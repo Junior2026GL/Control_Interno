@@ -1,28 +1,34 @@
 const db = require('./db');
 const bcrypt = require('bcryptjs');
 
-const createAdmin = async () => {
+const createSuperAdmin = async () => {
   try {
-    // Datos del admin a crear
-    const nombre = 'Administrador';
-    const email = 'admin@test.com';
-    const password = 'Admin123'; // Cambia esto por la contraseña que desees
-    const rol = 'ADMIN';
+    const nombre   = 'Super Administrador';
+    const username = 'superadmin';          // nombre de usuario para el login
+    const email    = 'superadmin@control.com';
+    const password = 'Superadmin@2026';      // cambia esto después del primer login
+    const rol      = 'SUPER_ADMIN';
 
-    // Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insertar en la base de datos
-    const query = 'INSERT INTO usuarios (nombre, email, password, rol, activo) VALUES (?, ?, ?, ?, 1)';
-    
-    db.query(query, [nombre, email, hashedPassword, rol], (err, result) => {
+    const query = `
+      INSERT INTO usuarios (nombre, username, email, password, rol, activo)
+      VALUES (?, ?, ?, ?, ?, 1)
+      ON DUPLICATE KEY UPDATE
+        nombre   = VALUES(nombre),
+        password = VALUES(password),
+        rol      = VALUES(rol),
+        activo   = 1
+    `;
+
+    db.query(query, [nombre, username, email, hashedPassword, rol], (err) => {
       if (err) {
-        console.error('Error al crear el usuario:', err);
+        console.error('Error al crear el super admin:', err);
       } else {
-        console.log('✅ Usuario administrador creado exitosamente');
-        console.log('📧 Email:', email);
-        console.log('🔑 Contraseña:', password);
-        console.log('👤 Rol:', rol);
+        console.log('✅ Usuario Super Administrador creado / actualizado exitosamente');
+        console.log('👤 Username :', username);
+        console.log('🔑 Password :', password);
+        console.log('🛡️  Rol     :', rol);
       }
       process.exit();
     });
@@ -32,4 +38,4 @@ const createAdmin = async () => {
   }
 };
 
-createAdmin();
+createSuperAdmin();

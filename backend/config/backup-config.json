@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "frequency": "daily",
+  "time": "00:37",
+  "dayOfWeek": 1,
+  "dayOfMonth": 1,
+  "savePath": "C:\\Users\\usuario\\Desktop\\Backup",
+  "lastBackup": null
+}

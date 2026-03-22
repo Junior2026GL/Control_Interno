@@ -1,0 +1,421 @@
+/* ============================================================
+   Base de Datos – Module Styles
+   ============================================================ */
+
+/* ── Page layout ── */
+.db-main {
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 44px 24px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Page header ── */
+.db-page-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+
+.db-page-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.35);
+  flex-shrink: 0;
+}
+
+.db-page-header h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a3a52;
+}
+
+.db-page-header p {
+  margin: 0;
+  font-size: 13.5px;
+  color: #8a99aa;
+}
+
+/* ── Summary strip ── */
+.db-summary-strip {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: white;
+  border-radius: 12px;
+  padding: 14px 22px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.db-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: #555;
+}
+
+.db-summary-item svg { color: #667eea; }
+
+.db-summary-item.db-status.on  svg { color: #22c55e; }
+.db-summary-item.db-status.off svg { color: #94a3b8; }
+
+/* ── Accordion section wrapper ── */
+.db-section-wrap {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  overflow: hidden;
+}
+
+/* ── Toggle button (accordion header) ── */
+.db-section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.db-section-toggle:hover  { background: #f7f8fc; }
+.db-section-toggle.open   { background: #f7f8fc; }
+
+.db-section-toggle-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.db-section-toggle-title {
+  flex: 1;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #1a3a52;
+}
+
+.db-section-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #667eea;
+  background: #eef0fc;
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+.db-section-chevron {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Panel content ── */
+.db-panel {
+  padding: 22px 26px 26px;
+  border-top: 1px solid #f0f2f8;
+}
+
+/* ── Helpers ── */
+.db-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #8a99aa;
+  font-size: 14px;
+  padding: 10px 0;
+}
+
+.db-desc {
+  font-size: 14px;
+  color: #667;
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+/* ── Alert ── */
+.db-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 14px 0;
+}
+
+.db-alert--success {
+  background: #ecfdf5;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.db-alert--error {
+  background: #fef2f2;
+  color: #7f1d1d;
+  border: 1px solid #fecaca;
+}
+
+/* ── Form fields ── */
+.db-fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.db-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+  flex: 1;
+}
+
+.db-field--full  { flex: 0 0 100%; }
+.db-field--toggle { flex: 0 0 100%; flex-direction: row; align-items: center; gap: 14px; margin-bottom: 16px; }
+
+.db-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.db-input,
+.db-select {
+  height: 40px;
+  padding: 0 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1a3a52;
+  background: #fafbfd;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.db-input:focus,
+.db-select:focus { border-color: #667eea; background: white; }
+
+.db-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── Toggle button ── */
+.db-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.db-toggle-btn.enabled {
+  background: #ecfdf5;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+.db-toggle-btn:hover { opacity: .85; }
+
+/* ── Action buttons ── */
+.db-panel-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.db-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 9px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.db-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+.db-btn--primary { background: linear-gradient(135deg,#667eea,#764ba2); color: white; }
+.db-btn--teal    { background: linear-gradient(135deg,#4facfe,#00c9ff); color: white; }
+.db-btn--green   { background: linear-gradient(135deg,#43e97b,#38f9d7); color: #065f46; }
+.db-btn--purple  { background: linear-gradient(135deg,#a18cd1,#fbc2eb); color: #4c1d95; }
+.db-btn--ghost   { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+.db-btn:not(:disabled):hover { filter: brightness(1.07); transform: translateY(-1px); }
+.db-btn--ghost:not(:disabled):hover { background: #e8edf5; }
+
+/* ── Backup toolbar ── */
+.db-backup-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+/* ── Import file drop zone ── */
+.db-import-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.db-file-drop { margin-bottom: 6px; }
+
+.db-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.db-file-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px dashed #c7d2fe;
+  border-radius: 12px;
+  padding: 36px 20px;
+  cursor: pointer;
+  color: #667eea;
+  font-size: 14px;
+  font-weight: 500;
+  background: #f8f9ff;
+  transition: all 0.15s;
+}
+
+.db-file-label:hover { background: #eef2ff; border-color: #818cf8; }
+
+.db-file-name { font-weight: 600; color: #1e293b; word-break: break-all; text-align: center; }
+.db-file-size { font-size: 12px; color: #64748b; }
+.db-file-hint { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+/* ── Backups table ── */
+.db-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.db-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.db-table td {
+  padding: 12px 12px;
+  border-bottom: 1px solid #f0f2f8;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.db-table tr:last-child td { border-bottom: none; }
+.db-table tr:hover td { background: #fafbfd; }
+
+.db-td-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: monospace;
+  font-size: 12.5px;
+  color: #475569;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.db-td-file svg { flex-shrink: 0; color: #94a3b8; }
+
+.db-td-actions { display: flex; gap: 8px; }
+
+.db-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.db-icon-btn--download { background: #eff6ff; color: #2563eb; }
+.db-icon-btn--delete   { background: #fef2f2; color: #dc2626; }
+
+.db-icon-btn:hover { filter: brightness(.9); transform: scale(1.07); }
+
+/* ── Empty state ── */
+.db-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.db-empty p    { margin: 0; font-size: 15px; font-weight: 500; color: #64748b; }
+.db-empty span { font-size: 13px; }
+
+/* ── Spinner ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }

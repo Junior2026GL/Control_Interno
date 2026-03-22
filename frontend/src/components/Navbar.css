@@ -1,11 +1,14 @@
 .navbar {
-  background: white;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  background: #274C8D;
+  box-shadow: 0 2px 12px rgba(39, 76, 141, 0.35);
   padding: 0 30px;
   height: 70px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .navbar-content {
@@ -15,18 +18,23 @@
   width: 100%;
 }
 
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
 .navbar-brand h1 {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
-  color: #1a3a52;
+  color: white;
   letter-spacing: -0.5px;
 }
 
 .navbar-user {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .user-badge {
@@ -34,16 +42,16 @@
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
-  background: #f5f7fa;
+  background: rgba(255,255,255,0.12);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid #e8ecf1;
+  border: 1px solid rgba(255,255,255,0.18);
 }
 
 .user-badge:hover {
-  background: #eff2f7;
-  border-color: #dce3ed;
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.28);
 }
 
 .user-initial {
@@ -53,12 +61,12 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: rgba(255,255,255,0.22);
   color: white;
   font-weight: 700;
   font-size: 16px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .user-info-navbar {
@@ -71,16 +79,58 @@
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1a3a52;
+  color: white;
 }
 
 .user-info-navbar .userrole {
   margin: 0;
   font-size: 11px;
-  color: #999;
+  color: rgba(255,255,255,0.65);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
+}
+
+.navbar-home-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  color: white;
+  background: rgba(255,255,255,0.15);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.navbar-home-btn:hover {
+  background: rgba(255,255,255,0.28);
+  color: white;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 80, 80, 0.18);
+  border-color: #ff6b6b;
+  color: #ffaaaa;
 }
 
 @media (max-width: 768px) {
@@ -97,6 +147,10 @@
     width: 36px;
     height: 36px;
     font-size: 14px;
+  }
+
+  .logout-btn span {
+    display: none;
   }
 
   .user-info-navbar .username {

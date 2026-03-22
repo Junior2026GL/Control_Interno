@@ -3,9 +3,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.login = (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
-  db.query('SELECT * FROM usuarios WHERE email = ?', [email], async (err, results) => {
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Usuario y contraseña son requeridos' });
+  }
+
+  db.query('SELECT * FROM usuarios WHERE username = ?', [username], async (err, results) => {
     if (err) return res.status(500).json(err);
 
     if (results.length === 0) {

@@ -1,54 +1,40 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
-const bcrypt = require('bcryptjs');
 const verifyToken = require('../middleware/auth');
 const checkRole = require('../middleware/role');
+const usersController = require('../controllers/users.controller');
 
-router.get('/', verifyToken, (req, res) => {
-  db.query('SELECT id, nombre, email, rol, activo FROM usuarios', (err, results) => {
-    if (err) return res.status(500).json(err);
-    res.json(results);
-  });
-});
+// Listar usuarios — SUPER_ADMIN y ADMIN
+router.get(
+  '/',
+  verifyToken,
+  checkRole(['SUPER_ADMIN', 'ADMIN']),
+  usersController.getUsers
+);
 
-router.post('/', verifyToken, checkRole(['ADMIN']), async (req, res) => {
-  const { nombre, email, password, rol } = req.body;
+// Crear usuario — SUPER_ADMIN y ADMIN
+// (el controller valida internamente que solo SUPER_ADMIN pueda crear otro SUPER_ADMIN)
+router.post(
+  '/',
+  verifyToken,
+  checkRole(['SUPER_ADMIN', 'ADMIN']),
+  usersController.createUser
+);
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+// Actualizar usuario — SUPER_ADMIN y ADMIN
+router.put(
+  '/:id',
+  verifyToken,
+  checkRole(['SUPER_ADMIN', 'ADMIN']),
+  usersController.updateUser
+);
 
-  db.query(
-    'INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, ?)',
-    [nombre, email, hashedPassword, rol],
-    (err) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: 'Usuario creado' });
-    }
-  );
-});
-
-router.put('/:id', verifyToken, (req, res) => {
-  const { nombre, email, rol, activo } = req.body;
-
-  db.query(
-    'UPDATE usuarios SET nombre=?, email=?, rol=?, activo=? WHERE id=?',
-    [nombre, email, rol, activo, req.params.id],
-    (err) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: 'Usuario actualizado' });
-    }
-  );
-});
-
-router.delete('/:id', verifyToken, checkRole(['ADMIN']), (req, res) => {
-  db.query(
-    'UPDATE usuarios SET activo=0 WHERE id=?',
-    [req.params.id],
-    (err) => {
-      if (err) return res.status(500).json(err);
-      res.json({ message: 'Usuario desactivado' });
-    }
-  );
-});
+// Desactivar usuario — solo SUPER_ADMIN y ADMIN
+router.delete(
+  '/:id',
+  verifyToken,
+  checkRole(['SUPER_ADMIN', 'ADMIN']),
+  usersController.deleteUser
+);
 
 module.exports = router;
