@@ -1428,8 +1428,8 @@ export default function Autorizaciones() {
       {editItem && (
         <div className="modal-overlay" onClick={() => setEditItem(null)}>
           <div className="aut-modal" onClick={e => e.stopPropagation()}>
-            <div className="aut-modal-header" style={{ background: 'linear-gradient(135deg,#fffbeb,#fef3c7)' }}>
-              <div className="aut-modal-icon"><FiEdit2 size={20} color="#d97706" /></div>
+            <div className="aut-modal-header" style={{ background: 'linear-gradient(135deg,#dbeafe,#bfdbfe)' }}>
+              <div className="aut-modal-icon"><FiEdit2 size={20} color="#274C8D" /></div>
               <div>
                 <h3>Editar Autorización</h3>
                 <p>No. {String(editItem.numero).padStart(4,'0')}</p>
