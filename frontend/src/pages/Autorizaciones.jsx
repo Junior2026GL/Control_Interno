@@ -1432,7 +1432,7 @@ export default function Autorizaciones() {
               <div className="aut-modal-icon"><FiEdit2 size={20} color="#d97706" /></div>
               <div>
                 <h3>Editar Autorización</h3>
-                <p>No. {String(editItem.numero).padStart(4,'0')} — solo PENDIENTES</p>
+                <p>No. {String(editItem.numero).padStart(4,'0')}</p>
               </div>
               <button className="modal-close-btn" onClick={() => setEditItem(null)}><FiX size={18} /></button>
             </div>
