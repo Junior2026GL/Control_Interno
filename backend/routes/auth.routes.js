@@ -1,10 +1,19 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../db');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const express    = require('express');
+const router     = express.Router();
+const rateLimit  = require('express-rate-limit');
+const db         = require('../db');
+const bcrypt     = require('bcryptjs');
+const jwt        = require('jsonwebtoken');
 
-router.post('/login', (req, res) => {
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Demasiados intentos de inicio de sesión. Intente de nuevo en 15 minutos.' },
+});
+
+router.post('/login', loginLimiter, (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -12,8 +21,16 @@ router.post('/login', (req, res) => {
   }
 
   db.query('SELECT * FROM usuarios WHERE username = ?', [username], async (err, results) => {
-    if (err) return res.status(500).json(err);
-    if (results.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
+    if (err) {
+      console.error('[auth] Error en login DB:', err);
+      return res.status(500).json({ message: 'Error en el servidor' });
+    }
+
+    // Misma respuesta y código para usuario inexistente y contraseña incorrecta
+    // (evita enumeración de usuarios)
+    const INVALID = { status: 401, message: 'Credenciales inválidas' };
+
+    if (results.length === 0) return res.status(INVALID.status).json({ message: INVALID.message });
 
     const user = results[0];
 
@@ -22,26 +39,37 @@ router.post('/login', (req, res) => {
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) return res.status(401).json({ message: 'Contraseña incorrecta' });
+    if (!validPassword) return res.status(INVALID.status).json({ message: INVALID.message });
 
     const token = jwt.sign(
-      { id: user.id, rol: user.rol },
+      { id: user.id, rol: user.rol, nombre: user.nombre },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
 
-    res.json({ 
-      token,
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        rol: user.rol
+    db.query(
+      'SELECT m.clave FROM modulos m JOIN usuario_modulos um ON m.id = um.modulo_id WHERE um.usuario_id = ?',
+      [user.id],
+      (err2, modResults) => {
+        // Si las tablas aún no existen, devolver login igualmente sin módulos
+        const modulos = err2 ? [] : modResults.map(r => r.clave);
+        res.json({
+          token,
+          user: {
+            id: user.id,
+            nombre: user.nombre,
+            rol: user.rol,
+            modulos,
+          }
+        });
       }
-    });
+    );
   });
 });
 
-// ── Forgot password: verify username + email, return short-lived reset token ──
+// ── Forgot password: verify username + email, send reset link by email ────────
+const mailer = require('../config/mailer');
+
 router.post('/forgot-password', (req, res) => {
   const { username, email } = req.body;
   if (!username || !email) {
@@ -51,7 +79,7 @@ router.post('/forgot-password', (req, res) => {
   db.query(
     'SELECT id, nombre, email FROM usuarios WHERE username = ? AND activo = 1',
     [username],
-    (err, results) => {
+    async (err, results) => {
       if (err) return res.status(500).json({ message: 'Error en el servidor' });
       if (results.length === 0) {
         return res.status(404).json({ message: 'Usuario no encontrado o inactivo' });
@@ -67,7 +95,14 @@ router.post('/forgot-password', (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: '15m' }
       );
-      res.json({ message: 'Identidad verificada', resetToken, nombre: user.nombre });
+      const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+      try {
+        await mailer.sendPasswordReset(user.email, user.nombre, resetUrl);
+        res.json({ message: 'Se ha enviado un enlace de recuperación a tu correo electrónico.' });
+      } catch (mailErr) {
+        console.error('[forgot-password] Error al enviar correo:', mailErr);
+        res.status(500).json({ message: 'No se pudo enviar el correo. Intenta de nuevo más tarde.' });
+      }
     }
   );
 });

@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FiHome, FiLogOut } from 'react-icons/fi';
+import { LuUserCheck } from 'react-icons/lu';
 import { AuthContext } from '../context/AuthContext';
 import './Navbar.css';
 
@@ -31,9 +32,10 @@ export default function Navbar() {
         {user && (
           <div className="navbar-user">
             <div className="user-badge">
-              <span className="user-initial">
-                {user.nombre.charAt(0).toUpperCase()}
-              </span>
+              <div className="user-initial">
+                <LuUserCheck size={22} color="white" />
+                <span className="user-check-badge">✓</span>
+              </div>
               <div className="user-info-navbar">
                 <p className="username">{user.nombre}</p>
                 <p className="userrole">{user.rol.replace('_', ' ')}</p>

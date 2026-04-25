@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut } from 'react-icons/fi';
+import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut, FiFileText, FiMessageSquare, FiShield, FiEye, FiBriefcase, FiUserCheck, FiRepeat, FiGift } from 'react-icons/fi';
 import { AuthContext } from '../context/AuthContext';
 import './Sidebar.css';
 
@@ -11,11 +11,28 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const menuItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: FiHome },
-    { path: '/caja', label: 'Caja Chica', icon: FiDollarSign },
-    { path: '/usuarios', label: 'Usuarios', icon: FiUsers },
+  const ALL_ITEMS = [
+    { path: '/dashboard',               label: 'Dashboard',                 icon: FiHome,          clave: null,                        soloSuperAdmin: false },
+    { path: '/caja',                    label: 'Caja Chica',                icon: FiDollarSign,    clave: 'caja',                      soloSuperAdmin: false },
+    { path: '/autorizaciones',          label: 'Autorizaciones',            icon: FiFileText,      clave: 'autorizaciones',            soloSuperAdmin: false },
+    { path: '/usuarios',                label: 'Usuarios',                  icon: FiUsers,         clave: 'usuarios',                  soloSuperAdmin: false },
+    { path: '/chat',                    label: 'Asistente IA',              icon: FiMessageSquare, clave: 'asistente-ia',              soloSuperAdmin: false },
+    { path: '/diputados',               label: 'Diputados',                 icon: FiUserCheck,     clave: 'diputados',                 soloSuperAdmin: false },
+    { path: '/presupuesto-social',      label: 'Presupuesto Social',        icon: FiBriefcase,     clave: 'presupuesto-social',        soloSuperAdmin: false },
+    { path: '/reportes-presupuesto',    label: 'Reportes Presupuesto',      icon: FiEye,           clave: 'reportes-presupuesto',      soloSuperAdmin: false },
+    { path: '/viaticos',                label: 'Viáticos',                  icon: FiDollarSign,    clave: 'viaticos',                  soloSuperAdmin: false },
+    { path: '/constancia-transferencia',label: 'Constancia Transferencia',  icon: FiRepeat,        clave: 'constancia-transferencia',  soloSuperAdmin: false },
+    { path: '/ayudas',                  label: 'Ayudas',                    icon: FiGift,          clave: 'ayudas',                    soloSuperAdmin: false },
+    { path: '/ip-whitelist',            label: 'Acceso por IP',             icon: FiShield,        clave: null,                        soloSuperAdmin: true  },
+    { path: '/auditoria',               label: 'Auditoría',                 icon: FiEye,           clave: null,                        soloSuperAdmin: true  },
   ];
+
+  const menuItems = ALL_ITEMS.filter(item => {
+    if (item.soloSuperAdmin) return user?.rol === 'SUPER_ADMIN';
+    if (!item.clave) return true; // Dashboard siempre
+    if (user?.rol === 'SUPER_ADMIN') return true;
+    return user?.modulos?.includes(item.clave);
+  });
 
   const handleLogout = () => {
     logout();

@@ -32,88 +32,92 @@ export default function Login() {
 
   return (
     <div className="login-bg">
-      {/* decorative blobs */}
-      <div className="blob blob-1" />
-      <div className="blob blob-2" />
 
-      <div className="login-card">
-        {/* top accent bar */}
-        <div className="card-accent" />
+      {/* ── Panel izquierdo ── */}
+      <div className="login-left" />
 
-        <div className="login-header">
-          <div className="logo-ring">
-            <FiUser size={28} strokeWidth={1.8} />
+      {/* ── Panel derecho ── */}
+      <div className="login-right">
+        <div className="login-card">
+          <div className="card-accent" />
+
+          <div className="login-header">
+            <div className="logo-ring">
+              <FiUser size={28} strokeWidth={1.8} />
+            </div>
+            <span className="system-badge">SCICN</span>
+            <h1>Iniciar Sesión</h1>
+            <span className="subtitle">Ingresa tus credenciales</span>
           </div>
-          <h1>Control Interno</h1>
-          <span className="subtitle">Sistema de Gestión</span>
+
+          <form onSubmit={handleSubmit} className="login-form" noValidate>
+
+            <div className="field-group">
+              <label htmlFor="username">Usuario</label>
+              <div className="field-wrap">
+                <FiUser className="field-icon" size={16} />
+                <input
+                  id="username"
+                  type="text"
+                  placeholder="Ingresa tu usuario"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  required
+                  disabled={loading}
+                  autoComplete="username"
+                />
+              </div>
+            </div>
+
+            <div className="field-group">
+              <label htmlFor="password">Contraseña</label>
+              <div className="field-wrap">
+                <FiLock className="field-icon" size={16} />
+                <input
+                  id="password"
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="toggle-pass"
+                  onClick={() => setShowPass(v => !v)}
+                  tabIndex={-1}
+                >
+                  {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="error-pill">
+                <FiAlertCircle size={15} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button type="submit" className="login-btn" disabled={loading}>
+              {loading
+                ? <><span className="btn-spinner" /> Verificando…</>
+                : 'Iniciar Sesión'
+              }
+            </button>
+
+            <div className="forgot-row">
+              <a href="/forgot-password" className="forgot-link">¿Olvidaste tu contraseña?</a>
+            </div>
+          </form>
+
+          <footer className="login-footer">
+            © 2026 Sistema Control Interno · Todos los derechos reservados
+            <span className="login-version">v1.0.0</span>
+          </footer>
         </div>
-
-        <form onSubmit={handleSubmit} className="login-form" noValidate>
-
-          <div className="field-group">
-            <label htmlFor="username">Usuario</label>
-            <div className="field-wrap">
-              <FiUser className="field-icon" size={16} />
-              <input
-                id="username"
-                type="text"
-                placeholder="Ingresa tu usuario"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required
-                disabled={loading}
-                autoComplete="username"
-              />
-            </div>
-          </div>
-
-          <div className="field-group">
-            <label htmlFor="password">Contraseña</label>
-            <div className="field-wrap">
-              <FiLock className="field-icon" size={16} />
-              <input
-                id="password"
-                type={showPass ? 'text' : 'password'}
-                placeholder="••••••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                disabled={loading}
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                className="toggle-pass"
-                onClick={() => setShowPass(v => !v)}
-                tabIndex={-1}
-              >
-                {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="error-pill">
-              <FiAlertCircle size={15} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading
-              ? <><span className="btn-spinner" /> Verificando…</>
-              : 'Iniciar Sesión'
-            }
-          </button>
-
-          <div className="forgot-row">
-            <a href="/forgot-password" className="forgot-link">¿Olvidaste tu contraseña?</a>
-          </div>
-        </form>
-
-        <footer className="login-footer">
-          © 2026 Sistema Control Interno · Todos los derechos reservados
-        </footer>
       </div>
     </div>
   );

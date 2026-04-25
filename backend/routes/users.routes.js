@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/auth');
 const checkRole = require('../middleware/role');
+const audit = require('../middleware/audit');
 const usersController = require('../controllers/users.controller');
 
 // Listar usuarios — SUPER_ADMIN y ADMIN
@@ -18,6 +19,7 @@ router.post(
   '/',
   verifyToken,
   checkRole(['SUPER_ADMIN', 'ADMIN']),
+  audit,
   usersController.createUser
 );
 
@@ -26,6 +28,7 @@ router.put(
   '/:id',
   verifyToken,
   checkRole(['SUPER_ADMIN', 'ADMIN']),
+  audit,
   usersController.updateUser
 );
 
@@ -34,6 +37,7 @@ router.delete(
   '/:id',
   verifyToken,
   checkRole(['SUPER_ADMIN', 'ADMIN']),
+  audit,
   usersController.deleteUser
 );
 

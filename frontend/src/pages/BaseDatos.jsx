@@ -1,586 +1,505 @@
-import { useState, useEffect, useCallback } from 'react';
-import {
-  FiDatabase, FiClock, FiDownload, FiUpload, FiList,
-  FiSave, FiTrash2, FiPlay, FiToggleLeft, FiToggleRight,
-  FiRefreshCw, FiCheckCircle, FiAlertCircle, FiFolder,
-  FiChevronDown, FiChevronUp, FiHardDrive,
-} from 'react-icons/fi';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
+import {
+  LuDatabase, LuClock, LuDownload, LuUpload, LuHardDrive,
+  LuPlay, LuTrash2, LuSave, LuRefreshCw, LuFolder,
+  LuCircleCheck, LuTriangleAlert, LuCalendar, LuFileText,
+  LuToggleLeft, LuToggleRight, LuX, LuInfo, LuCloudUpload,
+  LuZap, LuServer,
+} from 'react-icons/lu';
 import './BaseDatos.css';
 
-const BASE_URL = 'http://localhost:4000/api';
-
-function authHeaders() {
-  return { Authorization: `Bearer ${localStorage.getItem('token')}` };
-}
-
-function formatBytes(bytes) {
-  if (!bytes) return '0 B';
-  if (bytes < 1024)        return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-function formatDate(d) {
-  if (!d) return '—';
-  return new Date(d).toLocaleString('es-ES', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
-}
-
-function Alert({ msg }) {
-  if (!msg) return null;
+//  Toast 
+function Toast({ toasts, onRemove }) {
   return (
-    <div className={`db-alert db-alert--${msg.type}`}>
-      {msg.type === 'success' ? <FiCheckCircle size={16} /> : <FiAlertCircle size={16} />}
-      <span>{msg.text}</span>
+    <div className="db-toast-container">
+      {toasts.map(t => (
+        <div key={t.id} className={`db-toast db-toast--${t.type}`}>
+          <span className="db-toast-icon">
+            {t.type === 'success' ? <LuCircleCheck size={15} /> : <LuTriangleAlert size={15} />}
+          </span>
+          <span className="db-toast-msg">{t.message}</span>
+          <button className="db-toast-close" onClick={() => onRemove(t.id)}>
+            <LuX size={13} />
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
 
-const DAYS_WEEK   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const DAYS_MONTH  = Array.from({ length: 31 }, (_, i) => i + 1);
+//  Confirm modal 
+function ConfirmModal({ filename, onConfirm, onCancel, loading }) {
+  return (
+    <div className="db-modal-overlay" onClick={onCancel}>
+      <div className="db-modal" onClick={e => e.stopPropagation()}>
+        <div className="db-modal-icon"><LuTriangleAlert size={24} /></div>
+        <h3 className="db-modal-title">Eliminar backup</h3>
+        <p className="db-modal-body">
+          ¿Deseas eliminar <strong>{filename}</strong>?
+          Esta acción no se puede deshacer.
+        </p>
+        <div className="db-modal-actions">
+          <button className="db-btn db-btn--ghost" onClick={onCancel} disabled={loading}>Cancelar</button>
+          <button className="db-btn db-btn--danger" onClick={onConfirm} disabled={loading}>
+            {loading ? <LuRefreshCw size={13} className="spin" /> : <LuTrash2 size={13} />}
+            {loading ? 'Eliminando...' : 'Eliminar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
+//  Import confirm modal (requires typing CONFIRMAR) 
+function ImportConfirmModal({ filename, onConfirm, onCancel, loading }) {
+  const [text, setText] = useState('');
+  const valid = text === 'CONFIRMAR';
+  return (
+    <div className="db-modal-overlay" onClick={onCancel}>
+      <div className="db-modal" onClick={e => e.stopPropagation()} style={{maxWidth:460}}>
+        <div className="db-modal-icon" style={{color:'#dc2626'}}><LuTriangleAlert size={24} /></div>
+        <h3 className="db-modal-title">Confirmar importación</h3>
+        <p className="db-modal-body">
+          Esto reemplazará <strong>todos los datos actuales</strong> con el contenido de:<br/>
+          <strong style={{color:'#1e293b'}}>{filename}</strong><br/>
+          <span style={{color:'#dc2626',fontWeight:600}}>Esta acción no se puede deshacer.</span>
+        </p>
+        <p style={{fontSize:'13px',color:'#475569',margin:'0 0 8px',textAlign:'left'}}>
+          Escribe <strong>CONFIRMAR</strong> para continuar:
+        </p>
+        <input
+          type="text"
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="CONFIRMAR"
+          autoFocus
+          style={{
+            width:'100%', padding:'8px 12px', marginBottom:'16px', boxSizing:'border-box',
+            border:`1.5px solid ${valid ? '#16a34a' : '#e2e8f0'}`, borderRadius:'6px',
+            fontSize:'14px', outline:'none', background:'#fff', color:'#1e293b',
+          }}
+        />
+        <div className="db-modal-actions">
+          <button className="db-btn db-btn--ghost" onClick={onCancel} disabled={loading}>Cancelar</button>
+          <button className="db-btn db-btn--danger" onClick={onConfirm} disabled={!valid || loading}>
+            {loading ? <LuRefreshCw size={13} className="spin" /> : <LuUpload size={13} />}
+            {loading ? 'Importando...' : 'Importar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+//  Helpers 
+function formatBytes(b) {
+  if (!b) return '0 B';
+  const k = 1024, sz = ['B','KB','MB','GB'];
+  const i = Math.floor(Math.log(b) / Math.log(k));
+  return `${parseFloat((b / Math.pow(k, i)).toFixed(1))} ${sz[i]}`;
+}
+function formatDate(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function timeAgo(d) {
+  if (!d) return 'Nunca';
+  const diff = Date.now() - new Date(d).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'Ahora mismo';
+  if (min < 60) return `Hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Hace ${h}h`;
+  return `Hace ${Math.floor(h / 24)} día(s)`;
+}
+const DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+//  Component 
 export default function BaseDatos() {
-  /* ── Config state ─────────────────────────────────── */
-  const [config, setConfig] = useState({
-    enabled: false, frequency: 'daily', time: '02:00',
-    dayOfWeek: 1, dayOfMonth: 1, savePath: '', lastBackup: null,
-  });
-  const [configLoading, setConfigLoading] = useState(true);
-  const [savingConfig,  setSavingConfig]  = useState(false);
-  const [configMsg,     setConfigMsg]     = useState(null);
+  const [cfg, setCfg] = useState({ enabled:false, frequency:'daily', time:'02:00', dayOfWeek:1, dayOfMonth:1, savePath:'', retentionDays:30, lastBackup:null });
+  const [cfgLoading, setCfgLoading] = useState(false);
+  const [backups, setBackups]       = useState([]);
+  const [totalSize, setTotalSize]   = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [listLoading, setListLoading] = useState(false);
+  const [backupRunning, setBackupRunning] = useState(false);
+  const [exporting, setExporting]   = useState(false);
+  const [importing, setImporting]   = useState(false);
+  const [file, setFile]             = useState(null);
+  const [dragOver, setDragOver]     = useState(false);
+  const fileRef                     = useRef(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [toasts, setToasts]         = useState([]);
+  const toastId                     = useRef(0);
+  const [bkPage, setBkPage]         = useState(1);
+  const BK_PAGE_SIZE = 10;
 
-  /* ── Export state ─────────────────────────────────── */
-  const [exporting,  setExporting]  = useState(false);
-  const [exportMsg,  setExportMsg]  = useState(null);
+  function addToast(message, type = 'success') {
+    const id = ++toastId.current;
+    setToasts(p => [...p, { id, message, type }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4500);
+  }
 
-  /* ── Import state ─────────────────────────────────── */
-  const [importFile, setImportFile] = useState(null);
-  const [importing,  setImporting]  = useState(false);
-  const [importMsg,  setImportMsg]  = useState(null);
-
-  /* ── Backups list ─────────────────────────────────── */
-  const [backups,       setBackups]       = useState([]);
-  const [backupsLoading,setBackupsLoading]= useState(true);
-  const [runningBackup, setRunningBackup] = useState(false);
-  const [backupMsg,     setBackupMsg]     = useState(null);
-
-  /* ── Expanded section ─────────────────────────────── */
-  const [openSection, setOpenSection] = useState(null);
-
-  const toggleSection = s => setOpenSection(prev => prev === s ? null : s);
-
-  /* ── Data fetching ───────────────────────────────── */
   const loadConfig = useCallback(async () => {
-    try {
-      setConfigLoading(true);
-      const res = await api.get('/database/config', { headers: authHeaders() });
-      setConfig(res.data);
-    } catch { /* ignore */ }
-    finally { setConfigLoading(false); }
+    try { const { data } = await api.get('/database/config'); setCfg(data); } catch {}
   }, []);
 
   const loadBackups = useCallback(async () => {
+    setListLoading(true);
     try {
-      setBackupsLoading(true);
-      const res = await api.get('/database/backups', { headers: authHeaders() });
-      setBackups(res.data.backups || []);
-    } catch { /* ignore */ }
-    finally { setBackupsLoading(false); }
+      const { data } = await api.get('/database/backups');
+      setBackups(data.backups || []);
+      setTotalSize(data.totalSize || 0);
+      setTotalCount(data.totalCount || 0);
+    } catch { addToast('Error al cargar backups', 'error'); }
+    finally { setListLoading(false); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { loadConfig(); loadBackups(); }, [loadConfig, loadBackups]);
 
-  /* ── Shared download trigger ─────────────────────────────────────────
-     url    – full URL to fetch
-     method – 'GET' (export) | 'POST' (backup/run – saves to disk + streams)
-  ─────────────────────────────────────────────────────────────────────── */
-  const doDownload = useCallback(async (url, method = 'GET') => {
-    const opts = { method, headers: authHeaders() };
-    if (method === 'POST') {
-      opts.headers = { ...opts.headers, 'Content-Type': 'application/json' };
-      opts.body = JSON.stringify({});
-    }
-    const response = await fetch(url, opts);
-    if (!response.ok) {
-      const json = await response.json().catch(() => ({}));
-      throw new Error(json.message || 'Error en el servidor');
-    }
-    const blob     = await response.blob();
-    const disp     = response.headers.get('content-disposition') || '';
-    const match    = disp.match(/filename="([^"]+)"/);
-    const filename = match ? match[1] : 'backup.sql';
-    const blobUrl  = window.URL.createObjectURL(blob);
-    const a        = document.createElement('a');
-    a.href = blobUrl; a.download = filename;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(blobUrl);
-    return filename;
-  }, []);
+  async function saveConfig() {
+    setCfgLoading(true);
+    try { await api.post('/database/config', cfg); addToast('Configuración guardada'); }
+    catch { addToast('Error al guardar configuración', 'error'); }
+    finally { setCfgLoading(false); }
+  }
 
-  /* ── Auto-scheduler (checks every 30 s) ─────────────── */
-  useEffect(() => {
-    if (!config.enabled || !config.time) return;
-
-    const checkSchedule = () => {
-      const now  = new Date();
-      const [hCfg, mCfg] = config.time.split(':').map(Number);
-      if (now.getHours() !== hCfg || now.getMinutes() !== mCfg) return;
-      if (config.frequency === 'weekly'  && now.getDay()  !== Number(config.dayOfWeek))  return;
-      if (config.frequency === 'monthly' && now.getDate() !== Number(config.dayOfMonth)) return;
-
-      // Dedup within the same minute using sessionStorage
-      const stampKey = `auto_backup_${now.toISOString().slice(0, 16)}`;
-      if (sessionStorage.getItem(stampKey)) return;
-      sessionStorage.setItem(stampKey, '1');
-
-      console.log('[AutoBackup] Guardando y descargando backup programado…');
-      // Use /backup/run so the file is ALSO saved to the configured server path
-      doDownload(`${BASE_URL}/database/backup/run`, 'POST')
-        .then(f  => console.log('[AutoBackup] Descargado y guardado en ruta configurada:', f))
-        .catch(e => console.error('[AutoBackup] Error:', e));
-    };
-
-    const iv = setInterval(checkSchedule, 30_000);
-    return () => clearInterval(iv);
-  }, [config, doDownload]);
-
-  /* ── Handlers ────────────────────────────────────── */
-  const handleSaveConfig = async () => {
-    setSavingConfig(true); setConfigMsg(null);
+  async function runBackup() {
+    setBackupRunning(true);
     try {
-      await api.post('/database/config', config, { headers: authHeaders() });
-      setConfigMsg({ type: 'success', text: 'Configuración guardada exitosamente.' });
+      const r = await api.post('/database/backup/run', {}, { responseType:'blob' });
+      const cd = r.headers['content-disposition'] || '';
+      const name = (cd.match(/filename="([^"]+)"/) || [])[1] || 'backup.sql';
+      const url = URL.createObjectURL(r.data);
+      Object.assign(document.createElement('a'), { href:url, download:name }).click();
+      URL.revokeObjectURL(url);
+      setCfg(p => ({ ...p, lastBackup: new Date().toISOString() }));
+      await loadBackups();
+      addToast('Backup creado y descargado');
     } catch (err) {
-      setConfigMsg({ type: 'error', text: err.response?.data?.message || 'Error al guardar configuración.' });
-    } finally { setSavingConfig(false); }
-  };
+      const text = err.response?.data instanceof Blob ? await err.response.data.text() : null;
+      let msg = 'Error al crear backup';
+      try { msg = JSON.parse(text)?.message || msg; } catch {}
+      addToast(msg, 'error');
+    } finally { setBackupRunning(false); }
+  }
 
-  const handleExport = async () => {
-    setExporting(true); setExportMsg(null);
+  async function exportDB() {
+    setExporting(true);
     try {
-      const f = await doDownload(`${BASE_URL}/database/export`, 'GET');
-      setExportMsg({ type: 'success', text: `Archivo "${f}" descargado correctamente.` });
-    } catch {
-      setExportMsg({ type: 'error', text: 'Error al exportar la base de datos. Verifique que mysqldump esté instalado.' });
-    } finally { setExporting(false); }
-  };
+      const r = await api.get('/database/export', { responseType:'blob' });
+      const cd = r.headers['content-disposition'] || '';
+      const name = (cd.match(/filename="([^"]+)"/) || [])[1] || 'export.sql';
+      const url = URL.createObjectURL(r.data);
+      Object.assign(document.createElement('a'), { href:url, download:name }).click();
+      URL.revokeObjectURL(url);
+      addToast('Exportación completada');
+    } catch { addToast('Error al exportar', 'error'); }
+    finally { setExporting(false); }
+  }
 
-  const handleImport = async e => {
-    e.preventDefault();
-    if (!importFile) return;
-    setImporting(true); setImportMsg(null);
-    const formData = new FormData();
-    formData.append('sqlFile', importFile);
+  async function importDB() {
+    if (!file) return;
+    setImporting(true);
     try {
-      const res = await api.post('/database/import', formData, {
-        headers: { ...authHeaders(), 'Content-Type': 'multipart/form-data' },
-      });
-      setImportMsg({ type: 'success', text: res.data.message });
-      setImportFile(null);
-      const el = document.getElementById('sql-file-input');
-      if (el) el.value = '';
-    } catch (err) {
-      setImportMsg({ type: 'error', text: err.response?.data?.message || 'Error al importar el archivo.' });
-    } finally { setImporting(false); }
-  };
+      const fd = new FormData();
+      fd.append('sqlFile', file);
+      await api.post('/database/import', fd, { headers:{ 'Content-Type':'multipart/form-data' } });
+      setFile(null);
+      if (fileRef.current) fileRef.current.value = '';
+      addToast('Base de datos importada exitosamente');
+    } catch (err) { addToast(err.response?.data?.message || 'Error al importar', 'error'); }
+    finally { setImporting(false); }
+  }
 
-  const handleRunBackup = async () => {
-    setRunningBackup(true); setBackupMsg(null);
+  async function handleImportConfirm() {
+    await importDB();
+    setImportModalOpen(false);
+  }
+
+  async function downloadBackup(filename) {
     try {
-      // POST /backup/run → saves to configured path on disk AND streams back for browser download
-      const f = await doDownload(`${BASE_URL}/database/backup/run`, 'POST');
-      setBackupMsg({ type: 'success', text: `Backup guardado en la ruta configurada y descargado: ${f}` });
-      loadBackups();
-    } catch (err) {
-      setBackupMsg({ type: 'error', text: err.message || 'Error al generar el backup. Verifique que mysqldump esté instalado.' });
-    } finally { setRunningBackup(false); }
-  };
+      const r = await api.get(`/database/backups/${encodeURIComponent(filename)}`, { responseType:'blob' });
+      const url = URL.createObjectURL(r.data);
+      Object.assign(document.createElement('a'), { href:url, download:filename }).click();
+      URL.revokeObjectURL(url);
+    } catch { addToast('Error al descargar', 'error'); }
+  }
 
-  const handleDownloadBackup = async filename => {
-    const response = await fetch(
-      `${BASE_URL}/database/backups/${encodeURIComponent(filename)}`,
-      { headers: authHeaders() },
-    );
-    if (!response.ok) { alert('Error al descargar el backup'); return; }
-    const blob = await response.blob();
-    const url  = window.URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
-
-  const handleDeleteBackup = async filename => {
-    if (!window.confirm(`¿Eliminar el backup "${filename}"? Esta acción no se puede deshacer.`)) return;
+  async function doDelete() {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      await api.delete(`/database/backups/${encodeURIComponent(filename)}`, { headers: authHeaders() });
-      loadBackups();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error al eliminar el backup.');
-    }
-  };
+      await api.delete(`/database/backups/${encodeURIComponent(deleteTarget)}`);
+      setDeleteTarget(null);
+      await loadBackups();
+      addToast('Backup eliminado');
+    } catch { addToast('Error al eliminar', 'error'); }
+    finally { setDeleteLoading(false); }
+  }
 
-  /* ── Render helpers ──────────────────────────────── */
-  const SectionHeader = ({ id, icon: Icon, title, badge, color }) => (
-    <button
-      className={`db-section-toggle ${openSection === id ? 'open' : ''}`}
-      onClick={() => toggleSection(id)}
-    >
-      <span className="db-section-toggle-icon" style={{ background: color }}>
-        <Icon size={20} color="white" />
-      </span>
-      <span className="db-section-toggle-title">{title}</span>
-      {badge && <span className="db-section-badge">{badge}</span>}
-      <span className="db-section-chevron">
-        {openSection === id ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-      </span>
-    </button>
-  );
+  function onDrop(e) {
+    e.preventDefault(); setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    if (f?.name.toLowerCase().endsWith('.sql')) setFile(f);
+    else addToast('Solo se permiten archivos .sql', 'error');
+  }
 
-  /* ── Main render ─────────────────────────────────── */
   return (
-    <div className="app-shell">
+    <div className="page-wrapper">
       <Navbar />
-      <main className="db-main">
+      <Toast toasts={toasts} onRemove={id => setToasts(p => p.filter(t => t.id !== id))} />
+      {deleteTarget && (
+        <ConfirmModal
+          filename={deleteTarget}
+          onConfirm={doDelete}
+          onCancel={() => setDeleteTarget(null)}
+          loading={deleteLoading}
+        />
+      )}
+      {importModalOpen && (
+        <ImportConfirmModal
+          filename={file?.name || ''}
+          onConfirm={handleImportConfirm}
+          onCancel={() => setImportModalOpen(false)}
+          loading={importing}
+        />
+      )}
 
-        {/* ── Page header ── */}
-        <div className="db-page-header">
-          <div className="db-page-icon">
-            <FiDatabase size={28} color="white" />
-          </div>
+      <main className="page-content">
+
+        {/* Header */}
+        <div className="db-header">
+          <div className="db-header-icon"><LuDatabase size={22} /></div>
           <div>
-            <h1>Base de Datos</h1>
-            <p>Backups automáticos, exportación e importación · Solo Super Administrador</p>
+            <h1 className="db-title">Base de Datos</h1>
+            <p className="db-subtitle">Gestión de backups, exportación e importación</p>
           </div>
         </div>
 
-        {/* ── Summary strip ── */}
-        <div className="db-summary-strip">
-          <div className="db-summary-item">
-            <FiHardDrive size={18} />
-            <span><strong>{backups.length}</strong> backups guardados</span>
+        {/* Stats */}
+        <div className="db-stats">
+          <div className="db-stat">
+            <LuHardDrive size={17} className="db-stat-ico ico-blue" />
+            <div><span className="db-stat-val">{totalCount}</span><span className="db-stat-lbl">Backups</span></div>
           </div>
-          <div className="db-summary-item">
-            <FiClock size={18} />
-            <span>Último backup: <strong>{formatDate(config.lastBackup)}</strong></span>
+          <div className="db-stat">
+            <LuServer size={17} className="db-stat-ico ico-purple" />
+            <div><span className="db-stat-val">{formatBytes(totalSize)}</span><span className="db-stat-lbl">Almacenado</span></div>
           </div>
-          <div className={`db-summary-item db-status ${config.enabled ? 'on' : 'off'}`}>
-            {config.enabled ? <FiToggleRight size={18} /> : <FiToggleLeft size={18} />}
-            <span>Programación: <strong>{config.enabled ? 'Activa' : 'Inactiva'}</strong></span>
+          <div className="db-stat">
+            <LuClock size={17} className="db-stat-ico ico-teal" />
+            <div><span className="db-stat-val">{timeAgo(cfg.lastBackup)}</span><span className="db-stat-lbl">Último backup</span></div>
+          </div>
+          <div className="db-stat">
+            <LuZap size={17} className={`db-stat-ico ${cfg.enabled ? 'ico-green' : 'ico-gray'}`} />
+            <div><span className="db-stat-val">{cfg.enabled ? 'Activo' : 'Inactivo'}</span><span className="db-stat-lbl">Programador</span></div>
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════════
-            SECTION 1 – Backup Automático
-        ══════════════════════════════════════════════ */}
-        <div className="db-section-wrap">
-          <SectionHeader
-            id="config"
-            icon={FiClock}
-            title="Backup Automático"
-            badge={config.enabled ? 'Activo' : null}
-            color="linear-gradient(135deg,#667eea,#764ba2)"
-          />
+        {/* Grid */}
+        <div className="db-grid">
 
-          {openSection === 'config' && (
-            <div className="db-panel">
-              {configLoading ? (
-                <div className="db-loading"><FiRefreshCw className="spin" size={22} /> Cargando…</div>
-              ) : (
-                <>
-                  {/* Enable toggle */}
-                  <div className="db-field db-field--toggle">
-                    <label className="db-label">Estado del backup automático</label>
-                    <button
-                      className={`db-toggle-btn ${config.enabled ? 'enabled' : ''}`}
-                      onClick={() => setConfig(c => ({ ...c, enabled: !c.enabled }))}
-                    >
-                      {config.enabled
-                        ? <><FiToggleRight size={22} /> Habilitado</>
-                        : <><FiToggleLeft  size={22} /> Deshabilitado</>}
-                    </button>
-                  </div>
-
-                  <div className="db-fields-row">
-                    {/* Frequency */}
-                    <div className="db-field">
-                      <label className="db-label">Frecuencia</label>
-                      <select
-                        className="db-select"
-                        value={config.frequency}
-                        onChange={e => setConfig(c => ({ ...c, frequency: e.target.value }))}
-                      >
-                        <option value="daily">Diario</option>
-                        <option value="weekly">Semanal</option>
-                        <option value="monthly">Mensual</option>
-                      </select>
-                    </div>
-
-                    {/* Time */}
-                    <div className="db-field">
-                      <label className="db-label">Hora de ejecución</label>
-                      <input
-                        type="time"
-                        className="db-input"
-                        value={config.time}
-                        onChange={e => setConfig(c => ({ ...c, time: e.target.value }))}
-                      />
-                    </div>
-
-                    {/* Day of week (weekly only) */}
-                    {config.frequency === 'weekly' && (
-                      <div className="db-field">
-                        <label className="db-label">Día de la semana</label>
-                        <select
-                          className="db-select"
-                          value={config.dayOfWeek}
-                          onChange={e => setConfig(c => ({ ...c, dayOfWeek: Number(e.target.value) }))}
-                        >
-                          {DAYS_WEEK.map((d, i) => <option key={i} value={i}>{d}</option>)}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Day of month (monthly only) */}
-                    {config.frequency === 'monthly' && (
-                      <div className="db-field">
-                        <label className="db-label">Día del mes</label>
-                        <select
-                          className="db-select"
-                          value={config.dayOfMonth}
-                          onChange={e => setConfig(c => ({ ...c, dayOfMonth: Number(e.target.value) }))}
-                        >
-                          {DAYS_MONTH.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Save path */}
-                  <div className="db-field db-field--full">
-                    <label className="db-label">
-                      <FiFolder size={14} /> Ruta de guardado en servidor
-                    </label>
-                    <input
-                      type="text"
-                      className="db-input"
-                      placeholder="Ej. C:\backups\control_interno o /var/backups"
-                      value={config.savePath}
-                      onChange={e => setConfig(c => ({ ...c, savePath: e.target.value }))}
-                    />
-                    <p className="db-hint">
-                      Carpeta del servidor donde se almacenarán los archivos .sql automáticos.
-                    </p>
-                  </div>
-
-                  <Alert msg={configMsg} />
-
-                  <div className="db-panel-actions">
-                    <button
-                      className="db-btn db-btn--primary"
-                      onClick={handleSaveConfig}
-                      disabled={savingConfig}
-                    >
-                      {savingConfig
-                        ? <><FiRefreshCw className="spin" size={15} /> Guardando…</>
-                        : <><FiSave size={15} /> Guardar configuración</>}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* ══════════════════════════════════════════════
-            SECTION 2 – Exportar
-        ══════════════════════════════════════════════ */}
-        <div className="db-section-wrap">
-          <SectionHeader
-            id="export"
-            icon={FiDownload}
-            title="Exportar Base de Datos"
-            color="linear-gradient(135deg,#4facfe,#00f2fe)"
-          />
-
-          {openSection === 'export' && (
-            <div className="db-panel">
-              <p className="db-desc">
-                Genera un volcado completo de la base de datos en formato SQL y lo descarga
-                directamente en tu navegador. El archivo incluye estructura y datos.
-              </p>
-
-              <Alert msg={exportMsg} />
-
-              <div className="db-panel-actions">
-                <button
-                  className="db-btn db-btn--teal"
-                  onClick={handleExport}
-                  disabled={exporting}
-                >
-                  {exporting
-                    ? <><FiRefreshCw className="spin" size={15} /> Generando exportación…</>
-                    : <><FiDownload size={15} /> Descargar exportación (SQL)</>}
-                </button>
+          {/*  Backup automático  */}
+          <div className="db-card">
+            <div className="db-card-hd">
+              <span className="db-card-hd-ico ico-blue"><LuClock size={15} /></span>
+              <div>
+                <h2 className="db-card-title">Backup Automático</h2>
+                <p className="db-card-sub">Programa copias de seguridad periódicas</p>
               </div>
+              <button className={`db-toggle ${cfg.enabled ? 'on' : ''}`}
+                onClick={() => setCfg(p => ({ ...p, enabled: !p.enabled }))}>
+                {cfg.enabled ? <LuToggleRight size={22} /> : <LuToggleLeft size={22} />}
+                {cfg.enabled ? 'Habilitado' : 'Deshabilitado'}
+              </button>
             </div>
-          )}
-        </div>
-
-        {/* ══════════════════════════════════════════════
-            SECTION 3 – Importar
-        ══════════════════════════════════════════════ */}
-        <div className="db-section-wrap">
-          <SectionHeader
-            id="import"
-            icon={FiUpload}
-            title="Importar Base de Datos"
-            color="linear-gradient(135deg,#43e97b,#38f9d7)"
-          />
-
-          {openSection === 'import' && (
-            <div className="db-panel">
-              <div className="db-import-warning">
-                <FiAlertCircle size={18} />
-                <span>
-                  <strong>Precaución:</strong> Importar un archivo SQL reemplazará los datos
-                  existentes. Se recomienda realizar un backup antes de continuar.
+            <div className="db-card-body">
+              <div className="db-row">
+                <div className="db-field">
+                  <label className="db-label">Frecuencia</label>
+                  <select className="db-select" value={cfg.frequency}
+                    onChange={e => setCfg(p => ({ ...p, frequency: e.target.value }))}>
+                    <option value="daily">Diario</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly">Mensual</option>
+                  </select>
+                </div>
+                <div className="db-field">
+                  <label className="db-label">Hora</label>
+                  <input type="time" className="db-input" value={cfg.time}
+                    onChange={e => setCfg(p => ({ ...p, time: e.target.value }))} />
+                </div>
+                {cfg.frequency === 'weekly' && (
+                  <div className="db-field">
+                    <label className="db-label">Día</label>
+                    <select className="db-select" value={cfg.dayOfWeek}
+                      onChange={e => setCfg(p => ({ ...p, dayOfWeek: +e.target.value }))}>
+                      {DAYS.map((d,i) => <option key={i} value={i}>{d}</option>)}
+                    </select>
+                  </div>
+                )}
+                {cfg.frequency === 'monthly' && (
+                  <div className="db-field">
+                    <label className="db-label">Día del mes</label>
+                    <input type="number" className="db-input" min={1} max={28} value={cfg.dayOfMonth}
+                      onChange={e => setCfg(p => ({ ...p, dayOfMonth: +e.target.value }))} />
+                  </div>
+                )}
+              </div>
+              <div className="db-field" style={{marginBottom:14}}>
+                <label className="db-label"><LuFolder size={11}/> Ruta de guardado</label>
+                <input type="text" className="db-input" value={cfg.savePath} placeholder="/ruta/backups"
+                  onChange={e => setCfg(p => ({ ...p, savePath: e.target.value }))} />
+              </div>
+              <div className="db-field" style={{marginBottom:14}}>
+                <label className="db-label">Retención de backups (días)</label>
+                <select className="db-select" value={cfg.retentionDays}
+                  onChange={e => setCfg(p => ({ ...p, retentionDays: +e.target.value }))}>
+                  <option value={7}>7 días</option>
+                  <option value={14}>14 días</option>
+                  <option value={30}>30 días (recomendado)</option>
+                  <option value={60}>60 días</option>
+                  <option value={90}>90 días</option>
+                  <option value={0}>Sin límite</option>
+                </select>
+                <span style={{fontSize:'11px',color:'#8a99aa',marginTop:'4px',display:'block'}}>
+                  Los backups más antiguos de {cfg.retentionDays > 0 ? `${cfg.retentionDays} días` : 'siempre'} se eliminan automáticamente.
                 </span>
               </div>
-
-              <form onSubmit={handleImport}>
-                <div className="db-file-drop">
-                  <input
-                    id="sql-file-input"
-                    type="file"
-                    accept=".sql"
-                    className="db-file-input"
-                    onChange={e => setImportFile(e.target.files[0] || null)}
-                  />
-                  <label htmlFor="sql-file-input" className="db-file-label">
-                    {importFile ? (
-                      <>
-                        <FiDatabase size={28} />
-                        <span className="db-file-name">{importFile.name}</span>
-                        <span className="db-file-size">{formatBytes(importFile.size)}</span>
-                      </>
-                    ) : (
-                      <>
-                        <FiUpload size={28} />
-                        <span>Haz clic para seleccionar un archivo .sql</span>
-                        <span className="db-file-hint">Tamaño máximo: 100 MB</span>
-                      </>
-                    )}
-                  </label>
+              {cfg.enabled && (
+                <div className="db-info">
+                  <LuInfo size={13} />
+                  <span>Programado: <strong>{{ daily:'Diario', weekly:'Semanal', monthly:'Mensual' }[cfg.frequency]}</strong> a las <strong>{cfg.time}</strong></span>
                 </div>
-
-                <Alert msg={importMsg} />
-
-                <div className="db-panel-actions">
-                  <button
-                    className="db-btn db-btn--green"
-                    type="submit"
-                    disabled={!importFile || importing}
-                  >
-                    {importing
-                      ? <><FiRefreshCw className="spin" size={15} /> Importando…</>
-                      : <><FiUpload size={15} /> Importar base de datos</>}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-        </div>
-
-        {/* ══════════════════════════════════════════════
-            SECTION 4 – Historial de Backups
-        ══════════════════════════════════════════════ */}
-        <div className="db-section-wrap">
-          <SectionHeader
-            id="history"
-            icon={FiList}
-            title="Historial de Backups"
-            badge={backups.length > 0 ? `${backups.length}` : null}
-            color="linear-gradient(135deg,#fa709a,#fee140)"
-          />
-
-          {openSection === 'history' && (
-            <div className="db-panel">
-              <div className="db-backup-toolbar">
-                <button
-                  className="db-btn db-btn--purple"
-                  onClick={handleRunBackup}
-                  disabled={runningBackup}
-                >
-                  {runningBackup
-                    ? <><FiRefreshCw className="spin" size={15} /> Creando backup…</>
-                    : <><FiPlay size={15} /> Crear backup ahora</>}
+              )}
+              <div className="db-actions">
+                <button className="db-btn primary" onClick={saveConfig} disabled={cfgLoading}>
+                  {cfgLoading ? <LuRefreshCw size={13} className="spin"/> : <LuSave size={13}/>}
+                  {cfgLoading ? 'Guardando...' : 'Guardar config'}
                 </button>
-                <button className="db-btn db-btn--ghost" onClick={loadBackups}>
-                  <FiRefreshCw size={15} /> Actualizar lista
+                <button className="db-btn teal" onClick={runBackup} disabled={backupRunning}>
+                  {backupRunning ? <LuRefreshCw size={13} className="spin"/> : <LuPlay size={13}/>}
+                  {backupRunning ? 'Creando...' : 'Backup ahora'}
                 </button>
               </div>
+            </div>
+          </div>
 
-              <Alert msg={backupMsg} />
+          {/*  Exportar  */}
+          <div className="db-card">
+            <div className="db-card-hd">
+              <span className="db-card-hd-ico ico-green"><LuDownload size={15}/></span>
+              <div>
+                <h2 className="db-card-title">Exportar</h2>
+                <p className="db-card-sub">Descarga un volcado SQL completo</p>
+              </div>
+            </div>
+            <div className="db-card-body">
+              <p className="db-desc">Genera un archivo <code>.sql</code> con la estructura y datos actuales de la base de datos.</p>
+              <button className="db-btn green" onClick={exportDB} disabled={exporting}>
+                {exporting ? <LuRefreshCw size={13} className="spin"/> : <LuDownload size={13}/>}
+                {exporting ? 'Exportando...' : 'Exportar y descargar'}
+              </button>
+            </div>
+          </div>
 
-              {backupsLoading ? (
-                <div className="db-loading"><FiRefreshCw className="spin" size={22} /> Cargando…</div>
+          {/*  Importar  */}
+          <div className="db-card">
+            <div className="db-card-hd">
+              <span className="db-card-hd-ico ico-orange"><LuUpload size={15}/></span>
+              <div>
+                <h2 className="db-card-title">Importar</h2>
+                <p className="db-card-sub">Restaura desde un archivo .sql</p>
+              </div>
+            </div>
+            <div className="db-card-body">
+              <div className="db-warning">
+                <LuTriangleAlert size={14}/>
+                <span>Esta acción reemplaza todos los datos actuales. Ten un backup vigente antes de continuar.</span>
+              </div>
+              <div
+                className={`db-dropzone ${dragOver ? 'over' : ''} ${file ? 'has-file' : ''}`}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+                onClick={() => fileRef.current?.click()}
+              >
+                <input ref={fileRef} type="file" accept=".sql" style={{display:'none'}}
+                  onChange={e => setFile(e.target.files[0] || null)} />
+                {file ? (
+                  <><LuFileText size={28} style={{color:'#16a34a'}}/><span className="db-drop-name">{file.name}</span><span className="db-drop-size">{formatBytes(file.size)}</span></>
+                ) : (
+                  <><LuCloudUpload size={28}/><span className="db-drop-main">Arrastra tu .sql aquí</span><span className="db-drop-hint">o haz clic para seleccionar</span></>
+                )}
+              </div>
+              <div className="db-actions" style={{marginTop:12}}>
+                <button className="db-btn orange" onClick={() => file && setImportModalOpen(true)} disabled={!file || importing}>
+                  {importing ? <LuRefreshCw size={13} className="spin"/> : <LuUpload size={13}/>}
+                  {importing ? 'Importando...' : 'Importar base de datos'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/*  Historial  */}
+          <div className="db-card db-card--full">
+            <div className="db-card-hd">
+              <span className="db-card-hd-ico ico-purple"><LuHardDrive size={15}/></span>
+              <div>
+                <h2 className="db-card-title">Historial de Backups</h2>
+                <p className="db-card-sub">{totalCount} archivo{totalCount !== 1 ? 's' : ''}  {formatBytes(totalSize)}</p>
+              </div>
+              <button className="db-btn ghost sm" onClick={loadBackups} disabled={listLoading} style={{marginLeft:'auto'}}>
+                <LuRefreshCw size={13} className={listLoading ? 'spin' : ''}/> Actualizar
+              </button>
+            </div>
+            <div className="db-card-body" style={{padding:0}}>
+              {listLoading ? (
+                <div className="db-loader"><LuRefreshCw size={20} className="spin"/><span>Cargando...</span></div>
               ) : backups.length === 0 ? (
-                <div className="db-empty">
-                  <FiDatabase size={40} />
-                  <p>No hay backups guardados todavía.</p>
-                  <span>Crea uno manualmente o configura el backup automático.</span>
-                </div>
+                <div className="db-empty"><LuDatabase size={36}/><p>Sin backups guardados</p><span>Crea el primero con "Backup ahora"</span></div>
               ) : (
                 <table className="db-table">
-                  <thead>
-                    <tr>
-                      <th>Archivo</th>
-                      <th>Fecha</th>
-                      <th>Tamaño</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
+                  <thead><tr>
+                    <th>Archivo</th>
+                    <th>Fecha</th>
+                    <th>Tamaño</th>
+                    <th>Acciones</th>
+                  </tr></thead>
                   <tbody>
-                    {backups.map(b => (
+                    {backups.slice((bkPage-1)*BK_PAGE_SIZE, bkPage*BK_PAGE_SIZE).map(b => (
                       <tr key={b.filename}>
-                        <td className="db-td-file">
-                          <FiDatabase size={14} />
-                          <span>{b.filename}</span>
-                        </td>
-                        <td>{formatDate(b.createdAt)}</td>
+                        <td><span className="db-filename"><LuFileText size={14}/>{b.filename}</span></td>
+                        <td><span className="db-date"><LuCalendar size={12}/>{formatDate(b.createdAt)}</span></td>
                         <td>{formatBytes(b.size)}</td>
-                        <td className="db-td-actions">
-                          <button
-                            className="db-icon-btn db-icon-btn--download"
-                            title="Descargar"
-                            onClick={() => handleDownloadBackup(b.filename)}
-                          >
-                            <FiDownload size={15} />
-                          </button>
-                          <button
-                            className="db-icon-btn db-icon-btn--delete"
-                            title="Eliminar"
-                            onClick={() => handleDeleteBackup(b.filename)}
-                          >
-                            <FiTrash2 size={15} />
-                          </button>
+                        <td>
+                          <div className="db-row-actions">
+                            <button className="db-icon-btn dl" title="Descargar" onClick={() => downloadBackup(b.filename)}><LuDownload size={14}/></button>
+                            <button className="db-icon-btn del" title="Eliminar" onClick={() => setDeleteTarget(b.filename)}><LuTrash2 size={14}/></button>
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
+              {backups.length > BK_PAGE_SIZE && (
+                <div className="db-pagination">
+                  <button className="db-page-btn" onClick={() => setBkPage(p => Math.max(1, p-1))} disabled={bkPage === 1}>‹ Anterior</button>
+                  <span className="db-page-info">{bkPage} / {Math.ceil(backups.length / BK_PAGE_SIZE)}</span>
+                  <button className="db-page-btn" onClick={() => setBkPage(p => Math.min(Math.ceil(backups.length / BK_PAGE_SIZE), p+1))} disabled={bkPage === Math.ceil(backups.length / BK_PAGE_SIZE)}>Siguiente ›</button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
 
+        </div>
       </main>
     </div>
   );
