@@ -1,0 +1,38 @@
+PORT=4000
+
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=123456789@
+DB_NAME=control_interno
+
+# Ruta a la carpeta bin de MySQL (necesario en Windows si no está en PATH)
+MYSQL_BIN=C:\Program Files\MySQL\MySQL Server 8.0\bin
+
+JWT_SECRET=supersecreto123
+
+# Origen(s) del frontend (separados por coma si hay varios)
+FRONTEND_URL=http://localhost:5173
+
+# Lista blanca de IPs que pueden acceder al sistema (separadas por coma).
+# Soporta IPs exactas y rangos CIDR.
+# Dejar en blanco para permitir todas las IPs (modo desarrollo).
+# Ejemplos:
+#   ALLOWED_IPS=192.168.1.10                        <- solo esa PC
+#   ALLOWED_IPS=192.168.1.0/24                      <- toda la red local
+#   ALLOWED_IPS=192.168.1.10,203.0.113.50           <- dos IPs exactas
+#   ALLOWED_IPS=192.168.1.0/24,203.0.113.50         <- red + IP externa
+ALLOWED_IPS=
+
+# IA - Chat
+OPENAI_API_KEY=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
+ELEVENLABS_API_KEY=sk_371c4315dd7ae4952af5b4f81ec167426e36f81c6a641d86
+ELEVENLABS_VOICE_ID=qHkrJuifPpn95wK3rm2A
+
+
+# Correo para recuperación de contraseña
+EMAIL_USER=luquejunior6@gmail.com
+EMAIL_PASS=zwlshxqoycjsfnof
+
+# Correo que recibe notificaciones de backup (exitoso o fallido).
+# Puede ser el mismo EMAIL_USER u otro. Dejar vacío para deshabilitar.
+ALERT_EMAIL=junior_systems@yahoo.com
