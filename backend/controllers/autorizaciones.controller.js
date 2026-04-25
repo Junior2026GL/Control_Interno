@@ -184,10 +184,12 @@ exports.update = (req, res) => {
   const org   = (rawOrg   || '').trim().substring(0, 20) || null;
   const fondo = (rawFondo || '').trim().substring(0, 20) || null;
 
-  // Solo el creador o un admin puede editar; solo si está PENDIENTE
+  // SUPER_ADMIN/ADMIN: editan cualquier registro; ASISTENTE: solo los suyos
+  const canEdit = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(req.user.rol);
+  if (!canEdit) return res.status(403).json({ message: 'No tiene permiso para editar.' });
   const selectSql = canEditAll
-    ? "SELECT id FROM autorizaciones_pago WHERE id = ? AND estado = 'PENDIENTE'"
-    : "SELECT id FROM autorizaciones_pago WHERE id = ? AND estado = 'PENDIENTE' AND creado_por = ?";
+    ? 'SELECT id FROM autorizaciones_pago WHERE id = ?'
+    : 'SELECT id FROM autorizaciones_pago WHERE id = ? AND creado_por = ?';
   const selectParams = canEditAll ? [id] : [id, req.user.id];
 
   db.query(selectSql, selectParams, (err, rows) => {

@@ -139,6 +139,7 @@ export default function Autorizaciones() {
   const { user } = useContext(AuthContext);
   const esAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(user?.rol);
   const esSuperAdmin = user?.rol === 'SUPER_ADMIN';
+  const puedeEditar = (a) => ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(user?.rol) && (esAdmin || a.creado_por === user?.id);
 
   const [lista, setLista]           = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -1368,8 +1369,8 @@ export default function Autorizaciones() {
                           <button className="action-btn" title="Descargar PDF" onClick={() => generarPDF(a)}>
                             <FiDownload size={14} />
                           </button>
-                          {/* Editar (solo PENDIENTE, creador o admin) */}
-                          {a.estado === 'PENDIENTE' && (esAdmin || a.creado_por === user?.id) && (
+                          {/* Editar (ASISTENTE, ADMIN, SUPER_ADMIN — cualquier estado) */}
+                          {puedeEditar(a) && (
                             <button className="action-btn edit" title="Editar" onClick={() => openEditar(a)}>
                               <FiEdit2 size={14} />
                             </button>
