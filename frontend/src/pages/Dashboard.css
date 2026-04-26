@@ -255,6 +255,15 @@
   padding: 36px 24px 60px;
 }
 
+/* Tablet: sidebar fijo de 260px ocupa el lado izquierdo */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .page-content {
+    margin-left: 260px;
+    max-width: calc(100% - 260px);
+    padding: 28px 20px 60px;
+  }
+}
+
 .page-header {
   margin-bottom: 30px;
 }

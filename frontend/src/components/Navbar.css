@@ -11,6 +11,13 @@
   z-index: 100;
 }
 
+/* Tablet: dejar espacio al sidebar fijo */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .navbar {
+    padding-left: 280px;
+  }
+}
+
 .navbar-content {
   display: flex;
   justify-content: space-between;
