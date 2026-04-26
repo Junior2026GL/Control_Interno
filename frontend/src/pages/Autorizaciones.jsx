@@ -106,7 +106,7 @@ const ESTADO_CFG = {
 
 const EMPTY_FORM = {
   tipo_pago: 'CHEQUE', beneficiario: '', monto: '', monto_letras: '',
-  detalle: '', anio: new Date().getFullYear(), org: '', fondo: '',
+  detalle: '', anio: new Date().getFullYear(), org: '11111', fondo: '11',
 };
 
 const MONTO_MAX = 99_999_999;
