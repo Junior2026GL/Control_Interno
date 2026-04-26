@@ -51,7 +51,7 @@ function clientValidate({ departamento, tipo, nombre, correo, identidad, telefon
 
 export default function Diputados() {
   const { user: me } = useContext(AuthContext);
-  const canEdit = me?.rol === 'SUPER_ADMIN' || me?.rol === 'ADMIN';
+  const canEdit = me?.rol === 'SUPER_ADMIN' || me?.rol === 'ADMIN' || me?.rol === 'ASISTENTE';
 
   const [datos, setDatos]             = useState([]);
   const [search, setSearch]           = useState('');
