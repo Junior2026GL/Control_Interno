@@ -7,7 +7,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
   FiPlus, FiX, FiCheckCircle, FiXCircle, FiEye,
-  FiAlertTriangle, FiFileText, FiLock, FiTrash2, FiDownload, FiEdit2,
+  FiAlertTriangle, FiFileText, FiLock, FiTrash2, FiDownload, FiEdit2, FiPrinter,
   FiList, FiClock, FiCheckSquare, FiSlash,
   FiBarChart2, FiChevronUp, FiChevronDown, FiTrendingUp,
 } from 'react-icons/fi';
@@ -451,7 +451,7 @@ export default function Autorizaciones() {
   };
 
   // ── PDF ──────────────────────────────────────────────────────────────────
-  const generarPDF = async (item) => {
+  const generarPDF = async (item, printMode = false) => {
     const doc    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
     const PW     = doc.internal.pageSize.getWidth();   // 215.9
     const PH     = doc.internal.pageSize.getHeight();  // 279.4
@@ -896,8 +896,26 @@ export default function Autorizaciones() {
       doc.text('Generado: ' + fGen + ' ' + hGen, L + CW + 1, FY + 5.8, { align: 'right' });
     }
 
-    doc.save(`autorizacion-${String(item.numero || 0).padStart(4, '0')}.pdf`);
+    if (printMode) {
+      const blobUrl = doc.output('bloburl');
+      const iframe  = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+      document.body.appendChild(iframe);
+      iframe.src = blobUrl;
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          setTimeout(() => { document.body.removeChild(iframe); URL.revokeObjectURL(blobUrl); }, 1500);
+        }, 300);
+      };
+    } else {
+      doc.save(`autorizacion-${String(item.numero || 0).padStart(4, '0')}.pdf`);
+    }
   };
+
+  // ── Imprimir PDF directo sin descarga ─────────────────────────────────
+  const imprimirPDF = (item) => generarPDF(item, true);
 
   // ─── render ───────────────────────────────────────────────────────────────
   return (
@@ -1369,6 +1387,10 @@ export default function Autorizaciones() {
                           <button className="action-btn" title="Descargar PDF" onClick={() => generarPDF(a)}>
                             <FiDownload size={14} />
                           </button>
+                          {/* Imprimir */}
+                          <button className="action-btn" title="Imprimir" onClick={() => imprimirPDF(a)}>
+                            <FiPrinter size={14} />
+                          </button>
                           {/* Editar (ASISTENTE, ADMIN, SUPER_ADMIN — cualquier estado) */}
                           {puedeEditar(a) && (
                             <button className="action-btn edit" title="Editar" onClick={() => openEditar(a)}>
@@ -1680,6 +1702,9 @@ export default function Autorizaciones() {
               )}
               <div className="caja-modal-actions" style={{ marginTop: '18px' }}>
                 <button className="btn-secondary" onClick={() => setVerItem(null)}>Cerrar</button>
+                <button className="btn-pdf" onClick={() => imprimirPDF(verItem)}>
+                  <FiPrinter size={14} /> Imprimir
+                </button>
                 <button className="btn-pdf" onClick={() => generarPDF(verItem)}>
                   <FiDownload size={14} /> Descargar PDF
                 </button>
