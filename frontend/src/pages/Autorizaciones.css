@@ -40,8 +40,18 @@
 /* ── Actions ─────────────────────────────────────────────── */
 .aut-actions {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  max-width: 160px;
+  margin-left: auto;
+}
+/* Botones de acción en tabla de autorizaciones */
+.aut-actions .action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
 }
 .action-btn.approve {
   color: #059669;
