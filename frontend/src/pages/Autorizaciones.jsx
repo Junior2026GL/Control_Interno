@@ -1352,7 +1352,6 @@ export default function Autorizaciones() {
                   <th>Tipo de Pago</th>
                   <th>Beneficiario</th>
                   <th style={{ textAlign: 'right' }}>Monto</th>
-                  <th>Creado por</th>
                   <th>Fecha</th>
                   <th>Estado</th>
                   <th></th>
@@ -1367,7 +1366,6 @@ export default function Autorizaciones() {
                       <td>{TIPO_LABELS[a.tipo_pago] || a.tipo_pago}</td>
                       <td>{a.beneficiario}</td>
                       <td style={{ textAlign: 'right' }}><strong>{fmtMonto(a.monto)}</strong></td>
-                      <td>{a.creado_por_nombre}</td>
                       <td>{fmtFecha(a.fecha_creacion)}</td>
                       <td>
                         <span className={`aut-badge ${cfg.cls}`}>{cfg.label}</span>
