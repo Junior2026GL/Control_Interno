@@ -602,19 +602,33 @@ export default function Ayudas() {
                 {TIPOS_AYUDA.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            <label className="ay-date-label">Desde
-              <input type="date" className="ay-toolbar__date" value={filtroDesde}
-                onChange={e => { setFiltroDesde(e.target.value); setPage(1); }} />
-            </label>
-            <label className="ay-date-label">Hasta
-              <input type="date" className="ay-toolbar__date" value={filtroHasta}
-                onChange={e => { setFiltroHasta(e.target.value); setPage(1); }} />
-            </label>
-            {hayFiltros && (
-              <button className="ay-btn ay-btn--ghost ay-btn--sm" onClick={limpiarFiltros}>
-                <FiX size={13} /> Limpiar
-              </button>
-            )}
+            <div className="caja-date-filters">
+              <div className="caja-date-field">
+                <span className="caja-date-label"><FiCalendar size={11} /> Desde</span>
+                <input type="date" className="caja-date-input" value={filtroDesde}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (filtroHasta && val > filtroHasta) { showToast('La fecha de inicio no puede ser mayor a la fecha de fin.', 'warn'); return; }
+                    setFiltroDesde(val); setPage(1);
+                  }} />
+              </div>
+              <span className="caja-date-sep">—</span>
+              <div className="caja-date-field">
+                <span className="caja-date-label"><FiCalendar size={11} /> Hasta</span>
+                <input type="date" className="caja-date-input" value={filtroHasta}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (filtroDesde && val < filtroDesde) { showToast('La fecha de fin no puede ser menor a la fecha de inicio.', 'warn'); return; }
+                    setFiltroHasta(val); setPage(1);
+                  }} />
+              </div>
+              {(filtroDesde || filtroHasta) && (
+                <button className="caja-date-clear" title="Limpiar rango de fechas"
+                  onClick={() => { setFiltroDesde(''); setFiltroHasta(''); setPage(1); }}>
+                  <FiX size={13} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
