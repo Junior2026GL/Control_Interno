@@ -1592,12 +1592,12 @@ export default function Autorizaciones() {
                 </div>
                 <div className="aut-form-group">
                   <label>Org.</label>
-                  <input className="caja-input" type="text" maxLength={20} placeholder="11111"
+                  <input className="caja-input" type="text" maxLength={20}
                     value={form.org} onChange={e => setF('org', e.target.value)} />
                 </div>
                 <div className="aut-form-group">
                   <label>Fondo</label>
-                  <input className="caja-input" type="text" maxLength={20} placeholder="11"
+                  <input className="caja-input" type="text" maxLength={20}
                     value={form.fondo} onChange={e => setF('fondo', e.target.value)} />
                 </div>
               </div>
