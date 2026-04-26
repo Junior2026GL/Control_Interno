@@ -60,7 +60,7 @@
 .caja-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 16px;
   gap: 12px;
   flex-wrap: wrap;
@@ -135,7 +135,11 @@
   border-radius: 14px;
   border: 1px solid #e8ecf4;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.caja-table-wrap .caja-table {
+  min-width: 620px;
 }
 
 .caja-empty {
