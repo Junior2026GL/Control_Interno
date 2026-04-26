@@ -771,21 +771,21 @@ export default function PresupuestoDiputados() {
     for (let p = 1; p <= pageCount; p++) {
       doc.setPage(p);
       const PH = doc.internal.pageSize.getHeight();
-      // Borde exterior recto
+      // Borde exterior — mismo que PDF de Autorizaciones
       doc.setDrawColor(...C_AZUL);
       doc.setLineWidth(1.2);
-      doc.rect(x0 - P, BM, CW + 2 * P, PH - 2 * BM, 'S');
+      doc.rect(x0 - 4, 5, CW + 8, PH - 10, 'S');
       // Barra footer azul
       const FH = 9;
-      const FY = PH - BM - FH;
+      const FY = PH - 5 - FH;
       doc.setFillColor(...C_AZUL);
-      doc.rect(x0 - P, FY, CW + 2 * P, FH, 'F');
+      doc.rect(x0 - 4, FY, CW + 8, FH, 'F');
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9.5);
       doc.setTextColor(...C_BLANCO);
-      doc.text('Congreso Nacional - Pagaduría Especial', x0 - P + 3, FY + 5.8);
-      doc.text('Página ' + p + ' de ' + pageCount, x0 - P + (CW + 2 * P) / 2, FY + 5.8, { align: 'center' });
-      doc.text('Generado: ' + fechaGen + '  ' + horaGen, x0 - P + CW + 2 * P - 3, FY + 5.8, { align: 'right' });
+      doc.text('Congreso Nacional - Pagaduría Especial', x0 - 1, FY + 5.8);
+      doc.text('Página ' + p + ' de ' + pageCount, x0 + CW / 2, FY + 5.8, { align: 'center' });
+      doc.text('Generado: ' + fechaGen + '  ' + horaGen, x0 + CW + 1, FY + 5.8, { align: 'right' });
     }
 
     doc.save(`presupuesto_social_${selectedDip.nombre.replace(/\s+/g, '_')}_${anio}.pdf`);
