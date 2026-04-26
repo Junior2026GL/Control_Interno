@@ -503,7 +503,7 @@ export default function Ayudas() {
         7: { cellWidth: 30 },
         8: { cellWidth: 35 },
       },
-      margin: { left: L, right: 14 },
+      margin: { left: L, right: PW - L - CW },
     });
 
     // ════ PIE DE PÁGINA ══════════════════════════════════════════════════════
