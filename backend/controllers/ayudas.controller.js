@@ -1,6 +1,6 @@
 const db = require('../db');
 
-const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN'];
+const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 
 const TIPOS_AYUDA = [
   'Económica',
