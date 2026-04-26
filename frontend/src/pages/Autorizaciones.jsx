@@ -1339,7 +1339,7 @@ export default function Autorizaciones() {
         </div>
 
         {/* Tabla */}
-        <div className="caja-table-wrap">
+        <div className="caja-table-wrap aut-table-wrap">
           {loading ? (
             <div className="caja-empty">Cargando…</div>
           ) : listaMostrada.length === 0 ? (

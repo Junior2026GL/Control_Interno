@@ -612,6 +612,14 @@
   text-align: right;
 }
 
+/* ── Tabla scroll en tablet ─────────────────────────────── */
+.aut-table-wrap {
+  overflow-x: auto;
+}
+.aut-table-wrap .caja-table {
+  min-width: 680px;
+}
+
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   .aut-charts-body { grid-template-columns: 1fr; }
