@@ -217,11 +217,8 @@
   white-space: nowrap; color: #6b7280; font-size: .82rem;
 }
 .ay-td--monto {
-  font-weight: 800; white-space: nowrap;
+  font-weight: 700; white-space: nowrap;
   color: #15803d;
-  background: #f0fdf4;
-  border-radius: 6px;
-  padding: .35rem .7rem !important;
   font-size: .84rem;
 }
 .ay-td--obs   { max-width: 220px; color: #6b7280; font-size: .83rem; }
