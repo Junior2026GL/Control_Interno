@@ -9,7 +9,7 @@ import {
   FiPlus, FiX, FiCheckCircle, FiXCircle, FiEye,
   FiAlertTriangle, FiFileText, FiLock, FiTrash2, FiDownload, FiEdit2, FiPrinter,
   FiList, FiClock, FiCheckSquare, FiSlash,
-  FiBarChart2, FiChevronUp, FiChevronDown, FiTrendingUp,
+  FiBarChart2, FiChevronUp, FiChevronDown, FiTrendingUp, FiCalendar,
 } from 'react-icons/fi';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -1290,39 +1290,43 @@ export default function Autorizaciones() {
             ))}
           </div>
           <div className="caja-date-filters">
-            <input
-              type="date"
-              className="caja-input caja-date-input"
-              title="Desde"
-              value={filtroDesde}
-              onChange={e => {
-                const val = e.target.value;
-                if (filtroHasta && val && val > filtroHasta) {
-                  showToast('La fecha de inicio no puede ser mayor a la fecha de fin.', 'warn');
-                  return;
-                }
-                setFiltroDesde(val); setPage(1);
-              }}
-            />
+            <div className="caja-date-field">
+              <span className="caja-date-label"><FiCalendar size={11} /> Desde</span>
+              <input
+                type="date"
+                className="caja-date-input"
+                value={filtroDesde}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (filtroHasta && val && val > filtroHasta) {
+                    showToast('La fecha de inicio no puede ser mayor a la fecha de fin.', 'warn');
+                    return;
+                  }
+                  setFiltroDesde(val); setPage(1);
+                }}
+              />
+            </div>
             <span className="caja-date-sep">—</span>
-            <input
-              type="date"
-              className="caja-input caja-date-input"
-              title="Hasta"
-              value={filtroHasta}
-              onChange={e => {
-                const val = e.target.value;
-                if (filtroDesde && val && val < filtroDesde) {
-                  showToast('La fecha de fin no puede ser menor a la fecha de inicio.', 'warn');
-                  return;
-                }
-                setFiltroHasta(val); setPage(1);
-              }}
-            />
+            <div className="caja-date-field">
+              <span className="caja-date-label"><FiCalendar size={11} /> Hasta</span>
+              <input
+                type="date"
+                className="caja-date-input"
+                value={filtroHasta}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (filtroDesde && val && val < filtroDesde) {
+                    showToast('La fecha de fin no puede ser menor a la fecha de inicio.', 'warn');
+                    return;
+                  }
+                  setFiltroHasta(val); setPage(1);
+                }}
+              />
+            </div>
             {(filtroDesde || filtroHasta) && (
               <button
                 className="caja-date-clear"
-                title="Limpiar rango"
+                title="Limpiar rango de fechas"
                 onClick={() => { setFiltroDesde(''); setFiltroHasta(''); setPage(1); }}
               >
                 <FiX size={13} />
