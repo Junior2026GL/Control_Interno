@@ -26,7 +26,8 @@
     "react-simple-maps": "^3.0.0",
     "recharts": "^3.8.1",
     "serve": "^14.2.6",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

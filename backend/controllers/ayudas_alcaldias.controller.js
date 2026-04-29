@@ -167,8 +167,9 @@ exports.update = (req, res) => {
 
 // ── GET resumen mapa ──────────────────────────────────────────
 exports.resumenMapa = (req, res) => {
-  const anio = req.query.anio ? parseInt(req.query.anio, 10) : null;
-  const mes  = req.query.mes  || null;
+  const anio      = req.query.anio       ? parseInt(req.query.anio, 10)       : null;
+  const mes       = req.query.mes        || null;
+  const anioComp  = req.query.anio_comp  ? parseInt(req.query.anio_comp, 10)  : null;
 
   const params = [];
   const wheres = [];
@@ -221,6 +222,40 @@ exports.resumenMapa = (req, res) => {
     ${whereSQL}
     GROUP BY a.mes`;
 
+  // Top alcaldías (beneficiarios) por monto
+  const sqlAlcaldias = `
+    SELECT
+      a.beneficiario                                                                        AS alcaldia,
+      a.departamento,
+      COUNT(*)                                                                              AS cantidad,
+      COALESCE(SUM(a.total), 0)                                                             AS total_monto,
+      COUNT(CASE WHEN a.estado_entrega='pendiente' AND DATEDIFF(NOW(), a.created_at) > 30 THEN 1 END) AS atrasados
+    FROM ayudas_alcaldias a
+    ${whereSQL}
+    GROUP BY a.beneficiario, a.departamento
+    ORDER BY total_monto DESC
+    LIMIT 50`;
+
+  // Comparativa año anterior o año seleccionado
+  const compParams = [];
+  const compWheres = [];
+  if (anioComp) {
+    compWheres.push('YEAR(a.created_at) = ?'); compParams.push(anioComp);
+  } else if (anio) {
+    compWheres.push('YEAR(a.created_at) = ?'); compParams.push(anio - 1);
+  }
+  if (mes) { compWheres.push('a.mes = ?'); compParams.push(mes); }
+  const compWhereSQL = compWheres.length ? 'WHERE ' + compWheres.join(' AND ') : '';
+
+  const sqlComparativa = `
+    SELECT
+      a.mes,
+      COUNT(*)                  AS cantidad,
+      COALESCE(SUM(a.total), 0) AS total_monto
+    FROM ayudas_alcaldias a
+    ${compWhereSQL}
+    GROUP BY a.mes`;
+
   db.query(sqlDepartamentos, params, (err, deptos) => {
     if (err) { console.error('[mapa] deptos:', err); return res.status(500).json({ message: 'Error interno.' }); }
     db.query(sqlPartidos, params, (err2, partidos) => {
@@ -229,11 +264,20 @@ exports.resumenMapa = (req, res) => {
         if (err3) { console.error('[mapa] kpis:', err3); return res.status(500).json({ message: 'Error interno.' }); }
         db.query(sqlTendencia, params, (err4, tendencia) => {
           if (err4) { console.error('[mapa] tendencia:', err4); return res.status(500).json({ message: 'Error interno.' }); }
-          res.json({
-            departamentos: deptos,
-            partidos,
-            kpis: kpisRows[0] || {},
-            tendencia,
+          db.query(sqlAlcaldias, params, (err5, alcaldias) => {
+            if (err5) { console.error('[mapa] alcaldias:', err5); return res.status(500).json({ message: 'Error interno.' }); }
+            db.query(sqlComparativa, compParams, (err6, comparativa) => {
+              if (err6) { console.error('[mapa] comparativa:', err6); return res.status(500).json({ message: 'Error interno.' }); }
+              res.json({
+                departamentos: deptos,
+                partidos,
+                kpis: kpisRows[0] || {},
+                tendencia,
+                alcaldias,
+                comparativa,
+                anioComp: anioComp || (anio ? anio - 1 : null),
+              });
+            });
           });
         });
       });
