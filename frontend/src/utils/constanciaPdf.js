@@ -258,10 +258,14 @@ export async function generarConstanciaPdf(data) {
   doc.text('IV. DECLARACIÓN DE RECEPCIÓN', ML, y);
   y += 9;
 
-  // "Yo, _____ " — línea para firma a mano
+  // "Yo, [NOMBRE]" con subrayado
   normal(9.5); doc.setTextColor(...NEGRO);
   doc.text('Yo,', ML, y);
+  const nombreTexto = data.nombre || '';
+  bold(9.5); doc.setTextColor(...AZUL_OSC);
+  doc.text(nombreTexto, ML + 8, y);
   hline(ML + 8, y + 0.5, ML + CW, AZUL, 0.4);
+  normal(9.5); doc.setTextColor(...NEGRO);
   y += 8;
 
   const pref = 'de generales arriba indicadas ';

@@ -311,16 +311,18 @@ export default function ConstanciaTransferencia() {
                   </div>
                   <div className="ct-field">
                     <label className="ct-label">Fecha de la Transferencia <span className="req">*</span></label>
-                    <div className="ct-fecha-row">
-                      <input className="ct-input" type="number" placeholder="Día" min="1" max="31"
-                        value={form.fechaDia} onChange={e => set('fechaDia', e.target.value)} required />
-                      <select className="ct-input" value={form.fechaMes} onChange={e => set('fechaMes', e.target.value)} required>
-                        <option value="">Mes</option>
-                        {MESES.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                      <input className="ct-input" type="number" placeholder="Año" min="2020" max="2100"
-                        value={form.fechaAnio} onChange={e => set('fechaAnio', e.target.value)} required />
-                    </div>
+                    <input className="ct-input" type="date"
+                      value={form.fechaDia && form.fechaMes && form.fechaAnio
+                        ? `${form.fechaAnio}-${String(MESES.indexOf(form.fechaMes)+1).padStart(2,'0')}-${String(form.fechaDia).padStart(2,'0')}`
+                        : ''}
+                      onChange={e => {
+                        if (!e.target.value) return;
+                        const [y, m, d] = e.target.value.split('-');
+                        set('fechaDia', String(parseInt(d, 10)));
+                        set('fechaMes', MESES[parseInt(m, 10) - 1]);
+                        set('fechaAnio', y);
+                      }}
+                      required />
                   </div>
                 </div>
                 <div className="ct-row-2">
