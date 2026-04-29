@@ -106,6 +106,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
   },
   {
+    path: '/mapa-alcaldias',
+    label: 'Mapa Alcaldías',
+    clave: 'mapa-alcaldias',
+    description: 'Mapa y estadísticas de distribución geográfica de ayudas',
+    icon: LuMapPin,
+    gradient: 'linear-gradient(135deg, #134e4a 0%, #0f766e 100%)',
+  },
+  {
     path: '/ip-whitelist',
     label: 'Acceso por IP',
     clave: null,

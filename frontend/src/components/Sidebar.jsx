@@ -24,6 +24,7 @@ export default function Sidebar() {
     { path: '/constancia-transferencia',label: 'Constancia Transferencia',  icon: FiRepeat,        clave: 'constancia-transferencia',  soloSuperAdmin: false },
     { path: '/ayudas',                  label: 'Ayudas',                    icon: FiGift,          clave: 'ayudas',                    soloSuperAdmin: false },
     { path: '/ayudas-alcaldias',         label: 'Ayudas Alcaldías',          icon: FiMapPin,        clave: 'ayudas_alcaldias',          soloSuperAdmin: false },
+    { path: '/mapa-alcaldias',           label: 'Mapa Alcaldías',            icon: FiMapPin,        clave: 'mapa-alcaldias',            soloSuperAdmin: false },
     { path: '/ip-whitelist',            label: 'Acceso por IP',             icon: FiShield,        clave: null,                        soloSuperAdmin: true  },
     { path: '/auditoria',               label: 'Auditoría',                 icon: FiEye,           clave: null,                        soloSuperAdmin: true  },
   ];

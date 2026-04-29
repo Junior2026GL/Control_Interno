@@ -1,0 +1,95 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "nombre": "ATLÁNTIDA", "capital": "La Ceiba" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-87.9,15.0],[-86.5,15.0],[-86.5,16.0],[-87.0,16.1],[-87.9,15.9],[-87.9,15.0]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "CHOLUTECA", "capital": "Choluteca" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-87.85,12.98],[-86.85,12.98],[-86.85,13.72],[-87.5,13.72],[-87.85,13.5],[-87.85,12.98]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "COLÓN", "capital": "Trujillo" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-86.6,14.7],[-85.3,14.7],[-85.3,16.1],[-86.6,16.1],[-86.6,14.7]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "COMAYAGUA", "capital": "Comayagua" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-88.0,14.2],[-87.3,14.2],[-87.3,15.05],[-88.0,15.05],[-88.0,14.2]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "COPÁN", "capital": "Santa Rosa de Copán" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-89.35,14.85],[-88.6,14.85],[-88.6,15.4],[-89.35,15.4],[-89.35,14.85]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "CORTÉS", "capital": "San Pedro Sula" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-88.55,14.95],[-87.8,14.95],[-87.8,15.85],[-88.55,15.85],[-88.55,14.95]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "EL PARAÍSO", "capital": "Yuscarán" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-87.4,13.4],[-86.0,13.4],[-86.0,14.45],[-87.4,14.45],[-87.4,13.4]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "FRANCISCO MORAZÁN", "capital": "Tegucigalpa" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-87.8,13.7],[-86.5,13.7],[-86.5,14.8],[-87.3,14.8],[-87.8,14.6],[-87.8,13.7]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "GRACIAS A DIOS", "capital": "Puerto Lempira" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-86.0,14.3],[-83.15,14.3],[-83.15,16.0],[-85.3,16.0],[-86.0,15.8],[-86.0,14.3]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "INTIBUCÁ", "capital": "La Esperanza" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-88.55,14.0],[-87.95,14.0],[-87.95,14.6],[-88.55,14.6],[-88.55,14.0]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "ISLAS DE LA BAHÍA", "capital": "Roatán" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-87.55,16.05],[-86.2,16.05],[-86.2,16.55],[-87.55,16.55],[-87.55,16.05]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "LA PAZ", "capital": "La Paz" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-88.1,13.85],[-87.6,13.85],[-87.6,14.45],[-88.1,14.45],[-88.1,13.85]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "LEMPIRA", "capital": "Gracias" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-89.1,14.0],[-88.55,14.0],[-88.55,15.1],[-89.1,15.1],[-89.1,14.0]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "OCOTEPEQUE", "capital": "Nueva Ocotepeque" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-89.35,14.15],[-88.85,14.15],[-88.85,14.85],[-89.35,14.85],[-89.35,14.15]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "OLANCHO", "capital": "Juticalpa" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-87.3,13.7],[-85.0,13.7],[-85.0,15.35],[-86.6,15.35],[-87.3,15.1],[-87.3,13.7]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "SANTA BÁRBARA", "capital": "Santa Bárbara" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-88.6,14.5],[-87.95,14.5],[-87.95,15.2],[-88.6,15.2],[-88.6,14.5]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "VALLE", "capital": "Nacaome" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-87.9,12.98],[-87.5,12.98],[-87.5,13.45],[-87.9,13.45],[-87.9,12.98]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "nombre": "YORO", "capital": "Yoro" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-87.9,14.7],[-86.7,14.7],[-86.7,15.5],[-87.9,15.5],[-87.9,14.7]]] }
+    }
+  ]
+}

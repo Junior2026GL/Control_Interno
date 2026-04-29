@@ -196,3 +196,8 @@ INSERT IGNORE INTO usuario_modulos (usuario_id, modulo_id)
 INSERT IGNORE INTO modulos (clave, nombre) VALUES ('ayudas_alcaldias', 'Ayudas Alcaldías');
 INSERT IGNORE INTO usuario_modulos (usuario_id, modulo_id)
   SELECT 1, id FROM modulos WHERE clave = 'ayudas_alcaldias';
+
+-- Módulo: Mapa Alcaldías
+INSERT IGNORE INTO modulos (clave, nombre) VALUES ('mapa-alcaldias', 'Mapa Alcaldías');
+INSERT IGNORE INTO usuario_modulos (usuario_id, modulo_id)
+  SELECT 1, id FROM modulos WHERE clave = 'mapa-alcaldias';

@@ -165,6 +165,82 @@ exports.update = (req, res) => {
   );
 };
 
+// ── GET resumen mapa ──────────────────────────────────────────
+exports.resumenMapa = (req, res) => {
+  const anio = req.query.anio ? parseInt(req.query.anio, 10) : null;
+  const mes  = req.query.mes  || null;
+
+  const params = [];
+  const wheres = [];
+  if (anio) { wheres.push('YEAR(a.created_at) = ?'); params.push(anio); }
+  if (mes)  { wheres.push('a.mes = ?');               params.push(mes);  }
+  const whereSQL = wheres.length ? 'WHERE ' + wheres.join(' AND ') : '';
+
+  const sqlDepartamentos = `
+    SELECT
+      a.departamento,
+      COUNT(*)                                                    AS cantidad,
+      COALESCE(SUM(a.total), 0)                                   AS total_monto,
+      COALESCE(SUM(CASE WHEN a.estado_entrega='entregado' THEN a.total ELSE 0 END), 0) AS monto_entregado,
+      COALESCE(SUM(CASE WHEN a.estado_entrega='pendiente' THEN a.total ELSE 0 END), 0) AS monto_pendiente,
+      COALESCE(SUM(CASE WHEN a.liquidado=1 THEN a.total ELSE 0 END), 0)               AS monto_liquidado,
+      COALESCE(SUM(CASE WHEN a.debitado=1  THEN a.total ELSE 0 END), 0)               AS monto_debitado,
+      COUNT(CASE WHEN a.estado_entrega='pendiente' AND DATEDIFF(NOW(), a.created_at) > 30 THEN 1 END) AS atrasados
+    FROM ayudas_alcaldias a
+    ${whereSQL}
+    GROUP BY a.departamento
+    ORDER BY total_monto DESC`;
+
+  const sqlPartidos = `
+    SELECT
+      COALESCE(a.partido, 'SIN PARTIDO') AS partido,
+      COUNT(*)                           AS cantidad,
+      COALESCE(SUM(a.total), 0)          AS total_monto
+    FROM ayudas_alcaldias a
+    ${whereSQL}
+    GROUP BY a.partido
+    ORDER BY total_monto DESC`;
+
+  const sqlKpis = `
+    SELECT
+      COUNT(*)                                                                              AS total_registros,
+      COALESCE(SUM(a.total), 0)                                                             AS total_monto,
+      SUM(CASE WHEN a.estado_entrega='pendiente' THEN 1 ELSE 0 END)                        AS total_pendientes,
+      SUM(CASE WHEN a.estado_entrega='pendiente' AND DATEDIFF(NOW(), a.created_at) > 30 THEN 1 ELSE 0 END) AS atrasados_30,
+      SUM(CASE WHEN a.liquidado=1 THEN 1 ELSE 0 END)                                       AS liquidados,
+      COALESCE(SUM(CASE WHEN a.liquidado=1 THEN a.total ELSE 0 END), 0)                    AS monto_liquidado_total
+    FROM ayudas_alcaldias a
+    ${whereSQL}`;
+
+  const sqlTendencia = `
+    SELECT
+      a.mes,
+      COUNT(*)                  AS cantidad,
+      COALESCE(SUM(a.total), 0) AS total_monto
+    FROM ayudas_alcaldias a
+    ${whereSQL}
+    GROUP BY a.mes`;
+
+  db.query(sqlDepartamentos, params, (err, deptos) => {
+    if (err) { console.error('[mapa] deptos:', err); return res.status(500).json({ message: 'Error interno.' }); }
+    db.query(sqlPartidos, params, (err2, partidos) => {
+      if (err2) { console.error('[mapa] partidos:', err2); return res.status(500).json({ message: 'Error interno.' }); }
+      db.query(sqlKpis, params, (err3, kpisRows) => {
+        if (err3) { console.error('[mapa] kpis:', err3); return res.status(500).json({ message: 'Error interno.' }); }
+        db.query(sqlTendencia, params, (err4, tendencia) => {
+          if (err4) { console.error('[mapa] tendencia:', err4); return res.status(500).json({ message: 'Error interno.' }); }
+          res.json({
+            departamentos: deptos,
+            partidos,
+            kpis: kpisRows[0] || {},
+            tendencia,
+          });
+        });
+      });
+    });
+  });
+};
+
 // ── DELETE ────────────────────────────────────────────────────
 exports.remove = (req, res) => {
   if (!ROLES_ADMIN.includes(req.user.rol))
