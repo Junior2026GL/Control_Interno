@@ -288,25 +288,19 @@
   font-weight: 600;
 }
 
-/* Leaflet overrides */
-.leaflet-container {
-  background: #1e293b !important;
+.mapa-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 10;
+  font-size: 0.72rem;
+  color: #475569;
+  pointer-events: none;
 }
 
-.leaflet-control-attribution {
-  background: rgba(15,23,42,0.7) !important;
-  color: #64748b !important;
-  font-size: 10px !important;
-}
-
-.leaflet-control-zoom a {
-  background: #1e293b !important;
-  color: #e2e8f0 !important;
-  border-color: #334155 !important;
-}
-
-.leaflet-control-zoom a:hover {
-  background: #334155 !important;
+/* react-simple-maps SVG */
+.mapa-map-wrap svg {
+  display: block;
 }
 
 /* Responsive */

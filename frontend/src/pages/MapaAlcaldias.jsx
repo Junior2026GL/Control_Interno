@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, Legend,
+  CartesianGrid, Tooltip as RTooltip, ResponsiveContainer,
 } from 'recharts';
-import 'leaflet/dist/leaflet.css';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
 import './MapaAlcaldias.css';
@@ -38,7 +37,6 @@ function getColor(monto, max) {
 }
 
 export default function MapaAlcaldias() {
-  const [geoData, setGeoData]   = useState(null);
   const [resumen, setResumen]   = useState(null);
   const [loading, setLoading]   = useState(true);
   const [filtroAnio, setFiltroAnio] = useState('');
@@ -60,17 +58,10 @@ export default function MapaAlcaldias() {
     }
   }, [filtroAnio, filtroMes]);
 
-  useEffect(() => {
-    fetch('/honduras-departamentos.json')
-      .then(r => r.json())
-      .then(setGeoData)
-      .catch(e => console.error('[mapa] GeoJSON:', e));
-  }, []);
-
   useEffect(() => { cargarResumen(); }, [cargarResumen]);
 
-  const deptoMap = {};
-  (resumen?.departamentos || []).forEach(d => { deptoMap[d.departamento] = d; });
+  const deptoMapLC = {};
+  (resumen?.departamentos || []).forEach(d => { deptoMapLC[d.departamento.toLowerCase()] = d; });
 
   const maxMonto = Math.max(...(resumen?.departamentos || []).map(d => Number(d.total_monto)), 1);
 
@@ -81,29 +72,6 @@ export default function MapaAlcaldias() {
 
   const tendenciaOrdenada = [...(resumen?.tendencia || [])]
     .sort((a, b) => MESES_ORDEN.indexOf(a.mes) - MESES_ORDEN.indexOf(b.mes));
-
-  const styleFeature = useCallback((feature) => {
-    const nombre = feature.properties.nombre;
-    const d = deptoMap[nombre];
-    const monto = d ? Number(d.total_monto) : 0;
-    return {
-      fillColor: getColor(monto, maxMonto),
-      weight: 1.5,
-      opacity: 1,
-      color: '#fff',
-      fillOpacity: 0.85,
-    };
-  }, [deptoMap, maxMonto]);
-
-  const onEachFeature = useCallback((feature, layer) => {
-    const nombre = feature.properties.nombre;
-    const d = deptoMap[nombre];
-    layer.on({
-      click: () => setSelected(d ? { nombre, ...d } : { nombre, total_monto: 0, cantidad: 0 }),
-      mouseover: (e) => e.target.setStyle({ weight: 3, color: '#f59e0b', fillOpacity: 0.95 }),
-      mouseout:  (e) => e.target.setStyle({ weight: 1.5, color: '#fff', fillOpacity: 0.85 }),
-    });
-  }, [deptoMap]);
 
   return (
     <div className="app-shell">
@@ -152,26 +120,42 @@ export default function MapaAlcaldias() {
           {/* Mapa */}
           <div className="mapa-map-wrap">
             {loading && <div className="mapa-loading">Cargando datos...</div>}
-            {geoData && (
-              <MapContainer
-                center={[14.6, -86.6]}
-                zoom={7}
-                style={{ height: '100%', width: '100%', borderRadius: '12px' }}
-                zoomControl={true}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <GeoJSON
-                  key={JSON.stringify(deptoMap)}
-                  data={geoData}
-                  style={styleFeature}
-                  onEachFeature={onEachFeature}
-                >
-                </GeoJSON>
-              </MapContainer>
-            )}
+
+            <ComposableMap
+              projection="geoMercator"
+              projectionConfig={{ center: [-86.5, 14.6], scale: 5800 }}
+              style={{ width: '100%', height: '100%', background: '#0f172a' }}
+            >
+              <ZoomableGroup center={[-86.5, 14.6]} zoom={1} minZoom={0.8} maxZoom={8}>
+                <Geographies geography="/honduras-departamentos.json">
+                  {({ geographies }) =>
+                    geographies.map(geo => {
+                      const nombre = geo.properties.name;
+                      const d = deptoMapLC[nombre?.toLowerCase()];
+                      const monto = d ? Number(d.total_monto) : 0;
+                      const isSelected = selected?.nombre === nombre;
+                      return (
+                        <Geography
+                          key={geo.rsmKey}
+                          geography={geo}
+                          fill={isSelected ? '#f59e0b' : getColor(monto, maxMonto)}
+                          stroke="#0f172a"
+                          strokeWidth={0.8}
+                          onClick={() => setSelected(
+                            d ? { nombre, ...d } : { nombre, total_monto: 0, cantidad: 0, monto_entregado: 0, monto_pendiente: 0, monto_liquidado: 0, atrasados: 0 }
+                          )}
+                          style={{
+                            default:  { outline: 'none' },
+                            hover:    { fill: '#f59e0b', outline: 'none', cursor: 'pointer', opacity: 0.9 },
+                            pressed:  { outline: 'none' },
+                          }}
+                        />
+                      );
+                    })
+                  }
+                </Geographies>
+              </ZoomableGroup>
+            </ComposableMap>
 
             {/* Popup de departamento seleccionado */}
             {selected && (
@@ -194,11 +178,13 @@ export default function MapaAlcaldias() {
                 {['#dbeafe','#93c5fd','#3b82f6','#1d4ed8','#1e3a8a'].map((c, i) => (
                   <span key={c} className="leyenda-item">
                     <span style={{ background: c }} className="leyenda-color"></span>
-                    <span className="leyenda-text">{['Muy bajo','Bajo','Medio','Alto','Muy alto'][i]}</span>
+                    <span className="leyenda-text">{['Sin datos','Bajo','Medio','Alto','Muy alto'][i]}</span>
                   </span>
                 ))}
               </div>
             </div>
+
+            <div className="mapa-hint">🖱 Clic para ver detalle · Scroll para zoom</div>
           </div>
 
           {/* Panel lateral */}
