@@ -123,11 +123,11 @@ export default function MapaAlcaldias() {
 
             <ComposableMap
               projection="geoMercator"
-              projectionConfig={{ center: [-86.5, 14.6], scale: 5800 }}
+              projectionConfig={{ center: [-86.25, 14.55], scale: 6000 }}
               style={{ width: '100%', height: '100%', background: '#0f172a' }}
             >
-              <ZoomableGroup center={[-86.5, 14.6]} zoom={1} minZoom={0.8} maxZoom={8}>
-                <Geographies geography="/honduras-departamentos.json">
+              <ZoomableGroup center={[-86.25, 14.55]} zoom={1} minZoom={0.8} maxZoom={8}>
+                <Geographies geography="/honduras-geo.json">
                   {({ geographies }) =>
                     geographies.map(geo => {
                       const nombre = geo.properties.name;
