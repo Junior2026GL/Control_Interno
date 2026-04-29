@@ -18,6 +18,7 @@ import ReportesPresupuesto from './pages/ReportesPresupuesto';
 import Viaticos from './pages/Viaticos';
 import ConstanciaTransferencia from './pages/ConstanciaTransferencia';
 import Ayudas from './pages/Ayudas';
+import AyudasAlcaldias from './pages/AyudasAlcaldias';
 import PrivateRoute from './components/PrivateRoute';
 import RoleRoute from './components/RoleRoute';
 import ModuleRoute from './components/ModuleRoute';
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="/viaticos" element={<ModuleRoute modulo="viaticos"><Viaticos /></ModuleRoute>} />
             <Route path="/constancia-transferencia" element={<ModuleRoute modulo="constancia-transferencia"><ConstanciaTransferencia /></ModuleRoute>} />
             <Route path="/ayudas" element={<ModuleRoute modulo="ayudas"><Ayudas /></ModuleRoute>} />
+            <Route path="/ayudas-alcaldias" element={<ModuleRoute modulo="ayudas_alcaldias"><AyudasAlcaldias /></ModuleRoute>} />
           </Routes>
         </SocketProvider>
       </BrowserRouter>

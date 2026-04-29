@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut, FiFileText, FiMessageSquare, FiShield, FiEye, FiBriefcase, FiUserCheck, FiRepeat, FiGift } from 'react-icons/fi';
+import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut, FiFileText, FiMessageSquare, FiShield, FiEye, FiBriefcase, FiUserCheck, FiRepeat, FiGift, FiMapPin } from 'react-icons/fi';
 import { AuthContext } from '../context/AuthContext';
 import './Sidebar.css';
 
@@ -23,6 +23,7 @@ export default function Sidebar() {
     { path: '/viaticos',                label: 'Viáticos',                  icon: FiDollarSign,    clave: 'viaticos',                  soloSuperAdmin: false },
     { path: '/constancia-transferencia',label: 'Constancia Transferencia',  icon: FiRepeat,        clave: 'constancia-transferencia',  soloSuperAdmin: false },
     { path: '/ayudas',                  label: 'Ayudas',                    icon: FiGift,          clave: 'ayudas',                    soloSuperAdmin: false },
+    { path: '/ayudas-alcaldias',         label: 'Ayudas Alcaldías',          icon: FiMapPin,        clave: 'ayudas_alcaldias',          soloSuperAdmin: false },
     { path: '/ip-whitelist',            label: 'Acceso por IP',             icon: FiShield,        clave: null,                        soloSuperAdmin: true  },
     { path: '/auditoria',               label: 'Auditoría',                 icon: FiEye,           clave: null,                        soloSuperAdmin: true  },
   ];

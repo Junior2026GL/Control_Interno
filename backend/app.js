@@ -60,6 +60,7 @@ app.use('/api/diputados',       require('./routes/diputados.routes'));
 app.use('/api/presupuesto',     require('./routes/presupuesto.routes'));
 app.use('/api/viaticos',        require('./routes/viaticos.routes'));
 app.use('/api/constancias',     require('./routes/constancias.routes'));
-app.use('/api/ayudas',          require('./routes/ayudas.routes'));
+app.use('/api/ayudas',           require('./routes/ayudas.routes'));
+app.use('/api/ayudas-alcaldias', require('./routes/ayudas_alcaldias.routes'));
 
 module.exports = app;
