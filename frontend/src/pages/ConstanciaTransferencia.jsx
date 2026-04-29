@@ -136,45 +136,7 @@ export default function ConstanciaTransferencia() {
   };
 
   const handleImprimir = () => {
-    const docEl = document.querySelector('.ct-doc');
-    if (!docEl) return;
-    const html = docEl.outerHTML;
-    const win = window.open('', '_blank', 'width=900,height=750');
-    if (!win) { showToast('Permita ventanas emergentes para imprimir.', 'warn'); return; }
-    win.document.write(
-      '<!DOCTYPE html><html lang="es"><head>' +
-      '<meta charset="UTF-8"><title>Constancia de Transferencia Electr\u00f3nica</title>' +
-      '<style>' +
-      '@page{margin:15mm}' +
-      'body{margin:0;font-family:"Times New Roman",Times,serif;color:#111}' +
-      '.ct-doc{padding:0}' +
-      '.ct-doc-header{display:flex;align-items:center;gap:24px;border:2px solid #274C8D;padding:12px 20px}' +
-      '.ct-doc-logo{width:70px;height:70px;object-fit:contain}' +
-      '.ct-doc-inst{flex:1;text-align:center}' +
-      '.ct-doc-inst-top{margin:0;font-size:13px;font-weight:600;color:#274C8D}' +
-      '.ct-doc-inst-mid{margin:2px 0;font-size:11px;color:#333}' +
-      '.ct-doc-inst-bot{margin:0;font-size:17px;font-weight:700;color:#274C8D}' +
-      '.ct-doc-title-bar{background:#274C8D;color:white;text-align:center;font-size:12px;font-weight:700;padding:8px;margin-bottom:16px;letter-spacing:.5px}' +
-      '.ct-doc-section-title{text-align:center;font-size:11px;font-weight:700;color:#0f2744;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.3px}' +
-      '.ct-doc-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:4px}' +
-      '.ct-doc-field{display:flex;flex-direction:column;border-bottom:1px solid #aaa;padding-bottom:4px}' +
-      '.ct-doc-field--full{grid-column:1/-1}' +
-      '.ct-doc-label{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.3px}' +
-      '.ct-doc-value{font-size:12px;font-weight:600;color:#0f2744;min-height:18px}' +
-      '.ct-doc-monto{font-size:15px;color:#274C8D}' +
-      '.ct-doc-concepto{border:1px solid #ccc;padding:10px 12px;font-size:12px;min-height:40px;margin-bottom:4px;border-radius:4px;background:#fafafa}' +
-      '.ct-doc-declaracion{font-size:11.5px;line-height:1.7}' +
-      '.ct-doc-declaracion p{margin:4px 0}' +
-      '.ct-doc-cierre{margin-top:10px}' +
-      '.ct-doc-firma{margin-top:50px;text-align:center}' +
-      '.ct-doc-firma-line{width:220px;border-top:1px solid #274C8D;margin:0 auto 6px}' +
-      '.ct-doc-firma p{font-size:11px;color:#333;margin:0}' +
-      '<\/style><\/head><body>' +
-      html +
-      '<script>window.onload=function(){window.print();}<\/script>' +
-      '<\/body><\/html>'
-    );
-    win.document.close();
+    window.print();
   };
 
   const handleDescargarPdf = async () => {
