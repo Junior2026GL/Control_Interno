@@ -290,7 +290,7 @@ export async function generarConstanciaPdf(data) {
 
   y += 3;
 
-  // Párrafo de cierre con líneas dibujadas para fecha
+  // Párrafo de cierre con la fecha real del documento
   normal(9.5); doc.setTextColor(...NEGRO);
   const p1 = 'Para los efectos administrativos y legales correspondientes, se firma la presente constancia';
   const p2 = 'en la ciudad de Tegucigalpa M.D.C., a los';
@@ -299,22 +299,40 @@ export async function generarConstanciaPdf(data) {
 
   doc.text(p1, ML, y); y += 6;
 
-  // línea 2 con blancos: "a los [__] dias del mes de [____________] del año [______]."
+  // línea 2: "a los [dia] días del mes de [mes] del año [anio]."
   const x1 = ML;
   doc.text(p2, x1, y);
   const x2 = x1 + doc.getTextWidth(p2) + 2;
-  // blanco día (12mm)
-  hline(x2, y + 0.5, x2 + 12, AZUL, 0.4);
-  const x3 = x2 + 13;
+
+  // día en negrita con subrayado
+  bold(9.5); doc.setTextColor(...AZUL_OSC);
+  const diaText = data.fechaDia ? String(data.fechaDia) : '____';
+  doc.text(diaText, x2, y);
+  hline(x2, y + 0.5, x2 + doc.getTextWidth(diaText) + 2, AZUL, 0.4);
+  normal(9.5); doc.setTextColor(...NEGRO);
+  const x3 = x2 + doc.getTextWidth(diaText) + 4;
+
   doc.text(p3, x3, y);
   const x4 = x3 + doc.getTextWidth(p3) + 2;
-  // blanco mes (32mm)
-  hline(x4, y + 0.5, x4 + 32, AZUL, 0.4);
-  const x5 = x4 + 33;
+
+  // mes en negrita con subrayado
+  bold(9.5); doc.setTextColor(...AZUL_OSC);
+  const mesText = data.fechaMes ? String(data.fechaMes) : '____________';
+  doc.text(mesText, x4, y);
+  hline(x4, y + 0.5, x4 + doc.getTextWidth(mesText) + 2, AZUL, 0.4);
+  normal(9.5); doc.setTextColor(...NEGRO);
+  const x5 = x4 + doc.getTextWidth(mesText) + 4;
+
   doc.text(p4, x5, y);
   const x6 = x5 + doc.getTextWidth(p4) + 2;
-  // blanco año (18mm)
-  hline(x6, y + 0.5, x6 + 18, AZUL, 0.4);
+
+  // año en negrita con subrayado
+  bold(9.5); doc.setTextColor(...AZUL_OSC);
+  const anioText = data.fechaAnio ? String(data.fechaAnio) : '______';
+  doc.text(anioText, x6, y);
+  hline(x6, y + 0.5, x6 + doc.getTextWidth(anioText) + 2, AZUL, 0.4);
+  normal(9.5); doc.setTextColor(...NEGRO);
+
   y += 38;
 
   // ── Líneas de firma ──────────────────────────────────
