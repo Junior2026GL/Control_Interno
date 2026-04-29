@@ -136,7 +136,45 @@ export default function ConstanciaTransferencia() {
   };
 
   const handleImprimir = () => {
-    window.print();
+    const docEl = document.querySelector('.ct-doc');
+    if (!docEl) return;
+    const html = docEl.outerHTML;
+    const win = window.open('', '_blank', 'width=900,height=750');
+    if (!win) { showToast('Permita ventanas emergentes para imprimir.', 'warn'); return; }
+    win.document.write(
+      '<!DOCTYPE html><html lang="es"><head>' +
+      '<meta charset="UTF-8"><title>Constancia de Transferencia Electr\u00f3nica</title>' +
+      '<style>' +
+      '@page{margin:15mm}' +
+      'body{margin:0;font-family:"Times New Roman",Times,serif;color:#111}' +
+      '.ct-doc{padding:0}' +
+      '.ct-doc-header{display:flex;align-items:center;gap:24px;border:2px solid #274C8D;padding:12px 20px}' +
+      '.ct-doc-logo{width:70px;height:70px;object-fit:contain}' +
+      '.ct-doc-inst{flex:1;text-align:center}' +
+      '.ct-doc-inst-top{margin:0;font-size:13px;font-weight:600;color:#274C8D}' +
+      '.ct-doc-inst-mid{margin:2px 0;font-size:11px;color:#333}' +
+      '.ct-doc-inst-bot{margin:0;font-size:17px;font-weight:700;color:#274C8D}' +
+      '.ct-doc-title-bar{background:#274C8D;color:white;text-align:center;font-size:12px;font-weight:700;padding:8px;margin-bottom:16px;letter-spacing:.5px}' +
+      '.ct-doc-section-title{text-align:center;font-size:11px;font-weight:700;color:#0f2744;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.3px}' +
+      '.ct-doc-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:4px}' +
+      '.ct-doc-field{display:flex;flex-direction:column;border-bottom:1px solid #aaa;padding-bottom:4px}' +
+      '.ct-doc-field--full{grid-column:1/-1}' +
+      '.ct-doc-label{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.3px}' +
+      '.ct-doc-value{font-size:12px;font-weight:600;color:#0f2744;min-height:18px}' +
+      '.ct-doc-monto{font-size:15px;color:#274C8D}' +
+      '.ct-doc-concepto{border:1px solid #ccc;padding:10px 12px;font-size:12px;min-height:40px;margin-bottom:4px;border-radius:4px;background:#fafafa}' +
+      '.ct-doc-declaracion{font-size:11.5px;line-height:1.7}' +
+      '.ct-doc-declaracion p{margin:4px 0}' +
+      '.ct-doc-cierre{margin-top:10px}' +
+      '.ct-doc-firma{margin-top:50px;text-align:center}' +
+      '.ct-doc-firma-line{width:220px;border-top:1px solid #274C8D;margin:0 auto 6px}' +
+      '.ct-doc-firma p{font-size:11px;color:#333;margin:0}' +
+      '<\/style><\/head><body>' +
+      html +
+      '<script>window.onload=function(){window.print();}<\/script>' +
+      '<\/body><\/html>'
+    );
+    win.document.close();
   };
 
   const handleDescargarPdf = async () => {
@@ -311,18 +349,24 @@ export default function ConstanciaTransferencia() {
                   </div>
                   <div className="ct-field">
                     <label className="ct-label">Fecha de la Transferencia <span className="req">*</span></label>
-                    <input className="ct-input" type="date"
-                      value={form.fechaDia && form.fechaMes && form.fechaAnio
-                        ? `${form.fechaAnio}-${String(MESES.indexOf(form.fechaMes)+1).padStart(2,'0')}-${String(form.fechaDia).padStart(2,'0')}`
-                        : ''}
-                      onChange={e => {
-                        if (!e.target.value) return;
-                        const [y, m, d] = e.target.value.split('-');
-                        set('fechaDia', String(parseInt(d, 10)));
-                        set('fechaMes', MESES[parseInt(m, 10) - 1]);
-                        set('fechaAnio', y);
-                      }}
-                      required />
+                    <div className="ct-fecha-selects">
+                      <select className="ct-input ct-select" value={form.fechaDia} onChange={e => set('fechaDia', e.target.value)} required>
+                        <option value="">Día</option>
+                        {Array.from({length:31},(_,i)=>i+1).map(d=>(
+                          <option key={d} value={String(d)}>{String(d).padStart(2,'0')}</option>
+                        ))}
+                      </select>
+                      <select className="ct-input ct-select" value={form.fechaMes} onChange={e => set('fechaMes', e.target.value)} required>
+                        <option value="">Mes</option>
+                        {MESES.map(m=><option key={m} value={m}>{m}</option>)}
+                      </select>
+                      <select className="ct-input ct-select" value={form.fechaAnio} onChange={e => set('fechaAnio', e.target.value)} required>
+                        <option value="">Año</option>
+                        {Array.from({length:6},(_,i)=>new Date().getFullYear()-2+i).map(y=>(
+                          <option key={y} value={String(y)}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div className="ct-row-2">
@@ -599,8 +643,8 @@ export default function ConstanciaTransferencia() {
             <div className="ct-print-toolbar no-print">
               <span className="ct-print-toolbar-title"><FiFileText size={16} /> Vista Previa — Constancia de Transferencia</span>
               <div className="ct-print-toolbar-actions">
-                <button className="ct-btn-pdf" onClick={handleDescargarPdf}><FiDownload size={14}/> Descargar PDF</button>
-                <button className="ct-btn-pdf ct-btn-print" onClick={handleImprimir}><FiPrinter size={14}/> Imprimir</button>
+                <button className="ct-toolbar-btn ct-toolbar-btn--dl" onClick={handleDescargarPdf}><FiDownload size={14}/> Descargar PDF</button>
+                <button className="ct-toolbar-btn ct-toolbar-btn--print" onClick={handleImprimir}><FiPrinter size={14}/> Imprimir</button>
                 <button className="ct-print-close" onClick={() => setShowPreview(false)}><FiX size={18}/></button>
               </div>
             </div>
@@ -683,7 +727,7 @@ export default function ConstanciaTransferencia() {
                 <p>2. El monto corresponde al concepto descrito en el presente documento.</p>
                 <p>3. Confirmo que el pago ha sido recibido a mi entera satisfacción, sin que exista reclamo posterior relacionado con esta transferencia.</p>
                 <p>4. Reconozco que la presente constancia sirve como respaldo administrativo y financiero del pago realizado.</p>
-                <p className="ct-doc-cierre">Para los efectos administrativos y legales correspondientes, se firma la presente constancia en la ciudad de Tegucigalpa M.D.C., a los _____ días del mes de ________________ del año _______.</p>
+                <p className="ct-doc-cierre">Para los efectos administrativos y legales correspondientes, se firma la presente constancia en la ciudad de Tegucigalpa M.D.C., a los <strong>{previewData.fechaDia}</strong> días del mes de <strong>{previewData.fechaMes}</strong> del año <strong>{previewData.fechaAnio}</strong>.</p>
               </div>
 
               <div className="ct-doc-firma">
