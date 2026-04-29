@@ -41,7 +41,9 @@ exports.getOne = (req, res) => {
 
 // POST /api/constancias
 exports.create = (req, res) => {
-  const { nombre, dni, telefono, direccion, correo,`r`n          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;`r`n  if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
+  const { nombre, dni, telefono, direccion, correo,
+          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;
+  if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
   if (!dni?.trim()) return res.status(400).json({ message: 'El DNI es requerido.' });
   const montoNum = parseFloat(monto);
   if (isNaN(montoNum) || montoNum <= 0) return res.status(400).json({ message: 'El monto debe ser mayor a cero.' });
@@ -69,7 +71,9 @@ exports.create = (req, res) => {
 exports.update = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!id || id <= 0) return res.status(400).json({ message: 'ID inv�lido.' });
-  const { nombre, dni, telefono, direccion, correo,`r`n          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;`r`n  if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
+  const { nombre, dni, telefono, direccion, correo,
+          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;
+  if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
   if (!dni?.trim()) return res.status(400).json({ message: 'El DNI es requerido.' });
   const montoNum = parseFloat(monto);
   if (isNaN(montoNum) || montoNum <= 0) return res.status(400).json({ message: 'El monto debe ser mayor a cero.' });
