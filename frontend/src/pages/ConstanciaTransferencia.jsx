@@ -3,7 +3,7 @@ import {
   FiUser, FiFileText, FiCalendar,
   FiPhone, FiMail, FiMapPin, FiDownload,
   FiRefreshCw, FiList, FiFilePlus, FiTrash2,
-  FiAlertCircle, FiEdit3, FiEye, FiX,
+  FiAlertCircle, FiEdit3, FiEye, FiX, FiPrinter,
 } from 'react-icons/fi';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
@@ -27,6 +27,32 @@ const MESES = [
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
 ];
 
+function numeroALetrasPreview(num) {
+  const n   = Math.floor(Math.abs(parseFloat(num) || 0));
+  const dec = Math.round((Math.abs(parseFloat(num) || 0) - n) * 100);
+  const uni = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
+    'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const dec2 = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const cen  = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  function grupo(x) {
+    if (x === 0) return '';
+    if (x === 100) return 'CIEN';
+    let r = '';
+    const c = Math.floor(x/100), resto = x%100;
+    if (c>0) r += cen[c]+(resto>0?' ':'');
+    if (resto<20) r += uni[resto];
+    else { const d=Math.floor(resto/10),u=resto%10; r += dec2[d]+(u>0?' Y '+uni[u]:''); }
+    return r.trim();
+  }
+  if (n===0) return `CERO LEMPIRAS CON ${dec.toString().padStart(2,'0')}/100`;
+  const mill=Math.floor(n/1000000), mil=Math.floor((n%1000000)/1000), rest=n%1000;
+  let r='';
+  if (mill>0) r+=(mill===1?'UN MILLÓN':grupo(mill)+' MILLONES')+' ';
+  if (mil>0)  r+=(mil===1?'MIL':grupo(mil)+' MIL')+' ';
+  if (rest>0) r+=grupo(rest);
+  return r.trim()+` LEMPIRAS CON ${dec.toString().padStart(2,'0')}/100`;
+}
+
 export default function ConstanciaTransferencia() {
   const [tab, setTab]         = useState('nueva');   // 'nueva' | 'historial'
   const [form, setForm]       = useState(buildEmpty());
@@ -41,6 +67,8 @@ export default function ConstanciaTransferencia() {
   const [histError, setHistError]     = useState('');
   const [deletingId, setDeletingId]   = useState(null);
   const [viewItem, setViewItem]         = useState(null);
+  const [showPreview, setShowPreview]   = useState(false);
+  const [previewData, setPreviewData]   = useState(null);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -88,25 +116,34 @@ export default function ConstanciaTransferencia() {
     if (err) { showToast(err, 'error'); return; }
     setLoading(true);
     try {
-      await generarConstanciaPdf(form);
-      try {
-        if (editingId) {
-          await api.put(`/constancias/${editingId}`, form);
-          showToast('Constancia actualizada correctamente.', 'ok');
-          setEditingId(null);
-          cargarHistorial();
-        } else {
-          await api.post('/constancias', form);
-          showToast('Constancia generada y guardada correctamente.', 'ok');
-        }
-        setForm(buildEmpty());
-      } catch {
-        showToast('PDF generado. No se pudo guardar en el historial.', 'warn');
+      if (editingId) {
+        await api.put(`/constancias/${editingId}`, form);
+        showToast('Constancia actualizada correctamente.', 'ok');
+        setEditingId(null);
+        cargarHistorial();
+      } else {
+        await api.post('/constancias', form);
+        showToast('Constancia guardada correctamente.', 'ok');
       }
+      setPreviewData({ ...form });
+      setShowPreview(true);
+      setForm(buildEmpty());
     } catch {
-      showToast('Error al generar el PDF. Intente nuevamente.', 'error');
+      showToast('Error al guardar la constancia.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImprimir = () => {
+    window.print();
+  };
+
+  const handleDescargarPdf = async () => {
+    try {
+      await generarConstanciaPdf(previewData);
+    } catch {
+      showToast('Error al generar el PDF.', 'error');
     }
   };
 
@@ -331,7 +368,7 @@ export default function ConstanciaTransferencia() {
                 <FiRefreshCw size={14} /> Limpiar
               </button>
               <button type="submit" className="ct-btn-pdf" disabled={loading}>
-                {loading ? <><span className="ct-spinner" /> Generando…</> : <><FiDownload size={15} /> Generar PDF</>}
+                {loading ? <><span className="ct-spinner" /> Guardando…</> : <><FiPrinter size={15} /> Guardar e Imprimir</>}
               </button>
             </div>
 
@@ -386,8 +423,8 @@ export default function ConstanciaTransferencia() {
                 </button>
                 <button type="submit" form="ct-form" className="ct-btn-pdf" disabled={loading}>
                   {loading
-                    ? <><span className="ct-spinner" /> {editingId ? 'Actualizando…' : 'Generando…'}</>
-                    : <><FiDownload size={15} /> {editingId ? 'Actualizar Constancia' : 'Generar Constancia PDF'}</>}
+                    ? <><span className="ct-spinner" /> {editingId ? 'Actualizando…' : 'Guardando…'}</>
+                    : <><FiPrinter size={15} /> {editingId ? 'Actualizar y Ver' : 'Guardar e Imprimir'}</>}
                 </button>
                 {editingId && (
                   <button type="button" className="ct-btn-reset" onClick={() => { setEditingId(null); setForm(buildEmpty()); }}>
@@ -548,6 +585,109 @@ export default function ConstanciaTransferencia() {
               <button className="ct-view-btn-dl" onClick={() => handleDescargar(viewItem)}>
                 <FiDownload size={15} /> Descargar PDF
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Print preview modal ─────────────────────────────── */}
+      {showPreview && previewData && (
+        <div className="ct-print-overlay" onClick={() => setShowPreview(false)}>
+          <div className="ct-print-box" onClick={e => e.stopPropagation()}>
+            <div className="ct-print-toolbar no-print">
+              <span className="ct-print-toolbar-title"><FiFileText size={16} /> Vista Previa — Constancia de Transferencia</span>
+              <div className="ct-print-toolbar-actions">
+                <button className="ct-btn-pdf" onClick={handleDescargarPdf}><FiDownload size={14}/> Descargar PDF</button>
+                <button className="ct-btn-pdf ct-btn-print" onClick={handleImprimir}><FiPrinter size={14}/> Imprimir</button>
+                <button className="ct-print-close" onClick={() => setShowPreview(false)}><FiX size={18}/></button>
+              </div>
+            </div>
+
+            {/* ── Documento imprimible ── */}
+            <div className="ct-doc">
+              <div className="ct-doc-header">
+                <img src="/logo-congreso.png.png" alt="Logo" className="ct-doc-logo" onError={e => e.target.style.display='none'} />
+                <div className="ct-doc-inst">
+                  <p className="ct-doc-inst-top">REPÚBLICA DE HONDURAS</p>
+                  <p className="ct-doc-inst-mid">CONGRESO NACIONAL</p>
+                  <p className="ct-doc-inst-bot">PAGADURÍA ESPECIAL</p>
+                </div>
+              </div>
+              <div className="ct-doc-title-bar">
+                CONSTANCIA DE RECEPCIÓN DE TRANSFERENCIA ELECTRÓNICA
+              </div>
+
+              <div className="ct-doc-section-title">I. DATOS DE LA PERSONA QUE RECIBE LA TRANSFERENCIA</div>
+              <div className="ct-doc-fields">
+                <div className="ct-doc-field ct-doc-field--full">
+                  <span className="ct-doc-label">Nombre completo:</span>
+                  <span className="ct-doc-value">{previewData.nombre}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">Número de Identidad (DNI):</span>
+                  <span className="ct-doc-value">{previewData.dni}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">Teléfono:</span>
+                  <span className="ct-doc-value">{previewData.telefono || '—'}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">Dirección:</span>
+                  <span className="ct-doc-value">{previewData.direccion || '—'}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">Correo electrónico:</span>
+                  <span className="ct-doc-value">{previewData.correo || '—'}</span>
+                </div>
+              </div>
+
+              <div className="ct-doc-section-title">II. DATOS DE LA TRANSFERENCIA ELECTRÓNICA</div>
+              <div className="ct-doc-fields">
+                <div className="ct-doc-field ct-doc-field--full">
+                  <span className="ct-doc-label">Monto recibido:</span>
+                  <span className="ct-doc-value ct-doc-monto">
+                    L. {parseFloat(previewData.monto).toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="ct-doc-field ct-doc-field--full">
+                  <span className="ct-doc-label">Monto en letras:</span>
+                  <span className="ct-doc-value">{numeroALetrasPreview(previewData.monto)}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">Banco receptor:</span>
+                  <span className="ct-doc-value">{previewData.bancoReceptor}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">Tipo de cuenta:</span>
+                  <span className="ct-doc-value">{previewData.tipoCuenta || '—'}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">Número de cuenta:</span>
+                  <span className="ct-doc-value">{previewData.numeroCuenta}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">Fecha de la transferencia:</span>
+                  <span className="ct-doc-value">{previewData.fechaDia} / {previewData.fechaMes} / {previewData.fechaAnio}</span>
+                </div>
+              </div>
+
+              <div className="ct-doc-section-title">III. CONCEPTO DE LA TRANSFERENCIA</div>
+              <div className="ct-doc-concepto">{previewData.concepto}</div>
+
+              <div className="ct-doc-section-title">IV. DECLARACIÓN DE RECEPCIÓN</div>
+              <div className="ct-doc-declaracion">
+                <p>Yo, <strong>{previewData.nombre}</strong>, de generales arriba indicadas <strong>DECLARO BAJO FE DE JURAMENTO</strong> que:</p>
+                <p>1. He recibido mediante transferencia electrónica bancaria la cantidad anteriormente indicada.</p>
+                <p>2. El monto corresponde al concepto descrito en el presente documento.</p>
+                <p>3. Confirmo que el pago ha sido recibido a mi entera satisfacción, sin que exista reclamo posterior relacionado con esta transferencia.</p>
+                <p>4. Reconozco que la presente constancia sirve como respaldo administrativo y financiero del pago realizado.</p>
+                <p className="ct-doc-cierre">Para los efectos administrativos y legales correspondientes, se firma la presente constancia en la ciudad de Tegucigalpa M.D.C., a los _____ días del mes de ________________ del año _______.</p>
+              </div>
+
+              <div className="ct-doc-firma">
+                <div className="ct-doc-firma-line"></div>
+                <p>Persona que recibe la transferencia</p>
+              </div>
             </div>
           </div>
         </div>
