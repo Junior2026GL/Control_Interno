@@ -25,6 +25,7 @@
     "react-router-dom": "^7.13.1",
     "react-simple-maps": "^3.0.0",
     "recharts": "^3.8.1",
+    "serve": "^14.2.6",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
@@ -36,7 +37,6 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "serve": "^14.2.6",
     "vite": "^7.3.1"
   }
 }
