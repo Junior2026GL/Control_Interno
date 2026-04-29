@@ -349,24 +349,22 @@ export default function ConstanciaTransferencia() {
                   </div>
                   <div className="ct-field">
                     <label className="ct-label">Fecha de la Transferencia <span className="req">*</span></label>
-                    <div className="ct-fecha-selects">
-                      <select className="ct-input ct-select" value={form.fechaDia} onChange={e => set('fechaDia', e.target.value)} required>
-                        <option value="">Día</option>
-                        {Array.from({length:31},(_,i)=>i+1).map(d=>(
-                          <option key={d} value={String(d)}>{String(d).padStart(2,'0')}</option>
-                        ))}
-                      </select>
-                      <select className="ct-input ct-select" value={form.fechaMes} onChange={e => set('fechaMes', e.target.value)} required>
-                        <option value="">Mes</option>
-                        {MESES.map(m=><option key={m} value={m}>{m}</option>)}
-                      </select>
-                      <select className="ct-input ct-select" value={form.fechaAnio} onChange={e => set('fechaAnio', e.target.value)} required>
-                        <option value="">Año</option>
-                        {Array.from({length:6},(_,i)=>new Date().getFullYear()-2+i).map(y=>(
-                          <option key={y} value={String(y)}>{y}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <input
+                      lang="es"
+                      className="ct-input"
+                      type="date"
+                      value={form.fechaDia && form.fechaMes && form.fechaAnio
+                        ? `${form.fechaAnio}-${String(MESES.indexOf(form.fechaMes)+1).padStart(2,'0')}-${String(form.fechaDia).padStart(2,'0')}`
+                        : ''}
+                      onChange={e => {
+                        if (!e.target.value) return;
+                        const [y, m, d] = e.target.value.split('-');
+                        set('fechaDia', String(parseInt(d, 10)));
+                        set('fechaMes', MESES[parseInt(m, 10) - 1]);
+                        set('fechaAnio', y);
+                      }}
+                      required
+                    />
                   </div>
                 </div>
                 <div className="ct-row-2">
