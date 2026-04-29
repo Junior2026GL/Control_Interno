@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
@@ -26,9 +27,10 @@ import ModuleRoute from './components/ModuleRoute';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <SocketProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <SocketProvider>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<Login />} />
@@ -52,7 +54,8 @@ export default function App() {
             <Route path="/mapa-alcaldias" element={<ModuleRoute modulo="mapa-alcaldias"><MapaAlcaldias /></ModuleRoute>} />
           </Routes>
         </SocketProvider>
-      </BrowserRouter>
-    </AuthProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

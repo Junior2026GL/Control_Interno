@@ -453,3 +453,73 @@
     font-size: 22px;
   }
 }
+
+/* ============================================================
+   Dark Mode
+   ============================================================ */
+[data-theme="dark"] .app-shell,
+[data-theme="dark"] .page-shell {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .module-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .module-card:not(.is-disabled):hover {
+  box-shadow: 0 20px 40px rgba(99, 102, 241, 0.22);
+  border-color: #4f46e5;
+}
+
+[data-theme="dark"] .module-info h3 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .module-info p {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .launcher-header h2 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .launcher-header h2 span {
+  color: #818cf8;
+}
+
+[data-theme="dark"] .launcher-datetime {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+[data-theme="dark"] .launcher-date {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .launcher-sep {
+  color: #475569;
+}
+
+[data-theme="dark"] .launcher-time {
+  color: #818cf8;
+}
+
+[data-theme="dark"] .launcher-avatar-badge {
+  border-color: #0f172a;
+}
+
+[data-theme="dark"] .coming-soon-badge {
+  background: #1e293b;
+  color: #818cf8;
+}
+
+[data-theme="dark"] .page-header h1 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .page-header p {
+  color: #94a3b8;
+}
