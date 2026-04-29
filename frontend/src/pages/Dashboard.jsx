@@ -4,7 +4,7 @@ import {
   LuWallet, LuUsers, LuClipboardCheck,
   LuDatabase, LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
-  LuUserCheck, LuArrowLeftRight,
+  LuUserCheck, LuArrowLeftRight, LuMapPin,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -96,6 +96,14 @@ const ALL_MODULES = [
     description: 'Registro de ayudas otorgadas a beneficiarios',
     icon: LuHandCoins,
     gradient: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+  },
+  {
+    path: '/ayudas-alcaldias',
+    label: 'Ayudas Alcaldías',
+    clave: 'ayudas_alcaldias',
+    description: 'Registro de ayudas sociales otorgadas a alcaldías',
+    icon: LuMapPin,
+    gradient: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)',
   },
   {
     path: '/ip-whitelist',
