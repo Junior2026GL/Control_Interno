@@ -28,7 +28,7 @@ exports.getAll = (req, res) => {
 // GET /api/constancias/:id
 exports.getOne = (req, res) => {
   const id = parseInt(req.params.id, 10);
-  if (!id || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
+  if (!id || id <= 0) return res.status(400).json({ message: 'ID invï¿½lido.' });
   db.query('SELECT * FROM constancias_transferencia WHERE id = ?', [id], (err, rows) => {
     if (err) { console.error('[constancias] getOne:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
     if (!rows.length) return res.status(404).json({ message: 'Constancia no encontrada.' });
@@ -41,26 +41,23 @@ exports.getOne = (req, res) => {
 
 // POST /api/constancias
 exports.create = (req, res) => {
-  const { nombre, dni, telefono, direccion, correo, funcionario, cargo, dependencia,
-          monto, bancoEmisor, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;
-  if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
+  const { nombre, dni, telefono, direccion, correo,`r`n          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;`r`n  if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
   if (!dni?.trim()) return res.status(400).json({ message: 'El DNI es requerido.' });
   const montoNum = parseFloat(monto);
   if (isNaN(montoNum) || montoNum <= 0) return res.status(400).json({ message: 'El monto debe ser mayor a cero.' });
-  if (montoNum > MONTO_MAX) return res.status(400).json({ message: 'El monto excede el límite permitido.' });
-  if (!bancoEmisor?.trim()) return res.status(400).json({ message: 'El banco emisor es requerido.' });
+  if (montoNum > MONTO_MAX) return res.status(400).json({ message: 'El monto excede el lï¿½mite permitido.' });
   if (!bancoReceptor?.trim()) return res.status(400).json({ message: 'El banco receptor es requerido.' });
-  if (!numeroCuenta?.trim()) return res.status(400).json({ message: 'El número de cuenta es requerido.' });
-  if (!fechaMes || !MESES_VALIDOS.includes(fechaMes)) return res.status(400).json({ message: 'El mes no es válido.' });
+  if (!numeroCuenta?.trim()) return res.status(400).json({ message: 'El nï¿½mero de cuenta es requerido.' });
+  if (!fechaMes || !MESES_VALIDOS.includes(fechaMes)) return res.status(400).json({ message: 'El mes no es vï¿½lido.' });
   const dia = parseInt(fechaDia, 10);
-  if (!dia || dia < 1 || dia > 31) return res.status(400).json({ message: 'El día no es válido (1-31).' });
+  if (!dia || dia < 1 || dia > 31) return res.status(400).json({ message: 'El dï¿½a no es vï¿½lido (1-31).' });
   const anio = parseInt(fechaAnio, 10);
-  if (!anio || anio < 2000 || anio > 2100) return res.status(400).json({ message: 'El año no es válido.' });
+  if (!anio || anio < 2000 || anio > 2100) return res.status(400).json({ message: 'El aï¿½o no es vï¿½lido.' });
   if (!concepto?.trim()) return res.status(400).json({ message: 'El concepto es requerido.' });
   const usuarioId = req.user?.id || null;
   db.query(
-    `INSERT INTO constancias_transferencia (nombre,dni,telefono,direccion,correo,funcionario,cargo,dependencia,monto,banco_emisor,banco_receptor,numero_cuenta,fecha_dia,fecha_mes,fecha_anio,concepto,usuario_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(correo||'').trim(),(funcionario||'').trim(),(cargo||'').trim(),(dependencia||'').trim(),montoNum,bancoEmisor.trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),usuarioId],
+    `INSERT INTO constancias_transferencia (nombre,dni,telefono,direccion,correo,monto,tipo_cuenta,banco_receptor,numero_cuenta,fecha_dia,fecha_mes,fecha_anio,concepto,usuario_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(correo||'').trim(),montoNum,(tipoCuenta||'').trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),usuarioId],
     (err, result) => {
       if (err) { console.error('[constancias] create:', err); return res.status(500).json({ message: 'Error al guardar la constancia.' }); }
       res.status(201).json({ id: result.insertId, message: 'Constancia guardada correctamente.' });
@@ -71,28 +68,25 @@ exports.create = (req, res) => {
 // PUT /api/constancias/:id
 exports.update = (req, res) => {
   const id = parseInt(req.params.id, 10);
-  if (!id || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
-  const { nombre, dni, telefono, direccion, correo, funcionario, cargo, dependencia,
-          monto, bancoEmisor, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;
-  if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
+  if (!id || id <= 0) return res.status(400).json({ message: 'ID invï¿½lido.' });
+  const { nombre, dni, telefono, direccion, correo,`r`n          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;`r`n  if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
   if (!dni?.trim()) return res.status(400).json({ message: 'El DNI es requerido.' });
   const montoNum = parseFloat(monto);
   if (isNaN(montoNum) || montoNum <= 0) return res.status(400).json({ message: 'El monto debe ser mayor a cero.' });
-  if (montoNum > MONTO_MAX) return res.status(400).json({ message: 'El monto excede el límite permitido.' });
-  if (!bancoEmisor?.trim()) return res.status(400).json({ message: 'El banco emisor es requerido.' });
+  if (montoNum > MONTO_MAX) return res.status(400).json({ message: 'El monto excede el lï¿½mite permitido.' });
   if (!bancoReceptor?.trim()) return res.status(400).json({ message: 'El banco receptor es requerido.' });
-  if (!numeroCuenta?.trim()) return res.status(400).json({ message: 'El número de cuenta es requerido.' });
-  if (!fechaMes || !MESES_VALIDOS.includes(fechaMes)) return res.status(400).json({ message: 'El mes no es válido.' });
+  if (!numeroCuenta?.trim()) return res.status(400).json({ message: 'El nï¿½mero de cuenta es requerido.' });
+  if (!fechaMes || !MESES_VALIDOS.includes(fechaMes)) return res.status(400).json({ message: 'El mes no es vï¿½lido.' });
   const dia = parseInt(fechaDia, 10);
-  if (!dia || dia < 1 || dia > 31) return res.status(400).json({ message: 'El día no es válido (1-31).' });
+  if (!dia || dia < 1 || dia > 31) return res.status(400).json({ message: 'El dï¿½a no es vï¿½lido (1-31).' });
   const anio = parseInt(fechaAnio, 10);
-  if (!anio || anio < 2000 || anio > 2100) return res.status(400).json({ message: 'El año no es válido.' });
+  if (!anio || anio < 2000 || anio > 2100) return res.status(400).json({ message: 'El aï¿½o no es vï¿½lido.' });
   if (!concepto?.trim()) return res.status(400).json({ message: 'El concepto es requerido.' });
   const esAdmin = ROLES_ADMIN.includes(req.user.rol);
   const doUpdate = () => {
     db.query(
-      `UPDATE constancias_transferencia SET nombre=?,dni=?,telefono=?,direccion=?,correo=?,funcionario=?,cargo=?,dependencia=?,monto=?,banco_emisor=?,banco_receptor=?,numero_cuenta=?,fecha_dia=?,fecha_mes=?,fecha_anio=?,concepto=? WHERE id=?`,
-      [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(correo||'').trim(),(funcionario||'').trim(),(cargo||'').trim(),(dependencia||'').trim(),montoNum,bancoEmisor.trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),id],
+      `UPDATE constancias_transferencia SET nombre=?,dni=?,telefono=?,direccion=?,correo=?,monto=?,tipo_cuenta=?,banco_receptor=?,numero_cuenta=?,fecha_dia=?,fecha_mes=?,fecha_anio=?,concepto=? WHERE id=?`,
+      [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(correo||'').trim(),montoNum,(tipoCuenta||'').trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),id],
       (err, result) => {
         if (err) { console.error('[constancias] update:', err); return res.status(500).json({ message: 'Error al actualizar la constancia.' }); }
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Constancia no encontrada.' });
@@ -112,7 +106,7 @@ exports.update = (req, res) => {
 // DELETE /api/constancias/:id
 exports.remove = (req, res) => {
   const id = parseInt(req.params.id, 10);
-  if (!id || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
+  if (!id || id <= 0) return res.status(400).json({ message: 'ID invï¿½lido.' });
   const esAdmin = ROLES_ADMIN.includes(req.user.rol);
   const doDelete = () => {
     db.query('DELETE FROM constancias_transferencia WHERE id = ?', [id], (err, result) => {
@@ -129,3 +123,4 @@ exports.remove = (req, res) => {
     doDelete();
   });
 };
+

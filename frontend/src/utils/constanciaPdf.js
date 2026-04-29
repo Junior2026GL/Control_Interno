@@ -161,7 +161,7 @@ export async function generarConstanciaPdf(data) {
   doc.text('CONSTANCIA DE RECEPCIÓN DE TRANSFERENCIA ELECTRÓNICA', PW / 2, y + 7.2, { align: 'center' });
   y += TBAR_H + 8;
 
-  y = secHeader('I. DATOS DE LA PERSONA QUE RECIBE EL PAGO', y);
+  y = secHeader('I. DATOS DE LA PERSONA QUE RECIBE LA TRANSFERENCIA', y);
   drawField('Nombre completo:', data.nombre, ML, y, CW);
   y += ROW;
 
@@ -177,37 +177,21 @@ export async function generarConstanciaPdf(data) {
   drawField('Correo electrónico:', data.correo,    xR, y, halfR);
   y += ROW + 2;
 
-  y = secHeader('II. DATOS DE QUIÉN AUTORIZA / REALIZA EL PAGO', y);
-  drawField('Nombre del funcionario:', data.funcionario, ML, y, CW);
-  y += ROW;
-
-  drawField('Cargo:', data.cargo, ML, y, CW * 0.48);
-  drawField('Dependencia/Unidad:', data.dependencia, ML + CW * 0.52, y, CW * 0.48);
-  y += ROW + 1;
-
-  normal(8.5); doc.setTextColor(...GRIS);
-  doc.text('INSTITUCIÓN:', ML, y);
-  bold(9); doc.setTextColor(...AZUL_OSC);
-  doc.text('Congreso Nacional de la República de Honduras', ML + doc.getTextWidth('INSTITUCIÓN:') + 2, y);
-  y += 8;
-
-  y = secHeader('III. DATOS DE LA TRANSFERENCIA ELECTRÓNICA', y);
+  y = secHeader('II. DATOS DE LA TRANSFERENCIA ELECTRÓNICA', y);
   y += 2;
 
   const montoStr = data.monto
     ? `L. ${parseFloat(data.monto).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : '';
-  drawField('Monto transferido:', montoStr, ML, y, CW);
+  drawField('Monto recibido:', montoStr, ML, y, CW);
   y += ROW;
 
   const letras = data.monto ? numeroALetras(data.monto) : '';
   drawField('Monto en letras:', letras, ML, y, CW);
   y += ROW;
 
-  drawField('Banco desde el cual se realizó la transferencia:', data.bancoEmisor, ML, y, CW);
-  y += ROW;
-
-  drawField('Banco receptor:', data.bancoReceptor, ML, y, CW);
+  drawField('Banco receptor:', data.bancoReceptor, ML, y, halfL);
+  drawField('Tipo de cuenta:', data.tipoCuenta, xR, y, halfR);
   y += ROW;
 
   let fechaStr = '';
@@ -218,7 +202,7 @@ export async function generarConstanciaPdf(data) {
   drawField('Fecha de la transferencia:', fechaStr, ML + CW * 0.58, y, CW * 0.42);
   y += ROW + 2;
 
-  y = secHeader('IV. CONCEPTO DEL PAGO', y);
+  y = secHeader('III. CONCEPTO DE LA TRANSFERENCIA', y);
   if (data.concepto) {
     const conceptoLines = doc.splitTextToSize(data.concepto, CW - 4);
     // Caja de concepto con fondo
@@ -271,7 +255,7 @@ export async function generarConstanciaPdf(data) {
   y += TBAR_H + 10;
 
   bold(10); doc.setTextColor(...AZUL_OSC);
-  doc.text('V. DECLARACIÓN DE RECEPCIÓN', ML, y);
+  doc.text('IV. DECLARACIÓN DE RECEPCIÓN', ML, y);
   y += 9;
 
   // "Yo, _____ " — línea para firma a mano
@@ -334,13 +318,12 @@ export async function generarConstanciaPdf(data) {
   const sigL  = ML + 18;
   const sigR  = ML + CW - 18 - sigW;
 
-  hline(sigL, y, sigL + sigW, AZUL, 0.5);
-  hline(sigR, y, sigR + sigW, AZUL, 0.5);
+  const sigC = PW / 2 - sigW / 2;
+  hline(sigC, y, sigC + sigW, AZUL, 0.5);
   y += 6;
 
   normal(12); doc.setTextColor(...NEGRO);
-  doc.text('Persona que recibe el pago', sigL + sigW / 2, y, { align: 'center' });
-  doc.text('Personal que autoriza el pago', sigR + sigW / 2, y, { align: 'center' });
+  doc.text('Persona que recibe la transferencia', PW / 2, y, { align: 'center' });
 
   drawFooter(2, 2);
 

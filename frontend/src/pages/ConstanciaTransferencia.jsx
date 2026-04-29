@@ -15,11 +15,9 @@ function buildEmpty() {
     // Sección I
     nombre: '', dni: '', telefono: '', direccion: '', correo: '',
     // Sección II
-    funcionario: '', cargo: '', dependencia: '',
-    // Sección III
-    monto: '', bancoEmisor: '', bancoReceptor: '', numeroCuenta: '',
+    monto: '', bancoReceptor: '', tipoCuenta: '', numeroCuenta: '',
     fechaDia: '', fechaMes: '', fechaAnio: '',
-    // Sección IV
+    // Sección III
     concepto: '',
   };
 }
@@ -77,7 +75,6 @@ export default function ConstanciaTransferencia() {
     const m = parseFloat(form.monto);
     if (!form.monto || isNaN(m) || m <= 0) return 'El monto debe ser mayor a cero.';
     if (m > 99999999) return 'El monto excede el límite permitido.';
-    if (!form.bancoEmisor.trim())  return 'El banco emisor es requerido.';
     if (!form.bancoReceptor.trim()) return 'El banco receptor es requerido.';
     if (!form.numeroCuenta.trim()) return 'El número de cuenta es requerido.';
     if (!form.fechaDia || !form.fechaMes || !form.fechaAnio) return 'La fecha de la transferencia es requerida.';
@@ -120,12 +117,9 @@ export default function ConstanciaTransferencia() {
       telefono:     c.telefono || '',
       direccion:    c.direccion || '',
       correo:       c.correo || '',
-      funcionario:  c.funcionario || '',
-      cargo:        c.cargo || '',
-      dependencia:  c.dependencia || '',
       monto:        c.monto || '',
-      bancoEmisor:  c.banco_emisor || '',
       bancoReceptor: c.banco_receptor || '',
+      tipoCuenta:   c.tipo_cuenta || '',
       numeroCuenta: c.numero_cuenta || '',
       fechaDia:     String(c.fecha_dia || ''),
       fechaMes:     c.fecha_mes || '',
@@ -143,9 +137,9 @@ export default function ConstanciaTransferencia() {
       const data = {
         nombre: c.nombre, dni: c.dni, telefono: c.telefono,
         direccion: c.direccion, correo: c.correo,
-        funcionario: c.funcionario, cargo: c.cargo, dependencia: c.dependencia,
-        monto: c.monto, bancoEmisor: c.banco_emisor,
-        bancoReceptor: c.banco_receptor, numeroCuenta: c.numero_cuenta,
+        monto: c.monto,
+        bancoReceptor: c.banco_receptor, tipoCuenta: c.tipo_cuenta,
+        numeroCuenta: c.numero_cuenta,
         fechaDia: c.fecha_dia, fechaMes: c.fecha_mes, fechaAnio: c.fecha_anio,
         concepto: c.concepto,
       };
@@ -259,49 +253,19 @@ export default function ConstanciaTransferencia() {
               </div>
             </div>
 
-            {/* ── II. Funcionario ─────────────────────────────── */}
+            {/* ── II. Transferencia ──────────────────────────── */}
             <div className="ct-section">
               <div className="ct-section-head">
                 <span className="ct-step-num">2</span>
                 <div>
-                  <h2 className="ct-section-title">Datos de quien autoriza el pago</h2>
-                  <p className="ct-section-desc">Funcionario responsable de realizar la transferencia</p>
-                </div>
-              </div>
-              <div className="ct-fields">
-                <div className="ct-field-full">
-                  <label className="ct-label">Nombre del Funcionario</label>
-                  <input className="ct-input" type="text" placeholder="Nombre del funcionario autorizante"
-                    value={form.funcionario} onChange={e => set('funcionario', e.target.value.toUpperCase())} />
-                </div>
-                <div className="ct-row-2">
-                  <div className="ct-field">
-                    <label className="ct-label">Cargo</label>
-                    <input className="ct-input" type="text" placeholder="Cargo del funcionario"
-                      value={form.cargo} onChange={e => set('cargo', e.target.value)} />
-                  </div>
-                  <div className="ct-field">
-                    <label className="ct-label">Dependencia / Unidad</label>
-                    <input className="ct-input" type="text" placeholder="Dependencia o unidad"
-                      value={form.dependencia} onChange={e => set('dependencia', e.target.value)} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── III. Transferencia ──────────────────────────── */}
-            <div className="ct-section">
-              <div className="ct-section-head">
-                <span className="ct-step-num">3</span>
-                <div>
-                  <h2 className="ct-section-title">Datos de la Transferencia</h2>
+                  <h2 className="ct-section-title">Datos de la Transferencia Electrónica</h2>
                   <p className="ct-section-desc">Información bancaria y monto de la operación</p>
                 </div>
               </div>
               <div className="ct-fields">
                 <div className="ct-row-2">
                   <div className="ct-field">
-                    <label className="ct-label">Monto Transferido (L.) <span className="req">*</span></label>
+                    <label className="ct-label">Monto Recibido (L.) <span className="req">*</span></label>
                     <div className="ct-icon-field">
                       <span className="ct-currency">Lps.</span>
                       <input className="ct-input ct-has-icon" type="number" placeholder="0.00" min="0.01" step="0.01"
@@ -324,14 +288,14 @@ export default function ConstanciaTransferencia() {
                 </div>
                 <div className="ct-row-2">
                   <div className="ct-field">
-                    <label className="ct-label">Banco Emisor <span className="req">*</span></label>
-                    <input className="ct-input" type="text" placeholder="Banco que realiza la transferencia"
-                      value={form.bancoEmisor} onChange={e => set('bancoEmisor', e.target.value)} required />
-                  </div>
-                  <div className="ct-field">
                     <label className="ct-label">Banco Receptor <span className="req">*</span></label>
                     <input className="ct-input" type="text" placeholder="Banco que recibe la transferencia"
                       value={form.bancoReceptor} onChange={e => set('bancoReceptor', e.target.value)} required />
+                  </div>
+                  <div className="ct-field">
+                    <label className="ct-label">Tipo de Cuenta</label>
+                    <input className="ct-input" type="text" placeholder="Ej: Ahorro, Corriente"
+                      value={form.tipoCuenta} onChange={e => set('tipoCuenta', e.target.value)} />
                   </div>
                 </div>
                 <div className="ct-field-full">
@@ -342,12 +306,12 @@ export default function ConstanciaTransferencia() {
               </div>
             </div>
 
-            {/* ── IV. Concepto ────────────────────────────────── */}
+            {/* ── III. Concepto ────────────────────────────────── */}
             <div className="ct-section">
               <div className="ct-section-head">
-                <span className="ct-step-num">4</span>
+                <span className="ct-step-num">3</span>
                 <div>
-                  <h2 className="ct-section-title">Concepto del Pago</h2>
+                  <h2 className="ct-section-title">Concepto de la Transferencia</h2>
                   <p className="ct-section-desc">Describa el motivo de la transferencia</p>
                 </div>
               </div>
@@ -399,14 +363,6 @@ export default function ConstanciaTransferencia() {
                 <div className="ct-aside-row">
                   <span className="ct-aside-key"><FiUser size={11} /> Beneficiario</span>
                   <span className="ct-aside-val">{form.nombre || '—'}</span>
-                </div>
-                <div className="ct-aside-row">
-                  <span className="ct-aside-key"><FiUser size={11} /> Funcionario</span>
-                  <span className="ct-aside-val">{form.funcionario || '—'}</span>
-                </div>
-                <div className="ct-aside-row">
-                  <span className="ct-aside-key">Banco emisor</span>
-                  <span className="ct-aside-val">{form.bancoEmisor || '—'}</span>
                 </div>
                 <div className="ct-aside-row">
                   <span className="ct-aside-key">Banco receptor</span>
@@ -573,8 +529,8 @@ export default function ConstanciaTransferencia() {
               <div className="ct-view-group">
                 <h4 className="ct-view-group-title">Transferencia</h4>
                 <div className="ct-view-row"><span className="ct-view-key">Monto</span><span className="ct-view-val ct-view-monto">Lps. {parseFloat(viewItem.monto).toLocaleString('es-HN', { minimumFractionDigits: 2 })}</span></div>
-                <div className="ct-view-row"><span className="ct-view-key">Banco emisor</span><span className="ct-view-val">{viewItem.banco_emisor}</span></div>
                 <div className="ct-view-row"><span className="ct-view-key">Banco receptor</span><span className="ct-view-val">{viewItem.banco_receptor}</span></div>
+                {viewItem.tipo_cuenta && <div className="ct-view-row"><span className="ct-view-key">Tipo de cuenta</span><span className="ct-view-val">{viewItem.tipo_cuenta}</span></div>}
                 <div className="ct-view-row"><span className="ct-view-key">N° de cuenta</span><span className="ct-view-val">{viewItem.numero_cuenta}</span></div>
                 <div className="ct-view-row"><span className="ct-view-key">Fecha</span><span className="ct-view-val">{viewItem.fecha_dia} de {viewItem.fecha_mes} de {viewItem.fecha_anio}</span></div>
               </div>
