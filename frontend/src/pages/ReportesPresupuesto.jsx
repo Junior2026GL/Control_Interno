@@ -116,20 +116,27 @@ async function buildPDFHeader(doc, anio, me) {
 }
 
 function addPDFFooter(doc, x0, CW, BM) {
-  const C_AZUL  = [39, 76, 141];
+  const C_AZUL   = [39, 76, 141];
   const C_BLANCO = [255, 255, 255];
-  const PH = doc.internal.pageSize.getHeight();
-  const FH = 9;
+  const PH    = doc.internal.pageSize.getHeight();
+  const FH    = 9;
   const total = doc.internal.getNumberOfPages();
+  const bx    = x0 - 4;   // mismo que PresupuestoDiputados
+  const bw    = CW + 8;   // mismo que PresupuestoDiputados
   for (let p = 1; p <= total; p++) {
     doc.setPage(p);
+    // Marco exterior — igual que PresupuestoDiputados
+    doc.setDrawColor(...C_AZUL);
+    doc.setLineWidth(1.2);
+    doc.rect(bx, BM, bw, PH - 2 * BM, 'S');
+    // Barra footer (cubre todo el ancho del marco)
     doc.setFillColor(...C_AZUL);
-    doc.rect(x0, PH - BM - FH, CW, FH, 'F');
+    doc.rect(bx, PH - BM - FH, bw, FH, 'F');
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
     doc.setTextColor(...C_BLANCO);
     const mid = x0 + CW / 2;
     doc.text('CONGRESO NACIONAL — PAGADURÍA ESPECIAL', mid, PH - BM - FH / 2 + 1.5, { align: 'center' });
-    doc.text(`Página ${p} de ${total}`, x0 + CW - 3, PH - BM - FH / 2 + 1.5, { align: 'right' });
+    doc.text(`Página ${p} de ${total}`, bx + bw - 3, PH - BM - FH / 2 + 1.5, { align: 'right' });
   }
 }
 
@@ -441,15 +448,6 @@ export default function ReportesPresupuesto() {
 
     addPDFFooter(doc, x0, CW, BM);
 
-    // Outer border on each page
-    const pageCount = doc.internal.getNumberOfPages();
-    const PH = doc.internal.pageSize.getHeight();
-    for (let p = 1; p <= pageCount; p++) {
-      doc.setPage(p);
-      doc.setDrawColor(...C_AZUL); doc.setLineWidth(0.5);
-      doc.rect(x0, x0, CW, PH - BM - x0);
-    }
-
     doc.save(`Resumen_Presupuesto_${anio}.pdf`);
   };
 
@@ -521,14 +519,6 @@ export default function ReportesPresupuesto() {
     });
 
     addPDFFooter(doc, x0, CW, BM);
-
-    const pageCount = doc.internal.getNumberOfPages();
-    const PH = doc.internal.pageSize.getHeight();
-    for (let p = 1; p <= pageCount; p++) {
-      doc.setPage(p);
-      doc.setDrawColor(...C_AZUL); doc.setLineWidth(0.5);
-      doc.rect(x0, x0, CW, PH - BM - x0);
-    }
 
     doc.save(`Ayudas_Sociales_${anio}${selectedDip ? '_' + selectedDip.nombre.replace(/\s+/g, '_') : ''}.pdf`);
   };
