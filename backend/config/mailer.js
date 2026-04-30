@@ -429,3 +429,96 @@ exports.sendBackupFailure = async (toEmail, errorMessage, lastBackup) => {
     attachments: [{ filename: 'logo-congreso.png', path: LOGO_PATH, cid: 'logo_congreso' }],
   });
 };
+
+/**
+ * Notificación de descarga de base de datos.
+ * @param {string} toEmail
+ * @param {string} nombreUsuario  - Nombre del usuario que descargó
+ * @param {string} filename       - Nombre del archivo descargado
+ * @param {string} ip             - IP desde donde se descargó
+ */
+exports.sendDownloadNotification = async (toEmail, nombreUsuario, filename, ip) => {
+  const dateStr = new Date().toLocaleString('es-HN', { timeZone: 'America/Tegucigalpa' });
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:15px;color:#1e293b;line-height:1.6;">
+      Se realizó una <strong>descarga de la base de datos</strong> del sistema.
+      A continuación los detalles del evento:
+    </p>
+
+    <!-- Tabla de detalles -->
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"
+           style="border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:24px;">
+      <tr bgcolor="#f8fafc">
+        <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:12px;
+                   font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:1px;
+                   border-bottom:1px solid #e2e8f0;" width="140">
+          Usuario
+        </td>
+        <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;
+                   color:#1e293b;font-weight:600;border-bottom:1px solid #e2e8f0;">
+          ${nombreUsuario}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:12px;
+                   font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:1px;
+                   border-bottom:1px solid #e2e8f0;">
+          Fecha / Hora
+        </td>
+        <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;
+                   color:#1e293b;border-bottom:1px solid #e2e8f0;">
+          ${dateStr}
+        </td>
+      </tr>
+      <tr bgcolor="#f8fafc">
+        <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:12px;
+                   font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:1px;
+                   border-bottom:1px solid #e2e8f0;">
+          Archivo
+        </td>
+        <td style="padding:10px 16px;font-family:Arial,monospace;font-size:12.5px;
+                   color:#1e293b;border-bottom:1px solid #e2e8f0;">
+          ${filename}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:10px 16px;font-family:Arial,sans-serif;font-size:12px;
+                   font-weight:bold;color:#64748b;text-transform:uppercase;letter-spacing:1px;">
+          IP de origen
+        </td>
+        <td style="padding:10px 16px;font-family:Arial,monospace;font-size:13px;
+                   color:#1a3a6e;font-weight:700;">
+          ${ip}
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td bgcolor="#f0f4ff" style="padding:14px 18px;border-radius:8px;border-left:4px solid #1a3a6e;">
+          <p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#1e3a6e;line-height:1.6;">
+            Si no reconoces esta actividad, revisa el módulo de
+            <strong>Auditoría</strong> del sistema de inmediato.
+          </p>
+        </td>
+      </tr>
+    </table>`;
+
+  const html = buildBackupEmail({
+    accentColor: '#1a3a6e',
+    headerBg: '#0f2744',
+    iconHtml: '💾',
+    titleText: 'Descarga de base de datos',
+    subtitleText: 'Sistema de Control Interno',
+    bodyHtml,
+  });
+
+  await transporter.sendMail({
+    from: `"Sistema Control Interno" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: `💾 Descarga de base de datos – ${dateStr}`,
+    html,
+    attachments: [{ filename: 'logo-congreso.png', path: LOGO_PATH, cid: 'logo_congreso' }],
+  });
+};

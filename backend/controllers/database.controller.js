@@ -355,6 +355,18 @@ exports.exportDB = async (req, res) => {
       ip, metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO',
     });
 
+    // Enviar notificación por correo (fire-and-forget)
+    const alertEmail = process.env.ALERT_EMAIL;
+    if (alertEmail) {
+      const mailer = require('../config/mailer');
+      mailer.sendDownloadNotification(
+        alertEmail,
+        usuario.nombre || 'Desconocido',
+        filename,
+        ip,
+      ).catch(e => console.error('[DB-Export] Error enviando correo:', e.message));
+    }
+
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', buf.length);
