@@ -189,6 +189,7 @@ export default function ReportesPresupuesto() {
   const [aEstado, setAEstado] = useState('');
 
   const [toast, setToast] = useState(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -381,6 +382,9 @@ export default function ReportesPresupuesto() {
 
   /* ── Export Resumen PDF ────────────────────────────────── */
   const exportResumenPDF = async () => {
+    if (exportingPDF) return;
+    setExportingPDF(true);
+    try {
     const C_AZUL    = [39,  76, 141];
     const C_AZUL_OSC = [22, 51, 110];
     const C_BLANCO  = [255, 255, 255];
@@ -456,10 +460,18 @@ export default function ReportesPresupuesto() {
     addPDFFooter(doc, x0, CW, BM);
 
     doc.save(`Resumen_Presupuesto_${anio}.pdf`);
+    } catch (err) {
+      showToast('Error al generar el PDF: ' + (err?.message || 'Error desconocido'), 'error');
+    } finally {
+      setExportingPDF(false);
+    }
   };
 
   /* ── Export Ayudas PDF ─────────────────────────────────── */
   const exportAyudasPDF = async () => {
+    if (exportingPDF) return;
+    setExportingPDF(true);
+    try {
     const C_AZUL   = [39, 76, 141];
     const C_BLANCO = [255, 255, 255];
     const C_GRIS   = [235, 242, 255];
@@ -528,6 +540,11 @@ export default function ReportesPresupuesto() {
     addPDFFooter(doc, x0, CW, BM);
 
     doc.save(`Ayudas_Sociales_${anio}${selectedDip ? '_' + selectedDip.nombre.replace(/\s+/g, '_') : ''}.pdf`);
+    } catch (err) {
+      showToast('Error al generar el PDF: ' + (err?.message || 'Error desconocido'), 'error');
+    } finally {
+      setExportingPDF(false);
+    }
   };
 
   /* ── Export Ayudas CSV ─────────────────────────────────── */
@@ -787,8 +804,8 @@ export default function ReportesPresupuesto() {
                 )}
               </div>
               <button className="rp-export-btn" onClick={exportResumenPDF}
-                disabled={loadingResumen || !resumen.length}>
-                <FiDownload size={13} /> Exportar PDF
+                disabled={loadingResumen || !resumen.length || exportingPDF}>
+                <FiDownload size={13} /> {exportingPDF ? 'Generando...' : 'Exportar PDF'}
               </button>
             </div>
 
@@ -1014,8 +1031,8 @@ export default function ReportesPresupuesto() {
                   )}
                 </div>
                 <button className="rp-export-btn" onClick={exportAyudasPDF}
-                  disabled={loadingAyudas || !ayudas.length}>
-                  <FiDownload size={13} /> Exportar PDF
+                  disabled={loadingAyudas || !ayudas.length || exportingPDF}>
+                  <FiDownload size={13} /> {exportingPDF ? 'Generando...' : 'Exportar PDF'}
                 </button>
               </div>
             </div>
