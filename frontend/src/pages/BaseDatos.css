@@ -1,29 +1,43 @@
-﻿/* ── Banner (redesigned page) ─────────────────────────────── */
+﻿/* ── Banner ───────────────────────────────────────────────── */
 .db-banner {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-  background: linear-gradient(135deg, #274C8D, #3a6bbf);
-  border-radius: 16px;
-  padding: 20px 24px;
+  gap: 18px;
+  margin-bottom: 26px;
+  background: linear-gradient(135deg, #1e3a6e 0%, #274C8D 50%, #3a6bbf 100%);
+  border-radius: 18px;
+  padding: 24px 28px;
   color: white;
+  box-shadow: 0 4px 24px rgba(39,76,141,.28);
+  position: relative;
+  overflow: hidden;
+}
+.db-banner::after {
+  content: '';
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  pointer-events: none;
 }
 .db-banner-icon {
-  width: 52px; height: 52px;
-  border-radius: 14px;
+  width: 56px; height: 56px;
+  border-radius: 15px;
   background: rgba(255,255,255,.18);
+  border: 1.5px solid rgba(255,255,255,.25);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.db-banner-title { font-size: 22px; font-weight: 700; margin: 0 0 2px; color: white; }
-.db-banner-sub   { font-size: 13px; color: rgba(255,255,255,.82); margin: 0; }
+.db-banner-title { font-size: 23px; font-weight: 800; margin: 0 0 3px; color: white; letter-spacing: -.3px; }
+.db-banner-sub   { font-size: 13px; color: rgba(255,255,255,.78); margin: 0; }
 .db-banner-meta  {
   margin-left: auto;
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(255,255,255,.18);
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.22);
   border-radius: 99px;
-  padding: 6px 14px;
+  padding: 7px 16px;
   font-size: 12.5px; font-weight: 600;
   white-space: nowrap;
 }
@@ -31,73 +45,84 @@
 /* ── Download card ────────────────────────────────────────── */
 .db-download-card {
   background: white;
-  border: 1px solid #e8edf5;
-  border-radius: 16px;
-  padding: 28px 30px;
+  border: 1px solid #e2eaf5;
+  border-radius: 18px;
+  padding: 28px 32px;
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 28px;
   margin-bottom: 22px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.05);
+  box-shadow: 0 2px 14px rgba(39,76,141,.07);
+  transition: box-shadow .2s;
+}
+.db-download-card:hover {
+  box-shadow: 0 6px 28px rgba(39,76,141,.12);
 }
 .db-download-left {
   display: flex;
-  align-items: flex-start;
-  gap: 18px;
+  align-items: center;
+  gap: 22px;
   flex: 1;
 }
 .db-download-icon {
-  width: 64px; height: 64px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  width: 68px; height: 68px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #274C8D, #3a6bbf);
   color: white;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(39,76,141,.3);
 }
 .db-download-title {
-  font-size: 18px; font-weight: 700; color: #1a2b4a; margin: 0 0 6px;
+  font-size: 18px; font-weight: 800; color: #1a2b4a; margin: 0 0 5px; letter-spacing: -.2px;
 }
 .db-download-desc {
   font-size: 13.5px; color: #64748b; line-height: 1.6; margin: 0 0 8px;
 }
+.db-download-desc code {
+  background: #f1f5f9; border-radius: 4px; padding: 1px 6px;
+  font-size: 12.5px; color: #274C8D; font-weight: 600;
+}
 .db-download-last {
   font-size: 12px; color: #94a3b8; margin: 0;
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center; gap: 5px;
 }
 .db-download-last strong { color: #475569; }
 .db-download-last-date  { color: #94a3b8; }
 .db-download-btn {
-  display: inline-flex; align-items: center; gap: 9px;
-  padding: 13px 26px; border-radius: 12px; border: none;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 28px; border-radius: 13px; border: none;
+  background: linear-gradient(135deg, #274C8D, #3a6bbf);
   color: white; font-size: 14.5px; font-weight: 700;
-  cursor: pointer; transition: all .15s; white-space: nowrap;
+  cursor: pointer; transition: all .18s; white-space: nowrap;
   flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(22,163,74,.3);
+  box-shadow: 0 4px 16px rgba(39,76,141,.32);
+  letter-spacing: .01em;
 }
 .db-download-btn:not(:disabled):hover {
-  filter: brightness(1.08); transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(22,163,74,.4);
+  filter: brightness(1.1); transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(39,76,141,.4);
 }
 .db-download-btn:disabled { opacity: .6; cursor: not-allowed; }
 
 /* ── Log card ─────────────────────────────────────────────── */
 .db-log-card {
   background: white;
-  border: 1px solid #e8edf5;
-  border-radius: 16px;
+  border: 1px solid #e2eaf5;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  box-shadow: 0 2px 14px rgba(39,76,141,.07);
 }
 .db-log-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 22px;
-  border-bottom: 1px solid #f0f4f8;
+  padding: 18px 24px;
+  border-bottom: 1px solid #eef2f8;
+  background: #fafbfd;
 }
 .db-log-header-left {
-  display: flex; align-items: center; gap: 11px;
+  display: flex; align-items: center; gap: 12px;
 }
-.db-log-icon { color: #7c3aed; flex-shrink: 0; }
+.db-log-icon { color: #274C8D; flex-shrink: 0; }
 .db-log-title { font-size: 15px; font-weight: 700; color: #1a2b4a; margin: 0 0 2px; }
 .db-log-sub   { font-size: 12px; color: #64748b; margin: 0; }
 .db-log-refresh {
@@ -107,7 +132,7 @@
   font-size: 12.5px; font-weight: 600; color: #64748b;
   cursor: pointer; transition: all .14s;
 }
-.db-log-refresh:hover:not(:disabled) { background: #f1f5f9; border-color: #c7d2fe; color: #4338ca; }
+.db-log-refresh:hover:not(:disabled) { background: #eef2fb; border-color: #274C8D; color: #274C8D; }
 .db-log-refresh:disabled { opacity: .5; cursor: not-allowed; }
 .db-log-loading {
   display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -126,15 +151,15 @@
   width: 100%; border-collapse: collapse; font-size: 13px;
 }
 .db-log-table th {
-  text-align: left; padding: 10px 16px;
-  background: #f8fafc; color: #64748b;
-  font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
-  border-bottom: 1px solid #e2e8f0;
+  text-align: left; padding: 10px 20px;
+  background: #f4f7fc; color: #4a6080;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: 1px solid #e2eaf5;
   white-space: nowrap;
 }
 .db-log-table th svg { vertical-align: middle; margin-right: 4px; }
 .db-log-table td {
-  padding: 11px 16px; border-bottom: 1px solid #f0f4f8;
+  padding: 12px 20px; border-bottom: 1px solid #f0f4f8;
   color: #334155; vertical-align: middle;
 }
 .db-log-table tr:last-child td { border-bottom: none; }
@@ -144,7 +169,7 @@
 .db-log-date   { white-space: nowrap; font-size: 12.5px; color: #475569; }
 .db-log-user   { font-weight: 600; color: #1a2b4a; }
 .db-log-detail { font-size: 12.5px; color: #64748b; max-width: 280px; }
-.db-log-ip     { font-family: monospace; font-size: 12px; color: #7c3aed; }
+.db-log-ip     { font-family: monospace; font-size: 12px; color: #274C8D; font-weight: 600; }
 
 .db-log-badge {
   display: inline-flex; align-items: center; gap: 4px;

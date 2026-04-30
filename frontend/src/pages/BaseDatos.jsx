@@ -124,14 +124,14 @@ export default function BaseDatos() {
 
         {/* -- Banner -- */}
         <div className="db-banner">
-          <div className="db-banner-icon"><LuDatabase size={26} /></div>
+          <div className="db-banner-icon"><LuDatabase size={28} /></div>
           <div>
             <h1 className="db-banner-title">Base de Datos</h1>
-            <p className="db-banner-sub">Descarga y bitácora de respaldos — Railway</p>
+            <p className="db-banner-sub">Gestión y respaldo de la base de datos del sistema</p>
           </div>
           <div className="db-banner-meta">
             <LuShieldCheck size={14} />
-            <span>Base de datos alojada en Railway</span>
+            <span>Acceso exclusivo · Super Admin</span>
           </div>
         </div>
 
@@ -144,8 +144,8 @@ export default function BaseDatos() {
             <div>
               <h2 className="db-download-title">Descargar Base de Datos</h2>
               <p className="db-download-desc">
-                Genera un volcado SQL completo de todos los datos y estructura actual.
-                El archivo se descargará directamente a tu equipo.
+                Genera un volcado SQL completo con todos los datos y la estructura actual.
+                El archivo <code>.sql</code> se descargará directamente a tu equipo.
               </p>
               {lastDownload && (
                 <p className="db-download-last">
