@@ -3,6 +3,7 @@ import {
   FiPlus, FiRefreshCw, FiEdit3, FiTrash2, FiX,
   FiCheckCircle, FiAlertCircle, FiFilter, FiList,
   FiUsers, FiSearch, FiDownload, FiChevronUp, FiChevronDown,
+  FiChevronLeft, FiChevronRight,
 } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import Navbar from '../components/Navbar';
@@ -46,7 +47,7 @@ function applySort(arr, { col, dir }) {
   });
 }
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 10;
 
 export default function Alcaldes() {
   const { user: me } = useContext(AuthContext);
@@ -402,30 +403,51 @@ export default function Alcaldes() {
                 </table>
               </div>
 
-              {totalPages > 1 && (
-                <div className="alc-pagination">
-                  <button className="alc-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-                  <button className="alc-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-                  <div className="alc-pg-nums">
-                    {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                      let p;
-                      if (totalPages <= 7) p = i + 1;
-                      else if (page <= 4) p = i + 1;
-                      else if (page >= totalPages - 3) p = totalPages - 6 + i;
-                      else p = page - 3 + i;
-                      return (
+              <div className="alc-pagination">
+                <span className="alc-pg-info">
+                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de <strong>{filtered.length}</strong>
+                </span>
+                <div className="alc-pg-controls">
+                  <button className="alc-pg-btn" disabled={page === 1} onClick={() => setPage(1)} title="Primera">
+                    <FiChevronLeft size={13}/><FiChevronLeft size={13}/>
+                  </button>
+                  <button className="alc-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)} title="Anterior">
+                    <FiChevronLeft size={14}/>
+                  </button>
+
+                  {(() => {
+                    const maxBtns = 7;
+                    let start = Math.max(1, page - Math.floor(maxBtns / 2));
+                    let end   = Math.min(totalPages, start + maxBtns - 1);
+                    if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                    const pages = [];
+                    if (start > 1) {
+                      pages.push(<button key={1} className="alc-pg-num" onClick={() => setPage(1)}>1</button>);
+                      if (start > 2) pages.push(<span key="el" className="alc-pg-ellipsis">…</span>);
+                    }
+                    for (let p = start; p <= end; p++) {
+                      pages.push(
                         <button key={p}
-                          className={`alc-pg-num ${page === p ? 'alc-pg-num--active' : ''}`}
-                          onClick={() => setPage(p)}>
-                          {p}
-                        </button>
+                          className={`alc-pg-num${page === p ? ' alc-pg-num--active' : ''}`}
+                          onClick={() => setPage(p)}>{p}</button>
                       );
-                    })}
-                  </div>
-                  <button className="alc-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-                  <button className="alc-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
+                    }
+                    if (end < totalPages) {
+                      if (end < totalPages - 1) pages.push(<span key="er" className="alc-pg-ellipsis">…</span>);
+                      pages.push(<button key={totalPages} className="alc-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
+                    }
+                    return pages;
+                  })()}
+
+                  <button className="alc-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)} title="Siguiente">
+                    <FiChevronRight size={14}/>
+                  </button>
+                  <button className="alc-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)} title="Última">
+                    <FiChevronRight size={13}/><FiChevronRight size={13}/>
+                  </button>
                 </div>
-              )}
+                <span className="alc-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
+              </div>
             </>
           )}
         </div>
