@@ -291,89 +291,83 @@ exports.manualBackup = async (req, res) => {
   }
 };
 
-exports.exportDB = (req, res) => {
-  const dlFilename  = buildFilename(false);  // colons ok in Content-Disposition
-  const tmpFilename = buildFilename(true);   // safe chars for filesystem
-  const tmpPath     = path.join(require('os').tmpdir(), tmpFilename);
-  const usuario     = req.user || {};
-  const ip          = req.ip || '?';
+// Escape a JS value to a safe SQL literal
+function sqlEscape(v) {
+  if (v === null || v === undefined) return 'NULL';
+  if (typeof v === 'boolean') return v ? '1' : '0';
+  if (typeof v === 'number') return String(v);
+  if (v instanceof Date) return `'${v.toISOString().slice(0, 19).replace('T', ' ')}'`;
+  if (Buffer.isBuffer(v)) return `0x${v.toString('hex')}`;
+  return `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\x00/g, '\\0').replace(/\n/g, '\\n').replace(/\r/g, '\\r')}'`;
+}
 
-  const args = [
-    `--host=${process.env.DB_HOST}`,
-    `--user=${process.env.DB_USER}`,
-    `--password=${process.env.DB_PASSWORD}`,
-    '--databases',
-    process.env.DB_NAME,
-  ];
+exports.exportDB = async (req, res) => {
+  const pool    = require('../db');
+  const pPool   = pool.promise();
+  const usuario = req.user || {};
+  const ip      = req.ip || '?';
+  const filename = buildFilename(false);
 
-  const child = spawn(resolveBin('mysqldump'), args, { shell: false });
-  const ws    = fs.createWriteStream(tmpPath);
-  child.stdout.pipe(ws);
+  try {
+    const now = new Date();
+    const dateStr = now.toLocaleString('es-HN', { timeZone: 'America/Tegucigalpa' });
+    let sql = `-- ============================================================\n`;
+    sql += `-- Base de datos: ${process.env.DB_NAME}\n`;
+    sql += `-- Exportado el: ${dateStr}\n`;
+    sql += `-- ============================================================\n\n`;
+    sql += `SET FOREIGN_KEY_CHECKS=0;\nSET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n\n`;
 
-  let exitCode = null;
-  let wsFinished = false;
-  let childClosed = false;
-  let errMsg = '';
-  let timedOut = false;
+    const [tables] = await pPool.query('SHOW TABLES');
+    const tableKey = Object.keys(tables[0])[0]; // Tables_in_<db_name>
 
-  const timer = setTimeout(() => {
-    timedOut = true;
-    child.kill('SIGTERM');
-  }, SPAWN_TIMEOUT_MS);
+    for (const row of tables) {
+      const tbl = row[tableKey];
 
-  function finish() {
-    if (!wsFinished || !childClosed) return;
-    clearTimeout(timer);
+      // DROP + CREATE
+      const [[createRow]] = await pPool.query(`SHOW CREATE TABLE \`${tbl}\``);
+      sql += `-- ------------------------------------------------------------\n`;
+      sql += `-- Tabla: ${tbl}\n`;
+      sql += `-- ------------------------------------------------------------\n`;
+      sql += `DROP TABLE IF EXISTS \`${tbl}\`;\n`;
+      sql += (createRow['Create Table'] || createRow['Create View']) + ';\n\n';
 
-    if (timedOut) {
-      fs.unlink(tmpPath, () => {});
-      if (!res.headersSent)
-        return res.status(500).json({ message: 'Timeout: la exportación superó 5 minutos' });
-      return;
+      // Rows
+      const [rows] = await pPool.query(`SELECT * FROM \`${tbl}\``);
+      if (rows.length > 0) {
+        const cols = Object.keys(rows[0]).map(c => `\`${c}\``).join(', ');
+        const CHUNK = 500;
+        for (let i = 0; i < rows.length; i += CHUNK) {
+          const chunk = rows.slice(i, i + CHUNK);
+          const vals  = chunk.map(r => `(${Object.values(r).map(sqlEscape).join(', ')})`).join(',\n');
+          sql += `INSERT INTO \`${tbl}\` (${cols}) VALUES\n${vals};\n\n`;
+        }
+      }
     }
 
-    const fileSize = (() => { try { return fs.statSync(tmpPath).size; } catch { return 0; } })();
+    sql += `SET FOREIGN_KEY_CHECKS=1;\n`;
 
-    if (exitCode !== 0 || fileSize < 100) {
-      fs.unlink(tmpPath, () => {});
-      const detail = errMsg.trim() || `mysqldump terminó con código ${exitCode}`;
-      logEvent({ usuario_id: usuario.id || null, usuario_nombre: usuario.nombre || null,
-        accion: 'CREAR', modulo: 'BASE_DATOS', detalle: `Error en exportación: ${detail}`,
-        ip, metodo: req.method, ruta: req.originalUrl, resultado: 'FALLO' });
-      if (!res.headersSent)
-        return res.status(500).json({ message: 'Error al exportar la base de datos. Verifique que mysqldump esté disponible y las credenciales en el .env sean correctas.', error: detail });
-      return;
-    }
+    const buf = Buffer.from(sql, 'utf8');
 
-    logEvent({ usuario_id: usuario.id || null, usuario_nombre: usuario.nombre || null,
-      accion: 'CREAR', modulo: 'BASE_DATOS', detalle: `Exportación SQL: ${dlFilename}`,
-      ip, metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
+    logEvent({
+      usuario_id: usuario.id || null, usuario_nombre: usuario.nombre || null,
+      accion: 'CREAR', modulo: 'BASE_DATOS',
+      detalle: `Exportación SQL: ${filename}`,
+      ip, metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO',
+    });
 
     res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${dlFilename}"`);
-    res.setHeader('Content-Length', fileSize);
-
-    const rs = fs.createReadStream(tmpPath);
-    rs.pipe(res);
-    rs.on('close', () => fs.unlink(tmpPath, () => {}));
-    rs.on('error', err2 => {
-      fs.unlink(tmpPath, () => {});
-      if (!res.headersSent) res.status(500).json({ message: 'Error al leer el archivo generado.', error: err2.message });
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', buf.length);
+    res.send(buf);
+  } catch (err) {
+    logEvent({
+      usuario_id: usuario.id || null, usuario_nombre: usuario.nombre || null,
+      accion: 'CREAR', modulo: 'BASE_DATOS',
+      detalle: `Error en exportación: ${err.message}`,
+      ip, metodo: req.method, ruta: req.originalUrl, resultado: 'FALLO',
     });
+    if (!res.headersSent) res.status(500).json({ message: 'Error al exportar la base de datos', error: err.message });
   }
-
-  child.stderr.on('data', d => { errMsg += d.toString(); });
-  ws.on('finish', () => { wsFinished = true; finish(); });
-  child.on('close', code => { exitCode = code; childClosed = true; finish(); });
-
-  child.on('error', err => {
-    clearTimeout(timer);
-    fs.unlink(tmpPath, () => {});
-    logEvent({ usuario_id: usuario.id || null, usuario_nombre: usuario.nombre || null,
-      accion: 'CREAR', modulo: 'BASE_DATOS', detalle: `Error en exportación: ${err.message}`,
-      ip, metodo: req.method, ruta: req.originalUrl, resultado: 'FALLO' });
-    if (!res.headersSent) res.status(500).json({ message: `mysqldump no encontrado. Configure MYSQL_BIN en el .env o agregue MySQL al PATH del sistema.`, error: err.message });
-  });
 };
 
 exports.importDB = (req, res) => {
@@ -503,12 +497,12 @@ exports.getDownloadLog = (req, res) => {
   const db     = require('../db');
 
   db.query(
-    `SELECT id, usuario_nombre, detalle, ip, resultado, fecha_hora
+    `SELECT id, usuario_nombre, detalle, ip, resultado, creado_en
      FROM auditoria
      WHERE modulo = 'BASE_DATOS'
        AND accion = 'CREAR'
        AND (detalle LIKE 'Exportación%' OR detalle LIKE 'Exportacion%' OR detalle LIKE 'Backup manual%')
-     ORDER BY fecha_hora DESC
+     ORDER BY creado_en DESC
      LIMIT ? OFFSET ?`,
     [limit, offset],
     (err, rows) => {
