@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import {
@@ -30,7 +30,7 @@ function Toast({ toasts, onRemove }) {
 
 /* -- Helpers --------------------------------------------------- */
 function formatDate(d) {
-  if (!d) return '�';
+  if (!d) return '—';
   return new Date(d).toLocaleString('es-HN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -44,7 +44,7 @@ function timeAgo(d) {
   if (min < 60) return `Hace ${min} min`;
   const h = Math.floor(min / 60);
   if (h < 24) return `Hace ${h}h`;
-  return `Hace ${Math.floor(h / 24)} d�a(s)`;
+  return `Hace ${Math.floor(h / 24)} día(s)`;
 }
 
 const LOG_PAGE = 10;
@@ -127,7 +127,7 @@ export default function BaseDatos() {
           <div className="db-banner-icon"><LuDatabase size={26} /></div>
           <div>
             <h1 className="db-banner-title">Base de Datos</h1>
-            <p className="db-banner-sub">Descarga y bit�cora de respaldos � Railway</p>
+            <p className="db-banner-sub">Descarga y bitácora de respaldos — Railway</p>
           </div>
           <div className="db-banner-meta">
             <LuShieldCheck size={14} />
@@ -145,12 +145,12 @@ export default function BaseDatos() {
               <h2 className="db-download-title">Descargar Base de Datos</h2>
               <p className="db-download-desc">
                 Genera un volcado SQL completo de todos los datos y estructura actual.
-                El archivo se descargar� directamente a tu equipo.
+                El archivo se descargará directamente a tu equipo.
               </p>
               {lastDownload && (
                 <p className="db-download-last">
-                  <LuCalendar size={12} /> �ltima descarga: <strong>{timeAgo(lastDownload)}</strong>
-                  <span className="db-download-last-date"> � {formatDate(lastDownload)}</span>
+                  <LuCalendar size={12} /> Última descarga: <strong>{timeAgo(lastDownload)}</strong>
+                  <span className="db-download-last-date"> — {formatDate(lastDownload)}</span>
                 </p>
               )}
             </div>
@@ -166,13 +166,13 @@ export default function BaseDatos() {
           </button>
         </div>
 
-        {/* -- Bit�cora -- */}
+        {/* ── Bitácora ── */}
         <div className="db-log-card">
           <div className="db-log-header">
             <div className="db-log-header-left">
               <LuHistory size={18} className="db-log-icon" />
               <div>
-                <h2 className="db-log-title">Bit�cora de Descargas</h2>
+                <h2 className="db-log-title">Bitácora de Descargas</h2>
                 <p className="db-log-sub">{logTotal} registro{logTotal !== 1 ? 's' : ''} en total</p>
               </div>
             </div>
@@ -191,7 +191,7 @@ export default function BaseDatos() {
             <div className="db-log-empty">
               <LuHistory size={40} />
               <p>Sin descargas registradas</p>
-              <span>Aqu� aparecer� cada vez que se descargue la base de datos.</span>
+              <span>Aquí aparecerá cada vez que se descargue la base de datos.</span>
             </div>
           ) : (
             <>
@@ -212,7 +212,7 @@ export default function BaseDatos() {
                       <tr key={entry.id}>
                         <td className="db-log-num">{(logPage - 1) * LOG_PAGE + i + 1}</td>
                         <td className="db-log-date">{formatDate(entry.creado_en)}</td>
-                        <td className="db-log-user">{entry.usuario_nombre || '�'}</td>
+                        <td className="db-log-user">{entry.usuario_nombre || '—'}</td>
                         <td className="db-log-detail">{entry.detalle}</td>
                         <td className="db-log-ip">{entry.ip}</td>
                         <td>
@@ -234,13 +234,13 @@ export default function BaseDatos() {
                     className="db-pg-btn"
                     onClick={() => changePage(logPage - 1)}
                     disabled={logPage === 1}
-                  >� Anterior</button>
-                  <span className="db-pg-info">P�gina {logPage} de {logPages}</span>
+                  >‹ Anterior</button>
+                  <span className="db-pg-info">Página {logPage} de {logPages}</span>
                   <button
                     className="db-pg-btn"
                     onClick={() => changePage(logPage + 1)}
                     disabled={logPage === logPages}
-                  >Siguiente �</button>
+                  >Siguiente ›</button>
                 </div>
               )}
             </>
