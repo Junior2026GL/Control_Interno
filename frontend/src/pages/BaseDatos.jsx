@@ -5,7 +5,8 @@ import {
   LuDatabase, LuDownload, LuRefreshCw,
   LuCircleCheck, LuTriangleAlert, LuX,
   LuCloudDownload, LuCalendar, LuUser, LuGlobe,
-  LuHistory,
+  LuHistory, LuSettings, LuSave, LuClock, LuFolderOpen,
+  LuToggleLeft, LuToggleRight,
 } from 'react-icons/lu';
 import './BaseDatos.css';
 
@@ -49,6 +50,11 @@ function timeAgo(d) {
 
 const LOG_PAGE = 10;
 
+const DAYS_OF_WEEK = [
+  { v: 0, l: 'Domingo' }, { v: 1, l: 'Lunes' }, { v: 2, l: 'Martes' },
+  { v: 3, l: 'Miércoles' }, { v: 4, l: 'Jueves' }, { v: 5, l: 'Viernes' }, { v: 6, l: 'Sábado' },
+];
+
 /* -- Component ------------------------------------------------- */
 export default function BaseDatos() {
   const [exporting,    setExporting]    = useState(false);
@@ -58,6 +64,12 @@ export default function BaseDatos() {
   const [logPage,      setLogPage]      = useState(1);
   const [lastDownload, setLastDownload] = useState(null);
   const [toasts,       setToasts]       = useState([]);
+
+  // Config backup automático
+  const [cfg,        setCfg]        = useState(null);
+  const [cfgLoading, setCfgLoading] = useState(true);
+  const [cfgSaving,  setCfgSaving]  = useState(false);
+
   let toastCounter = 0;
 
   function addToast(message, type = 'success') {
@@ -66,8 +78,31 @@ export default function BaseDatos() {
     setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4500);
   }
 
-  const loadLog = useCallback(async (page = 1) => {
-    setLogLoading(true);
+  const loadConfig = useCallback(async () => {
+    try {
+      const { data } = await api.get('/database/config');
+      setCfg(data);
+    } catch {
+      addToast('Error al cargar la configuración', 'error');
+    } finally {
+      setCfgLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function saveConfig() {
+    setCfgSaving(true);
+    try {
+      await api.post('/database/config', cfg);
+      addToast('Configuración guardada correctamente');
+    } catch {
+      addToast('Error al guardar la configuración', 'error');
+    } finally {
+      setCfgSaving(false);
+    }
+  }
+
+  const loadLog = useCallback(async (page = 1) => {    setLogLoading(true);
     try {
       const offset = (page - 1) * LOG_PAGE;
       const { data } = await api.get(`/database/download-log?limit=${LOG_PAGE}&offset=${offset}`);
@@ -84,7 +119,7 @@ export default function BaseDatos() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { loadLog(1); }, [loadLog]);
+  useEffect(() => { loadLog(1); loadConfig(); }, [loadLog, loadConfig]);
 
   async function handleDownload() {
     setExporting(true);
@@ -160,6 +195,124 @@ export default function BaseDatos() {
               ? <><LuRefreshCw size={18} className="spin" /> Generando...</>
               : <><LuDownload size={18} /> Descargar SQL</>}
           </button>
+        </div>
+
+        {/* ── Configuración backup automático ── */}
+        <div className="db-cfg-card">
+          <div className="db-cfg-header">
+            <div className="db-cfg-header-left">
+              <div className="db-cfg-icon"><LuSettings size={18} /></div>
+              <div>
+                <h2 className="db-cfg-title">Backup Automático</h2>
+                <p className="db-cfg-sub">Programa descargas automáticas de la base de datos</p>
+              </div>
+            </div>
+            {cfg && (
+              <button
+                className={`db-cfg-toggle ${cfg.enabled ? 'db-cfg-toggle--on' : ''}`}
+                onClick={() => setCfg(p => ({ ...p, enabled: !p.enabled }))}
+              >
+                {cfg.enabled
+                  ? <><LuToggleRight size={17} /> Activado</>
+                  : <><LuToggleLeft size={17} /> Desactivado</>}
+              </button>
+            )}
+          </div>
+
+          {cfgLoading ? (
+            <div className="db-cfg-loading"><LuRefreshCw size={18} className="spin" /> Cargando...</div>
+          ) : cfg && (
+            <div className="db-cfg-body">
+
+              <div className="db-cfg-row">
+                {/* Frecuencia */}
+                <div className="db-cfg-field">
+                  <label className="db-cfg-label"><LuClock size={12} /> Frecuencia</label>
+                  <select
+                    className="db-cfg-select"
+                    value={cfg.frequency}
+                    onChange={e => setCfg(p => ({ ...p, frequency: e.target.value }))}
+                    disabled={!cfg.enabled}
+                  >
+                    <option value="daily">Diario</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="monthly">Mensual</option>
+                  </select>
+                </div>
+
+                {/* Hora */}
+                <div className="db-cfg-field">
+                  <label className="db-cfg-label"><LuClock size={12} /> Hora</label>
+                  <input
+                    type="time"
+                    className="db-cfg-input"
+                    value={cfg.time}
+                    onChange={e => setCfg(p => ({ ...p, time: e.target.value }))}
+                    disabled={!cfg.enabled}
+                  />
+                </div>
+
+                {/* Día de semana (solo weekly) */}
+                {cfg.frequency === 'weekly' && (
+                  <div className="db-cfg-field">
+                    <label className="db-cfg-label">Día de la semana</label>
+                    <select
+                      className="db-cfg-select"
+                      value={cfg.dayOfWeek}
+                      onChange={e => setCfg(p => ({ ...p, dayOfWeek: Number(e.target.value) }))}
+                      disabled={!cfg.enabled}
+                    >
+                      {DAYS_OF_WEEK.map(d => (
+                        <option key={d.v} value={d.v}>{d.l}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Día del mes (solo monthly) */}
+                {cfg.frequency === 'monthly' && (
+                  <div className="db-cfg-field">
+                    <label className="db-cfg-label">Día del mes</label>
+                    <input
+                      type="number"
+                      min="1" max="28"
+                      className="db-cfg-input"
+                      value={cfg.dayOfMonth}
+                      onChange={e => setCfg(p => ({ ...p, dayOfMonth: Number(e.target.value) }))}
+                      disabled={!cfg.enabled}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Ruta de guardado */}
+              <div className="db-cfg-field db-cfg-field--full">
+                <label className="db-cfg-label"><LuFolderOpen size={12} /> Ruta de guardado</label>
+                <input
+                  type="text"
+                  className="db-cfg-input"
+                  placeholder="Ej: C:\Users\usuario\Desktop\Backups"
+                  value={cfg.savePath || ''}
+                  onChange={e => setCfg(p => ({ ...p, savePath: e.target.value }))}
+                  disabled={!cfg.enabled}
+                />
+              </div>
+
+              {cfg.lastBackup && (
+                <p className="db-cfg-last">
+                  <LuCalendar size={12} /> Último backup automático: <strong>{formatDate(cfg.lastBackup)}</strong>
+                </p>
+              )}
+
+              <div className="db-cfg-actions">
+                <button className="db-cfg-save-btn" onClick={saveConfig} disabled={cfgSaving}>
+                  {cfgSaving
+                    ? <><LuRefreshCw size={15} className="spin" /> Guardando...</>
+                    : <><LuSave size={15} /> Guardar configuración</>}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Bitácora ── */}
