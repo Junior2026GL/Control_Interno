@@ -305,7 +305,7 @@ exports.exportDB = async (req, res) => {
   const pool    = require('../db');
   const pPool   = pool.promise();
   const usuario = req.user || {};
-  const ip      = req.ip || '?';
+  const ip      = (req.headers['x-forwarded-for'] || req.ip || '?').split(',')[0].trim();
   const filename = buildFilename(false);
 
   try {
