@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   FiShield, FiAlertTriangle, FiXCircle, FiCheckCircle,
   FiFilter, FiTrash2, FiRefreshCw, FiCalendar, FiUser, FiWifi, FiDownload,
+  FiActivity, FiClock, FiTag,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +23,12 @@ const ACCION_LABELS = {
   ELIMINAR:       { label: 'Eliminar',          color: 'danger'  },
   ACCESO_DENEGADO:{ label: 'Acceso denegado',   color: 'blocked' },
 };
+
+const MODULOS = [
+  'auth', 'BASE_DATOS', 'caja', 'diputados', 'alcaldes',
+  'ayudas', 'ayudas_alcaldias', 'autorizaciones', 'constancias',
+  'presupuesto', 'viaticos', 'auditoria', 'users', 'modulos', 'chat',
+];
 
 const RESULTADO_COLORS = { EXITO: 'success', FALLO: 'danger', BLOQUEADO: 'blocked' };
 
@@ -100,11 +107,6 @@ export default function Auditoria() {
   }, []);
 
   const handleApply = () => {
-    const hasFilter = Object.values(filters).some(v => v !== '');
-    if (!hasFilter) {
-      showToast('Seleccione al menos un filtro antes de filtrar.', 'warn');
-      return;
-    }
     setApplied({ ...filters });
     fetchLogs(1, filters);
     fetchStats();
@@ -305,15 +307,16 @@ export default function Auditoria() {
       <Navbar />
       <main className="page-content">
 
-        {/* Header */}
-        <div className="aud-header">
-          <div>
-            <h1><FiShield size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />Auditoría del Sistema</h1>
-            <p>Registro completo de accesos, acciones y eventos de seguridad.</p>
+        {/* ── Banner ── */}
+        <div className="aud-banner">
+          <div className="aud-banner-icon"><FiShield size={28} /></div>
+          <div className="aud-banner-text">
+            <h1 className="aud-banner-title">Auditoría del Sistema</h1>
+            <p className="aud-banner-sub">Registro completo de accesos, acciones y eventos de seguridad</p>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="aud-banner-actions">
             <button className="btn-pdf" onClick={handleExportPDF} disabled={exporting}>
-              <FiDownload size={14} /> {exporting ? 'Generando…' : 'Descargar PDF'}
+              <FiDownload size={14} /> {exporting ? 'Generando…' : 'Exportar PDF'}
             </button>
             <button className="btn-danger-outline" onClick={() => setPurgeConf(true)}>
               <FiTrash2 size={14} /> Eliminar registros
@@ -325,22 +328,27 @@ export default function Auditoria() {
         {stats && (
           <div className="aud-stats">
             <div className="aud-stat-card">
+              <div className="aud-stat-ico aud-ico-blue"><FiActivity size={18} /></div>
               <span className="aud-stat-num">{stats.total ?? 0}</span>
               <span className="aud-stat-label">Total eventos</span>
             </div>
             <div className="aud-stat-card">
+              <div className="aud-stat-ico aud-ico-teal"><FiClock size={18} /></div>
               <span className="aud-stat-num">{stats.hoy ?? 0}</span>
               <span className="aud-stat-label">Hoy</span>
             </div>
             <div className="aud-stat-card danger">
+              <div className="aud-stat-ico aud-ico-red"><FiXCircle size={18} /></div>
               <span className="aud-stat-num">{stats.login_fallidos ?? 0}</span>
               <span className="aud-stat-label">Logins fallidos</span>
             </div>
             <div className="aud-stat-card blocked">
+              <div className="aud-stat-ico aud-ico-orange"><FiWifi size={18} /></div>
               <span className="aud-stat-num">{stats.bloqueados ?? 0}</span>
               <span className="aud-stat-label">IPs bloqueadas</span>
             </div>
             <div className="aud-stat-card warning">
+              <div className="aud-stat-ico aud-ico-yellow"><FiAlertTriangle size={18} /></div>
               <span className="aud-stat-num">{stats.errores ?? 0}</span>
               <span className="aud-stat-label">Errores</span>
             </div>
@@ -349,6 +357,7 @@ export default function Auditoria() {
 
         {/* Filtros */}
         <div className="aud-filters">
+          <p className="aud-filters-title"><FiFilter size={12} /> Filtrar registros</p>
           <div className="aud-filter-grid">
             <div className="aud-filter-field">
               <label>Acción</label>
@@ -372,11 +381,12 @@ export default function Auditoria() {
 
             <div className="aud-filter-field">
               <label>Módulo</label>
-              <input
-                placeholder="ej. auth, caja, diputados"
-                value={filters.modulo}
-                onChange={e => setFilters(f => ({ ...f, modulo: e.target.value }))}
-              />
+              <select value={filters.modulo} onChange={e => setFilters(f => ({ ...f, modulo: e.target.value }))}>
+                <option value="">Todos los módulos</option>
+                {MODULOS.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
             </div>
 
             <div className="aud-filter-field">
@@ -413,6 +423,25 @@ export default function Auditoria() {
             </div>
           </div>
         </div>
+
+        {/* Filtros activos */}
+        {Object.values(applied).some(v => v) && (
+          <div className="aud-active-filters">
+            <span className="aud-active-label"><FiFilter size={12} /> Filtros activos:</span>
+            {Object.entries(applied).filter(([, v]) => v).map(([k, v]) => (
+              <span key={k} className="aud-active-tag">
+                <FiTag size={10} /> {k}: <strong>{v}</strong>
+                <button onClick={() => {
+                  const nf = { ...filters, [k]: '' };
+                  setFilters(nf);
+                  setApplied(nf);
+                  fetchLogs(1, nf);
+                }}>×</button>
+              </span>
+            ))}
+            <button className="aud-clear-all" onClick={handleReset}>Limpiar todos</button>
+          </div>
+        )}
 
         {/* Tabla */}
         <div className="aud-table-wrap">
