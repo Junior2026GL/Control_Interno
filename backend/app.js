@@ -62,5 +62,6 @@ app.use('/api/viaticos',        require('./routes/viaticos.routes'));
 app.use('/api/constancias',     require('./routes/constancias.routes'));
 app.use('/api/ayudas',           require('./routes/ayudas.routes'));
 app.use('/api/ayudas-alcaldias', require('./routes/ayudas_alcaldias.routes'));
+app.use('/api/alcaldes',         require('./routes/alcaldes.routes'));
 
 module.exports = app;
