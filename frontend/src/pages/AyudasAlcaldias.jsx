@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+﻿import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   FiPlus, FiRefreshCw, FiEdit3, FiTrash2, FiX,
   FiCheckCircle, FiAlertCircle, FiFilter, FiList,
-  FiDollarSign, FiMapPin,
+  FiDollarSign, FiMapPin, FiSearch, FiDownload, FiChevronUp, FiChevronDown,
 } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
 import './AyudasAlcaldias.css';
@@ -18,13 +19,16 @@ const DEPARTAMENTOS = [
   'SANTA BÁRBARA','VALLE','YORO',
 ];
 
+const CURRENT_YEAR = new Date().getFullYear();
+const ANIOS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i);
+
 function buildEmpty() {
   return {
     no_cheque: '', cuenta: '', beneficiario: '', departamento: '',
     orden_pago: '', descripcion: '', total: '',
     estado_entrega: 'pendiente', fecha_entrega: '',
     debitado: false, liquidado: false, fecha_liquidacion: '',
-    partido: '', mes: '',
+    partido: '', mes: '', anio: String(CURRENT_YEAR),
   };
 }
 
@@ -45,24 +49,45 @@ function fmtDate(iso) {
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 }
 
+function applySort(arr, { col, dir }) {
+  if (!col) return arr;
+  return [...arr].sort((a, b) => {
+    let va = a[col], vb = b[col];
+    if (va == null) va = '';
+    if (vb == null) vb = '';
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va < vb) return dir === 'asc' ? -1 : 1;
+    if (va > vb) return dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+}
+
+const PAGE_SIZE = 50;
+
 export default function AyudasAlcaldias() {
-  const [tab, setTab]           = useState('listado');   // 'listado' | 'nuevo'
-  const [data, setData]         = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [saving, setSaving]     = useState(false);
-  const [error, setError]       = useState('');
-  const [toast, setToast]       = useState(null);
-  const [form, setForm]         = useState(buildEmpty());
+  const [tab, setTab]             = useState('listado');
+  const [data, setData]           = useState([]);
+  const [loading, setLoading]     = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [error, setError]         = useState('');
+  const [toast, setToast]         = useState(null);
+  const [form, setForm]           = useState(buildEmpty());
   const [editingId, setEditingId] = useState(null);
   const [confirmCfg, setConfirmCfg] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  // Filtros
-  const [filtroDpto,   setFiltroDpto]   = useState('');
-  const [filtroMes,    setFiltroMes]    = useState('');
-  const [filtroPartido,setFiltroPartido]= useState('');
-  const [filtroEstado, setFiltroEstado] = useState('');
-  const [filtroDebitado, setFiltroDebitado] = useState('');
+  const [filtroDpto,      setFiltroDpto]      = useState('');
+  const [filtroMes,       setFiltroMes]       = useState('');
+  const [filtroAnio,      setFiltroAnio]      = useState('');
+  const [filtroPartido,   setFiltroPartido]   = useState('');
+  const [filtroEstado,    setFiltroEstado]    = useState('');
+  const [filtroDebitado,  setFiltroDebitado]  = useState('');
+  const [filtroLiquidado, setFiltroLiquidado] = useState('');
+  const [busqueda,        setBusqueda]        = useState('');
+
+  const [sortCfg, setSortCfg] = useState({ col: null, dir: 'asc' });
+  const [page, setPage]       = useState(1);
 
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type });
@@ -86,24 +111,78 @@ export default function AyudasAlcaldias() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  // ── totales resumen ──────────────────────────────────────────
-  const totalGeneral  = data.reduce((s, r) => s + parseFloat(r.total || 0), 0);
-  const totalEntregado = data.filter(r => r.estado_entrega === 'entregado')
-                             .reduce((s, r) => s + parseFloat(r.total || 0), 0);
-  const totalVencidos = data.filter(r => r.estado_vencimiento === 'VENCIDO').length;
+  useEffect(() => { setPage(1); },
+    [filtroDpto, filtroMes, filtroAnio, filtroPartido, filtroEstado, filtroDebitado, filtroLiquidado, busqueda, sortCfg]);
 
-  // ── filtrado ─────────────────────────────────────────────────
-  const filtered = data.filter(r => {
-    if (filtroDpto    && r.departamento !== filtroDpto) return false;
-    if (filtroMes     && r.mes !== filtroMes)           return false;
-    if (filtroPartido && r.partido !== filtroPartido)   return false;
-    if (filtroEstado  && r.estado_entrega !== filtroEstado) return false;
-    if (filtroDebitado === '1' && !r.debitado) return false;
-    if (filtroDebitado === '0' && r.debitado)  return false;
-    return true;
-  });
+  const filtered = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    const base = data.filter(r => {
+      if (filtroDpto     && r.departamento !== filtroDpto)     return false;
+      if (filtroMes      && r.mes !== filtroMes)               return false;
+      if (filtroAnio     && String(r.anio) !== filtroAnio)     return false;
+      if (filtroPartido  && r.partido !== filtroPartido)       return false;
+      if (filtroEstado   && r.estado_entrega !== filtroEstado) return false;
+      if (filtroDebitado === '1' && !r.debitado)               return false;
+      if (filtroDebitado === '0' && r.debitado)                return false;
+      if (filtroLiquidado === '1' && !r.liquidado)             return false;
+      if (filtroLiquidado === '0' && r.liquidado)              return false;
+      if (q) {
+        const haystack = [r.beneficiario, r.no_cheque, r.orden_pago, r.descripcion]
+          .filter(Boolean).join(' ').toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+    return applySort(base, sortCfg);
+  }, [data, filtroDpto, filtroMes, filtroAnio, filtroPartido, filtroEstado, filtroDebitado, filtroLiquidado, busqueda, sortCfg]);
 
-  // ── submit ───────────────────────────────────────────────────
+  const totalGeneral   = useMemo(() => filtered.reduce((s, r) => s + parseFloat(r.total || 0), 0), [filtered]);
+  const totalEntregado = useMemo(() => filtered.filter(r => r.estado_entrega === 'entregado').reduce((s, r) => s + parseFloat(r.total || 0), 0), [filtered]);
+  const totalVencidos  = useMemo(() => filtered.filter(r => r.estado_vencimiento === 'VENCIDO').length, [filtered]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handleSort = (col) => {
+    setSortCfg(prev => ({
+      col,
+      dir: prev.col === col && prev.dir === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+  const SortIcon = ({ col }) => {
+    if (sortCfg.col !== col) return <FiChevronUp size={11} style={{ opacity: 0.3 }} />;
+    return sortCfg.dir === 'asc'
+      ? <FiChevronUp size={11} style={{ opacity: 1 }} />
+      : <FiChevronDown size={11} style={{ opacity: 1 }} />;
+  };
+
+  const exportarExcel = () => {
+    const rows = filtered.map(r => ({
+      'No. Cheque':     r.no_cheque || '',
+      'Cuenta':         r.cuenta || '',
+      'Beneficiario':   r.beneficiario,
+      'Departamento':   r.departamento,
+      'O-P':            r.orden_pago || '',
+      'Descripción':    r.descripcion,
+      'Total (Lps.)':   parseFloat(r.total || 0),
+      'Estado':         r.estado_entrega,
+      'Fecha Entrega':  r.fecha_entrega ? r.fecha_entrega.split('T')[0] : '',
+      'Días':           r.dias_transcurridos ?? '',
+      'Vencimiento':    r.estado_vencimiento || '',
+      'Año':            r.anio || '',
+      'Mes':            r.mes || '',
+      'Debitado':       r.debitado ? 'Sí' : 'No',
+      'Liquidado':      r.liquidado ? 'Sí' : 'No',
+      'F. Liquidación': r.fecha_liquidacion ? r.fecha_liquidacion.split('T')[0] : '',
+      'Partido':        r.partido || '',
+      'Registrado por': r.registrado_por || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ayudas Alcaldías');
+    XLSX.writeFile(wb, `ayudas_alcaldias_${Date.now()}.xlsx`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.beneficiario.trim()) { showToast('El beneficiario es requerido.','error'); return; }
@@ -134,20 +213,21 @@ export default function AyudasAlcaldias() {
 
   const handleEdit = (row) => {
     setForm({
-      no_cheque:        row.no_cheque || '',
-      cuenta:           row.cuenta || '',
-      beneficiario:     row.beneficiario || '',
-      departamento:     row.departamento || '',
-      orden_pago:       row.orden_pago || '',
-      descripcion:      row.descripcion || '',
-      total:            row.total || '',
-      estado_entrega:   row.estado_entrega || 'pendiente',
-      fecha_entrega:    row.fecha_entrega ? row.fecha_entrega.split('T')[0] : '',
-      debitado:         !!row.debitado,
-      liquidado:        !!row.liquidado,
+      no_cheque:         row.no_cheque || '',
+      cuenta:            row.cuenta || '',
+      beneficiario:      row.beneficiario || '',
+      departamento:      row.departamento || '',
+      orden_pago:        row.orden_pago || '',
+      descripcion:       row.descripcion || '',
+      total:             row.total || '',
+      estado_entrega:    row.estado_entrega || 'pendiente',
+      fecha_entrega:     row.fecha_entrega ? row.fecha_entrega.split('T')[0] : '',
+      debitado:          !!row.debitado,
+      liquidado:         !!row.liquidado,
       fecha_liquidacion: row.fecha_liquidacion ? row.fecha_liquidacion.split('T')[0] : '',
-      partido:          row.partido || '',
-      mes:              row.mes || '',
+      partido:           row.partido || '',
+      mes:               row.mes || '',
+      anio:              row.anio ? String(row.anio) : String(CURRENT_YEAR),
     });
     setEditingId(row.id);
     setTab('nuevo');
@@ -174,12 +254,20 @@ export default function AyudasAlcaldias() {
 
   const cancelEdit = () => { setEditingId(null); setForm(buildEmpty()); setTab('listado'); };
 
+  const limpiarFiltros = () => {
+    setFiltroDpto(''); setFiltroMes(''); setFiltroAnio('');
+    setFiltroPartido(''); setFiltroEstado('');
+    setFiltroDebitado(''); setFiltroLiquidado(''); setBusqueda('');
+  };
+
+  const hayFiltros = filtroDpto || filtroMes || filtroAnio || filtroPartido ||
+    filtroEstado || filtroDebitado || filtroLiquidado || busqueda;
+
   return (
     <div className="page-shell">
       <Navbar />
       <div className="aa-page">
 
-        {/* ── Banner ── */}
         <div className="aa-banner">
           <div className="aa-banner-icon"><FiMapPin size={26} /></div>
           <div>
@@ -188,11 +276,10 @@ export default function AyudasAlcaldias() {
           </div>
         </div>
 
-        {/* ── Tarjetas resumen ── */}
         <div className="aa-cards">
           <div className="aa-card">
-            <span className="aa-card-label">Total registros</span>
-            <span className="aa-card-val">{data.length}</span>
+            <span className="aa-card-label">Registros {hayFiltros ? 'filtrados' : 'totales'}</span>
+            <span className="aa-card-val">{filtered.length}</span>
           </div>
           <div className="aa-card aa-card--blue">
             <span className="aa-card-label">Total general</span>
@@ -208,7 +295,6 @@ export default function AyudasAlcaldias() {
           </div>
         </div>
 
-        {/* ── Tabs ── */}
         <div className="aa-tabs">
           <button className={`aa-tab ${tab==='listado'?'aa-tab--active':''}`} onClick={() => { setTab('listado'); cargar(); }}>
             <FiList size={14} /> Listado
@@ -218,16 +304,33 @@ export default function AyudasAlcaldias() {
           </button>
         </div>
 
-        {/* ════════════ TAB LISTADO ════════════ */}
         {tab === 'listado' && (
         <div className="aa-listado">
 
-          {/* Filtros */}
           <div className="aa-filters">
             <div className="aa-filter-icon"><FiFilter size={14}/></div>
+
+            <div className="aa-search-wrap">
+              <FiSearch size={13} className="aa-search-icon" />
+              <input
+                className="aa-search-input"
+                type="text"
+                placeholder="Buscar beneficiario, cheque, O-P…"
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+              />
+              {busqueda && (
+                <button className="aa-search-clear" onClick={() => setBusqueda('')}><FiX size={12}/></button>
+              )}
+            </div>
+
             <select className="aa-flt" value={filtroDpto} onChange={e=>setFiltroDpto(e.target.value)}>
               <option value="">Todos los departamentos</option>
               {DEPARTAMENTOS.map(d=><option key={d} value={d}>{d}</option>)}
+            </select>
+            <select className="aa-flt" value={filtroAnio} onChange={e=>setFiltroAnio(e.target.value)}>
+              <option value="">Todos los años</option>
+              {ANIOS.map(a=><option key={a} value={String(a)}>{a}</option>)}
             </select>
             <select className="aa-flt" value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}>
               <option value="">Todos los meses</option>
@@ -247,9 +350,27 @@ export default function AyudasAlcaldias() {
               <option value="1">Debitado: Sí</option>
               <option value="0">Debitado: No</option>
             </select>
+            <select className="aa-flt" value={filtroLiquidado} onChange={e=>setFiltroLiquidado(e.target.value)}>
+              <option value="">Liquidado: todos</option>
+              <option value="1">Liquidado: Sí</option>
+              <option value="0">Liquidado: No</option>
+            </select>
+
+            {hayFiltros && (
+              <button className="aa-btn-clear-filters" onClick={limpiarFiltros} title="Limpiar filtros">
+                <FiX size={13}/> Limpiar
+              </button>
+            )}
+
             <button className="aa-btn-refresh" onClick={cargar} disabled={loading} title="Actualizar">
               <FiRefreshCw size={14} />
             </button>
+
+            {filtered.length > 0 && (
+              <button className="aa-btn-export" onClick={exportarExcel} title="Exportar a Excel">
+                <FiDownload size={13}/> Excel
+              </button>
+            )}
           </div>
 
           {error && (
@@ -266,31 +387,34 @@ export default function AyudasAlcaldias() {
           )}
 
           {!loading && filtered.length > 0 && (
+          <>
           <div className="aa-table-wrap">
             <table className="aa-table">
               <thead>
                 <tr>
-                  <th>No. Cheq.</th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('no_cheque')}>No. Cheq. <SortIcon col="no_cheque"/></th>
                   <th>Cuenta</th>
-                  <th>Beneficiario</th>
-                  <th>Dpto.</th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('beneficiario')}>Beneficiario <SortIcon col="beneficiario"/></th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('departamento')}>Dpto. <SortIcon col="departamento"/></th>
                   <th>O-P</th>
                   <th>Descripción</th>
-                  <th>Total</th>
-                  <th>Estado</th>
-                  <th>Fecha entrega</th>
-                  <th>Días</th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('total')}>Total <SortIcon col="total"/></th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('estado_entrega')}>Estado <SortIcon col="estado_entrega"/></th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('fecha_entrega')}>Fecha entrega <SortIcon col="fecha_entrega"/></th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('dias_transcurridos')}>Días <SortIcon col="dias_transcurridos"/></th>
                   <th>Venc.</th>
-                  <th>Mes</th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('anio')}>Año <SortIcon col="anio"/></th>
+                  <th className="aa-th-sort" onClick={()=>handleSort('mes')}>Mes <SortIcon col="mes"/></th>
                   <th>Debitado</th>
                   <th>Liquidado</th>
                   <th>Partido</th>
                   <th>F. Liquidación</th>
+                  <th>Registrado por</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(r => (
+                {paginated.map(r => (
                   <tr key={r.id} className={r.estado_vencimiento==='VENCIDO'?'aa-row--vencido':''}>
                     <td className="aa-td-cheque">{r.no_cheque||'—'}</td>
                     <td>{r.cuenta||'—'}</td>
@@ -313,6 +437,7 @@ export default function AyudasAlcaldias() {
                           </span>
                         : '—'}
                     </td>
+                    <td className="aa-td-anio">{r.anio||'—'}</td>
                     <td>{r.mes||'—'}</td>
                     <td className="aa-td-bool">
                       {r.debitado
@@ -330,6 +455,7 @@ export default function AyudasAlcaldias() {
                         : '—'}
                     </td>
                     <td className="aa-td-fecha">{fmtDate(r.fecha_liquidacion)}</td>
+                    <td className="aa-td-regby">{r.registrado_por||'—'}</td>
                     <td className="aa-td-actions">
                       <button className="aa-btn-icon aa-btn-icon--edit" title="Editar" onClick={()=>handleEdit(r)}>
                         <FiEdit3 size={14}/>
@@ -342,19 +468,39 @@ export default function AyudasAlcaldias() {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="aa-tfoot-row">
+                  <td colSpan={6} className="aa-tfoot-label">
+                    Total ({filtered.length} registros{filtered.length !== data.length ? ` de ${data.length}` : ''})
+                  </td>
+                  <td className="aa-tfoot-monto">{fmtMonto(totalGeneral)}</td>
+                  <td colSpan={12}></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="aa-pagination">
+              <button className="aa-page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+              <button className="aa-page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+              <span className="aa-page-info">
+                Página <strong>{page}</strong> de <strong>{totalPages}</strong>
+                &nbsp;·&nbsp;{filtered.length} registros
+              </span>
+              <button className="aa-page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+              <button className="aa-page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
+            </div>
+          )}
+          </>
           )}
         </div>
         )}
 
-        {/* ════════════ TAB NUEVO / EDITAR ════════════ */}
         {tab === 'nuevo' && (
         <form className="aa-form" onSubmit={handleSubmit} noValidate>
-
           <div className="aa-form-grid">
 
-            {/* ── Sección 1: Identificación ── */}
             <div className="aa-section">
               <div className="aa-section-head">
                 <span className="aa-step">1</span>
@@ -381,7 +527,6 @@ export default function AyudasAlcaldias() {
               </div>
             </div>
 
-            {/* ── Sección 2: Beneficiario ── */}
             <div className="aa-section">
               <div className="aa-section-head">
                 <span className="aa-step">2</span>
@@ -415,7 +560,6 @@ export default function AyudasAlcaldias() {
               </div>
             </div>
 
-            {/* ── Sección 3: Monto y descripción ── */}
             <div className="aa-section">
               <div className="aa-section-head">
                 <span className="aa-step">3</span>
@@ -425,7 +569,7 @@ export default function AyudasAlcaldias() {
                 </div>
               </div>
               <div className="aa-fields">
-                <div className="aa-row2">
+                <div className="aa-row3">
                   <div className="aa-field">
                     <label className="aa-label">Total (Lps.) <span className="aa-req">*</span></label>
                     <div className="aa-icon-field">
@@ -433,6 +577,13 @@ export default function AyudasAlcaldias() {
                       <input className="aa-input aa-has-icon" type="number" placeholder="0.00" min="0.01" step="0.01"
                         value={form.total} onChange={e=>set('total',e.target.value)} required/>
                     </div>
+                  </div>
+                  <div className="aa-field">
+                    <label className="aa-label">Año</label>
+                    <select className="aa-input aa-select" value={form.anio} onChange={e=>set('anio',e.target.value)}>
+                      <option value="">Sin año</option>
+                      {ANIOS.map(a=><option key={a} value={String(a)}>{a}</option>)}
+                    </select>
                   </div>
                   <div className="aa-field">
                     <label className="aa-label">Mes</label>
@@ -450,7 +601,6 @@ export default function AyudasAlcaldias() {
               </div>
             </div>
 
-            {/* ── Sección 4: Estado y fechas ── */}
             <div className="aa-section">
               <div className="aa-section-head">
                 <span className="aa-step">4</span>
@@ -494,7 +644,6 @@ export default function AyudasAlcaldias() {
 
           </div>
 
-          {/* ── Botones ── */}
           <div className="aa-form-actions">
             <button type="button" className="aa-btn-cancel" onClick={cancelEdit}>
               <FiX size={14}/> Cancelar
@@ -503,13 +652,11 @@ export default function AyudasAlcaldias() {
               {saving ? <><span className="aa-spinner"/> Guardando…</> : <><FiCheckCircle size={15}/> {editingId?'Actualizar':'Guardar registro'}</>}
             </button>
           </div>
-
         </form>
         )}
 
       </div>
 
-      {/* ── Toast ── */}
       {toast && (
         <div className={`aa-toast aa-toast--${toast.type}`} role="alert">
           <span>{toast.msg}</span>
@@ -517,7 +664,6 @@ export default function AyudasAlcaldias() {
         </div>
       )}
 
-      {/* ── Confirm modal ── */}
       {confirmCfg && (
         <div className="aa-confirm-overlay" onClick={()=>setConfirmCfg(null)}>
           <div className="aa-confirm-box" onClick={e=>e.stopPropagation()}>

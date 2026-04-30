@@ -47,7 +47,7 @@ exports.create = (req, res) => {
   const {
     no_cheque, cuenta, beneficiario, departamento, orden_pago,
     descripcion, total, estado_entrega, fecha_entrega,
-    debitado, liquidado, fecha_liquidacion, partido, mes,
+    debitado, liquidado, fecha_liquidacion, partido, mes, anio,
   } = req.body;
 
   // validaciones
@@ -75,8 +75,8 @@ exports.create = (req, res) => {
     `INSERT INTO ayudas_alcaldias
      (no_cheque, cuenta, beneficiario, departamento, orden_pago,
       descripcion, total, estado_entrega, fecha_entrega,
-      debitado, liquidado, fecha_liquidacion, partido, mes, usuario_id)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      debitado, liquidado, fecha_liquidacion, partido, mes, anio, usuario_id)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       (no_cheque || '').trim() || null,
       (cuenta || '').trim() || null,
@@ -92,6 +92,7 @@ exports.create = (req, res) => {
       fecha_liquidacion || null,
       partido || null,
       mes || null,
+      anio ? parseInt(anio, 10) : null,
       req.user.id,
     ],
     (err, result) => {
@@ -113,7 +114,7 @@ exports.update = (req, res) => {
   const {
     no_cheque, cuenta, beneficiario, departamento, orden_pago,
     descripcion, total, estado_entrega, fecha_entrega,
-    debitado, liquidado, fecha_liquidacion, partido, mes,
+    debitado, liquidado, fecha_liquidacion, partido, mes, anio,
   } = req.body;
 
   if (!(beneficiario || '').toString().trim())
@@ -136,7 +137,7 @@ exports.update = (req, res) => {
     `UPDATE ayudas_alcaldias SET
        no_cheque=?, cuenta=?, beneficiario=?, departamento=?, orden_pago=?,
        descripcion=?, total=?, estado_entrega=?, fecha_entrega=?,
-       debitado=?, liquidado=?, fecha_liquidacion=?, partido=?, mes=?
+       debitado=?, liquidado=?, fecha_liquidacion=?, partido=?, mes=?, anio=?
      WHERE id=?`,
     [
       (no_cheque || '').trim() || null,
@@ -153,6 +154,7 @@ exports.update = (req, res) => {
       fecha_liquidacion || null,
       partido || null,
       mes || null,
+      anio ? parseInt(anio, 10) : null,
       id,
     ],
     (err) => {

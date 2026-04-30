@@ -90,8 +90,50 @@
   background: white; color: #94a3b8; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.18s, color 0.18s;
+  flex-shrink: 0;
 }
 .aa-btn-refresh:hover { background: #f0f4fb; color: #274C8D; }
+
+/* Buscador texto libre */
+.aa-search-wrap {
+  position: relative; display: flex; align-items: center;
+  flex: 1; min-width: 200px; max-width: 280px;
+}
+.aa-search-icon {
+  position: absolute; left: 9px; color: #94a3b8; pointer-events: none;
+}
+.aa-search-input {
+  width: 100%; padding: 7px 28px 7px 28px;
+  border: 1.5px solid #dde4f0; border-radius: 8px;
+  font-size: 12.5px; color: #1a2332; background: #f8fafc;
+  font-family: inherit; outline: none;
+}
+.aa-search-input:focus { border-color: #274C8D; background: white; }
+.aa-search-clear {
+  position: absolute; right: 7px; background: none; border: none;
+  color: #94a3b8; cursor: pointer; display: flex; align-items: center; padding: 2px;
+}
+.aa-search-clear:hover { color: #e53e3e; }
+
+/* Botón limpiar filtros */
+.aa-btn-clear-filters {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border: 1.5px solid #fca5a5; border-radius: 8px;
+  background: #fff5f5; color: #b91c1c; font-size: 12px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: background 0.18s;
+}
+.aa-btn-clear-filters:hover { background: #fee2e2; }
+
+/* Botón exportar Excel */
+.aa-btn-export {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border: 1.5px solid #86efac; border-radius: 8px;
+  background: #f0fdf4; color: #15803d; font-size: 12px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: background 0.18s; flex-shrink: 0;
+}
+.aa-btn-export:hover { background: #dcfce7; }
 
 /* ── Estados ────────────────────────────────────────────────── */
 .aa-error {
@@ -126,6 +168,11 @@
   font-size: 10.5px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.06em; white-space: nowrap;
 }
+.aa-th-sort {
+  cursor: pointer; user-select: none;
+  display: flex; align-items: center; gap: 4px;
+}
+.aa-th-sort:hover { background: rgba(255,255,255,0.12); }
 .aa-table tbody tr { border-bottom: 1px solid #f0f4fa; transition: background 0.15s; }
 .aa-table tbody tr:last-child { border-bottom: none; }
 .aa-table tbody tr:hover { background: #f5f8ff; }
@@ -143,7 +190,37 @@
 .aa-td-fecha   { white-space: nowrap; font-size: 12px; color: #6b7a99; }
 .aa-td-dias    { text-align: center; font-weight: 600; }
 .aa-td-bool    { text-align: center; }
+.aa-td-anio    { font-weight: 600; color: #4a5568; white-space: nowrap; }
+.aa-td-regby   { font-size: 11.5px; color: #6b7a99; white-space: nowrap; }
 .aa-td-actions { display: flex; gap: 6px; }
+
+/* Pie de tabla */
+.aa-tfoot-row { background: #f0f4fb !important; border-top: 2px solid #c7d5ed; }
+.aa-tfoot-label {
+  padding: 9px 12px; font-size: 12px; font-weight: 700;
+  color: #4a5568; text-align: right;
+}
+.aa-tfoot-monto {
+  padding: 9px 12px; font-size: 13px; font-weight: 800;
+  color: #274C8D; white-space: nowrap;
+}
+
+/* Paginación */
+.aa-pagination {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 0 4px;
+}
+.aa-page-btn {
+  width: 34px; height: 34px; border: 1.5px solid #dde4f0; border-radius: 8px;
+  background: white; color: #274C8D; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.18s;
+}
+.aa-page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.aa-page-btn:not(:disabled):hover { background: #f0f4fb; }
+.aa-page-info {
+  font-size: 12.5px; color: #6b7a99; padding: 0 6px;
+}
 
 /* Badges */
 .aa-badge {

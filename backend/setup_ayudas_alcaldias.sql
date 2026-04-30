@@ -25,11 +25,17 @@ CREATE TABLE IF NOT EXISTS ayudas_alcaldias (
   fecha_liquidacion   DATE           NULL,
   partido             ENUM('PN','PL','LB','DC','PINU') NULL,
   mes                 VARCHAR(20)    NULL,
+  anio                SMALLINT       NULL          COMMENT 'Año fiscal del registro',
   usuario_id          INT            NOT NULL,
   created_at          TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at          TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Migración: agregar columna anio si la tabla ya existe sin ella
+-- ------------------------------------------------------------
+-- ALTER TABLE ayudas_alcaldias ADD COLUMN anio SMALLINT NULL COMMENT 'Año fiscal' AFTER mes;
 
 -- ------------------------------------------------------------
 -- Registrar módulo en la tabla modulos
