@@ -47,6 +47,11 @@ function applySort(arr, { col, dir }) {
   });
 }
 
+// Normaliza: quita tildes, pasa a mayúsculas — para comparaciones seguras
+function norm(str) {
+  return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+}
+
 const PAGE_SIZE = 10;
 
 export default function Alcaldes() {
@@ -95,12 +100,18 @@ export default function Alcaldes() {
   useEffect(() => { cargar(); }, [cargar]);
   useEffect(() => { setPage(1); }, [filtroDpto, filtroPartido, busqueda, sortCfg]);
 
-  // Filtrado + sort
+  // Listas dinámicas desde los datos reales (evita desajustes de formato)
+  const dptosList    = useMemo(() => [...new Set(data.map(r => r.departamento).filter(Boolean))].sort(), [data]);
+  const partidosList = useMemo(() => [...new Set(data.map(r => r.partido).filter(Boolean))].sort(), [data]);
+
+  // Filtrado + sort — comparación normalizada (ignora tildes y mayúsculas)
   const filtered = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
+    const ndpto    = norm(filtroDpto);
+    const npartido = norm(filtroPartido);
     const base = data.filter(r => {
-      if (filtroDpto    && r.departamento !== filtroDpto)   return false;
-      if (filtroPartido && r.partido !== filtroPartido)      return false;
+      if (ndpto    && norm(r.departamento) !== ndpto)    return false;
+      if (npartido && norm(r.partido)      !== npartido) return false;
       if (q) {
         const h = [r.alcalde, r.municipio, r.departamento, r.partido]
           .filter(Boolean).join(' ').toLowerCase();
@@ -111,11 +122,18 @@ export default function Alcaldes() {
     return applySort(base, sortCfg);
   }, [data, filtroDpto, filtroPartido, busqueda, sortCfg]);
 
+  // Stats contextuales: distribución de partidos en el filtro actual
+  const partidosEnFiltro = useMemo(() => {
+    const counts = {};
+    filtered.forEach(r => { if (r.partido) counts[r.partido] = (counts[r.partido] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }, [filtered]);
+
   // KPIs
-  const totalMunicipios  = filtered.length;
+  const totalMunicipios    = filtered.length;
   const totalDepartamentos = useMemo(() => new Set(filtered.map(r => r.departamento).filter(Boolean)).size, [filtered]);
-  const totalPartidos    = useMemo(() => new Set(filtered.map(r => r.partido).filter(Boolean)).size, [filtered]);
-  const sinPartido       = useMemo(() => filtered.filter(r => !r.partido).length, [filtered]);
+  const totalPartidos      = useMemo(() => new Set(filtered.map(r => r.partido).filter(Boolean)).size, [filtered]);
+  const sinPartido         = useMemo(() => filtered.filter(r => !r.partido).length, [filtered]);
 
   // Paginación
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -260,13 +278,21 @@ export default function Alcaldes() {
             </div>
 
             <select className="alc-sel-flt" value={filtroDpto} onChange={e => setFiltroDpto(e.target.value)}>
-              <option value="">Todos los departamentos</option>
-              {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
+              <option value="">Todos los departamentos ({data.length})</option>
+              {dptosList.map(d => {
+                const cnt = data.filter(r => norm(r.departamento) === norm(d)).length;
+                return <option key={d} value={d}>{d} ({cnt})</option>;
+              })}
             </select>
 
             <select className="alc-sel-flt" value={filtroPartido} onChange={e => setFiltroPartido(e.target.value)}>
               <option value="">Todos los partidos</option>
-              {PARTIDOS.map(p => <option key={p} value={p}>{p}</option>)}
+              {partidosList.map(p => {
+                const cnt = (filtroDpto
+                  ? data.filter(r => norm(r.departamento) === norm(filtroDpto))
+                  : data).filter(r => norm(r.partido) === norm(p)).length;
+                return <option key={p} value={p}>{p} ({cnt})</option>;
+              })}
             </select>
 
             {hayFiltros && (
