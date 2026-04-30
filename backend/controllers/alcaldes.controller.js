@@ -7,7 +7,7 @@ function sanitize(str) { return (str || '').toString().trim(); }
 // ── GET all ───────────────────────────────────────────────────
 exports.getAll = (req, res) => {
   db.query(
-    `SELECT * FROM alcaldes ORDER BY departamento ASC, municipio ASC LIMIT 3000`,
+    `SELECT * FROM alcaldias ORDER BY departamento ASC, municipio ASC LIMIT 3000`,
     (err, rows) => {
       if (err) {
         console.error('[alcaldes] getAll:', err);
@@ -36,7 +36,7 @@ exports.create = (req, res) => {
   if (alcalde.length > 200)      return res.status(400).json({ message: 'Nombre de alcalde demasiado largo (máx. 200).' });
 
   db.query(
-    `INSERT INTO alcaldes (departamento, municipio, alcalde, partido) VALUES (?, ?, ?, ?)`,
+    `INSERT INTO alcaldias (departamento, municipio, alcalde, partido) VALUES (?, ?, ?, ?)`,
     [departamento, municipio, alcalde, partido],
     (err, result) => {
       if (err) {
@@ -66,7 +66,7 @@ exports.update = (req, res) => {
   if (!alcalde)      return res.status(400).json({ message: 'El nombre del alcalde es requerido.' });
 
   db.query(
-    `UPDATE alcaldes SET departamento=?, municipio=?, alcalde=?, partido=? WHERE id=?`,
+    `UPDATE alcaldias SET departamento=?, municipio=?, alcalde=?, partido=? WHERE id=?`,
     [departamento, municipio, alcalde, partido, id],
     (err, result) => {
       if (err) {
@@ -88,7 +88,7 @@ exports.remove = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ message: 'ID inválido.' });
 
-  db.query('DELETE FROM alcaldes WHERE id=?', [id], (err, result) => {
+  db.query('DELETE FROM alcaldias WHERE id=?', [id], (err, result) => {
     if (err) {
       console.error('[alcaldes] remove:', err);
       return res.status(500).json({ message: 'Error interno del servidor.' });
