@@ -357,6 +357,7 @@ exports.exportDB = async (req, res) => {
 
     // Enviar notificación por correo (fire-and-forget)
     const alertEmail = process.env.ALERT_EMAIL;
+    console.log('[DB-Export] ALERT_EMAIL:', alertEmail || '(no definido)');
     if (alertEmail) {
       const mailer = require('../config/mailer');
       mailer.sendDownloadNotification(
@@ -364,7 +365,8 @@ exports.exportDB = async (req, res) => {
         usuario.nombre || 'Desconocido',
         filename,
         ip,
-      ).catch(e => console.error('[DB-Export] Error enviando correo:', e.message));
+      ).then(() => console.log('[DB-Export] Correo enviado a:', alertEmail))
+       .catch(e => console.error('[DB-Export] Error enviando correo:', e.message));
     }
 
     res.setHeader('Content-Type', 'application/octet-stream');
