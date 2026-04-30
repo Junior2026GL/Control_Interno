@@ -5,7 +5,7 @@ import {
   LuDatabase, LuDownload, LuRefreshCw,
   LuCircleCheck, LuTriangleAlert, LuX,
   LuCloudDownload, LuCalendar, LuUser, LuGlobe,
-  LuHistory, LuShieldCheck,
+  LuHistory,
 } from 'react-icons/lu';
 import './BaseDatos.css';
 
@@ -128,10 +128,6 @@ export default function BaseDatos() {
           <div>
             <h1 className="db-banner-title">Base de Datos</h1>
             <p className="db-banner-sub">Gestión y respaldo de la base de datos del sistema</p>
-          </div>
-          <div className="db-banner-meta">
-            <LuShieldCheck size={14} />
-            <span>Acceso exclusivo · Super Admin</span>
           </div>
         </div>
 
