@@ -25,5 +25,6 @@ router.post('/import',            ...superAdmin, upload.single('sqlFile'), ctrl.
 router.get ('/backups',           ...superAdmin, ctrl.listBackups);
 router.get ('/backups/:filename', ...superAdmin, ctrl.downloadBackup);
 router.delete('/backups/:filename',...superAdmin, ctrl.deleteBackup);
+router.get ('/download-log',      ...superAdmin, ctrl.getDownloadLog);
 
 module.exports = router;

@@ -496,6 +496,35 @@ exports.downloadBackup = (req, res) => {
   res.download(filePath, filename);
 };
 
+// ── Download log (bitácora) ───────────────────────────────────
+exports.getDownloadLog = (req, res) => {
+  const limit  = Math.min(parseInt(req.query.limit  || 50, 10), 200);
+  const offset = parseInt(req.query.offset || 0, 10);
+  const db     = require('../db');
+
+  db.query(
+    `SELECT id, usuario_nombre, detalle, ip, resultado, fecha_hora
+     FROM auditoria
+     WHERE modulo = 'BASE_DATOS'
+       AND accion = 'CREAR'
+       AND (detalle LIKE 'Exportación%' OR detalle LIKE 'Exportacion%' OR detalle LIKE 'Backup manual%')
+     ORDER BY fecha_hora DESC
+     LIMIT ? OFFSET ?`,
+    [limit, offset],
+    (err, rows) => {
+      if (err) return res.status(500).json({ message: 'Error al obtener historial', error: err.message });
+      db.query(
+        `SELECT COUNT(*) AS total FROM auditoria
+         WHERE modulo = 'BASE_DATOS' AND accion = 'CREAR'
+           AND (detalle LIKE 'Exportación%' OR detalle LIKE 'Exportacion%' OR detalle LIKE 'Backup manual%')`,
+        (err2, cnt) => {
+          res.json({ log: rows, total: err2 ? 0 : cnt[0].total });
+        }
+      );
+    }
+  );
+};
+
 exports.deleteBackup = (req, res) => {
   const cfg      = loadConfig();
   const { filename } = req.params;
