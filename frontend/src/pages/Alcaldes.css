@@ -164,14 +164,32 @@
 }
 .alc-th-sort {
   cursor: pointer; user-select: none;
-  display: flex; align-items: center; gap: 4px;
 }
 .alc-th-sort:hover { background: rgba(255,255,255,0.12); }
 
+/* Wrapper flex para el contenido del th sortable */
+.alc-th-inner {
+  display: inline-flex; align-items: center; gap: 4px;
+}
+
+/* Clases para th */
+.alc-th { white-space: nowrap; }
+.alc-th--sort { cursor: pointer; user-select: none; transition: background 0.15s; }
+.alc-th--sort:hover { background: rgba(255,255,255,0.12); }
+.alc-th--num { width: 42px; text-align: center; }
+
 .alc-table tbody tr { border-bottom: 1px solid #f0f4fa; transition: background 0.15s; }
 .alc-table tbody tr:last-child { border-bottom: none; }
-.alc-table tbody tr:hover { background: #f5f8ff; }
-.alc-table td { padding: 11px 14px; color: #1a2332; vertical-align: middle; }
+.alc-table tbody tr.alc-tr--even { background: #f7f9ff; }
+.alc-table tbody tr:hover { background: #eef3ff !important; }
+.alc-table td { padding: 10px 14px; color: #1a2332; vertical-align: middle; }
+
+/* Columna # */
+.alc-td-num {
+  font-size: 11px; color: #b0bcd4; text-align: center;
+  font-weight: 700; font-variant-numeric: tabular-nums;
+  background: transparent;
+}
 
 .alc-td-dpto   { font-weight: 700; white-space: nowrap; color: #0f2744; }
 .alc-td-mun    { font-weight: 600; }
@@ -189,7 +207,10 @@
 .alc-partido {
   display: inline-flex; align-items: center; padding: 3px 10px;
   border-radius: 20px; font-size: 11px; font-weight: 700;
+  border-width: 1.5px; border-style: solid;
+  letter-spacing: 0.03em;
 }
+.alc-partido-none { color: #cbd5e1; font-size: 13px; }
 
 /* Botones de acción */
 .alc-btn-icon {

@@ -20,14 +20,14 @@ const DEPARTAMENTOS = [
 const PARTIDOS = ['PN','PL','LB','DC','PINU','LIBRE','PAC','OTRO'];
 
 const PARTIDO_COLOR = {
-  PN:    { bg: '#dbeafe', color: '#1e40af' },
-  PL:    { bg: '#fee2e2', color: '#b91c1c' },
-  LB:    { bg: '#d1fae5', color: '#065f46' },
-  DC:    { bg: '#ede9fe', color: '#5b21b6' },
-  PINU:  { bg: '#fef9c3', color: '#854d0e' },
-  LIBRE: { bg: '#fce7f3', color: '#9d174d' },
-  PAC:   { bg: '#e0f2fe', color: '#0369a1' },
-  OTRO:  { bg: '#f1f5f9', color: '#475569' },
+  PN:    { backgroundColor: '#dbeafe', color: '#1e40af', borderColor: '#93c5fd' },
+  PL:    { backgroundColor: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' },
+  LB:    { backgroundColor: '#d1fae5', color: '#065f46', borderColor: '#6ee7b7' },
+  DC:    { backgroundColor: '#ede9fe', color: '#5b21b6', borderColor: '#c4b5fd' },
+  PINU:  { backgroundColor: '#fef9c3', color: '#854d0e', borderColor: '#fde68a' },
+  LIBRE: { backgroundColor: '#fce7f3', color: '#9d174d', borderColor: '#f9a8d4' },
+  PAC:   { backgroundColor: '#e0f2fe', color: '#0369a1', borderColor: '#7dd3fc' },
+  OTRO:  { backgroundColor: '#f1f5f9', color: '#475569', borderColor: '#cbd5e1' },
 };
 
 function buildEmpty() {
@@ -316,23 +316,25 @@ export default function Alcaldes() {
               <table className="alc-table">
                 <thead>
                   <tr>
-                    <th className="alc-th-sort" onClick={() => handleSort('departamento')}>Departamento <SortIcon col="departamento"/></th>
-                    <th className="alc-th-sort" onClick={() => handleSort('municipio')}>Municipio <SortIcon col="municipio"/></th>
-                    <th className="alc-th-sort" onClick={() => handleSort('alcalde')}>Alcalde <SortIcon col="alcalde"/></th>
-                    <th className="alc-th-sort" onClick={() => handleSort('partido')}>Partido <SortIcon col="partido"/></th>
-                    {canEdit && <th>Acciones</th>}
+                    <th className="alc-th alc-th--num">#</th>
+                    <th className="alc-th alc-th--sort" onClick={() => handleSort('departamento')}><span className="alc-th-inner">Departamento <SortIcon col="departamento"/></span></th>
+                    <th className="alc-th alc-th--sort" onClick={() => handleSort('municipio')}><span className="alc-th-inner">Municipio <SortIcon col="municipio"/></span></th>
+                    <th className="alc-th alc-th--sort" onClick={() => handleSort('alcalde')}><span className="alc-th-inner">Alcalde <SortIcon col="alcalde"/></span></th>
+                    <th className="alc-th alc-th--sort" onClick={() => handleSort('partido')}><span className="alc-th-inner">Partido <SortIcon col="partido"/></span></th>
+                    {canEdit && <th className="alc-th">Acciones</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map(r => (
-                    <tr key={r.id}>
+                  {paginated.map((r, idx) => (
+                    <tr key={r.id} className={idx % 2 === 1 ? 'alc-tr--even' : ''}>
+                      <td className="alc-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                       <td className="alc-td-dpto">{r.departamento || '—'}</td>
                       <td className="alc-td-mun">{r.municipio || '—'}</td>
                       <td className="alc-td-alc">{r.alcalde || '—'}</td>
                       <td>
                         {r.partido
-                          ? <span className="alc-partido" style={PARTIDO_COLOR[r.partido] || { bg: '#f1f5f9', color: '#475569' }}>{r.partido}</span>
-                          : '—'}
+                          ? <span className="alc-partido" style={PARTIDO_COLOR[r.partido] || { backgroundColor: '#f1f5f9', color: '#475569', borderColor: '#cbd5e1' }}>{r.partido}</span>
+                          : <span className="alc-partido-none">—</span>}
                       </td>
                       {canEdit && (
                         <td className="alc-td-actions">
@@ -350,7 +352,7 @@ export default function Alcaldes() {
                 </tbody>
                 <tfoot>
                   <tr className="alc-tfoot-row">
-                    <td colSpan={canEdit ? 5 : 4} className="alc-tfoot-label">
+                    <td colSpan={canEdit ? 6 : 5} className="alc-tfoot-label">
                       {filtered.length} registro{filtered.length !== 1 ? 's' : ''}{filtered.length !== data.length ? ` de ${data.length}` : ''}
                     </td>
                   </tr>
