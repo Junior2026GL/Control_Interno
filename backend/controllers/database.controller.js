@@ -150,7 +150,7 @@ function buildFilename(safeForFs) {
   const hh   = String(now.getHours()).padStart(2, '0');
   const min  = String(now.getMinutes()).padStart(2, '0');
   const sep  = safeForFs ? '-' : ':';
-  return `${process.env.DB_NAME} ${dd}_${mo}_${yyyy}_${hh}${sep}${min}.sql`;
+  return `backup_${dd}_${mo}_${yyyy}_${hh}${sep}${min}.sql`;
 }
 
 // ── Core backup logic ─────────────────────────────────────────
