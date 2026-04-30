@@ -63,7 +63,7 @@ function applySort(arr, { col, dir }) {
   });
 }
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 10;
 
 export default function AyudasAlcaldias() {
   const [tab, setTab]             = useState('listado');
@@ -268,26 +268,46 @@ export default function AyudasAlcaldias() {
       <Navbar />
       <div className="aa-page">
 
-        <div className="aa-banner">
-          <div className="aa-banner-icon"><FiMapPin size={26} /></div>
-          <div>
-            <h1 className="aa-banner-title">Listado de Alcaldías Beneficiadas con Ayuda Social</h1>
-            <p className="aa-banner-sub">Control de cheques, estados de entrega y liquidaciones</p>
+        {/* ── HEADER ── */}
+        <div className="aa-header">
+          <div className="aa-header-brand">
+            <div className="aa-header-icon"><FiMapPin size={24}/></div>
+            <div>
+              <h1 className="aa-banner-title">Alcaldías Beneficiadas · Ayuda Social</h1>
+              <p className="aa-banner-sub">Control de cheques, estados de entrega y liquidaciones</p>
+            </div>
+          </div>
+          <div className="aa-header-stats">
+            <div className="aa-hstat">
+              <span className="aa-hstat-val">{data.length}</span>
+              <span className="aa-hstat-lbl">Registros</span>
+            </div>
+            <div className="aa-hstat-sep"/>
+            <div className="aa-hstat">
+              <span className="aa-hstat-val">{fmtMonto(data.reduce((s,r)=>s+parseFloat(r.total||0),0))}</span>
+              <span className="aa-hstat-lbl">Total global</span>
+            </div>
+            <div className="aa-hstat-sep"/>
+            <div className="aa-hstat">
+              <span className="aa-hstat-val">{data.filter(r=>r.estado_vencimiento==='VENCIDO').length}</span>
+              <span className="aa-hstat-lbl">Vencidos</span>
+            </div>
           </div>
         </div>
 
+        {/* ── CARDS KPI ── */}
         <div className="aa-cards">
           <div className="aa-card">
-            <span className="aa-card-label">Registros {hayFiltros ? 'filtrados' : 'totales'}</span>
+            <span className="aa-card-label">Registros {hayFiltros?'filtrados':'totales'}</span>
             <span className="aa-card-val">{filtered.length}</span>
           </div>
           <div className="aa-card aa-card--blue">
             <span className="aa-card-label">Total general</span>
-            <span className="aa-card-val">{fmtMonto(totalGeneral)}</span>
+            <span className="aa-card-val aa-card-val--sm">{fmtMonto(totalGeneral)}</span>
           </div>
           <div className="aa-card aa-card--green">
             <span className="aa-card-label">Total entregado</span>
-            <span className="aa-card-val">{fmtMonto(totalEntregado)}</span>
+            <span className="aa-card-val aa-card-val--sm">{fmtMonto(totalEntregado)}</span>
           </div>
           <div className="aa-card aa-card--red">
             <span className="aa-card-label">Registros vencidos</span>
@@ -307,70 +327,62 @@ export default function AyudasAlcaldias() {
         {tab === 'listado' && (
         <div className="aa-listado">
 
-          <div className="aa-filters">
-            <div className="aa-filter-icon"><FiFilter size={14}/></div>
-
-            <div className="aa-search-wrap">
-              <FiSearch size={13} className="aa-search-icon" />
-              <input
-                className="aa-search-input"
-                type="text"
-                placeholder="Buscar beneficiario, cheque, O-P…"
-                value={busqueda}
-                onChange={e => setBusqueda(e.target.value)}
-              />
-              {busqueda && (
-                <button className="aa-search-clear" onClick={() => setBusqueda('')}><FiX size={12}/></button>
-              )}
+          {/* ── TOOLBAR ── */}
+          <div className="aa-toolbar">
+            <div className="aa-toolbar-row1">
+              <div className="aa-search-wrap">
+                <FiSearch size={13} className="aa-search-icon"/>
+                <input className="aa-search-input" type="text"
+                  placeholder="Buscar beneficiario, cheque, O-P…"
+                  value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
+                {busqueda && <button className="aa-search-clear" onClick={()=>setBusqueda('')}><FiX size={12}/></button>}
+              </div>
+              <select className="aa-flt" value={filtroDpto} onChange={e=>setFiltroDpto(e.target.value)}>
+                <option value="">Todos los departamentos</option>
+                {DEPARTAMENTOS.map(d=><option key={d} value={d}>{d}</option>)}
+              </select>
+              <select className="aa-flt" value={filtroAnio} onChange={e=>setFiltroAnio(e.target.value)}>
+                <option value="">Todos los años</option>
+                {ANIOS.map(a=><option key={a} value={String(a)}>{a}</option>)}
+              </select>
+              <select className="aa-flt" value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}>
+                <option value="">Todos los meses</option>
+                {MESES.map(m=><option key={m} value={m}>{m}</option>)}
+              </select>
             </div>
-
-            <select className="aa-flt" value={filtroDpto} onChange={e=>setFiltroDpto(e.target.value)}>
-              <option value="">Todos los departamentos</option>
-              {DEPARTAMENTOS.map(d=><option key={d} value={d}>{d}</option>)}
-            </select>
-            <select className="aa-flt" value={filtroAnio} onChange={e=>setFiltroAnio(e.target.value)}>
-              <option value="">Todos los años</option>
-              {ANIOS.map(a=><option key={a} value={String(a)}>{a}</option>)}
-            </select>
-            <select className="aa-flt" value={filtroMes} onChange={e=>setFiltroMes(e.target.value)}>
-              <option value="">Todos los meses</option>
-              {MESES.map(m=><option key={m} value={m}>{m}</option>)}
-            </select>
-            <select className="aa-flt" value={filtroPartido} onChange={e=>setFiltroPartido(e.target.value)}>
-              <option value="">Todos los partidos</option>
-              {PARTIDOS.map(p=><option key={p} value={p}>{p}</option>)}
-            </select>
-            <select className="aa-flt" value={filtroEstado} onChange={e=>setFiltroEstado(e.target.value)}>
-              <option value="">Todos los estados</option>
-              <option value="entregado">Entregado</option>
-              <option value="pendiente">Pendiente</option>
-            </select>
-            <select className="aa-flt" value={filtroDebitado} onChange={e=>setFiltroDebitado(e.target.value)}>
-              <option value="">Debitado: todos</option>
-              <option value="1">Debitado: Sí</option>
-              <option value="0">Debitado: No</option>
-            </select>
-            <select className="aa-flt" value={filtroLiquidado} onChange={e=>setFiltroLiquidado(e.target.value)}>
-              <option value="">Liquidado: todos</option>
-              <option value="1">Liquidado: Sí</option>
-              <option value="0">Liquidado: No</option>
-            </select>
-
-            {hayFiltros && (
-              <button className="aa-btn-clear-filters" onClick={limpiarFiltros} title="Limpiar filtros">
-                <FiX size={13}/> Limpiar
-              </button>
-            )}
-
-            <button className="aa-btn-refresh" onClick={cargar} disabled={loading} title="Actualizar">
-              <FiRefreshCw size={14} />
-            </button>
-
-            {filtered.length > 0 && (
-              <button className="aa-btn-export" onClick={exportarExcel} title="Exportar a Excel">
-                <FiDownload size={13}/> Excel
-              </button>
-            )}
+            <div className="aa-toolbar-row2">
+              <select className="aa-flt" value={filtroPartido} onChange={e=>setFiltroPartido(e.target.value)}>
+                <option value="">Todos los partidos</option>
+                {PARTIDOS.map(p=><option key={p} value={p}>{p}</option>)}
+              </select>
+              <select className="aa-flt" value={filtroEstado} onChange={e=>setFiltroEstado(e.target.value)}>
+                <option value="">Todos los estados</option>
+                <option value="entregado">Entregado</option>
+                <option value="pendiente">Pendiente</option>
+              </select>
+              <select className="aa-flt" value={filtroDebitado} onChange={e=>setFiltroDebitado(e.target.value)}>
+                <option value="">Debitado: todos</option>
+                <option value="1">Sí debitado</option>
+                <option value="0">No debitado</option>
+              </select>
+              <select className="aa-flt" value={filtroLiquidado} onChange={e=>setFiltroLiquidado(e.target.value)}>
+                <option value="">Liquidado: todos</option>
+                <option value="1">Sí liquidado</option>
+                <option value="0">No liquidado</option>
+              </select>
+              <div className="aa-toolbar-actions">
+                {hayFiltros && (
+                  <>
+                    <span className="aa-result-count"><strong>{filtered.length}</strong> resultado{filtered.length!==1?'s':''}</span>
+                    <button className="aa-btn-clear-filters" onClick={limpiarFiltros}><FiX size={12}/> Limpiar</button>
+                  </>
+                )}
+                <button className="aa-btn-refresh" onClick={cargar} disabled={loading} title="Actualizar"><FiRefreshCw size={14}/></button>
+                {filtered.length>0 && (
+                  <button className="aa-btn-export" onClick={exportarExcel}><FiDownload size={13}/> Excel</button>
+                )}
+              </div>
+            </div>
           </div>
 
           {error && (
@@ -392,25 +404,24 @@ export default function AyudasAlcaldias() {
             <table className="aa-table">
               <thead>
                 <tr>
-                  <th className="aa-th-sort" onClick={()=>handleSort('no_cheque')}>No. Cheq. <SortIcon col="no_cheque"/></th>
-                  <th>Cuenta</th>
-                  <th className="aa-th-sort" onClick={()=>handleSort('beneficiario')}>Beneficiario <SortIcon col="beneficiario"/></th>
-                  <th className="aa-th-sort" onClick={()=>handleSort('departamento')}>Dpto. <SortIcon col="departamento"/></th>
-                  <th>O-P</th>
-                  <th>Descripción</th>
-                  <th className="aa-th-sort" onClick={()=>handleSort('total')}>Total <SortIcon col="total"/></th>
-                  <th className="aa-th-sort" onClick={()=>handleSort('estado_entrega')}>Estado <SortIcon col="estado_entrega"/></th>
-                  <th className="aa-th-sort" onClick={()=>handleSort('fecha_entrega')}>Fecha entrega <SortIcon col="fecha_entrega"/></th>
-                  <th className="aa-th-sort" onClick={()=>handleSort('dias_transcurridos')}>Días <SortIcon col="dias_transcurridos"/></th>
-                  <th>Venc.</th>
-                  <th className="aa-th-sort" onClick={()=>handleSort('anio')}>Año <SortIcon col="anio"/></th>
-                  <th className="aa-th-sort" onClick={()=>handleSort('mes')}>Mes <SortIcon col="mes"/></th>
-                  <th>Debitado</th>
-                  <th>Liquidado</th>
-                  <th>Partido</th>
-                  <th>F. Liquidación</th>
-                  <th>Registrado por</th>
-                  <th>Acciones</th>
+                  <th><span className="aa-th-inner aa-th-sort" onClick={()=>handleSort('no_cheque')}>No. Cheq. <SortIcon col="no_cheque"/></span></th>
+                  <th><span className="aa-th-inner">Cuenta</span></th>
+                  <th><span className="aa-th-inner aa-th-sort" onClick={()=>handleSort('beneficiario')}>Beneficiario <SortIcon col="beneficiario"/></span></th>
+                  <th><span className="aa-th-inner aa-th-sort" onClick={()=>handleSort('departamento')}>Departamento <SortIcon col="departamento"/></span></th>
+                  <th><span className="aa-th-inner">O-P</span></th>
+                  <th><span className="aa-th-inner">Descripción</span></th>
+                  <th><span className="aa-th-inner aa-th-sort" onClick={()=>handleSort('total')}>Total <SortIcon col="total"/></span></th>
+                  <th><span className="aa-th-inner aa-th-sort" onClick={()=>handleSort('estado_entrega')}>Estado <SortIcon col="estado_entrega"/></span></th>
+                  <th><span className="aa-th-inner aa-th-sort" onClick={()=>handleSort('fecha_entrega')}>F. Entrega <SortIcon col="fecha_entrega"/></span></th>
+                  <th><span className="aa-th-inner aa-th-sort" onClick={()=>handleSort('dias_transcurridos')}>Días <SortIcon col="dias_transcurridos"/></span></th>
+                  <th><span className="aa-th-inner">Venc.</span></th>
+                  <th><span className="aa-th-inner aa-th-sort" onClick={()=>handleSort('anio')}>Año/Mes <SortIcon col="anio"/></span></th>
+                  <th><span className="aa-th-inner">Debitado</span></th>
+                  <th><span className="aa-th-inner">Liquidado</span></th>
+                  <th><span className="aa-th-inner">Partido</span></th>
+                  <th><span className="aa-th-inner">F. Liquidación</span></th>
+                  <th><span className="aa-th-inner">Registrado por</span></th>
+                  <th><span className="aa-th-inner">Acciones</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -437,8 +448,7 @@ export default function AyudasAlcaldias() {
                           </span>
                         : '—'}
                     </td>
-                    <td className="aa-td-anio">{r.anio||'—'}</td>
-                    <td>{r.mes||'—'}</td>
+                    <td className="aa-td-anio">{r.anio||'—'}{r.mes ? <span className="aa-td-mes"> · {r.mes}</span> : ''}</td>
                     <td className="aa-td-bool">
                       {r.debitado
                         ? <FiCheckCircle size={15} className="aa-icon--ok"/>
@@ -482,14 +492,26 @@ export default function AyudasAlcaldias() {
 
           {totalPages > 1 && (
             <div className="aa-pagination">
-              <button className="aa-page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="aa-page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              <span className="aa-page-info">
-                Página <strong>{page}</strong> de <strong>{totalPages}</strong>
-                &nbsp;·&nbsp;{filtered.length} registros
+              <span className="aa-pg-info">
+                {(page-1)*PAGE_SIZE+1}–{Math.min(page*PAGE_SIZE,filtered.length)} de <strong>{filtered.length}</strong>
               </span>
-              <button className="aa-page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="aa-page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
+              <div className="aa-pg-controls">
+                <button className="aa-pg-btn" disabled={page===1} onClick={()=>setPage(1)}>«</button>
+                <button className="aa-pg-btn" disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button>
+                {Array.from({length:totalPages},(_, i)=>i+1)
+                  .filter(n=>n===1||n===totalPages||Math.abs(n-page)<=1)
+                  .reduce((acc,n,i,arr)=>{
+                    if(i>0&&n-arr[i-1]>1) acc.push('…');
+                    acc.push(n); return acc;
+                  },[])
+                  .map((n,i)=> n==='…'
+                    ? <span key={`e${i}`} className="aa-pg-ellipsis">…</span>
+                    : <button key={n} className={`aa-pg-btn aa-pg-num${page===n?' aa-pg-num--active':''}`} onClick={()=>setPage(n)}>{n}</button>
+                  )}
+                <button className="aa-pg-btn" disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}>›</button>
+                <button className="aa-pg-btn" disabled={page===totalPages} onClick={()=>setPage(totalPages)}>»</button>
+              </div>
+              <span className="aa-pg-total">Pág. {page} / {totalPages}</span>
             </div>
           )}
           </>
