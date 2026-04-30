@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  FiShield, FiAlertTriangle, FiXCircle, FiCheckCircle,
-  FiFilter, FiTrash2, FiRefreshCw, FiCalendar, FiUser, FiWifi, FiDownload,
-  FiActivity, FiClock, FiTag,
+  FiShield, FiAlertTriangle, FiXCircle,
+  FiFilter, FiTrash2, FiRefreshCw, FiUser, FiWifi, FiDownload,
+  FiActivity, FiClock, FiTag, FiFileText, FiX, FiPlay, FiPause,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -35,17 +35,20 @@ const RESULTADO_COLORS = { EXITO: 'success', FALLO: 'danger', BLOQUEADO: 'blocke
 const EMPTY_FILTERS = { accion: '', modulo: '', resultado: '', ip: '', usuario: '', desde: '', hasta: '' };
 
 export default function Auditoria() {
-  const [logs,      setLogs]      = useState([]);
-  const [stats,     setStats]     = useState(null);
-  const [total,     setTotal]     = useState(0);
-  const [page,      setPage]      = useState(1);
-  const [loading,   setLoading]   = useState(true);
-  const [filters,   setFilters]   = useState(EMPTY_FILTERS);
-  const [applied,   setApplied]   = useState(EMPTY_FILTERS);
-  const [toast,     setToast]     = useState(null);
-  const [purgeConf, setPurgeConf] = useState(false);
-  const [purgeDias, setPurgeDias] = useState(90);
-  const [exporting, setExporting] = useState(false);
+  const [logs,        setLogs]        = useState([]);
+  const [stats,       setStats]       = useState(null);
+  const [total,       setTotal]       = useState(0);
+  const [page,        setPage]        = useState(1);
+  const [loading,     setLoading]     = useState(true);
+  const [filters,     setFilters]     = useState(EMPTY_FILTERS);
+  const [applied,     setApplied]     = useState(EMPTY_FILTERS);
+  const [toast,       setToast]       = useState(null);
+  const [purgeConf,   setPurgeConf]   = useState(false);
+  const [purgeDias,   setPurgeDias]   = useState(90);
+  const [exporting,   setExporting]   = useState(false);
+  const [detailRow,   setDetailRow]   = useState(null);   // modal detalle
+  const [autoRefresh, setAutoRefresh] = useState(false);  // auto-refresh
+  const autoRefreshRef = useRef(null);
 
   const LIMIT = 25;
 
@@ -117,6 +120,62 @@ export default function Auditoria() {
     setApplied(EMPTY_FILTERS);
     fetchLogs(1, EMPTY_FILTERS);
     fetchStats();
+  };
+
+  // ── Auto-refresh ───────────────────────────────────────────
+  const appliedRef = useRef(applied);
+  const pageRef    = useRef(page);
+  useEffect(() => { appliedRef.current = applied; }, [applied]);
+  useEffect(() => { pageRef.current    = page;    }, [page]);
+
+  useEffect(() => {
+    if (autoRefresh) {
+      autoRefreshRef.current = setInterval(() => {
+        fetchLogs(pageRef.current, appliedRef.current);
+        fetchStats();
+      }, 30000);
+    } else {
+      clearInterval(autoRefreshRef.current);
+    }
+    return () => clearInterval(autoRefreshRef.current);
+  }, [autoRefresh, fetchLogs, fetchStats]);
+
+  // ── CSV Export ─────────────────────────────────────────────
+  const handleExportCSV = async () => {
+    try {
+      const params = Object.fromEntries(Object.entries(applied).filter(([, v]) => v));
+      const r = await api.get('/auditoria/export', { headers: authHeaders(), params });
+      const rows = r.data;
+      const ACCION_MAP = {
+        LOGIN_OK:'Login exitoso', LOGIN_FAIL:'Login fallido',
+        IP_BLOQUEADA:'IP bloqueada', CREAR:'Crear',
+        ACTUALIZAR:'Actualizar', ELIMINAR:'Eliminar',
+        ACCESO_DENEGADO:'Acceso denegado',
+      };
+      const header = ['Fecha', 'Accion', 'Modulo', 'Usuario', 'IP', 'Metodo', 'Ruta', 'Detalle', 'Resultado'];
+      const csvRows = rows.map(row => [
+        formatFecha(row.creado_en),
+        ACCION_MAP[row.accion] || row.accion || '',
+        row.modulo || '',
+        row.usuario_nombre || 'Anonimo',
+        row.ip || '',
+        row.metodo || '',
+        row.ruta || '',
+        (row.detalle || '').replace(/"/g, '""'),
+        row.resultado || '',
+      ].map(v => `"${v}"`).join(','));
+      const csv = [header.join(','), ...csvRows].join('\r\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `auditoria-${new Date().toISOString().substring(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV exportado correctamente.', 'success');
+    } catch {
+      showToast('Error al exportar CSV.', 'error');
+    }
   };
 
   // ── purgar ─────────────────────────────────────────────────
@@ -315,11 +374,21 @@ export default function Auditoria() {
             <p className="aud-banner-sub">Registro completo de accesos, acciones y eventos de seguridad</p>
           </div>
           <div className="aud-banner-actions">
+            <button
+              className={`btn-autorefresh ${autoRefresh ? 'on' : ''}`}
+              onClick={() => setAutoRefresh(v => !v)}
+              title={autoRefresh ? 'Detener auto-refresh' : 'Activar auto-refresh cada 30s'}
+            >
+              {autoRefresh ? <><FiPause size={13} /> En vivo</> : <><FiPlay size={13} /> Auto</>}
+            </button>
+            <button className="btn-csv" onClick={handleExportCSV}>
+              <FiFileText size={14} /> CSV
+            </button>
             <button className="btn-pdf" onClick={handleExportPDF} disabled={exporting}>
-              <FiDownload size={14} /> {exporting ? 'Generando…' : 'Exportar PDF'}
+              <FiDownload size={14} /> {exporting ? 'Generando…' : 'PDF'}
             </button>
             <button className="btn-danger-outline" onClick={() => setPurgeConf(true)}>
-              <FiTrash2 size={14} /> Eliminar registros
+              <FiTrash2 size={14} /> Eliminar
             </button>
           </div>
         </div>
@@ -446,9 +515,32 @@ export default function Auditoria() {
         {/* Tabla */}
         <div className="aud-table-wrap">
           {loading ? (
-            <div className="aud-empty">Cargando...</div>
+            <table className="aud-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Acción</th><th>Módulo</th>
+                  <th>Usuario</th><th>IP</th><th>Detalle</th><th>Resultado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i} className="aud-skeleton-row">
+                    <td><span className="aud-skeleton" style={{ width: 90 }} /></td>
+                    <td><span className="aud-skeleton" style={{ width: 70 }} /></td>
+                    <td><span className="aud-skeleton" style={{ width: 55 }} /></td>
+                    <td><span className="aud-skeleton" style={{ width: 110 }} /></td>
+                    <td><span className="aud-skeleton" style={{ width: 80 }} /></td>
+                    <td><span className="aud-skeleton" style={{ width: 180 }} /></td>
+                    <td><span className="aud-skeleton" style={{ width: 55 }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : logs.length === 0 ? (
-            <div className="aud-empty">No hay registros con los filtros aplicados.</div>
+            <div className="aud-empty">
+              <FiShield size={38} style={{ color: '#cbd5e0', marginBottom: 10 }} />
+              <p>No hay registros con los filtros aplicados.</p>
+            </div>
           ) : (
             <table className="aud-table">
               <thead>
@@ -456,8 +548,8 @@ export default function Auditoria() {
                   <th>Fecha</th>
                   <th>Acción</th>
                   <th>Módulo</th>
-                  <th><FiUser size={12} /> Usuario</th>
-                  <th><FiWifi size={12} /> IP</th>
+                  <th><FiUser size={11} /> Usuario</th>
+                  <th><FiWifi size={11} /> IP</th>
                   <th>Detalle</th>
                   <th>Resultado</th>
                 </tr>
@@ -467,13 +559,13 @@ export default function Auditoria() {
                   const accionInfo = ACCION_LABELS[row.accion] || { label: row.accion, color: 'info' };
                   const resColor   = RESULTADO_COLORS[row.resultado] || 'info';
                   return (
-                    <tr key={row.id}>
+                    <tr key={row.id} className="aud-row-clickable" onClick={() => setDetailRow(row)} title="Ver detalle">
                       <td className="aud-td-fecha">{formatFecha(row.creado_en)}</td>
                       <td><span className={`aud-badge ${accionInfo.color}`}>{accionInfo.label}</span></td>
-                      <td>{row.modulo || '—'}</td>
+                      <td><span className="aud-modulo-tag">{row.modulo || '—'}</span></td>
                       <td>{row.usuario_nombre || <span className="aud-anon">Anónimo</span>}</td>
                       <td className="aud-td-ip">{row.ip}</td>
-                      <td className="aud-td-detalle" title={row.detalle}>{row.detalle ? row.detalle.substring(0, 80) + (row.detalle.length > 80 ? '…' : '') : '—'}</td>
+                      <td className="aud-td-detalle" title={row.detalle}>{row.detalle ? row.detalle.substring(0, 70) + (row.detalle.length > 70 ? '…' : '') : '—'}</td>
                       <td><span className={`aud-badge ${resColor}`}>{row.resultado}</span></td>
                     </tr>
                   );
@@ -484,9 +576,11 @@ export default function Auditoria() {
         </div>
 
         {/* Paginación */}
-        {totalPages > 1 && (
+        {!loading && (
           <div className="aud-pagination">
-            <span className="aud-pag-info">{total} registro(s) · Página {page} de {totalPages}</span>
+            <span className="aud-pag-info">
+              Mostrando <strong>{Math.min((page - 1) * LIMIT + 1, total)}–{Math.min(page * LIMIT, total)}</strong> de <strong>{total}</strong> registros
+            </span>
             <div className="aud-pag-controls">
               <button className="aud-pag-btn" disabled={page <= 1} onClick={() => fetchLogs(1)} title="Primera">&laquo;</button>
               <button className="aud-pag-btn" disabled={page <= 1} onClick={() => fetchLogs(page - 1)}>Anterior</button>
@@ -494,15 +588,44 @@ export default function Auditoria() {
                 const start = Math.max(1, Math.min(page - 2, totalPages - 4));
                 const p = start + i;
                 return p <= totalPages ? (
-                  <button
-                    key={p}
-                    className={`aud-pag-btn${p === page ? ' active' : ''}`}
-                    onClick={() => fetchLogs(p)}
-                  >{p}</button>
+                  <button key={p} className={`aud-pag-btn${p === page ? ' active' : ''}`} onClick={() => fetchLogs(p)}>{p}</button>
                 ) : null;
               })}
               <button className="aud-pag-btn" disabled={page >= totalPages} onClick={() => fetchLogs(page + 1)}>Siguiente</button>
               <button className="aud-pag-btn" disabled={page >= totalPages} onClick={() => fetchLogs(totalPages)} title="Última">&raquo;</button>
+            </div>
+          </div>
+        )}
+
+        {/* Modal detalle fila */}
+        {detailRow && (
+          <div className="modal-overlay" onClick={() => setDetailRow(null)}>
+            <div className="modal-box modal-detail" onClick={e => e.stopPropagation()}>
+              <div className="modal-detail-header">
+                <div className="modal-detail-title">
+                  <FiShield size={18} />
+                  <span>Detalle del evento</span>
+                </div>
+                <button className="modal-detail-close" onClick={() => setDetailRow(null)}><FiX size={18} /></button>
+              </div>
+              <div className="modal-detail-body">
+                {[
+                  ['Fecha / Hora', formatFecha(detailRow.creado_en)],
+                  ['Acción', (ACCION_LABELS[detailRow.accion]?.label || detailRow.accion)],
+                  ['Módulo', detailRow.modulo],
+                  ['Usuario', detailRow.usuario_nombre || 'Anónimo'],
+                  ['IP', detailRow.ip],
+                  ['Método HTTP', detailRow.metodo],
+                  ['Ruta', detailRow.ruta],
+                  ['Resultado', detailRow.resultado],
+                  ['Detalle', detailRow.detalle],
+                ].map(([label, value]) => (
+                  <div key={label} className="modal-detail-row">
+                    <span className="modal-detail-label">{label}</span>
+                    <span className="modal-detail-value">{value || '—'}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

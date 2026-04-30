@@ -562,3 +562,109 @@
   .aud-filter-row select,
   .aud-filter-row input { width: 100%; }
 }
+
+/* ── Fila clickeable ─────────────────────────────────────── */
+.aud-row-clickable { cursor: pointer; }
+.aud-row-clickable:hover td { background: #eef4ff !important; }
+
+/* ── Módulo tag ──────────────────────────────────────────── */
+.aud-modulo-tag {
+  display: inline-block;
+  padding: 2px 8px; border-radius: 6px;
+  background: #f1f5f9; color: #475569;
+  font-size: 11.5px; font-weight: 600;
+  font-family: monospace;
+}
+
+/* ── Skeleton loader ─────────────────────────────────────── */
+.aud-skeleton {
+  display: inline-block;
+  height: 13px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: aud-shimmer 1.4s infinite;
+}
+@keyframes aud-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.aud-skeleton-row td { padding: 13px 14px; }
+
+/* ── Botón CSV ───────────────────────────────────────────── */
+.btn-csv {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,.35);
+  background: rgba(255,255,255,.15);
+  color: white; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn-csv:hover { background: rgba(255,255,255,.25); }
+
+/* ── Botón auto-refresh ──────────────────────────────────── */
+.btn-autorefresh {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,.35);
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.8); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn-autorefresh.on {
+  background: rgba(34,197,94,.25);
+  border-color: rgba(134,239,172,.6);
+  color: #bbf7d0;
+  animation: aud-pulse 2s infinite;
+}
+@keyframes aud-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,.35); }
+  50%       { box-shadow: 0 0 0 5px rgba(34,197,94,.0); }
+}
+
+/* ── Modal detalle ───────────────────────────────────────── */
+.modal-detail {
+  max-width: 520px;
+  padding: 0;
+  overflow: hidden;
+}
+.modal-detail-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #1e3a6e, #274C8D);
+  color: white;
+}
+.modal-detail-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 15px; font-weight: 700;
+}
+.modal-detail-close {
+  background: rgba(255,255,255,.15); border: none;
+  color: white; cursor: pointer; border-radius: 7px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.modal-detail-close:hover { background: rgba(255,255,255,.28); }
+.modal-detail-body {
+  padding: 6px 0;
+  max-height: 70vh; overflow-y: auto;
+}
+.modal-detail-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 22px;
+  border-bottom: 1px solid #f0f4f8;
+}
+.modal-detail-row:last-child { border-bottom: none; }
+.modal-detail-label {
+  min-width: 110px; font-size: 11px; font-weight: 700;
+  color: #64748b; text-transform: uppercase; letter-spacing: .04em;
+  padding-top: 2px;
+}
+.modal-detail-value {
+  font-size: 13.5px; color: #1a2b4a; word-break: break-all;
+  flex: 1;
+}
+
+/* ── Paginación mejorada ─────────────────────────────────── */
+.aud-pag-info strong { color: #274C8D; }
