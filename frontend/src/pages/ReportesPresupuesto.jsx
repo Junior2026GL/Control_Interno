@@ -121,22 +121,29 @@ function addPDFFooter(doc, x0, CW, BM) {
   const PH    = doc.internal.pageSize.getHeight();
   const FH    = 9;
   const total = doc.internal.getNumberOfPages();
-  const bx    = x0 - 4;   // mismo que PresupuestoDiputados
-  const bw    = CW + 8;   // mismo que PresupuestoDiputados
+  const bx    = x0 - 4;   // L - 4  (igual que Autorizaciones)
+  const bw    = CW + 8;   // CW + 8 (igual que Autorizaciones)
+  const now   = new Date();
+  const fGen  = now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const hGen  = now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
   for (let p = 1; p <= total; p++) {
     doc.setPage(p);
-    // Marco exterior — igual que PresupuestoDiputados
+    // Marco exterior — igual que Autorizaciones (lineWidth 1.2)
     doc.setDrawColor(...C_AZUL);
     doc.setLineWidth(1.2);
     doc.rect(bx, BM, bw, PH - 2 * BM, 'S');
     // Barra footer (cubre todo el ancho del marco)
+    const FY = PH - BM - FH;
     doc.setFillColor(...C_AZUL);
-    doc.rect(bx, PH - BM - FH, bw, FH, 'F');
+    doc.rect(bx, FY, bw, FH, 'F');
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
     doc.setTextColor(...C_BLANCO);
-    const mid = x0 + CW / 2;
-    doc.text('CONGRESO NACIONAL — PAGADURÍA ESPECIAL', mid, PH - BM - FH / 2 + 1.5, { align: 'center' });
-    doc.text(`Página ${p} de ${total}`, bx + bw - 3, PH - BM - FH / 2 + 1.5, { align: 'right' });
+    // Izquierda
+    doc.text('Congreso Nacional - Pagaduría Especial', bx + 4, FY + 5.8);
+    // Centro
+    doc.text(`Página ${p} de ${total}`, x0 + CW / 2, FY + 5.8, { align: 'center' });
+    // Derecha
+    doc.text('Generado: ' + fGen + '  ' + hGen, bx + bw - 3, FY + 5.8, { align: 'right' });
   }
 }
 
