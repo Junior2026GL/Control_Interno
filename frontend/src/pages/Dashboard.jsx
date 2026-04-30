@@ -114,6 +114,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #134e4a 0%, #0f766e 100%)',
   },
   {
+    path: '/alcaldes',
+    label: 'Alcaldes Municipales',
+    clave: 'alcaldes',
+    description: 'Directorio de alcaldes por departamento y partido político',
+    icon: LuLandmark,
+    gradient: 'linear-gradient(135deg, #1e3a5f 0%, #274C8D 100%)',
+  },
+  {
     path: '/ip-whitelist',
     label: 'Acceso por IP',
     clave: null,
