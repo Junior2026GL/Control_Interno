@@ -202,65 +202,50 @@ export default function Alcaldes() {
   };
 
   const cancelEdit = () => { setEditingId(null); setForm(buildEmpty()); setTab('listado'); };
-
   const limpiarFiltros = () => { setFiltroDpto(''); setFiltroPartido(''); setBusqueda(''); };
   const hayFiltros = filtroDpto || filtroPartido || busqueda;
+
+  // Stats globales (sobre data total, no filtered)
+  const totalDptos   = useMemo(() => new Set(data.map(r => r.departamento).filter(Boolean)).size, [data]);
+  const totalPartidosGlobal = useMemo(() => new Set(data.map(r => r.partido).filter(Boolean)).size, [data]);
 
   return (
     <div className="page-shell">
       <Navbar />
       <div className="alc-page">
 
-        {/* Banner */}
-        <div className="alc-banner">
-          <div className="alc-banner-icon"><FiUsers size={26} /></div>
-          <div>
-            <h1 className="alc-banner-title">Alcaldes Municipales</h1>
-            <p className="alc-banner-sub">Directorio de alcaldes por departamento y partido político</p>
+        {/* ── HEADER ── */}
+        <div className="alc-header">
+          <div className="alc-header-brand">
+            <div className="alc-header-icon"><FiUsers size={22}/></div>
+            <div>
+              <h1 className="alc-header-title">Alcaldes Municipales</h1>
+              <p className="alc-header-sub">Directorio oficial · República de Honduras</p>
+            </div>
+          </div>
+          <div className="alc-header-stats">
+            <div className="alc-hstat">
+              <span className="alc-hstat-val">{data.length}</span>
+              <span className="alc-hstat-lbl">Municipios</span>
+            </div>
+            <div className="alc-hstat-sep"/>
+            <div className="alc-hstat">
+              <span className="alc-hstat-val">{totalDptos}</span>
+              <span className="alc-hstat-lbl">Departamentos</span>
+            </div>
+            <div className="alc-hstat-sep"/>
+            <div className="alc-hstat">
+              <span className="alc-hstat-val">{totalPartidosGlobal}</span>
+              <span className="alc-hstat-lbl">Partidos</span>
+            </div>
           </div>
         </div>
 
-        {/* KPIs */}
-        <div className="alc-cards">
-          <div className="alc-card">
-            <span className="alc-card-label">Municipios {hayFiltros ? 'filtrados' : 'totales'}</span>
-            <span className="alc-card-val">{totalMunicipios}</span>
-          </div>
-          <div className="alc-card alc-card--blue">
-            <span className="alc-card-label">Departamentos</span>
-            <span className="alc-card-val">{totalDepartamentos}</span>
-          </div>
-          <div className="alc-card alc-card--green">
-            <span className="alc-card-label">Partidos distintos</span>
-            <span className="alc-card-val">{totalPartidos}</span>
-          </div>
-          <div className="alc-card alc-card--amber">
-            <span className="alc-card-label">Sin partido</span>
-            <span className="alc-card-val">{sinPartido}</span>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="alc-tabs">
-          <button className={`alc-tab ${tab==='listado'?'alc-tab--active':''}`} onClick={() => { setTab('listado'); cargar(); }}>
-            <FiList size={14} /> Listado
-          </button>
-          {canEdit && (
-            <button className={`alc-tab ${tab==='nuevo'?'alc-tab--active':''}`} onClick={() => setTab('nuevo')}>
-              <FiPlus size={14} /> {editingId ? 'Editando registro' : 'Nuevo registro'}
-            </button>
-          )}
-        </div>
-
-        {/* ── LISTADO ── */}
-        {tab === 'listado' && (
-        <div>
-          {/* Filtros */}
-          <div className="alc-filters">
-            <div className="alc-filter-icon"><FiFilter size={14}/></div>
-
+        {/* ── TOOLBAR ── */}
+        <div className="alc-toolbar">
+          <div className="alc-toolbar-left">
             <div className="alc-search-wrap">
-              <FiSearch size={13} className="alc-search-icon" />
+              <FiSearch size={14} className="alc-search-icon"/>
               <input
                 className="alc-search-input"
                 type="text"
@@ -273,103 +258,175 @@ export default function Alcaldes() {
               )}
             </div>
 
-            <select className="alc-flt" value={filtroDpto} onChange={e => setFiltroDpto(e.target.value)}>
+            <select className="alc-sel-flt" value={filtroDpto} onChange={e => setFiltroDpto(e.target.value)}>
               <option value="">Todos los departamentos</option>
               {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
 
-            <select className="alc-flt" value={filtroPartido} onChange={e => setFiltroPartido(e.target.value)}>
+            <select className="alc-sel-flt" value={filtroPartido} onChange={e => setFiltroPartido(e.target.value)}>
               <option value="">Todos los partidos</option>
               {PARTIDOS.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
 
             {hayFiltros && (
-              <button className="alc-btn-clear" onClick={limpiarFiltros}>
-                <FiX size={13}/> Limpiar
+              <button className="alc-btn-clear-flt" onClick={limpiarFiltros}>
+                <FiX size={12}/> Limpiar
               </button>
             )}
-
-            <button className="alc-btn-refresh" onClick={cargar} disabled={loading} title="Actualizar">
-              <FiRefreshCw size={14} />
-            </button>
-
-            {filtered.length > 0 && (
-              <button className="alc-btn-export" onClick={exportarExcel} title="Exportar a Excel">
-                <FiDownload size={13}/> Excel
-              </button>
+            {hayFiltros && (
+              <span className="alc-result-count">
+                <strong>{filtered.length}</strong> resultado{filtered.length !== 1 ? 's' : ''}
+              </span>
             )}
           </div>
 
-          {error && <div className="alc-error"><FiAlertCircle size={15}/> {error}</div>}
-          {loading && <div className="alc-loading">Cargando…</div>}
-
-          {!loading && !error && filtered.length === 0 && (
-            <div className="alc-empty">
-              <FiUsers size={38}/>
-              <p>No hay registros para los filtros seleccionados.</p>
-            </div>
-          )}
-
-          {!loading && filtered.length > 0 && (
-          <>
-            <div className="alc-table-wrap">
-              <table className="alc-table">
-                <thead>
-                  <tr>
-                    <th className="alc-th alc-th--num">#</th>
-                    <th className="alc-th alc-th--sort" onClick={() => handleSort('departamento')}><span className="alc-th-inner">Departamento <SortIcon col="departamento"/></span></th>
-                    <th className="alc-th alc-th--sort" onClick={() => handleSort('municipio')}><span className="alc-th-inner">Municipio <SortIcon col="municipio"/></span></th>
-                    <th className="alc-th alc-th--sort" onClick={() => handleSort('alcalde')}><span className="alc-th-inner">Alcalde <SortIcon col="alcalde"/></span></th>
-                    <th className="alc-th alc-th--sort" onClick={() => handleSort('partido')}><span className="alc-th-inner">Partido <SortIcon col="partido"/></span></th>
-                    {canEdit && <th className="alc-th">Acciones</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map((r, idx) => (
-                    <tr key={r.id} className={idx % 2 === 1 ? 'alc-tr--even' : ''}>
-                      <td className="alc-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
-                      <td className="alc-td-dpto">{r.departamento || '—'}</td>
-                      <td className="alc-td-mun">{r.municipio || '—'}</td>
-                      <td className="alc-td-alc">{r.alcalde || '—'}</td>
-                      <td>
-                        {r.partido
-                          ? <span className="alc-partido" style={PARTIDO_COLOR[r.partido] || { backgroundColor: '#f1f5f9', color: '#475569', borderColor: '#cbd5e1' }}>{r.partido}</span>
-                          : <span className="alc-partido-none">—</span>}
-                      </td>
-                      {canEdit && (
-                        <td className="alc-td-actions">
-                          <button className="alc-btn-icon alc-btn-icon--edit" title="Editar" onClick={() => handleEdit(r)}>
-                            <FiEdit3 size={14}/>
-                          </button>
-                          <button className="alc-btn-icon alc-btn-icon--del" title="Eliminar"
-                            disabled={deletingId === r.id} onClick={() => handleDelete(r.id)}>
-                            <FiTrash2 size={14}/>
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="alc-tfoot-row">
-                    <td colSpan={canEdit ? 6 : 5} className="alc-tfoot-label">
-                      {filtered.length} registro{filtered.length !== 1 ? 's' : ''}{filtered.length !== data.length ? ` de ${data.length}` : ''}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {totalPages > 1 && (
-              <div className="alc-pagination">
-                <button className="alc-page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-                <button className="alc-page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-                <span className="alc-page-info">Página <strong>{page}</strong> de <strong>{totalPages}</strong></span>
-                <button className="alc-page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-                <button className="alc-page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              </div>
+          <div className="alc-toolbar-right">
+            <button className="alc-tool-icon" onClick={cargar} disabled={loading} title="Actualizar">
+              <FiRefreshCw size={15}/>
+            </button>
+            {filtered.length > 0 && (
+              <button className="alc-tool-btn alc-tool-btn--export" onClick={exportarExcel}>
+                <FiDownload size={13}/> Exportar
+              </button>
             )}
-          </>
+            {canEdit && (
+              <button
+                className={`alc-tool-btn ${tab === 'nuevo' ? 'alc-tool-btn--back' : 'alc-tool-btn--new'}`}
+                onClick={() => { tab === 'nuevo' ? cancelEdit() : setTab('nuevo'); }}
+              >
+                {tab === 'nuevo'
+                  ? <><FiList size={13}/> Ver listado</>
+                  : <><FiPlus size={13}/> Nuevo registro</>}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Edit indicator */}
+        {editingId && tab === 'nuevo' && (
+          <div className="alc-edit-banner">
+            <FiEdit3 size={13}/>
+            <span>Editando: <strong>{form.alcalde || 'registro'}</strong> — {form.municipio}</span>
+            <button onClick={cancelEdit}><FiX size={13}/></button>
+          </div>
+        )}
+
+        {/* ── LISTADO ── */}
+        {tab === 'listado' && (
+        <div className="alc-list-wrap">
+          {error && <div className="alc-error"><FiAlertCircle size={15}/> {error}</div>}
+
+          {loading ? (
+            <div className="alc-loading">
+              <div className="alc-spinner-lg"/>
+              <span>Cargando directorio…</span>
+            </div>
+          ) : !error && filtered.length === 0 ? (
+            <div className="alc-empty">
+              <FiUsers size={42}/>
+              <h3>Sin resultados</h3>
+              <p>{data.length === 0
+                ? 'No hay registros cargados en el sistema.'
+                : 'Ningún registro coincide con los filtros aplicados.'}</p>
+              {hayFiltros && (
+                <button className="alc-btn-clear-flt" onClick={limpiarFiltros}>
+                  <FiX size={12}/> Limpiar filtros
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="alc-table-wrap">
+                <table className="alc-table">
+                  <thead>
+                    <tr>
+                      <th className="alc-th alc-th--num">#</th>
+                      <th className="alc-th alc-th--sort" onClick={() => handleSort('departamento')}>
+                        <span className="alc-th-inner">Departamento <SortIcon col="departamento"/></span>
+                      </th>
+                      <th className="alc-th alc-th--sort" onClick={() => handleSort('municipio')}>
+                        <span className="alc-th-inner">Municipio <SortIcon col="municipio"/></span>
+                      </th>
+                      <th className="alc-th alc-th--sort" onClick={() => handleSort('alcalde')}>
+                        <span className="alc-th-inner">Alcalde / Alcaldesa <SortIcon col="alcalde"/></span>
+                      </th>
+                      <th className="alc-th alc-th--sort alc-th--partido" onClick={() => handleSort('partido')}>
+                        <span className="alc-th-inner">Partido <SortIcon col="partido"/></span>
+                      </th>
+                      {canEdit && <th className="alc-th alc-th--actions">Acciones</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginated.map((r, idx) => (
+                      <tr key={r.id} className={idx % 2 === 1 ? 'alc-tr--alt' : ''}>
+                        <td className="alc-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
+                        <td className="alc-td-dpto">
+                          <span className="alc-dpto-chip">{r.departamento || '—'}</span>
+                        </td>
+                        <td className="alc-td-mun">{r.municipio || '—'}</td>
+                        <td className="alc-td-alc">{r.alcalde || '—'}</td>
+                        <td className="alc-td-partido">
+                          {r.partido
+                            ? (
+                              <span className="alc-badge"
+                                style={PARTIDO_COLOR[r.partido] || PARTIDO_COLOR.OTRO}>
+                                <span className="alc-badge-dot"/>
+                                {r.partido}
+                              </span>
+                            )
+                            : <span className="alc-badge-none">—</span>}
+                        </td>
+                        {canEdit && (
+                          <td className="alc-td-actions">
+                            <button className="alc-act-btn alc-act-btn--edit" title="Editar"
+                              onClick={() => handleEdit(r)}>
+                              <FiEdit3 size={13}/>
+                            </button>
+                            <button className="alc-act-btn alc-act-btn--del" title="Eliminar"
+                              disabled={deletingId === r.id} onClick={() => handleDelete(r.id)}>
+                              <FiTrash2 size={13}/>
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="alc-tfoot-row">
+                      <td colSpan={canEdit ? 6 : 5}>
+                        Mostrando <strong>{paginated.length}</strong> de <strong>{filtered.length}</strong> registros
+                        {filtered.length !== data.length && <> · {data.length} en total</>}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="alc-pagination">
+                  <button className="alc-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+                  <button className="alc-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                  <div className="alc-pg-nums">
+                    {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+                      let p;
+                      if (totalPages <= 7) p = i + 1;
+                      else if (page <= 4) p = i + 1;
+                      else if (page >= totalPages - 3) p = totalPages - 6 + i;
+                      else p = page - 3 + i;
+                      return (
+                        <button key={p}
+                          className={`alc-pg-num ${page === p ? 'alc-pg-num--active' : ''}`}
+                          onClick={() => setPage(p)}>
+                          {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button className="alc-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+                  <button className="alc-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
+                </div>
+              )}
+            </>
           )}
         </div>
         )}
@@ -377,56 +434,64 @@ export default function Alcaldes() {
         {/* ── FORMULARIO ── */}
         {tab === 'nuevo' && canEdit && (
         <form className="alc-form" onSubmit={handleSubmit} noValidate>
-
-          <div className="alc-section">
-            <div className="alc-section-head">
-              <span className="alc-step">1</span>
-              <div>
-                <h2 className="alc-section-title">Datos del alcalde</h2>
-                <p className="alc-section-desc">Departamento, municipio, alcalde y partido</p>
-              </div>
+          <div className="alc-form-card">
+            <div className="alc-form-card-head">
+              <h2 className="alc-form-card-title">
+                {editingId ? 'Editar alcalde' : 'Registrar nuevo alcalde'}
+              </h2>
+              <p className="alc-form-card-sub">
+                Complete todos los campos obligatorios marcados con <span className="alc-req">*</span>
+              </p>
             </div>
-            <div className="alc-fields">
+            <div className="alc-form-body">
               <div className="alc-row2">
                 <div className="alc-field">
                   <label className="alc-label">Departamento <span className="alc-req">*</span></label>
-                  <select className="alc-input alc-select" value={form.departamento} onChange={e => set('departamento', e.target.value)} required>
-                    <option value="">Seleccione…</option>
+                  <select className="alc-input alc-select" value={form.departamento}
+                    onChange={e => set('departamento', e.target.value)} required>
+                    <option value="">Seleccione un departamento…</option>
                     {DEPARTAMENTOS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div className="alc-field">
                   <label className="alc-label">Municipio <span className="alc-req">*</span></label>
-                  <input className="alc-input" type="text" placeholder="Nombre del municipio"
+                  <input className="alc-input" type="text" placeholder="Ej. San Pedro Sula"
                     value={form.municipio} onChange={e => set('municipio', e.target.value.toUpperCase())} required/>
                 </div>
               </div>
               <div className="alc-row2">
                 <div className="alc-field">
-                  <label className="alc-label">Nombre del alcalde <span className="alc-req">*</span></label>
+                  <label className="alc-label">Nombre completo del alcalde / alcaldesa <span className="alc-req">*</span></label>
                   <input className="alc-input" type="text" placeholder="Nombre completo"
                     value={form.alcalde} onChange={e => set('alcalde', e.target.value.toUpperCase())} required/>
                 </div>
                 <div className="alc-field">
                   <label className="alc-label">Partido político</label>
-                  <select className="alc-input alc-select" value={form.partido} onChange={e => set('partido', e.target.value)}>
+                  <select className="alc-input alc-select" value={form.partido}
+                    onChange={e => set('partido', e.target.value)}>
                     <option value="">Sin partido / Independiente</option>
                     {PARTIDOS.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
+                  {form.partido && (
+                    <span className="alc-badge alc-badge--preview"
+                      style={PARTIDO_COLOR[form.partido] || PARTIDO_COLOR.OTRO}>
+                      <span className="alc-badge-dot"/>
+                      {form.partido}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="alc-form-actions">
-            <button type="button" className="alc-btn-cancel" onClick={cancelEdit}>
-              <FiX size={14}/> Cancelar
-            </button>
-            <button type="submit" className="alc-btn-save" disabled={saving}>
-              {saving
-                ? <><span className="alc-spinner"/> Guardando…</>
-                : <><FiCheckCircle size={15}/> {editingId ? 'Actualizar' : 'Guardar registro'}</>}
-            </button>
+            <div className="alc-form-footer">
+              <button type="button" className="alc-btn-cancel" onClick={cancelEdit}>
+                <FiX size={14}/> Cancelar
+              </button>
+              <button type="submit" className="alc-btn-save" disabled={saving}>
+                {saving
+                  ? <><span className="alc-spinner"/> Guardando…</>
+                  : <><FiCheckCircle size={15}/> {editingId ? 'Actualizar registro' : 'Guardar registro'}</>}
+              </button>
+            </div>
           </div>
         </form>
         )}
