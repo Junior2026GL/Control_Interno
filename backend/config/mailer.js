@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const path       = require('path');
+const fs         = require('fs');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -11,6 +12,10 @@ const transporter = nodemailer.createTransport({
 
 // Ruta absoluta al logo (frontend/public)
 const LOGO_PATH = path.join(__dirname, '../../frontend/public/logo-congreso.png.png');
+const LOGO_EXISTS = fs.existsSync(LOGO_PATH);
+const LOGO_ATTACHMENT = LOGO_EXISTS
+  ? [{ filename: 'logo-congreso.png', path: LOGO_PATH, cid: 'logo_congreso' }]
+  : [];
 
 /**
  * Envía un correo con enlace de recuperación de contraseña.
@@ -343,7 +348,7 @@ exports.sendBackupSuccess = async (toEmail, filename, sizeBytes) => {
     to: toEmail,
     subject: `✅ Backup completado – ${filename}`,
     html,
-    attachments: [{ filename: 'logo-congreso.png', path: LOGO_PATH, cid: 'logo_congreso' }],
+    attachments: LOGO_ATTACHMENT,
   });
 };
 
@@ -426,7 +431,7 @@ exports.sendBackupFailure = async (toEmail, errorMessage, lastBackup) => {
     to: toEmail,
     subject: `🚨 [ALERTA] Backup automático falló – ${dateStr}`,
     html,
-    attachments: [{ filename: 'logo-congreso.png', path: LOGO_PATH, cid: 'logo_congreso' }],
+    attachments: LOGO_ATTACHMENT,
   });
 };
 
@@ -519,6 +524,6 @@ exports.sendDownloadNotification = async (toEmail, nombreUsuario, filename, ip) 
     to: toEmail,
     subject: `💾 Descarga de base de datos – ${dateStr}`,
     html,
-    attachments: [{ filename: 'logo-congreso.png', path: LOGO_PATH, cid: 'logo_congreso' }],
+    attachments: LOGO_ATTACHMENT,
   });
 };
