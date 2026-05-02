@@ -158,19 +158,6 @@
   padding: 4px 40px 28px;
 }
 
-.login-session-warn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fff7ed;
-  color: #c2410c;
-  border: 1.5px solid #fed7aa;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 0.82rem;
-  font-weight: 500;
-}
-
 .field-group {
   display: flex;
   flex-direction: column;

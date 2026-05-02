@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useContext } from 'react';
 import api from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,14 +11,8 @@ export default function Login() {
   const [showPass, setShowPass]   = useState(false);
   const [loading,  setLoading]    = useState(false);
   const [error,    setError]      = useState('');
-  const [sessionMsg, setSessionMsg] = useState('');
   const { login }    = useContext(AuthContext);
   const navigate     = useNavigate();
-
-  useEffect(() => {
-    const msg = sessionStorage.getItem('session_msg');
-    if (msg) { setSessionMsg(msg); sessionStorage.removeItem('session_msg'); }
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,12 +51,6 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="login-form" noValidate>
-
-            {sessionMsg && (
-              <div className="login-session-warn">
-                <FiAlertCircle size={15}/> {sessionMsg}
-              </div>
-            )}
 
             <div className="field-group">
               <label htmlFor="username">Usuario</label>
