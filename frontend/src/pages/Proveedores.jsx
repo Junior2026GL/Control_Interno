@@ -5,6 +5,7 @@ import {
   FiSearch, FiDownload, FiChevronUp, FiChevronDown,
   FiChevronLeft, FiChevronRight, FiEye,
   FiPhone, FiMail, FiMapPin, FiStar, FiPackage,
+  FiUser, FiCalendar,
 } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import Navbar from '../components/Navbar';
@@ -183,6 +184,8 @@ export default function Proveedores() {
     e.preventDefault();
     if (!form.nombre.trim())    { showToast('El nombre es requerido.', 'error'); return; }
     if (!form.categoria.trim()) { showToast('La categoría es requerida.', 'error'); return; }
+    if (form.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo.trim()))
+      { showToast('Formato de correo electrónico inválido.', 'error'); return; }
     setSaving(true);
     try {
       if (editingId) {
@@ -506,12 +509,12 @@ export default function Proveedores() {
                 <div className="pv-field">
                   <label className="pv-label">Nombre del proveedor <span className="pv-req">*</span></label>
                   <input className="pv-input" type="text" placeholder="Razón social o nombre comercial"
-                    value={form.nombre} onChange={e => set('nombre', e.target.value)} required/>
+                    value={form.nombre} onChange={e => set('nombre', e.target.value)} maxLength={200} required/>
                 </div>
                 <div className="pv-field">
                   <label className="pv-label">RTN</label>
                   <input className="pv-input" type="text" placeholder="0000-0000-000000"
-                    value={form.rtn} onChange={e => set('rtn', e.target.value)}/>
+                    value={form.rtn} onChange={e => set('rtn', e.target.value)} maxLength={20}/>
                 </div>
                 <div className="pv-field">
                   <label className="pv-label">RP</label>
@@ -562,14 +565,14 @@ export default function Proveedores() {
                 <div className="pv-field">
                   <label className="pv-label">Teléfono</label>
                   <input className="pv-input" type="tel" placeholder="0000-0000"
-                    value={form.telefono} onChange={e => set('telefono', e.target.value)}/>
+                    value={form.telefono} onChange={e => set('telefono', e.target.value)} maxLength={30}/>
                 </div>
               </div>
               <div className="pv-row2">
                 <div className="pv-field">
                   <label className="pv-label">Correo electrónico</label>
                   <input className="pv-input" type="email" placeholder="correo@empresa.com"
-                    value={form.correo} onChange={e => set('correo', e.target.value)}/>
+                    value={form.correo} onChange={e => set('correo', e.target.value)} maxLength={150}/>
                 </div>
                 <div className="pv-field">
                   <label className="pv-label">Dirección</label>
@@ -702,6 +705,24 @@ export default function Proveedores() {
                   <div className="pv-detail-item pv-detail-item-full">
                     <span className="pv-detail-label"><FiMapPin size={10}/> Dirección</span>
                     <span className="pv-detail-value">{detail.direccion}</span>
+                  </div>
+                )}
+                {detail.registrado_por && (
+                  <div className="pv-detail-item">
+                    <span className="pv-detail-label"><FiUser size={10}/> Registrado por</span>
+                    <span className="pv-detail-value">{detail.registrado_por}</span>
+                  </div>
+                )}
+                {detail.created_at && (
+                  <div className="pv-detail-item">
+                    <span className="pv-detail-label"><FiCalendar size={10}/> Fecha de registro</span>
+                    <span className="pv-detail-value">{new Date(detail.created_at).toLocaleString('es-HN')}</span>
+                  </div>
+                )}
+                {detail.updated_at && (
+                  <div className="pv-detail-item">
+                    <span className="pv-detail-label"><FiCalendar size={10}/> Última actualización</span>
+                    <span className="pv-detail-value">{new Date(detail.updated_at).toLocaleString('es-HN')}</span>
                   </div>
                 )}
               </div>

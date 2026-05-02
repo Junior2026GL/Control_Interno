@@ -50,6 +50,11 @@ exports.create = (req, res) => {
 
   if (!nombre)    return res.status(400).json({ message: 'El nombre del proveedor es requerido.' });
   if (!categoria) return res.status(400).json({ message: 'La categoría es requerida.' });
+  if (nombre.length > 200) return res.status(400).json({ message: 'El nombre no puede superar 200 caracteres.' });
+  if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo))
+    return res.status(400).json({ message: 'Formato de correo electrónico inválido.' });
+  if ([eval_calidad, eval_puntualidad, eval_precio, eval_servicio].some(v => v !== null && (v < 1 || v > 5)))
+    return res.status(400).json({ message: 'Las evaluaciones deben ser entre 1 y 5.' });
 
   db.query(
     `INSERT INTO proveedores
@@ -96,6 +101,11 @@ exports.update = (req, res) => {
 
   if (!nombre)    return res.status(400).json({ message: 'El nombre del proveedor es requerido.' });
   if (!categoria) return res.status(400).json({ message: 'La categoría es requerida.' });
+  if (nombre.length > 200) return res.status(400).json({ message: 'El nombre no puede superar 200 caracteres.' });
+  if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo))
+    return res.status(400).json({ message: 'Formato de correo electrónico inválido.' });
+  if ([eval_calidad, eval_puntualidad, eval_precio, eval_servicio].some(v => v !== null && (v < 1 || v > 5)))
+    return res.status(400).json({ message: 'Las evaluaciones deben ser entre 1 y 5.' });
 
   db.query(
     `UPDATE proveedores SET
