@@ -117,8 +117,7 @@ const ALL_MODULES = [
     path: '/alcaldes',
     label: 'Alcaldes Municipales',
     clave: 'alcaldes',
-    description: 'Directorio de alcaldes por departamento y partido político',
-    icon: LuLandmark,
+    icon: LuUserCheck,
     gradient: 'linear-gradient(135deg, #1e3a5f 0%, #274C8D 100%)',
   },
   {
