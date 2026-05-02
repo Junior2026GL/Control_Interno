@@ -69,13 +69,17 @@ function StarRating({ value, onChange, readOnly = false }) {
   );
 }
 
-function ScoreBadge({ score }) {
-  if (!score) return <span className="pv-score-none">Sin evaluar</span>;
-  let label, cls;
-  if (score >= 4.5) { label = 'Excelente'; cls = 'pv-score--excellent'; }
-  else if (score >= 3.5) { label = 'Bueno'; cls = 'pv-score--good'; }
-  else if (score >= 2.5) { label = 'Regular'; cls = 'pv-score--regular'; }
-  else { label = 'Deficiente'; cls = 'pv-score--poor'; }
+function getScoreLabel(s) {
+  if (!s) return null;
+  if (s >= 4.5) return { label: 'Excelente', cls: 'pv-score--excellent' };
+  if (s >= 3.5) return { label: 'Bueno',     cls: 'pv-score--good' };
+  if (s >= 2.5) return { label: 'Regular',   cls: 'pv-score--regular' };
+  return          { label: 'Deficiente', cls: 'pv-score--poor' };
+}
+function ScoreBadge({ score, hero = false }) {
+  if (!score) return hero ? null : <span className="pv-score-none">Sin evaluar</span>;
+  const { label, cls } = getScoreLabel(score);
+  if (hero) return <span className="pv-score-hero">★ {score} · {label}</span>;
   return <span className={`pv-score-badge ${cls}`}>★ {score} · {label}</span>;
 }
 
@@ -632,26 +636,25 @@ export default function Proveedores() {
       {detail && (
         <div className="pv-overlay" onClick={() => setDetail(null)}>
           <div className="pv-modal-detail" onClick={e => e.stopPropagation()}>
-            <div className="pv-modal-header">
-              <h2>Detalle del Proveedor</h2>
-              <button className="pv-modal-close" onClick={() => setDetail(null)}><FiX size={18}/></button>
+
+            {/* Hero con gradiente */}
+            <div className="pv-modal-hero">
+              <button className="pv-modal-close-hero" onClick={() => setDetail(null)}><FiX size={16}/></button>
+              <div className="pv-modal-hero-avatar">{inicial(detail.nombre)}</div>
+              <div className="pv-modal-hero-info">
+                <h2>{detail.nombre}</h2>
+                <div className="pv-modal-hero-badges">
+                  <span className="pv-categ-chip pv-categ-chip--hero">{detail.categoria}</span>
+                  <span className="pv-estado-badge pv-estado-badge--hero"
+                    style={ESTADO_STYLE[detail.estado] || ESTADO_STYLE.ACTIVO}>
+                    {detail.estado}
+                  </span>
+                </div>
+                <ScoreBadge score={detail.puntuacion_global} hero/>
+              </div>
             </div>
 
             <div className="pv-detail-body">
-              {/* Hero */}
-              <div className="pv-detail-hero">
-                <div className="pv-detail-avatar">{inicial(detail.nombre)}</div>
-                <div className="pv-detail-hero-info">
-                  <h3>{detail.nombre}</h3>
-                  <div className="pv-detail-badges">
-                    <span className="pv-categ-chip">{detail.categoria}</span>
-                    <span className="pv-estado-badge" style={ESTADO_STYLE[detail.estado] || ESTADO_STYLE.ACTIVO}>
-                      {detail.estado}
-                    </span>
-                  </div>
-                  <ScoreBadge score={detail.puntuacion_global}/>
-                </div>
-              </div>
 
               {/* Datos */}
               <div className="pv-detail-grid">
