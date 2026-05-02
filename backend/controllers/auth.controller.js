@@ -1,11 +1,11 @@
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { logEvent, normalizeIP } = require('../middleware/audit');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 exports.login = (req, res) => {
   const { username, password } = req.body;
-  const ip = normalizeIP(req.ip);
+  const ip = getClientIP(req);
 
   if (!username || !password) {
     return res.status(400).json({ message: 'Usuario y contraseña son requeridos' });

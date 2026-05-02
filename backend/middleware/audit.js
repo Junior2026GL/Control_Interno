@@ -15,6 +15,17 @@ function normalizeIP(ip) {
   return ip;
 }
 
+function getClientIP(req) {
+  // En Railway/proxies: X-Forwarded-For contiene la IP real del cliente
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    // Puede ser "clientIP, proxy1, proxy2" — tomamos la primera
+    const first = forwarded.split(',')[0].trim();
+    if (first) return normalizeIP(first);
+  }
+  return normalizeIP(req.ip || req.socket?.remoteAddress);
+}
+
 /**
  * Registra un evento de auditoría. Fire-and-forget, no bloquea la respuesta.
  * @param {object} data
@@ -81,7 +92,7 @@ const auditMiddleware = (req, res, next) => {
       usuario_nombre: req.user?.nombre || null,
       accion,
       modulo,
-      ip:      req.ip,
+      ip:      getClientIP(req),
       metodo:  req.method,
       ruta,
       resultado,
@@ -93,4 +104,6 @@ const auditMiddleware = (req, res, next) => {
 
 module.exports = auditMiddleware;
 module.exports.logEvent     = logEvent;
+module.exports.normalizeIP  = normalizeIP;
+module.exports.getClientIP  = getClientIP;
 module.exports.normalizeIP  = normalizeIP;
