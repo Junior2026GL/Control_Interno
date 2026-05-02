@@ -448,16 +448,16 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.45rem 1rem;
-  background: transparent;
-  color: #e53e3e;
-  border: 1px solid #e53e3e;
+  background: #e53e3e;
+  color: #fff;
+  border: 1.5px solid #c53030;
   border-radius: 7px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 }
-.btn-danger-outline:hover { background: #fff5f5; }
+.btn-danger-outline:hover { background: #c53030; border-color: #9b2c2c; }
 
 /* Modal */
 .modal-overlay {
