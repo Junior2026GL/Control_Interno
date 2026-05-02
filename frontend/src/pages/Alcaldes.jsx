@@ -2,8 +2,8 @@
 import {
   FiPlus, FiRefreshCw, FiEdit3, FiTrash2, FiX,
   FiCheckCircle, FiAlertCircle, FiFilter, FiList,
-  FiUsers, FiSearch, FiDownload, FiChevronUp, FiChevronDown,
-  FiChevronLeft, FiChevronRight,
+  FiHome, FiSearch, FiDownload, FiChevronUp, FiChevronDown,
+  FiChevronLeft, FiChevronRight, FiEye, FiMapPin, FiFlag, FiAward,
 } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import Navbar from '../components/Navbar';
@@ -68,6 +68,7 @@ export default function Alcaldes() {
   const [editingId, setEditingId] = useState(null);
   const [confirmCfg, setConfirmCfg] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [detail,     setDetail]     = useState(null);
 
   // Filtros
   const [filtroDpto,    setFiltroDpto]    = useState('');
@@ -236,7 +237,7 @@ export default function Alcaldes() {
         {/* ── HEADER ── */}
         <div className="alc-header">
           <div className="alc-header-brand">
-            <div className="alc-header-icon"><FiUsers size={22}/></div>
+            <div className="alc-header-icon"><FiHome size={22}/></div>
             <div>
               <h1 className="alc-header-title">Alcaldes Municipales</h1>
               <p className="alc-header-sub">Directorio oficial · República de Honduras</p>
@@ -350,7 +351,7 @@ export default function Alcaldes() {
             </div>
           ) : !error && filtered.length === 0 ? (
             <div className="alc-empty">
-              <FiUsers size={42}/>
+              <FiHome size={42}/>
               <h3>Sin resultados</h3>
               <p>{data.length === 0
                 ? 'No hay registros cargados en el sistema.'
@@ -380,7 +381,7 @@ export default function Alcaldes() {
                       <th className="alc-th alc-th--sort alc-th--partido" onClick={() => handleSort('partido')}>
                         <span className="alc-th-inner">Partido <SortIcon col="partido"/></span>
                       </th>
-                      {canEdit && <th className="alc-th alc-th--actions">Acciones</th>}
+                      <th className="alc-th alc-th--actions">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -403,18 +404,24 @@ export default function Alcaldes() {
                             )
                             : <span className="alc-badge-none">—</span>}
                         </td>
-                        {canEdit && (
-                          <td className="alc-td-actions">
-                            <button className="alc-act-btn alc-act-btn--edit" title="Editar"
-                              onClick={() => handleEdit(r)}>
-                              <FiEdit3 size={13}/>
+                        <td className="alc-td-actions">
+                            <button className="alc-act-btn alc-act-btn--view" title="Ver detalle"
+                              onClick={() => setDetail(r)}>
+                              <FiEye size={13}/>
                             </button>
-                            <button className="alc-act-btn alc-act-btn--del" title="Eliminar"
-                              disabled={deletingId === r.id} onClick={() => handleDelete(r.id)}>
-                              <FiTrash2 size={13}/>
-                            </button>
+                            {canEdit && (
+                              <>
+                                <button className="alc-act-btn alc-act-btn--edit" title="Editar"
+                                  onClick={() => handleEdit(r)}>
+                                  <FiEdit3 size={13}/>
+                                </button>
+                                <button className="alc-act-btn alc-act-btn--del" title="Eliminar"
+                                  disabled={deletingId === r.id} onClick={() => handleDelete(r.id)}>
+                                  <FiTrash2 size={13}/>
+                                </button>
+                              </>
+                            )}
                           </td>
-                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -551,6 +558,75 @@ export default function Alcaldes() {
         <div className={`alc-toast alc-toast--${toast.type}`} role="alert">
           <span>{toast.msg}</span>
           <button onClick={() => setToast(null)}>✕</button>
+        </div>
+      )}
+
+      {/* ── Modal detalle ── */}
+      {detail && (
+        <div className="alc-overlay" onClick={() => setDetail(null)}>
+          <div className="alc-modal-detail" onClick={e => e.stopPropagation()}>
+
+            <div className="alc-modal-header">
+              <h2>Detalle del Alcalde</h2>
+              <button className="alc-modal-close" onClick={() => setDetail(null)}><FiX size={18}/></button>
+            </div>
+
+            <div className="alc-detail-body">
+              {/* Hero */}
+              <div className="alc-detail-hero">
+                <div className="alc-detail-avatar">
+                  <FiHome size={32}/>
+                </div>
+                <div className="alc-detail-hero-info">
+                  <h3>{detail.alcalde || '—'}</h3>
+                  <div className="alc-detail-badges">
+                    <span className="alc-detail-mun-badge">{detail.municipio}</span>
+                    {detail.partido && (
+                      <span className="alc-badge"
+                        style={PARTIDO_COLOR[detail.partido] || PARTIDO_COLOR.OTRO}>
+                        <span className="alc-badge-dot"/>{detail.partido}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid de datos */}
+              <div className="alc-detail-grid">
+                <div className="alc-detail-item">
+                  <span className="alc-detail-label"><FiMapPin size={11}/> Departamento</span>
+                  <span className="alc-detail-value">{detail.departamento || '—'}</span>
+                </div>
+                <div className="alc-detail-item">
+                  <span className="alc-detail-label"><FiHome size={11}/> Municipio</span>
+                  <span className="alc-detail-value">{detail.municipio || '—'}</span>
+                </div>
+                <div className="alc-detail-item">
+                  <span className="alc-detail-label"><FiAward size={11}/> Alcalde / Alcaldesa</span>
+                  <span className="alc-detail-value">{detail.alcalde || '—'}</span>
+                </div>
+                <div className="alc-detail-item">
+                  <span className="alc-detail-label"><FiFlag size={11}/> Partido político</span>
+                  <span className="alc-detail-value">
+                    {detail.partido
+                      ? <span className="alc-badge" style={PARTIDO_COLOR[detail.partido] || PARTIDO_COLOR.OTRO}>
+                          <span className="alc-badge-dot"/>{detail.partido}
+                        </span>
+                      : '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="alc-detail-footer">
+              <button className="alc-btn-cancel" onClick={() => setDetail(null)}>Cerrar</button>
+              {canEdit && (
+                <button className="alc-btn-save" onClick={() => { setDetail(null); handleEdit(detail); }}>
+                  <FiEdit3 size={14}/> Editar
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
