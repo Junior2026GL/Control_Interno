@@ -463,9 +463,15 @@
 .pv-detail-obs-text { margin: 4px 0 0; font-size: 13px; color: #4a5568; line-height: 1.6; }
 
 .pv-detail-footer {
-  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-  padding: 14px 22px 18px; border-top: 1px solid #f0f4fa;
+  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+  padding: 12px 20px 16px; border-top: 1px solid #f0f4fa;
   position: sticky; bottom: 0; background: white;
+}
+.pv-detail-footer .pv-btn-cancel {
+  padding: 7px 16px; font-size: 13px;
+}
+.pv-detail-footer .pv-btn-save {
+  padding: 7px 18px; font-size: 13px; box-shadow: none;
 }
 
 /* ── Toast ───────────────────────────────────────────────────── */
