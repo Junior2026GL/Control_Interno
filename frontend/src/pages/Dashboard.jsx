@@ -4,7 +4,7 @@ import {
   LuWallet, LuUsers, LuClipboardCheck,
   LuDatabase, LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
-  LuUserCheck, LuArrowLeftRight, LuMapPin,
+  LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -117,7 +117,8 @@ const ALL_MODULES = [
     path: '/alcaldes',
     label: 'Alcaldes Municipales',
     clave: 'alcaldes',
-    icon: LuUserCheck,
+    description: 'Directorio de alcaldes por departamento y partido político',
+    icon: LuVote,
     gradient: 'linear-gradient(135deg, #1e3a5f 0%, #274C8D 100%)',
   },
   {
