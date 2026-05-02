@@ -1,6 +1,6 @@
 const router     = require('express').Router();
 const ctrl       = require('../controllers/proveedores.controller');
-const { verifyToken } = require('../middleware/auth');
+const verifyToken = require('../middleware/auth');
 const audit      = require('../middleware/audit');
 
 router.get   ('/',    verifyToken,        ctrl.getAll);
