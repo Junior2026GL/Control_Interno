@@ -18,8 +18,16 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401) {
+      const code = error.response?.data?.code;
+      const msg  = error.response?.data?.message;
+
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+
+      if (code === 'SESSION_REPLACED' || msg === 'Sesión cerrada en otro dispositivo') {
+        sessionStorage.setItem('session_msg', 'Tu sesión fue cerrada porque se inició sesión con tu cuenta desde otro dispositivo.');
+      }
+
       window.location.href = '/login';
     }
     return Promise.reject(error);
