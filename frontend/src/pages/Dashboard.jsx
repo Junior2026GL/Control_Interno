@@ -4,7 +4,7 @@ import {
   LuWallet, LuUsers, LuClipboardCheck,
   LuDatabase, LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
-  LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote,
+  LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -120,6 +120,14 @@ const ALL_MODULES = [
     description: 'Directorio de alcaldes por departamento y partido político',
     icon: LuVote,
     gradient: 'linear-gradient(135deg, #1e3a5f 0%, #274C8D 100%)',
+  },
+  {
+    path: '/proveedores',
+    label: 'Base de Datos Proveedores',
+    clave: 'proveedores',
+    description: 'Directorio y evaluación de proveedores',
+    icon: LuStore,
+    gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
   },
   {
     path: '/ip-whitelist',
