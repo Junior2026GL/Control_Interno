@@ -354,38 +354,74 @@
 
 /* ── Modal detalle ───────────────────────────────────────────── */
 .pv-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
   display: flex; align-items: center; justify-content: center;
   z-index: 1100; padding: 16px;
+  backdrop-filter: blur(3px);
 }
 .pv-modal-detail {
-  background: white; border-radius: 16px;
-  width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+  background: white; border-radius: 18px;
+  width: 100%; max-width: 520px; max-height: 92vh;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.32);
   display: flex; flex-direction: column;
-  animation: pvModalIn .2s ease;
+  animation: pvModalIn .22s ease;
 }
 @keyframes pvModalIn {
-  from { opacity: 0; transform: translateY(16px) scale(.97); }
+  from { opacity: 0; transform: translateY(18px) scale(.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-.pv-modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 22px 14px; border-bottom: 1px solid #f0f4fa; position: sticky; top: 0; background: white; z-index: 1;
-}
-.pv-modal-header h2 { margin: 0; font-size: 15px; font-weight: 700; color: #0f2744; }
-.pv-modal-close {
-  background: none; border: none; color: #94a3b8; cursor: pointer;
-  display: flex; align-items: center; padding: 4px; border-radius: 6px;
-  transition: background .15s, color .15s;
-}
-.pv-modal-close:hover { background: #f1f5f9; color: #e53e3e; }
 
-.pv-detail-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; flex: 1; }
-
-.pv-detail-hero {
-  display: none;
+/* ── Hero gradiente ── */
+.pv-modal-hero {
+  background: linear-gradient(135deg, #0c1f40 0%, #1a3a74 60%, #274C8D 100%);
+  padding: 22px 22px 20px;
+  position: relative;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-shrink: 0;
 }
+.pv-modal-close-hero {
+  position: absolute; top: 12px; right: 12px;
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(255,255,255,0.15); border: none;
+  color: white; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.pv-modal-close-hero:hover { background: rgba(255,255,255,0.30); }
+.pv-modal-hero-avatar {
+  width: 60px; height: 60px; border-radius: 16px; flex-shrink: 0;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.28);
+  color: white; font-size: 24px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+}
+.pv-modal-hero-info { min-width: 0; padding-right: 36px; }
+.pv-modal-hero-info h2 {
+  margin: 0 0 7px; font-size: 16px; font-weight: 800; color: white;
+  line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pv-modal-hero-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.pv-categ-chip--hero {
+  background: rgba(255,255,255,0.18) !important;
+  color: white !important;
+  border-color: rgba(255,255,255,0.28) !important;
+}
+.pv-estado-badge--hero { opacity: .9; }
+.pv-score-hero {
+  display: inline-flex; align-items: center;
+  padding: 3px 11px; border-radius: 20px;
+  font-size: 11.5px; font-weight: 700;
+  background: rgba(253,230,138,0.18);
+  color: #fde68a;
+  border: 1px solid rgba(253,230,138,0.30);
+}
+
+.pv-detail-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex: 1; }
+
+.pv-detail-hero { display: none; }
 .pv-detail-avatar {
   width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0;
   background: linear-gradient(135deg, #dbeafe, #bfdbfe);
@@ -408,7 +444,7 @@
 .pv-detail-value { font-size: 13.5px; font-weight: 600; color: #0f2744; }
 .pv-detail-link {
   display: inline-flex; align-items: center; gap: 4px;
-  color: #0f766e; text-decoration: none; font-size: 13px;
+  color: #1d4ed8; text-decoration: none; font-size: 13px;
 }
 .pv-detail-link:hover { text-decoration: underline; }
 
