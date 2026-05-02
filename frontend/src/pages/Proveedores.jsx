@@ -7,6 +7,7 @@ import {
   FiPhone, FiMail, FiMapPin, FiStar, FiPackage,
 } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
+import { SiMicrosoftexcel } from 'react-icons/si';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
@@ -329,7 +330,7 @@ export default function Proveedores() {
             </button>
             {filtered.length > 0 && (
               <button className="pv-tool-btn pv-tool-btn--export" onClick={exportarExcel}>
-                <FiDownload size={13}/> Exportar
+                <SiMicrosoftexcel size={14}/> Excel
               </button>
             )}
             {canEdit && (

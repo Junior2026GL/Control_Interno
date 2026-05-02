@@ -98,9 +98,9 @@
   transition: background .18s, transform .15s;
 }
 .pv-tool-btn--export {
-  background: #eff6ff; color: #1e40af; border: 1.5px solid #93c5fd;
+  background: #f0fdf4; color: #166534; border: 1.5px solid #86efac;
 }
-.pv-tool-btn--export:hover { background: #dbeafe; }
+.pv-tool-btn--export:hover { background: #dcfce7; }
 .pv-tool-btn--new {
   background: linear-gradient(135deg, #274C8D, #0f2744);
   color: white; box-shadow: 0 3px 10px rgba(39,76,141,0.30);
