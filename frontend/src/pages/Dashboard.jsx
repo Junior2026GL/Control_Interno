@@ -127,7 +127,7 @@ const ALL_MODULES = [
     clave: 'proveedores',
     description: 'Directorio y evaluación de proveedores',
     icon: LuStore,
-    gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
+    gradient: 'linear-gradient(135deg, #0f2744 0%, #274C8D 100%)',
   },
   {
     path: '/ip-whitelist',
