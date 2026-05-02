@@ -68,7 +68,7 @@ export default function Diputados() {
   const [detail, setDetail]           = useState(null);  // diputado to view
   const [page, setPage]               = useState(1);
   const [toast, setToast]             = useState(null);
-  const PAGE_SIZE = 25;
+  const PAGE_SIZE = 10;
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
