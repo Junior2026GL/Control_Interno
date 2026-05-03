@@ -109,10 +109,7 @@ button:focus-visible {
   color: white !important;
   border-color: #274C8D !important;
 }
-.std-pg-ellipsis {
-  padding: 0 4px; color: #94a3b8;
-  font-size: 13px; line-height: 32px;
-}
+.std-pg-ellipsis { padding: 0 4px; color: #94a3b8; font-size: 13px; line-height: 32px; }
 .std-pg-size-select {
   height: 32px; padding: 0 8px;
   border: 1.5px solid #dde4f0; border-radius: 8px;
