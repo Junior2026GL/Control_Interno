@@ -45,19 +45,19 @@
 }
 .vt-tc-brand {
   display: flex; align-items: center; gap: 7px;
-  color: #274C8D; font-size: 13px; font-weight: 600;
+  color: #274C8D; font-size: 15px; font-weight: 700;
 }
 .vt-tc-rates { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.vt-tc-sep { width: 1px; height: 30px; background: #e8ecf4; }
+.vt-tc-sep { width: 1px; height: 36px; background: #e8ecf4; }
 .vt-tc-item {
-  display: flex; align-items: center; gap: 5px;
-  background: #f8fafc; border-radius: 8px; padding: 6px 12px;
+  display: flex; align-items: center; gap: 6px;
+  background: #f8fafc; border-radius: 8px; padding: 8px 16px;
 }
 .vt-tc-compra { color: #059669; }
 .vt-tc-venta  { color: #dc2626; }
-.vt-tc-label  { font-size: 11px; font-weight: 600; text-transform: uppercase; opacity: .7; }
-.vt-tc-val    { font-size: 15px; font-weight: 700; letter-spacing: .3px; }
-.vt-tc-loading, .vt-tc-err { font-size: 12px; color: #94a3b8; margin-left: auto; }
+.vt-tc-label  { font-size: 13px; font-weight: 700; text-transform: uppercase; opacity: .75; }
+.vt-tc-val    { font-size: 18px; font-weight: 800; letter-spacing: .3px; }
+.vt-tc-loading, .vt-tc-err { font-size: 13px; color: #94a3b8; margin-left: auto; }
 .vt-tc-err    { color: #ef4444; }
 .vt-tc-refresh {
   background: none; border: 1.5px solid #e8ecf4; border-radius: 7px;
@@ -66,7 +66,7 @@
   transition: background .15s;
 }
 .vt-tc-refresh:hover { background: #f1f5f9; }
-.vt-tc-updated { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+.vt-tc-updated { font-size: 12px; font-weight: 500; color: #64748b; white-space: nowrap; }
 
 /* ── Search ── */
 .vt-search-bar {
