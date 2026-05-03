@@ -246,6 +246,13 @@
   40%,80% { transform: translateX(5px);  }
 }
 
+/* Locked account variant */
+.error-pill--locked {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
 /* Submit button */
 .login-btn {
   display: flex;

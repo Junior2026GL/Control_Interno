@@ -426,6 +426,15 @@
 .usr-status.inactive { color: #e11d48; background: #fff1f2; }
 .usr-status.inactive::before { background: #e11d48; }
 
+.usr-status.blocked { color: #b45309; background: #fffbeb; }
+.usr-status.blocked::before { background: #f59e0b; }
+
+.usr-status-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 /* Action buttons */
 .usr-actions {
   display: flex;
@@ -456,6 +465,9 @@
 
 .action-btn.activate       { color: #059669; border-color: #a7f3d0; }
 .action-btn.activate:hover { background: #059669; color: white; border-color: #059669; }
+
+.action-btn.unlock       { color: #d97706; border-color: #fde68a; }
+.action-btn.unlock:hover { background: #d97706; color: white; border-color: #d97706; }
 
 /* ── Modal overlay ──────────────────────────────────────── */
 .modal-overlay {

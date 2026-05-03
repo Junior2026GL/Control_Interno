@@ -27,7 +27,11 @@ function validateFields({ nombre, username, email, password, isCreate }) {
 
 exports.getUsers = (req, res) => {
   db.query(
-    'SELECT id, nombre, username, email, rol, activo FROM usuarios ORDER BY nombre ASC',
+    `SELECT id, nombre, username, email, rol, activo,
+      login_intentos,
+      login_bloqueado_hasta,
+      CASE WHEN login_bloqueado_hasta IS NOT NULL AND login_bloqueado_hasta > NOW() THEN 1 ELSE 0 END AS bloqueado
+     FROM usuarios ORDER BY nombre ASC`,
     (err, results) => {
       if (err) { console.error('[users] Error en getUsers:', err); return res.status(500).json({ message: 'Error al obtener usuarios' }); }
       res.json(results);
@@ -201,4 +205,24 @@ exports.deleteUser = (req, res) => {
     }
   });
 };
+
+// ── Desbloquear cuenta ───────────────────────────────────────
+exports.unlockUser = (req, res) => {
+  if (req.user.rol !== 'SUPER_ADMIN')
+    return res.status(403).json({ message: 'Solo el Super Administrador puede desbloquear cuentas.' });
+
+  const targetId = parseInt(req.params.id, 10);
+  if (isNaN(targetId)) return res.status(400).json({ message: 'ID inválido.' });
+
+  db.query(
+    'UPDATE usuarios SET login_intentos=0, login_bloqueado_hasta=NULL WHERE id=?',
+    [targetId],
+    (err, result) => {
+      if (err) { console.error('[users] Error en unlockUser:', err); return res.status(500).json({ message: 'Error al desbloquear.' }); }
+      if (result.affectedRows === 0) return res.status(404).json({ message: 'Usuario no encontrado.' });
+      res.json({ message: 'Cuenta desbloqueada correctamente.' });
+    }
+  );
+};
+
 

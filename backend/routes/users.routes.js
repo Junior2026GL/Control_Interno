@@ -41,4 +41,13 @@ router.delete(
   usersController.deleteUser
 );
 
+// Desbloquear cuenta — solo SUPER_ADMIN
+router.post(
+  '/:id/unlock',
+  verifyToken,
+  checkRole(['SUPER_ADMIN']),
+  audit,
+  usersController.unlockUser
+);
+
 module.exports = router;

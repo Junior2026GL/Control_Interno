@@ -2,7 +2,7 @@ import { useState, useContext } from 'react';
 import api from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle } from 'react-icons/fi';
+import { FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiAlertTriangle } from 'react-icons/fi';
 import './Login.css';
 
 export default function Login() {
@@ -11,12 +11,14 @@ export default function Login() {
   const [showPass, setShowPass]   = useState(false);
   const [loading,  setLoading]    = useState(false);
   const [error,    setError]      = useState('');
+  const [bloqueado, setBloqueado] = useState(false);
   const { login }    = useContext(AuthContext);
   const navigate     = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setBloqueado(false);
     setLoading(true);
     try {
       const res = await api.post('/auth/login', { username, password });
@@ -24,6 +26,8 @@ export default function Login() {
       localStorage.setItem('token', res.data.token);
       navigate('/dashboard');
     } catch (err) {
+      const isBloqueado = err.response?.status === 423 || err.response?.data?.bloqueado;
+      setBloqueado(!!isBloqueado);
       setError(err.response?.data?.message || 'Credenciales incorrectas. Intente de nuevo.');
     } finally {
       setLoading(false);
@@ -95,8 +99,8 @@ export default function Login() {
             </div>
 
             {error && (
-              <div className="error-pill">
-                <FiAlertCircle size={15} />
+              <div className={`error-pill${bloqueado ? ' error-pill--locked' : ''}`}>
+                {bloqueado ? <FiAlertTriangle size={15} /> : <FiAlertCircle size={15} />}
                 <span>{error}</span>
               </div>
             )}

@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
 import {
   FiPlus, FiSearch, FiEdit2, FiUserX, FiUserCheck,
-  FiX, FiUser, FiMail, FiLock, FiShield, FiAtSign, FiKey, FiCheck,
+  FiX, FiUser, FiMail, FiLock, FiUnlock, FiShield, FiAtSign, FiKey, FiCheck,
   FiEye, FiEyeOff, FiUsers, FiFilter,
 } from 'react-icons/fi';
 import api from '../api/axios';
@@ -84,6 +84,7 @@ export default function Usuarios() {
   const [toast, setToast]             = useState(null);
   const [filterRol, setFilterRol]     = useState('ALL');
   const [filterActivo, setFilterActivo] = useState('ALL');
+  const [unlockTarget, setUnlockTarget] = useState(null);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -212,6 +213,18 @@ export default function Usuarios() {
       showToast(msg, 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ── unlock account ──────────────────────────────────────────
+  const handleUnlock = async (u) => {
+    try {
+      await api.post(`/users/${u.id}/unlock`, {}, { headers: authHeaders() });
+      setUnlockTarget(null);
+      fetchUsers();
+      showToast(`${u.nombre} desbloqueado correctamente.`, 'ok');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Error al desbloquear.');
     }
   };
 
@@ -355,9 +368,14 @@ export default function Usuarios() {
                         </span>
                       </td>
                       <td>
-                        <span className={`usr-status ${u.activo ? 'active' : 'inactive'}`}>
-                          {u.activo ? 'Activo' : 'Inactivo'}
-                        </span>
+                        <div className="usr-status-cell">
+                          <span className={`usr-status ${u.activo ? 'active' : 'inactive'}`}>
+                            {u.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                          {!!u.bloqueado && (
+                            <span className="usr-status blocked">Bloqueado</span>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <div className="usr-actions">
@@ -384,6 +402,15 @@ export default function Usuarios() {
                               onClick={() => setConfirm(u)}
                             >
                               {u.activo ? <FiUserX size={15} /> : <FiUserCheck size={15} />}
+                            </button>
+                          )}
+                          {me?.rol === 'SUPER_ADMIN' && !!u.bloqueado && (
+                            <button
+                              className="action-btn unlock"
+                              title="Desbloquear cuenta"
+                              onClick={() => setUnlockTarget(u)}
+                            >
+                              <FiUnlock size={15} />
                             </button>
                           )}
                         </div>
@@ -563,6 +590,27 @@ export default function Usuarios() {
                 onClick={() => handleToggle(confirm)}
               >
                 {confirm.activo ? 'Sí, desactivar' : 'Sí, activar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Unlock Confirmation Modal ── */}
+      {unlockTarget && (
+        <div className="modal-overlay" onClick={() => setUnlockTarget(null)}>
+          <div className="modal-box modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Desbloquear Cuenta</h2>
+              <button className="modal-close" onClick={() => setUnlockTarget(null)}><FiX size={18} /></button>
+            </div>
+            <div className="confirm-body">
+              ¿Deseas desbloquear la cuenta de <strong>{unlockTarget.nombre}</strong>? Podrá volver a iniciar sesión.
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setUnlockTarget(null)}>Cancelar</button>
+              <button className="btn-success" onClick={() => handleUnlock(unlockTarget)}>
+                <FiUnlock size={14} /> Desbloquear
               </button>
             </div>
           </div>
