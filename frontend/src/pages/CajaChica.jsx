@@ -117,7 +117,7 @@ export default function CajaChica() {
   const [filtroDesde, setFiltroDesde] = useState('');
   const [filtroHasta, setFiltroHasta] = useState('');
   const [page, setPage]               = useState(1);
-  const [pageSize, setPageSize]       = useState(25);
+  const [pageSize, setPageSize]       = useState(10);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -190,7 +190,7 @@ export default function CajaChica() {
     return f;
   })();
 
-  const PAGE_SIZE_OPTIONS = [25, 50, 100];
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
   const totalFiltered = filtered.length;
   const totalPages    = Math.max(1, Math.ceil(totalFiltered / pageSize));
   const paginated     = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -810,6 +810,13 @@ export default function CajaChica() {
               {Math.min((page - 1) * pageSize + 1, totalFiltered)}–{Math.min(page * pageSize, totalFiltered)} de <strong>{totalFiltered}</strong> movimientos
             </span>
             <div className="caja-pg-controls">
+              <select
+                className="caja-pg-size-select"
+                value={pageSize}
+                onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+              >
+                {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s} por pág.</option>)}
+              </select>
               <button className="caja-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
               <button className="caja-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
