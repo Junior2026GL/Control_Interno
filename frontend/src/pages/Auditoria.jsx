@@ -584,16 +584,25 @@ export default function Auditoria() {
             <div className="std-pg-controls">
               <button className="std-pg-btn" disabled={page <= 1} onClick={() => fetchLogs(1)}>«</button>
               <button className="std-pg-btn" disabled={page <= 1} onClick={() => fetchLogs(page - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
-                .reduce((acc, n, i, arr) => {
-                  if (i > 0 && n - arr[i - 1] > 1) acc.push('…');
-                  acc.push(n); return acc;
-                }, [])
-                .map((n, i) => n === '…'
-                  ? <span key={`e${i}`} className="std-pg-ellipsis">…</span>
-                  : <button key={n} className={`std-pg-btn std-pg-num${page === n ? ' std-pg-num--active' : ''}`} onClick={() => fetchLogs(n)}>{n}</button>
-                )}
+              {(() => {
+                const maxBtns = 7;
+                let start = Math.max(1, page - Math.floor(maxBtns / 2));
+                let end   = Math.min(totalPages, start + maxBtns - 1);
+                if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                const nums = [];
+                if (start > 1) {
+                  nums.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => fetchLogs(1)}>1</button>);
+                  if (start > 2) nums.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                }
+                for (let p = start; p <= end; p++) {
+                  nums.push(<button key={p} className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`} onClick={() => fetchLogs(p)}>{p}</button>);
+                }
+                if (end < totalPages) {
+                  if (end < totalPages - 1) nums.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                  nums.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => fetchLogs(totalPages)}>{totalPages}</button>);
+                }
+                return nums;
+              })()}
               <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => fetchLogs(page + 1)}>›</button>
               <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => fetchLogs(totalPages)}>»</button>
             </div>
