@@ -2,6 +2,7 @@ import { useEffect, useState, useContext, useCallback } from 'react';
 import {
   FiPlus, FiX, FiSearch, FiPrinter, FiTrash2, FiEye,
   FiUser, FiCalendar, FiMapPin, FiDollarSign, FiEdit3,
+  FiRefreshCw, FiArrowDown, FiArrowUp,
 } from 'react-icons/fi';
 import { LuFileSpreadsheet } from 'react-icons/lu';
 import api from '../api/axios';
@@ -81,6 +82,9 @@ export default function Viaticos() {
   const [toast, setToast]       = useState(null);
   const [confirmCfg, setConfirmCfg] = useState(null);
   const [editingId, setEditingId]   = useState(null);
+  const [tipoCambio, setTipoCambio] = useState(null);
+  const [tcLoading, setTcLoading]   = useState(false);
+  const [tcError,   setTcError]     = useState(false);
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
@@ -99,6 +103,21 @@ export default function Viaticos() {
   }, []);
 
   useEffect(() => { fetchLista(); }, [fetchLista]);
+
+  // ── Tipo de cambio ─────────────────────────────────────────────
+  const fetchTipoCambio = useCallback(async () => {
+    setTcLoading(true); setTcError(false);
+    try {
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
+      const json = await res.json();
+      const hnl = json?.rates?.HNL;
+      if (hnl) setTipoCambio(hnl);
+      else setTcError(true);
+    } catch { setTcError(true); }
+    finally { setTcLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchTipoCambio(); }, [fetchTipoCambio]);
 
   // ── DNI lookup ─────────────────────────────────────────────────
   const handleDniSearch = async () => {
@@ -284,6 +303,36 @@ export default function Viaticos() {
           </div>
           <button className="vt-btn-primary" onClick={openModal}>
             <FiPlus size={15} /> Nuevo Viático
+          </button>
+        </div>
+
+        {/* ── Tipo de Cambio ── */}
+        <div className="vt-tc-card">
+          <div className="vt-tc-brand">
+            <FiDollarSign size={18}/>
+            <span>Tipo de Cambio <strong>USD / HNL</strong></span>
+          </div>
+          {tcLoading ? (
+            <span className="vt-tc-loading">Consultando…</span>
+          ) : tcError ? (
+            <span className="vt-tc-err">No disponible</span>
+          ) : tipoCambio ? (
+            <div className="vt-tc-rates">
+              <div className="vt-tc-item vt-tc-compra">
+                <FiArrowDown size={13}/>
+                <span className="vt-tc-label">Compra</span>
+                <span className="vt-tc-val">L {(tipoCambio * 0.997).toFixed(4)}</span>
+              </div>
+              <div className="vt-tc-sep"/>
+              <div className="vt-tc-item vt-tc-venta">
+                <FiArrowUp size={13}/>
+                <span className="vt-tc-label">Venta</span>
+                <span className="vt-tc-val">L {(tipoCambio * 1.003).toFixed(4)}</span>
+              </div>
+            </div>
+          ) : null}
+          <button className="vt-tc-refresh" onClick={fetchTipoCambio} disabled={tcLoading} title="Actualizar">
+            <FiRefreshCw size={13}/>
           </button>
         </div>
 

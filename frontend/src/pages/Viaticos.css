@@ -36,6 +36,37 @@
 }
 .vt-btn-cancel:hover { background: #f5f7fa; }
 
+/* ── Tipo de Cambio card ── */
+.vt-tc-card {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: white; border: 1.5px solid #e8ecf4; border-radius: 12px;
+  padding: 12px 18px; margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(39,76,141,.07);
+}
+.vt-tc-brand {
+  display: flex; align-items: center; gap: 7px;
+  color: #274C8D; font-size: 13px; font-weight: 600;
+}
+.vt-tc-rates { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.vt-tc-sep { width: 1px; height: 30px; background: #e8ecf4; }
+.vt-tc-item {
+  display: flex; align-items: center; gap: 5px;
+  background: #f8fafc; border-radius: 8px; padding: 6px 12px;
+}
+.vt-tc-compra { color: #059669; }
+.vt-tc-venta  { color: #dc2626; }
+.vt-tc-label  { font-size: 11px; font-weight: 600; text-transform: uppercase; opacity: .7; }
+.vt-tc-val    { font-size: 15px; font-weight: 700; letter-spacing: .3px; }
+.vt-tc-loading, .vt-tc-err { font-size: 12px; color: #94a3b8; margin-left: auto; }
+.vt-tc-err    { color: #ef4444; }
+.vt-tc-refresh {
+  background: none; border: 1.5px solid #e8ecf4; border-radius: 7px;
+  padding: 5px 8px; cursor: pointer; color: #64748b;
+  display: flex; align-items: center;
+  transition: background .15s;
+}
+.vt-tc-refresh:hover { background: #f1f5f9; }
+
 /* ── Search ── */
 .vt-search-bar {
   display: flex; align-items: center; gap: 10px;
