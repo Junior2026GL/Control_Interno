@@ -156,7 +156,7 @@
   color: #2d3748;
   background: #f8fafc;
   outline: none;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: inherit;
   transition: border-color 0.2s, background 0.2s;
   width: 100%;
   box-sizing: border-box;
@@ -231,7 +231,7 @@
   color: #2d3748;
   background: #f8fafc;
   outline: none;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: inherit;
   transition: border-color 0.2s, background 0.2s;
   width: 100%;
   box-sizing: border-box;
