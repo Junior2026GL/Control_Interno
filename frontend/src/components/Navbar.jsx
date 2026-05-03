@@ -28,7 +28,7 @@ export default function Navbar() {
               <FiHome size={18} />
             </Link>
           )}
-          <h1>Control Interno</h1>
+          <h1>Control Interno - Pagaduría Especial</h1>
         </div>
 
         {user && (
