@@ -278,7 +278,7 @@
 .dip-filter-btn,
 .dip-filter-select,
 .dip-search {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: inherit;
 }
 
 .dip-filter-select {
@@ -290,7 +290,7 @@
   background: #f8fafc;
   outline: none;
   cursor: pointer;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: inherit;
   transition: border-color 0.2s;
 }
 .dip-filter-select:focus { border-color: #274C8D; background: white; }

@@ -1,10 +1,10 @@
-﻿/* ===== Ayudas.css  Professional redesign ===== */
+/* ===== Ayudas.css  Professional redesign ===== */
 
 /* Font base */
 .page-shell,
 .ay-page-header, .ay-stats, .ay-toolbar, .ay-card,
 .ay-modal, .ay-confirm, .ay-toast, .ay-pagination {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: inherit;
 }
 
 /* Page header */
@@ -159,7 +159,7 @@
 .ay-table-wrap::-webkit-scrollbar { height: 5px; }
 .ay-table-wrap::-webkit-scrollbar-thumb { background: #b8d0f0; border-radius: 99px; }
 
-/* ── Table ──────────────────────────────────────────────────── */
+/* -- Table ---------------------------------------------------- */
 .ay-table {
   width: 100%; border-collapse: separate; border-spacing: 0;
   font-size: .855rem;
@@ -235,7 +235,7 @@
   box-shadow: 0 1px 3px rgba(0,0,0,.08);
 }
 
-/* ── Action buttons ─────────────────────────────────────────── */
+/* -- Action buttons ------------------------------------------- */
 .ay-actions { display: flex; gap: .35rem; align-items: center; }
 .ay-action-btn {
   width: 32px; height: 32px; border-radius: 8px;
