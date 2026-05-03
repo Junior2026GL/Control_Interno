@@ -50,7 +50,7 @@ export default function Auditoria() {
   const [autoRefresh, setAutoRefresh] = useState(false);  // auto-refresh
   const autoRefreshRef = useRef(null);
 
-  const LIMIT = 25;
+  const LIMIT = 10;
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
@@ -577,23 +577,27 @@ export default function Auditoria() {
 
         {/* Paginación */}
         {!loading && (
-          <div className="aud-pagination">
-            <span className="aud-pag-info">
-              Mostrando <strong>{Math.min((page - 1) * LIMIT + 1, total)}–{Math.min(page * LIMIT, total)}</strong> de <strong>{total}</strong> registros
+          <div className="std-pg">
+            <span className="std-pg-info">
+              {Math.min((page - 1) * LIMIT + 1, total)}–{Math.min(page * LIMIT, total)} de <strong>{total}</strong> registros
             </span>
-            <div className="aud-pag-controls">
-              <button className="aud-pag-btn" disabled={page <= 1} onClick={() => fetchLogs(1)} title="Primera">&laquo;</button>
-              <button className="aud-pag-btn" disabled={page <= 1} onClick={() => fetchLogs(page - 1)}>Anterior</button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                const p = start + i;
-                return p <= totalPages ? (
-                  <button key={p} className={`aud-pag-btn${p === page ? ' active' : ''}`} onClick={() => fetchLogs(p)}>{p}</button>
-                ) : null;
-              })}
-              <button className="aud-pag-btn" disabled={page >= totalPages} onClick={() => fetchLogs(page + 1)}>Siguiente</button>
-              <button className="aud-pag-btn" disabled={page >= totalPages} onClick={() => fetchLogs(totalPages)} title="Última">&raquo;</button>
+            <div className="std-pg-controls">
+              <button className="std-pg-btn" disabled={page <= 1} onClick={() => fetchLogs(1)}>«</button>
+              <button className="std-pg-btn" disabled={page <= 1} onClick={() => fetchLogs(page - 1)}>‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                .reduce((acc, n, i, arr) => {
+                  if (i > 0 && n - arr[i - 1] > 1) acc.push('…');
+                  acc.push(n); return acc;
+                }, [])
+                .map((n, i) => n === '…'
+                  ? <span key={`e${i}`} className="std-pg-ellipsis">…</span>
+                  : <button key={n} className={`std-pg-btn std-pg-num${page === n ? ' std-pg-num--active' : ''}`} onClick={() => fetchLogs(n)}>{n}</button>
+                )}
+              <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => fetchLogs(page + 1)}>›</button>
+              <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => fetchLogs(totalPages)}>»</button>
             </div>
+            <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
           </div>
         )}
 

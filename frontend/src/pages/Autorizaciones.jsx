@@ -182,8 +182,8 @@ export default function Autorizaciones() {
 
   // paginación
   const [page, setPage]         = useState(1);
-  const [pageSize, setPageSize] = useState(25);
-  const PAGE_SIZE_OPTIONS       = [25, 50, 100];
+  const [pageSize, setPageSize] = useState(10);
+  const PAGE_SIZE_OPTIONS       = [10, 25, 50, 100];
 
   // gráficos
   const [showCharts, setShowCharts] = useState(false);
@@ -1428,22 +1428,34 @@ export default function Autorizaciones() {
 
         {/* Paginación */}
         {totalFiltered > 0 && (
-          <div className="caja-pagination">
-            <span className="caja-pagination-info">
-              Mostrando {Math.min((page - 1) * pageSize + 1, totalFiltered)}–{Math.min(page * pageSize, totalFiltered)} de {totalFiltered} autorizaciones
+          <div className="std-pg">
+            <span className="std-pg-info">
+              {Math.min((page - 1) * pageSize + 1, totalFiltered)}–{Math.min(page * pageSize, totalFiltered)} de <strong>{totalFiltered}</strong> autorizaciones
             </span>
-            <div className="caja-pagination-controls">
+            <div className="std-pg-controls">
               <select
-                className="caja-input caja-page-size-select"
+                className="std-pg-size-select"
                 value={pageSize}
                 onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
               >
                 {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s} por pág.</option>)}
               </select>
-              <button className="caja-page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              <span className="caja-page-num">{page} / {totalPages}</span>
-              <button className="caja-page-btn" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+              <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+              <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                .reduce((acc, n, i, arr) => {
+                  if (i > 0 && n - arr[i - 1] > 1) acc.push('…');
+                  acc.push(n); return acc;
+                }, [])
+                .map((n, i) => n === '…'
+                  ? <span key={`e${i}`} className="std-pg-ellipsis">…</span>
+                  : <button key={n} className={`std-pg-btn std-pg-num${page === n ? ' std-pg-num--active' : ''}`} onClick={() => setPage(n)}>{n}</button>
+                )}
+              <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+              <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>»</button>
             </div>
+            <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
           </div>
         )}
       </div>

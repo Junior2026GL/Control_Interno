@@ -491,13 +491,13 @@ export default function AyudasAlcaldias() {
           </div>
 
           {totalPages > 1 && (
-            <div className="aa-pagination">
-              <span className="aa-pg-info">
+            <div className="std-pg">
+              <span className="std-pg-info">
                 {(page-1)*PAGE_SIZE+1}–{Math.min(page*PAGE_SIZE,filtered.length)} de <strong>{filtered.length}</strong>
               </span>
-              <div className="aa-pg-controls">
-                <button className="aa-pg-btn" disabled={page===1} onClick={()=>setPage(1)}>«</button>
-                <button className="aa-pg-btn" disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button>
+              <div className="std-pg-controls">
+                <button className="std-pg-btn" disabled={page===1} onClick={()=>setPage(1)}>«</button>
+                <button className="std-pg-btn" disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button>
                 {Array.from({length:totalPages},(_, i)=>i+1)
                   .filter(n=>n===1||n===totalPages||Math.abs(n-page)<=1)
                   .reduce((acc,n,i,arr)=>{
@@ -505,13 +505,13 @@ export default function AyudasAlcaldias() {
                     acc.push(n); return acc;
                   },[])
                   .map((n,i)=> n==='…'
-                    ? <span key={`e${i}`} className="aa-pg-ellipsis">…</span>
-                    : <button key={n} className={`aa-pg-btn aa-pg-num${page===n?' aa-pg-num--active':''}`} onClick={()=>setPage(n)}>{n}</button>
+                    ? <span key={`e${i}`} className="std-pg-ellipsis">…</span>
+                    : <button key={n} className={`std-pg-btn std-pg-num${page===n?' std-pg-num--active':''}`} onClick={()=>setPage(n)}>{n}</button>
                   )}
-                <button className="aa-pg-btn" disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}>›</button>
-                <button className="aa-pg-btn" disabled={page===totalPages} onClick={()=>setPage(totalPages)}>»</button>
+                <button className="std-pg-btn" disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}>›</button>
+                <button className="std-pg-btn" disabled={page===totalPages} onClick={()=>setPage(totalPages)}>»</button>
               </div>
-              <span className="aa-pg-total">Pág. {page} / {totalPages}</span>
+              <span className="std-pg-total">Pág. {page} / {totalPages}</span>
             </div>
           )}
           </>

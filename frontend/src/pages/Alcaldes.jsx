@@ -436,50 +436,27 @@ export default function Alcaldes() {
                 </table>
               </div>
 
-              <div className="alc-pagination">
-                <span className="alc-pg-info">
+              <div className="std-pg">
+                <span className="std-pg-info">
                   {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de <strong>{filtered.length}</strong>
                 </span>
-                <div className="alc-pg-controls">
-                  <button className="alc-pg-btn" disabled={page === 1} onClick={() => setPage(1)} title="Primera">
-                    <FiChevronLeft size={13}/><FiChevronLeft size={13}/>
-                  </button>
-                  <button className="alc-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)} title="Anterior">
-                    <FiChevronLeft size={14}/>
-                  </button>
-
-                  {(() => {
-                    const maxBtns = 7;
-                    let start = Math.max(1, page - Math.floor(maxBtns / 2));
-                    let end   = Math.min(totalPages, start + maxBtns - 1);
-                    if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
-                    const pages = [];
-                    if (start > 1) {
-                      pages.push(<button key={1} className="alc-pg-num" onClick={() => setPage(1)}>1</button>);
-                      if (start > 2) pages.push(<span key="el" className="alc-pg-ellipsis">…</span>);
-                    }
-                    for (let p = start; p <= end; p++) {
-                      pages.push(
-                        <button key={p}
-                          className={`alc-pg-num${page === p ? ' alc-pg-num--active' : ''}`}
-                          onClick={() => setPage(p)}>{p}</button>
-                      );
-                    }
-                    if (end < totalPages) {
-                      if (end < totalPages - 1) pages.push(<span key="er" className="alc-pg-ellipsis">…</span>);
-                      pages.push(<button key={totalPages} className="alc-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
-                    }
-                    return pages;
-                  })()}
-
-                  <button className="alc-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)} title="Siguiente">
-                    <FiChevronRight size={14}/>
-                  </button>
-                  <button className="alc-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)} title="Última">
-                    <FiChevronRight size={13}/><FiChevronRight size={13}/>
-                  </button>
+                <div className="std-pg-controls">
+                  <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+                  <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                    .reduce((acc, n, i, arr) => {
+                      if (i > 0 && n - arr[i - 1] > 1) acc.push('…');
+                      acc.push(n); return acc;
+                    }, [])
+                    .map((n, i) => n === '…'
+                      ? <span key={`e${i}`} className="std-pg-ellipsis">…</span>
+                      : <button key={n} className={`std-pg-btn std-pg-num${page === n ? ' std-pg-num--active' : ''}`} onClick={() => setPage(n)}>{n}</button>
+                    )}
+                  <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+                  <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>»</button>
                 </div>
-                <span className="alc-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
+                <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
               </div>
             </>
           )}

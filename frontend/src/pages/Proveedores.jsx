@@ -450,13 +450,13 @@ export default function Proveedores() {
 
               {/* Paginación */}
               {totalPages > 1 && (
-                <div className="pv-pagination">
-                  <span className="pv-pg-info">
+                <div className="std-pg">
+                  <span className="std-pg-info">
                     {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de <strong>{filtered.length}</strong>
                   </span>
-                  <div className="pv-pg-controls">
-                    <button className="pv-pg-btn" disabled={page === 1} onClick={() => setPage(1)}><FiChevronLeft size={13}/><FiChevronLeft size={13}/></button>
-                    <button className="pv-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}><FiChevronLeft size={14}/></button>
+                  <div className="std-pg-controls">
+                    <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+                    <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
                     {(() => {
                       const maxBtns = 7;
                       let start = Math.max(1, page - Math.floor(maxBtns / 2));
@@ -464,26 +464,26 @@ export default function Proveedores() {
                       if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
                       const pages = [];
                       if (start > 1) {
-                        pages.push(<button key={1} className="pv-pg-num" onClick={() => setPage(1)}>1</button>);
-                        if (start > 2) pages.push(<span key="el" className="pv-pg-ellipsis">…</span>);
+                        pages.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPage(1)}>1</button>);
+                        if (start > 2) pages.push(<span key="el" className="std-pg-ellipsis">…</span>);
                       }
                       for (let p = start; p <= end; p++) {
                         pages.push(
                           <button key={p}
-                            className={`pv-pg-num${page === p ? ' pv-pg-num--active' : ''}`}
+                            className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`}
                             onClick={() => setPage(p)}>{p}</button>
                         );
                       }
                       if (end < totalPages) {
-                        if (end < totalPages - 1) pages.push(<span key="er" className="pv-pg-ellipsis">…</span>);
-                        pages.push(<button key={totalPages} className="pv-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
+                        if (end < totalPages - 1) pages.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                        pages.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
                       }
                       return pages;
                     })()}
-                    <button className="pv-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}><FiChevronRight size={14}/></button>
-                    <button className="pv-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}><FiChevronRight size={13}/><FiChevronRight size={13}/></button>
+                    <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+                    <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
                   </div>
-                  <span className="pv-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
+                  <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
                 </div>
               )}
             </>

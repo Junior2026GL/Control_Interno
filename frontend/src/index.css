@@ -67,3 +67,51 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGINACIÓN ESTÁNDAR — compartida por todos los módulos
+   Clases: .std-pg, .std-pg-btn, .std-pg-num, etc.
+═══════════════════════════════════════════════════════════ */
+.std-pg {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 4px 4px;
+}
+.std-pg-info  { font-size: 12.5px; color: #6b7a99; }
+.std-pg-total { font-size: 12px; color: #94a3b8; }
+.std-pg-controls { display: flex; align-items: center; gap: 4px; }
+
+.std-pg-btn {
+  min-width: 32px; height: 32px;
+  border: 1.5px solid #dde4f0; border-radius: 8px;
+  background: white; color: #274C8D;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 6px;
+  transition: background 0.18s;
+  font-family: inherit;
+}
+.std-pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.std-pg-btn:not(:disabled):hover { background: #f0f4fb; border-color: #b8c9e8; }
+
+.std-pg-num { font-size: 12.5px; font-weight: 600; }
+.std-pg-num--active {
+  background: #274C8D !important;
+  color: white !important;
+  border-color: #274C8D !important;
+}
+.std-pg-ellipsis {
+  padding: 0 4px; color: #94a3b8;
+  font-size: 13px; line-height: 32px;
+}
+.std-pg-size-select {
+  height: 32px; padding: 0 8px;
+  border: 1.5px solid #dde4f0; border-radius: 8px;
+  background: white; color: #274C8D;
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}

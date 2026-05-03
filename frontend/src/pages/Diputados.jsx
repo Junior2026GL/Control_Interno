@@ -405,50 +405,27 @@ export default function Diputados() {
 
         {/* ── Pagination ── */}
         {!loading && filtered.length > PAGE_SIZE && (
-          <div className="dip-pagination">
-            <span className="dip-pag-info">
-              Mostrando {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} de {filtered.length}
+          <div className="std-pg">
+            <span className="std-pg-info">
+              {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} de <strong>{filtered.length}</strong>
             </span>
-
-            <div className="dip-pag-controls">
-              <button
-                className="dip-pag-btn"
-                disabled={safePage === 1}
-                onClick={() => setPage(p => p - 1)}
-              >
-                <FiChevronLeft size={15} />
-              </button>
-
+            <div className="std-pg-controls">
+              <button className="std-pg-btn" disabled={safePage === 1} onClick={() => setPage(1)}>«</button>
+              <button className="std-pg-btn" disabled={safePage === 1} onClick={() => setPage(p => p - 1)}>‹</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
-                .reduce((acc, p, idx, arr) => {
-                  if (idx > 0 && p - arr[idx - 1] > 1)
-                    acc.push('ellipsis-' + p);
-                  acc.push(p);
-                  return acc;
+                .filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1)
+                .reduce((acc, n, i, arr) => {
+                  if (i > 0 && n - arr[i - 1] > 1) acc.push('…');
+                  acc.push(n); return acc;
                 }, [])
-                .map(p =>
-                  typeof p === 'string' ? (
-                    <span key={p} className="dip-pag-ellipsis">…</span>
-                  ) : (
-                    <button
-                      key={p}
-                      className={`dip-pag-btn${p === safePage ? ' active' : ''}`}
-                      onClick={() => setPage(p)}
-                    >
-                      {p}
-                    </button>
-                  )
+                .map((n, i) => n === '…'
+                  ? <span key={`e${i}`} className="std-pg-ellipsis">…</span>
+                  : <button key={n} className={`std-pg-btn std-pg-num${safePage === n ? ' std-pg-num--active' : ''}`} onClick={() => setPage(n)}>{n}</button>
                 )}
-
-              <button
-                className="dip-pag-btn"
-                disabled={safePage === totalPages}
-                onClick={() => setPage(p => p + 1)}
-              >
-                <FiChevronRight size={15} />
-              </button>
+              <button className="std-pg-btn" disabled={safePage >= totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+              <button className="std-pg-btn" disabled={safePage >= totalPages} onClick={() => setPage(totalPages)}>»</button>
             </div>
+            <span className="std-pg-total">Pág. <strong>{safePage}</strong> / {totalPages}</span>
           </div>
         )}
       </div>

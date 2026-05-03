@@ -140,7 +140,7 @@ export default function Ayudas() {
   const [filtroDesde, setFiltroDesde] = useState('');
   const [filtroHasta, setFiltroHasta] = useState('');
   const [page, setPage]               = useState(1);
-  const PAGE_SIZE = 25;
+  const PAGE_SIZE = 10;
 
   // ── Charts ────────────────────────────────────────────────────────────────
   const [showCharts, setShowCharts]   = useState(false);
@@ -697,15 +697,27 @@ export default function Ayudas() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="ay-pagination">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}> Anterior</button>
-            <div className="ay-pagination__pages">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
-                const p = Math.min(Math.max(page - 2, 1) + idx, totalPages);
-                return <button key={p} className={p === page ? 'active' : ''} onClick={() => setPage(p)}>{p}</button>;
-              })}
+          <div className="std-pg">
+            <span className="std-pg-info">
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de <strong>{filtered.length}</strong>
+            </span>
+            <div className="std-pg-controls">
+              <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+              <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                .reduce((acc, n, i, arr) => {
+                  if (i > 0 && n - arr[i - 1] > 1) acc.push('…');
+                  acc.push(n); return acc;
+                }, [])
+                .map((n, i) => n === '…'
+                  ? <span key={`e${i}`} className="std-pg-ellipsis">…</span>
+                  : <button key={n} className={`std-pg-btn std-pg-num${page === n ? ' std-pg-num--active' : ''}`} onClick={() => setPage(n)}>{n}</button>
+                )}
+              <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+              <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>»</button>
             </div>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Siguiente </button>
+            <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
           </div>
         )}
 
