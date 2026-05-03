@@ -66,7 +66,7 @@
   transition: background .15s;
 }
 .vt-tc-refresh:hover { background: #f1f5f9; }
-.vt-tc-updated { font-size: 12px; font-weight: 500; color: #64748b; white-space: nowrap; }
+.vt-tc-updated { font-size: 14px; font-weight: 700; color: #374151; white-space: nowrap; }
 
 /* ── Search ── */
 .vt-search-bar {
