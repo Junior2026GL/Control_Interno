@@ -85,6 +85,7 @@ export default function Viaticos() {
   const [tipoCambio, setTipoCambio] = useState(null);
   const [tcLoading, setTcLoading]   = useState(false);
   const [tcError,   setTcError]     = useState(false);
+  const [tcUpdated, setTcUpdated]   = useState(null);
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
@@ -111,8 +112,15 @@ export default function Viaticos() {
       const res = await fetch('https://open.er-api.com/v6/latest/USD');
       const json = await res.json();
       const hnl = json?.rates?.HNL;
-      if (hnl) setTipoCambio(hnl);
-      else setTcError(true);
+      if (hnl) {
+        setTipoCambio(hnl);
+        if (json.time_last_update_utc) {
+          setTcUpdated(new Date(json.time_last_update_utc).toLocaleString('es-HN', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          }));
+        }
+      } else setTcError(true);
     } catch { setTcError(true); }
     finally { setTcLoading(false); }
   }, []);
@@ -334,6 +342,7 @@ export default function Viaticos() {
           <button className="vt-tc-refresh" onClick={fetchTipoCambio} disabled={tcLoading} title="Actualizar">
             <FiRefreshCw size={13}/>
           </button>
+          {tcUpdated && <span className="vt-tc-updated">Actualizado: {tcUpdated}</span>}
         </div>
 
         {/* ── Buscador ── */}
