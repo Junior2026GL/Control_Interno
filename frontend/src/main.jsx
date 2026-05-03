@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './index.css';
 
 // ── Validación nativa del navegador en español ─────────────────
 document.addEventListener('invalid', e => {
