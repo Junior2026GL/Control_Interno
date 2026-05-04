@@ -188,8 +188,25 @@ export default function CheckList() {
     const BLANCO = [255, 255, 255];
     const GBKG   = [237, 241, 250];
 
-    const sa = s => (s || '').replace(/[ÁÉÍÓÚÑáéíóúñüÜ]/g,
-      c => ({ Á:'A',É:'E',Í:'I',Ó:'O',Ú:'U',Ñ:'N',á:'a',é:'e',í:'i',ó:'o',ú:'u',ñ:'n',ü:'u',Ü:'U' }[c] || c));
+    const sa = s => s || '';   // fuente Roboto soporta acentos, no se necesita transformar
+
+    // cargar fuente Roboto con soporte de acentos
+    const loadFont = async (url) => {
+      const resp   = await fetch(url);
+      const buffer = await resp.arrayBuffer();
+      const uint8  = new Uint8Array(buffer);
+      let bin = '';
+      for (let i = 0; i < uint8.length; i++) bin += String.fromCharCode(uint8[i]);
+      return btoa(bin);
+    };
+    const [fontNormal, fontBold] = await Promise.all([
+      loadFont('/fonts/Roboto-Regular.ttf'),
+      loadFont('/fonts/Roboto-Bold.ttf'),
+    ]);
+    doc.addFileToVFS('Roboto-Regular.ttf', fontNormal);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.addFileToVFS('Roboto-Bold.ttf', fontBold);
+    doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
 
     const loadImg = (url) => new Promise(async (resolve) => {
       try {
@@ -250,13 +267,13 @@ export default function CheckList() {
 
     const hdrCX = L + LOGO_W + CENT_W / 2;
     doc.setTextColor(...AZUL);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(13);
     doc.text('REPUBLICA DE HONDURAS', hdrCX, y + 11, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(10);
     doc.text('CONGRESO NACIONAL', hdrCX, y + 18, { align: 'center' });
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(15);
     doc.text('DIRECCION ADMINISTRATIVA', hdrCX, y + 28, { align: 'center' });
 
@@ -273,7 +290,7 @@ export default function CheckList() {
     const anio    = now.getFullYear();
     const genPor  = sa((user?.nombre || 'Sistema').toUpperCase());
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...AZUL);
     doc.text('CHECK LIST', infoMid, y + 8, { align: 'center' });
@@ -282,7 +299,7 @@ export default function CheckList() {
     doc.setLineWidth(0.2);
     doc.line(infoX + 3, y + 10, infoX + INFO_W - 3, y + 10);
 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(100, 120, 160);
     doc.text('/' + anio, infoMid, y + 15, { align: 'center' });
@@ -300,7 +317,7 @@ export default function CheckList() {
     doc.setDrawColor(...AZUL);
     doc.setLineWidth(0.5);
     doc.rect(NB_X, NB_Y, NB_W, NB_H, 'FD');
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(...AZUL);
     doc.text(String(cl.numero || 0).padStart(4, '0'), infoMid, NB_Y + NB_H - 1.5, { align: 'center' });
@@ -309,11 +326,11 @@ export default function CheckList() {
     doc.setLineWidth(0.2);
     doc.line(infoX + 3, y + 30, infoX + INFO_W - 3, y + 30);
 
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(100, 120, 160);
     doc.text('GENERADO POR', infoMid, y + 34.5, { align: 'center' });
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(...AZUL);
     doc.text(genPor, infoMid, y + 40, { align: 'center' });
@@ -327,7 +344,7 @@ export default function CheckList() {
     doc.setDrawColor(...AZUL);
     doc.setLineWidth(0);
     doc.rect(L, y, CW, TBAR_H, 'FD');
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(...BLANCO);
     doc.text('CHECK LIST DE EXPEDIENTE DE PAGO', L + CW / 2, y + 7.5, { align: 'center' });
@@ -339,11 +356,11 @@ export default function CheckList() {
     // ════════════════════════════════════════════════════
     // campo folios y expediente — valores alineados en la misma columna
     const VALX = L + 76;
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(...NEGRO);
     doc.text('Numero de Folios Expediente:', L, y);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     const val1 = sa(cl.numero_folios || '');
     doc.text(val1, VALX, y);
     const lw1 = (val1 ? doc.getTextWidth(val1) : 0) + 4;
@@ -351,11 +368,11 @@ export default function CheckList() {
     doc.setLineWidth(0.4);
     doc.line(VALX, y + 1, VALX + lw1, y + 1);
     y += 8;
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(...NEGRO);
     doc.text('Numero de Expediente:', L, y);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     const val2 = sa(cl.numero_expediente || '');
     doc.text(val2, VALX, y);
     const lw2 = (val2 ? doc.getTextWidth(val2) : 0) + 4;
@@ -365,7 +382,7 @@ export default function CheckList() {
     y += 9;
 
     // texto introductorio
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(9.5);
     doc.setTextColor(...NEGRO);
     const intro = sa(
@@ -406,12 +423,12 @@ export default function CheckList() {
       doc.setLineWidth(0.45);
       doc.rect(L + 3, midY - CB_S / 2, CB_S, CB_S, 'FD');
       if (chkL) {
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.setFontSize(10);
         doc.setTextColor(...NEGRO);
         doc.text('X', L + 3 + CB_S / 2, midY + 2.2, { align: 'center' });
       }
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(...NEGRO);
       doc.text(sa(left.label), L + 3 + CB_S + 3, midY + 2);
@@ -424,12 +441,12 @@ export default function CheckList() {
         doc.setLineWidth(0.45);
         doc.rect(L + colW + 3, midY - CB_S / 2, CB_S, CB_S, 'FD');
         if (chkR) {
-          doc.setFont('helvetica', 'bold');
+          doc.setFont('Roboto', 'bold');
           doc.setFontSize(10);
           doc.setTextColor(...NEGRO);
           doc.text('X', L + colW + 3 + CB_S / 2, midY + 2.2, { align: 'center' });
         }
-        doc.setFont('helvetica', 'normal');
+        doc.setFont('Roboto', 'normal');
         doc.setFontSize(9);
         doc.setTextColor(...NEGRO);
         doc.text(sa(right.label), L + colW + 3 + CB_S + 3, midY + 2);
@@ -443,7 +460,7 @@ export default function CheckList() {
     // ════════════════════════════════════════════════════
     //  CUADRO OBSERVACIONES
     // ════════════════════════════════════════════════════
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...NEGRO);
     doc.text('Observaciones:', L, y);
@@ -454,7 +471,7 @@ export default function CheckList() {
     doc.setLineWidth(0.4);
     doc.rect(L, y, CW, obsH, 'FD');
     if (cl.observaciones) {
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setFontSize(11);
       doc.setTextColor(50, 50, 70);
       const obsLines = doc.splitTextToSize(sa(cl.observaciones), CW - 6);
@@ -465,12 +482,12 @@ export default function CheckList() {
     // ════════════════════════════════════════════════════
     //  NOTAS AL PIE
     // ════════════════════════════════════════════════════
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...NEGRO);
     doc.text('Observacion:', L, y);
     y += 5;
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(...NEGRO);
     const n1Lines = doc.splitTextToSize(sa(
@@ -480,7 +497,7 @@ export default function CheckList() {
     ), CW);
     doc.text(n1Lines, L, y);
     y += n1Lines.length * 5 + 3;
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(...NEGRO);
     const n2Lines = doc.splitTextToSize(sa(
@@ -498,7 +515,7 @@ export default function CheckList() {
       const FY = PH - 5 - FH;
       doc.setFillColor(...AZUL);
       doc.rect(L - 4, FY, CW + 8, FH, 'F');
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setFontSize(9.5);
       doc.setTextColor(...BLANCO);
       doc.text('Congreso Nacional - Direccion Administrativa', L - 1, FY + 5.8);
@@ -893,3 +910,4 @@ export default function CheckList() {
     </div>
   );
 }
+
