@@ -130,6 +130,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #0f2744 0%, #274C8D 100%)',
   },
   {
+    path: '/checklist',
+    label: 'Check List Expedientes',
+    clave: 'checklist',
+    description: 'Control de documentación para expedientes de pago',
+    icon: LuClipboardCheck,
+    gradient: 'linear-gradient(135deg, #164e63 0%, #0891b2 100%)',
+  },
+  {
     path: '/ip-whitelist',
     label: 'Acceso por IP',
     clave: null,
