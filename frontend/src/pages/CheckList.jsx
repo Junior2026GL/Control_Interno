@@ -481,8 +481,6 @@ export default function CheckList() {
     //  PIE DE PÁGINA — barra azul igual que autorizaciones
     // ════════════════════════════════════════════════════
     const pageCount = doc.internal.getNumberOfPages();
-    const fGen = now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const hGen = now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
     for (let p = 1; p <= pageCount; p++) {
       doc.setPage(p);
       const FH = 9;
