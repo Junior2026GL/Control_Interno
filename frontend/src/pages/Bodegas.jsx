@@ -2,7 +2,7 @@
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiDownload,
   FiPackage, FiUsers, FiRefreshCw, FiEye, FiBarChart2, FiCalendar,
-  FiChevronLeft, FiChevronRight,
+  FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -476,8 +476,10 @@ export default function Bodegas() {
 
         <div className="bod-card">
           <div className="bod-table-info">
-            <span>Mostrando <strong>{paginated.length}</strong> de <strong>{filtered.length}</strong> registros</span>
-            <span>Página {page} de {totalPages}</span>
+            <span className="bod-table-info__range">
+              <strong>{filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)}</strong> de <strong>{filtered.length}</strong>
+            </span>
+            <span className="bod-table-info__page">Pág. <strong>{page}</strong> / {totalPages}</span>
           </div>
           <div className="bod-table-wrap">
             {loading ? (
@@ -531,17 +533,45 @@ export default function Bodegas() {
               </table>
             )}
           </div>
-          {!loading && filtered.length > PAGE_SIZE && (
+          {!loading && (
             <div className="bod-pagination">
-              <button className="bod-btn bod-btn--ghost bod-btn--sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}><FiChevronLeft size={15} /></button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .reduce((acc, p, i, arr) => { if (i > 0 && p - arr[i - 1] > 1) acc.push('...'); acc.push(p); return acc; }, [])
-                .map((p, i) => p === '...'
-                  ? <span key={`d${i}`} className="bod-pagination__dots">…</span>
-                  : <button key={p} className={`bod-btn bod-btn--sm ${page === p ? 'bod-btn--primary' : 'bod-btn--ghost'}`} onClick={() => setPage(p)}>{p}</button>
-                )}
-              <button className="bod-btn bod-btn--ghost bod-btn--sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}><FiChevronRight size={15} /></button>
+              <button className="bod-pgn-btn" disabled={page === 1} onClick={() => setPage(1)} title="Primera página">
+                <FiChevronsLeft size={14} />
+              </button>
+              <button className="bod-pgn-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)} title="Anterior">
+                <FiChevronLeft size={14} />
+              </button>
+
+              <div className="bod-pgn-pages">
+                {(() => {
+                  const pages = [];
+                  const delta = 2;
+                  const left  = page - delta;
+                  const right = page + delta;
+                  let last = 0;
+                  for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= left && i <= right)) {
+                      if (last && i - last > 1) pages.push('...' + i);
+                      pages.push(i);
+                      last = i;
+                    }
+                  }
+                  return pages.map((p, i) =>
+                    typeof p === 'string'
+                      ? <span key={p} className="bod-pgn-dots">…</span>
+                      : <button key={p}
+                          className={`bod-pgn-btn bod-pgn-btn--num ${page === p ? 'bod-pgn-btn--active' : ''}`}
+                          onClick={() => setPage(p)}>{p}</button>
+                  );
+                })()}
+              </div>
+
+              <button className="bod-pgn-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)} title="Siguiente">
+                <FiChevronRight size={14} />
+              </button>
+              <button className="bod-pgn-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)} title="Última página">
+                <FiChevronsRight size={14} />
+              </button>
             </div>
           )}
         </div>
