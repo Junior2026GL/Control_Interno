@@ -337,31 +337,31 @@ export default function CheckList() {
     // ════════════════════════════════════════════════════
     //  CAMPOS DE CABECERA con línea debajo del valor
     // ════════════════════════════════════════════════════
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    // campo folios
+    // campo folios y expediente — valores alineados en la misma columna
+    const VALX = L + 76;
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     doc.setTextColor(...NEGRO);
     doc.text('Numero de Folios Expediente:', L, y);
     doc.setFont('helvetica', 'bold');
     const val1 = sa(cl.numero_folios || '');
-    doc.text(val1, L + 72, y);
-    const lw1 = (val1 ? doc.getTextWidth(val1) : 0) + 6;
+    doc.text(val1, VALX, y);
+    const lw1 = (val1 ? doc.getTextWidth(val1) : 0) + 4;
     doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
-    doc.line(L + 72, y + 1, L + 72 + lw1, y + 1);
+    doc.line(VALX, y + 1, VALX + lw1, y + 1);
     y += 8;
-    // campo expediente
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     doc.setTextColor(...NEGRO);
     doc.text('Numero de Expediente:', L, y);
     doc.setFont('helvetica', 'bold');
     const val2 = sa(cl.numero_expediente || '');
-    doc.text(val2, L + 56, y);
-    const lw2 = (val2 ? doc.getTextWidth(val2) : 0) + 6;
+    doc.text(val2, VALX, y);
+    const lw2 = (val2 ? doc.getTextWidth(val2) : 0) + 4;
     doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
-    doc.line(L + 56, y + 1, L + 56 + lw2, y + 1);
+    doc.line(VALX, y + 1, VALX + lw2, y + 1);
     y += 9;
 
     // texto introductorio
@@ -479,7 +479,10 @@ export default function CheckList() {
       '(como parte del proceso o como anexo del mismo)'
     ), CW);
     doc.text(n1Lines, L, y);
-    y += n1Lines.length * 5 + 2;
+    y += n1Lines.length * 5 + 3;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(...NEGRO);
     const n2Lines = doc.splitTextToSize(sa(
       '2. Las casillas de documentacion que no esten marcadas, es porque esa informacion no aplica para el presente expediente.'
     ), CW);
