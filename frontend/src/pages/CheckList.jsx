@@ -605,151 +605,158 @@ export default function CheckList() {
       <Navbar />
 
       <div className="cl-content">
-        {/* ── Header ── */}
+
+        {/* ── HEADER oscuro con stats ── */}
         <div className="cl-header">
-          <div className="cl-title-wrap">
-            <div className="cl-title-icon"><FiClipboard size={22} /></div>
-            <div className="cl-title">
-              <h1>Check List Expedientes</h1>
-              <p>Control de documentación para expedientes de pago</p>
+          <div className="cl-header-brand">
+            <div className="cl-header-icon"><FiClipboard size={22} /></div>
+            <div>
+              <h1 className="cl-header-title">Check List Expedientes</h1>
+              <p className="cl-header-sub">Control de documentación para expedientes de pago</p>
             </div>
           </div>
-          <div className="cl-header-actions">
-            <button className="btn-secondary" onClick={fetchLista} title="Actualizar">
+          <div className="cl-header-stats">
+            <div className="cl-hstat">
+              <span className="cl-hstat-val">{lista.length}</span>
+              <span className="cl-hstat-lbl">Registros</span>
+            </div>
+            <div className="cl-hstat-sep"/>
+            <div className="cl-hstat">
+              <span className="cl-hstat-val">{lista.filter(c => countDocs(c) === DOCS.length).length}</span>
+              <span className="cl-hstat-lbl">Completos</span>
+            </div>
+            <div className="cl-hstat-sep"/>
+            <div className="cl-hstat">
+              <span className="cl-hstat-val">{lista.filter(c => countDocs(c) > 0 && countDocs(c) < DOCS.length).length}</span>
+              <span className="cl-hstat-lbl">En proceso</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── TOOLBAR ── */}
+        <div className="cl-toolbar">
+          <div className="cl-toolbar-left">
+            <div className="cl-search-wrap">
+              <FiSearch size={14} className="cl-search-icon" />
+              <input
+                className="cl-search-input"
+                placeholder="Buscar por N°, expediente, responsable..."
+                value={busqueda}
+                onChange={e => { setBusqueda(e.target.value); setPage(1); }}
+              />
+            </div>
+          </div>
+          <div className="cl-toolbar-right">
+            <button className="cl-tool-icon" onClick={fetchLista} title="Actualizar">
               <FiRefreshCw size={15} />
             </button>
-            <button className="btn-primary" onClick={() => { setForm(buildEmpty()); setFormErr(''); setModalCrear(true); }}>
-              <FiPlus size={16} /> Nuevo Check List
+            <button className="cl-tool-btn-new"
+              onClick={() => { setForm(buildEmpty()); setFormErr(''); setModalCrear(true); }}>
+              <FiPlus size={13} /> Nuevo Check List
             </button>
           </div>
         </div>
 
-        {/* ── Toolbar ── */}
-        <div className="cl-toolbar">
-          <div className="cl-search-wrap">
-            <FiSearch size={15} className="cl-search-icon" />
-            <input
-              className="cl-search-input"
-              placeholder="Buscar por N°, expediente, responsable…"
-              value={busqueda}
-              onChange={e => { setBusqueda(e.target.value); setPage(1); }}
-            />
-          </div>
-        </div>
-
-        {/* ── Tabla ── */}
-        <div className="cl-table-card">
-          <div className="cl-table-wrap">
-            <table className="cl-table">
-              <thead>
-                <tr>
-                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>N°</th>
-                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>N° Expediente</th>
-                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>N° Folios</th>
-                  <th>Documentos</th>
-                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>Fecha</th>
-                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>Creado por</th>
-                  <th style={{ width: '1%', whiteSpace: 'nowrap', textAlign: 'right' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr className="cl-loading-row">
-                    <td colSpan={7}>Cargando…</td>
-                  </tr>
-                ) : listaPaginada.length === 0 ? (
+        {/* ── TABLA ── */}
+        <div className="cl-table-wrap">
+          {loading ? (
+            <div className="cl-empty"><FiClipboard size={40} /><p>Cargando…</p></div>
+          ) : listaMostrada.length === 0 ? (
+            <div className="cl-empty"><FiClipboard size={40} /><p>No hay check lists registrados.</p></div>
+          ) : (
+            <>
+              <table className="cl-table">
+                <thead>
                   <tr>
+                    <th><span className="cl-th-inner">#</span></th>
+                    <th><span className="cl-th-inner">N° Expediente</span></th>
+                    <th><span className="cl-th-inner">N° Folios</span></th>
+                    <th><span className="cl-th-inner">Documentos</span></th>
+                    <th><span className="cl-th-inner">Fecha</span></th>
+                    <th><span className="cl-th-inner">Creado por</span></th>
+                    <th><span className="cl-th-inner">Acciones</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listaPaginada.map((cl, idx) => {
+                    const n = countDocs(cl);
+                    return (
+                      <tr key={cl.id} className={idx % 2 === 1 ? 'cl-tr-alt' : ''}>
+                        <td className="cl-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
+                        <td style={{ whiteSpace: 'nowrap', fontWeight: 600, color: '#274C8D' }}>
+                          {String(cl.numero).padStart(4, '0')}
+                          {cl.numero_expediente ? <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>{cl.numero_expediente}</div> : null}
+                        </td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{cl.numero_folios || '—'}</td>
+                        <td>
+                          <div className="cl-docs-bar">
+                            <div className="cl-docs-fill">
+                              <div className="cl-docs-fill-inner"
+                                style={{ width: `${Math.round((n / DOCS.length) * 100)}%` }} />
+                            </div>
+                            <span className="cl-docs-label">{n}/{DOCS.length}</span>
+                          </div>
+                        </td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{fmtFecha(cl.fecha_creacion)}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{cl.creado_por_nombre || '—'}</td>
+                        <td>
+                          <div className="cl-actions">
+                            <button className="cl-act-btn cl-act-btn--view" title="Ver detalle" onClick={() => setVerItem(cl)}><FiEye size={13}/></button>
+                            <button className="cl-act-btn cl-act-btn--print" title="Imprimir PDF" onClick={() => generarPDF(cl, true)}><FiPrinter size={13}/></button>
+                            <button className="cl-act-btn cl-act-btn--dl" title="Descargar PDF" onClick={() => generarPDF(cl, false)}><FiClipboard size={13}/></button>
+                            <button className="cl-act-btn cl-act-btn--edit" title="Editar" onClick={() => openEditar(cl)}><FiEdit2 size={13}/></button>
+                            {canDelete && (
+                              <button className="cl-act-btn cl-act-btn--del" title="Eliminar" onClick={() => setDelItem(cl)}><FiTrash2 size={13}/></button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="cl-tfoot-row">
                     <td colSpan={7}>
-                      <div className="cl-empty">
-                        <FiClipboard size={40} />
-                        <p>No hay check lists registrados.</p>
-                      </div>
+                      Mostrando <strong>{listaPaginada.length}</strong> de <strong>{listaMostrada.length}</strong> registros
                     </td>
                   </tr>
-                ) : listaPaginada.map(cl => {
-                  const n = countDocs(cl);
-                  return (
-                    <tr key={cl.id}>
-                      <td style={{ whiteSpace: 'nowrap' }}><span className="cl-num">{String(cl.numero).padStart(4, '0')}</span></td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{cl.numero_expediente || '—'}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{cl.numero_folios     || '—'}</td>
-                      <td>
-                        <div className="cl-docs-bar">
-                          <div className="cl-docs-fill">
-                            <div
-                              className="cl-docs-fill-inner"
-                              style={{ width: `${Math.round((n / DOCS.length) * 100)}%` }}
-                            />
-                          </div>
-                          <span className="cl-docs-label">{n}/{DOCS.length}</span>
-                        </div>
-                      </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{fmtFecha(cl.fecha_creacion)}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{cl.creado_por_nombre || '—'}</td>
-                      <td>
-                        <div className="cl-actions">
-                          <button
-                            className="cl-action-btn"
-                            title="Ver detalle"
-                            onClick={() => setVerItem(cl)}
-                          ><FiEye size={15} /></button>
-                          <button
-                            className="cl-action-btn print"
-                            title="Imprimir PDF"
-                            onClick={() => generarPDF(cl, true)}
-                          ><FiPrinter size={15} /></button>
-                          <button
-                            className="cl-action-btn"
-                            title="Descargar PDF"
-                            onClick={() => generarPDF(cl, false)}
-                          ><FiClipboard size={15} /></button>
-                          <button
-                            className="cl-action-btn"
-                            title="Editar"
-                            onClick={() => openEditar(cl)}
-                          ><FiEdit2 size={15} /></button>
-                          {canDelete && (
-                            <button
-                              className="cl-action-btn danger"
-                              title="Eliminar"
-                              onClick={() => setDelItem(cl)}
-                            ><FiTrash2 size={15} /></button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                </tfoot>
+              </table>
 
-          {/* paginación */}
-          {totalPages > 1 && (
-            <div className="cl-pagination">
-              <span>
-                Mostrando {Math.min((page - 1) * PAGE_SIZE + 1, listaMostrada.length)}–
-                {Math.min(page * PAGE_SIZE, listaMostrada.length)} de {listaMostrada.length}
-              </span>
-              <div className="cl-page-btns">
-                <button className="cl-page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-                  <FiChevronLeft size={14} />
-                </button>
-                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                  const p = i + 1;
-                  return (
-                    <button
-                      key={p}
-                      className={`cl-page-btn ${page === p ? 'active' : ''}`}
-                      onClick={() => setPage(p)}
-                    >{p}</button>
-                  );
-                })}
-                <button className="cl-page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
-                  <FiChevronRight size={14} />
-                </button>
-              </div>
-            </div>
+              {totalPages > 1 && (
+                <div className="std-pg">
+                  <span className="std-pg-info">
+                    {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, listaMostrada.length)} de <strong>{listaMostrada.length}</strong>
+                  </span>
+                  <div className="std-pg-controls">
+                    <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+                    <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                    {(() => {
+                      const maxBtns = 7;
+                      let start = Math.max(1, page - Math.floor(maxBtns / 2));
+                      let end   = Math.min(totalPages, start + maxBtns - 1);
+                      if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                      const pages = [];
+                      if (start > 1) {
+                        pages.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPage(1)}>1</button>);
+                        if (start > 2) pages.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                      }
+                      for (let p = start; p <= end; p++) {
+                        pages.push(<button key={p} className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`} onClick={() => setPage(p)}>{p}</button>);
+                      }
+                      if (end < totalPages) {
+                        if (end < totalPages - 1) pages.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                        pages.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
+                      }
+                      return pages;
+                    })()}
+                    <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+                    <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
+                  </div>
+                  <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
