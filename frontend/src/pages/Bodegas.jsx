@@ -26,7 +26,8 @@ function fmtFecha(fechaStr) {
 function fmtFechaLarga(fechaStr) {
   if (!fechaStr) return '—';
   const d = new Date(String(fechaStr).split('T')[0] + 'T12:00:00');
-  return d.toLocaleDateString('es-HN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const s = d.toLocaleDateString('es-HN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function authHeaders() {
@@ -100,6 +101,7 @@ export default function Bodegas() {
   const [form, setForm]                 = useState({ ...EMPTY_FORM });
   const [formErrors, setFormErrors]     = useState({});
   const [saving, setSaving]             = useState(false);
+  const [deleting, setDeleting]          = useState(false);
   const [confirmDel, setConfirmDel]     = useState(null);
   const [toast, setToast]               = useState(null);
   const [busqueda, setBusqueda]         = useState('');
@@ -142,6 +144,18 @@ export default function Bodegas() {
 
   useEffect(() => { fetchRegistros(); fetchDiputados(); }, [fetchRegistros, fetchDiputados]);
   useEffect(() => { setPage(1); }, [busqueda, filtroDesde, filtroHasta]);
+
+  // Escape cierra modales
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key !== 'Escape') return;
+      if (modal) { closeModal(); return; }
+      if (viewing) { setViewing(null); return; }
+      if (confirmDel) { setConfirmDel(null); return; }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [modal, viewing, confirmDel]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -212,7 +226,10 @@ export default function Bodegas() {
       .map(([depto, v]) => ({ depto, ...v }))
       .sort((a, b) => b.cantidad - a.cantidad);
     const maxCant = arr[0]?.cantidad || 1;
-    return arr.map(row => ({ ...row, pct: Math.round((row.cantidad / maxCant) * 100) }));
+    const rows = arr.map(row => ({ ...row, pct: Math.round((row.cantidad / maxCant) * 100) }));
+    const totalCant = arr.reduce((s, r) => s + r.cantidad, 0);
+    const totalReg  = arr.reduce((s, r) => s + r.registros, 0);
+    return { rows, totalCant, totalReg };
   }, [registros]);
 
   const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM }); setDipQuery(''); setFormErrors({}); setModal(true); };
@@ -235,7 +252,17 @@ export default function Bodegas() {
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setSaving(true);
     try {
-      const payload = { diputado_id: form.diputado_id || null, diputado_nombre: form.diputado_nombre.trim(), departamento: form.departamento.trim(), partido: form.partido.trim() || null, persona_retiro: form.persona_retiro.trim(), fecha_entrega: form.fecha_entrega, cantidad_recibida: parseInt(form.cantidad_recibida, 10), numero_orden: form.numero_orden.trim(), observaciones: form.observaciones.trim() || null };
+      const payload = {
+        diputado_id: form.diputado_id || null,
+        diputado_nombre: form.diputado_nombre.trim(),
+        departamento: form.departamento.trim(),
+        partido: form.partido.trim() || null,
+        persona_retiro: form.persona_retiro.trim(),
+        fecha_entrega: form.fecha_entrega,
+        cantidad_recibida: parseInt(form.cantidad_recibida, 10),
+        numero_orden: String(form.numero_orden.trim()).padStart(4, '0'),
+        observaciones: form.observaciones.trim() || null,
+      };
       if (editing) {
         await api.put(`/bodegas/${editing}`, payload, { headers: authHeaders() });
         showToast('Registro actualizado correctamente.', 'ok');
@@ -250,7 +277,8 @@ export default function Bodegas() {
   };
 
   const handleDelete = async () => {
-    if (!confirmDel) return;
+    if (!confirmDel || deleting) return;
+    setDeleting(true);
     try {
       await api.delete(`/bodegas/${confirmDel.id}`, { headers: authHeaders() });
       showToast('Registro eliminado correctamente.', 'ok');
@@ -258,7 +286,7 @@ export default function Bodegas() {
     } catch (err) {
       showToast(err.response?.data?.message || 'Error al eliminar.', 'error');
       setConfirmDel(null);
-    }
+    } finally { setDeleting(false); }
   };
 
   const exportPDF = async () => {
@@ -431,9 +459,9 @@ export default function Bodegas() {
               <button className="bod-btn bod-btn--ghost bod-btn--sm" onClick={() => setShowStats(false)}><FiX size={13} /></button>
             </div>
             <div className="bod-depto-rows">
-              {deptoStats.length === 0 ? (
+              {deptoStats.rows.length === 0 ? (
                 <p className="bod-depto-empty">No hay datos.</p>
-              ) : deptoStats.map((row, i) => (
+              ) : deptoStats.rows.map((row, i) => (
                 <div key={row.depto} className="bod-depto-row">
                   <span className="bod-depto-row__name">{row.depto}</span>
                   <div className="bod-depto-row__bar-wrap">
@@ -443,6 +471,14 @@ export default function Bodegas() {
                   <span className="bod-depto-row__regs">{row.registros} reg.</span>
                 </div>
               ))}
+              {deptoStats.rows.length > 1 && (
+                <div className="bod-depto-row bod-depto-row--total">
+                  <span className="bod-depto-row__name">TOTAL</span>
+                  <div className="bod-depto-row__bar-wrap" />
+                  <span className="bod-depto-row__cant">{deptoStats.totalCant.toLocaleString('es-HN')}</span>
+                  <span className="bod-depto-row__regs">{deptoStats.totalReg} reg.</span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -477,7 +513,9 @@ export default function Bodegas() {
         <div className="bod-card">
           <div className="bod-table-info">
             <span className="bod-table-info__range">
-              <strong>{filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)}</strong> de <strong>{filtered.length}</strong>
+              {filtered.length === 0
+                ? <span>0 registros</span>
+                : <><strong>{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)}</strong> de <strong>{filtered.length}</strong></>}
             </span>
             <span className="bod-table-info__page">Pág. <strong>{page}</strong> / {totalPages}</span>
           </div>
@@ -533,7 +571,7 @@ export default function Bodegas() {
               </table>
             )}
           </div>
-          {!loading && (
+          {!loading && filtered.length > 0 && totalPages > 1 && (
             <div className="bod-pagination">
               <button className="bod-pgn-btn" disabled={page === 1} onClick={() => setPage(1)} title="Primera página">
                 <FiChevronsLeft size={14} />
@@ -720,8 +758,10 @@ export default function Bodegas() {
               <h3 className="bod-confirm__title">¿Eliminar registro?</h3>
               <p className="bod-confirm__msg">Se eliminará el registro de <strong>{confirmDel.diputado_nombre}</strong>. Esta acción no se puede deshacer.</p>
               <div className="bod-confirm__actions">
-                <button className="bod-btn bod-btn--outline" onClick={() => setConfirmDel(null)}>Cancelar</button>
-                <button className="bod-btn bod-btn--danger" onClick={handleDelete}>Eliminar</button>
+                <button className="bod-btn bod-btn--outline" disabled={deleting} onClick={() => setConfirmDel(null)}>Cancelar</button>
+                <button className="bod-btn bod-btn--danger" disabled={deleting} onClick={handleDelete}>
+                  {deleting ? <><span className="bod-btn-spinner" /> Eliminando…</> : 'Eliminar'}
+                </button>
               </div>
             </div>
           </div>
