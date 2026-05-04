@@ -448,7 +448,7 @@ export default function CheckList() {
     doc.rect(L, y, CW, obsH, 'FD');
     if (cl.observaciones) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(12);
+      doc.setFontSize(11);
       doc.setTextColor(50, 50, 70);
       const obsLines = doc.splitTextToSize(sa(cl.observaciones), CW - 6);
       doc.text(obsLines, L + 3, y + 8);
@@ -459,19 +459,19 @@ export default function CheckList() {
     //  NOTAS AL PIE
     // ════════════════════════════════════════════════════
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
+    doc.setFontSize(12);
     doc.setTextColor(...NEGRO);
     doc.text('Observacion:', L, y);
-    y += 4;
+    y += 5;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(11);
     const n1Lines = doc.splitTextToSize(sa(
       '1. Los expedientes para pago, dependiente de su naturaleza del gasto, son armados con la informacion ' +
       'requerida para la emision de pago, por lo que no todos los expedientes deben llevar la misma informacion ' +
       '(como parte del proceso o como anexo del mismo)'
     ), CW);
     doc.text(n1Lines, L, y);
-    y += n1Lines.length * 4 + 2;
+    y += n1Lines.length * 5 + 2;
     const n2Lines = doc.splitTextToSize(sa(
       '2. Las casillas de documentacion que no esten marcadas, es porque esa informacion no aplica para el presente expediente.'
     ), CW);
