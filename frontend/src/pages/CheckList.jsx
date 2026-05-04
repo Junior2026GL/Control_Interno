@@ -419,7 +419,7 @@ export default function CheckList() {
     doc.setFont('Roboto', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(...NEGRO);
-    doc.text('Numero de Folios Expediente:', L, y);
+    doc.text('Número de Folios Expediente:', L, y);
     doc.setFont('Roboto', 'bold');
     const val1 = sa(cl.numero_folios || '');
     doc.text(val1, VALX, y);
@@ -431,7 +431,7 @@ export default function CheckList() {
     doc.setFont('Roboto', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(...NEGRO);
-    doc.text('Numero de Expediente:', L, y);
+    doc.text('Número de Expediente:', L, y);
     doc.setFont('Roboto', 'bold');
     const val2 = sa(cl.numero_expediente || '');
     doc.text(val2, VALX, y);
@@ -579,7 +579,7 @@ export default function CheckList() {
       doc.setFontSize(9.5);
       doc.setTextColor(...BLANCO);
       doc.text('Congreso Nacional - Dirección Administrativa', L - 1, FY + 5.8);
-      doc.text('Pagina ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
+      doc.text('Página ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
       doc.text('Generado: ' + fGen + ' ' + hGen, L + CW + 1, FY + 5.8, { align: 'right' });
     }
 
