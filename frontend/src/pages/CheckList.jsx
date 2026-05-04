@@ -264,52 +264,59 @@ export default function CheckList() {
     doc.setLineWidth(0.3);
     doc.line(L + LOGO_W + CENT_W, y + 4, L + LOGO_W + CENT_W, y + HDR_H - 4);
 
-    // Panel derecho: No. + GENERADO/HORA + GENERADO POR  (igual que autorizaciones)
+    // Panel derecho: CHECK LIST + año + caja número + GENERADO POR
     const infoX   = L + LOGO_W + CENT_W;
     const infoMid = infoX + INFO_W / 2;
     const now      = new Date();
-    const fechaGen = now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const horaGen  = now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
-    const genPor   = sa((user?.nombre || 'Sistema').toUpperCase());
+    const fGen = now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const hGen = now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const anio    = now.getFullYear();
+    const genPor  = sa((user?.nombre || 'Sistema').toUpperCase());
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
+    doc.setFontSize(11);
+    doc.setTextColor(...AZUL);
+    doc.text('CHECK LIST', infoMid, y + 9, { align: 'center' });
+
+    doc.setDrawColor(210, 220, 235);
+    doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 11, infoX + INFO_W - 3, y + 11);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
     doc.setTextColor(100, 120, 160);
-    doc.text('No.', infoMid, y + 7, { align: 'center' });
+    doc.text('/' + anio, infoMid, y + 17, { align: 'center' });
+
+    doc.setDrawColor(210, 220, 235);
+    doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 19, infoX + INFO_W - 3, y + 19);
+
+    // caja con número
+    const NB_X = infoX + 4;
+    const NB_W = INFO_W - 8;
+    const NB_Y = y + 21;
+    const NB_H = 10;
+    doc.setFillColor(...BLANCO);
+    doc.setDrawColor(...AZUL);
+    doc.setLineWidth(0.5);
+    doc.rect(NB_X, NB_Y, NB_W, NB_H, 'FD');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(...AZUL);
-    doc.text(String(cl.numero || 0).padStart(4, '0'), infoMid, y + 15, { align: 'center' });
+    doc.text(String(cl.numero || 0).padStart(4, '0'), infoMid, NB_Y + NB_H - 2, { align: 'center' });
 
     doc.setDrawColor(210, 220, 235);
     doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 17, infoX + INFO_W - 3, y + 17);
-
-    const col1 = infoX + 4;
-    const col2 = infoX + INFO_W / 2 + 2;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
-    doc.setTextColor(100, 120, 160);
-    doc.text('GENERADO', col1, y + 22);
-    doc.text('HORA',     col2, y + 22);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(20, 20, 20);
-    doc.text(fechaGen, col1, y + 27.5);
-    doc.text(horaGen,  col2, y + 27.5);
-
-    doc.setDrawColor(210, 220, 235);
-    doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 30, infoX + INFO_W - 3, y + 30);
+    doc.line(infoX + 3, y + 33, infoX + INFO_W - 3, y + 33);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(100, 120, 160);
-    doc.text('GENERADO POR', infoMid, y + 34.5, { align: 'center' });
+    doc.text('GENERADO POR', infoMid, y + 37, { align: 'center' });
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(...AZUL);
-    doc.text(genPor, infoMid, y + 40, { align: 'center' });
+    doc.text(genPor, infoMid, y + 41.5, { align: 'center' });
 
     // ════════════════════════════════════════════════════
     //  BARRA TÍTULO AZUL
@@ -441,10 +448,10 @@ export default function CheckList() {
     doc.rect(L, y, CW, obsH, 'FD');
     if (cl.observaciones) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
+      doc.setFontSize(11);
       doc.setTextColor(50, 50, 70);
       const obsLines = doc.splitTextToSize(sa(cl.observaciones), CW - 6);
-      doc.text(obsLines, L + 3, y + 6);
+      doc.text(obsLines, L + 3, y + 7);
     }
     y += obsH + 6;
 
