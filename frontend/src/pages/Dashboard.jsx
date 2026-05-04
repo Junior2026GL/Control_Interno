@@ -138,6 +138,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #164e63 0%, #0891b2 100%)',
   },
   {
+    path: '/bodegas',
+    label: 'Retiro de Bodegas',
+    clave: 'bodegas',
+    description: 'Control de retiro de materiales por diputado',
+    icon: LuLandmark,
+    gradient: 'linear-gradient(135deg, #92400e 0%, #b45309 100%)',
+  },
+  {
     path: '/ip-whitelist',
     label: 'Acceso por IP',
     clave: null,
