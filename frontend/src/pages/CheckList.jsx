@@ -620,16 +620,6 @@ export default function CheckList() {
               <span className="cl-hstat-val">{lista.length}</span>
               <span className="cl-hstat-lbl">Registros</span>
             </div>
-            <div className="cl-hstat-sep"/>
-            <div className="cl-hstat">
-              <span className="cl-hstat-val">{lista.filter(c => countDocs(c) === DOCS.length).length}</span>
-              <span className="cl-hstat-lbl">Completos</span>
-            </div>
-            <div className="cl-hstat-sep"/>
-            <div className="cl-hstat">
-              <span className="cl-hstat-val">{lista.filter(c => countDocs(c) > 0 && countDocs(c) < DOCS.length).length}</span>
-              <span className="cl-hstat-lbl">En proceso</span>
-            </div>
           </div>
         </div>
 
