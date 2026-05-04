@@ -299,9 +299,9 @@ export default function CheckList() {
     // ── borde exterior ────────────────────────────────────────────────────
     doc.setDrawColor(...AZUL);
     doc.setLineWidth(1.2);
-    doc.rect(L - 4, 5, CW + 8, PH - 10, 'S');
+    doc.rect(L - 4, 10, CW + 8, PH - 20, 'S');
 
-    let y = 10;
+    let y = 15;
 
     // ════════════════════════════════════════════════════
     //  ENCABEZADO — [LOGO | INSTITUCIÓN | INFO PANEL]
@@ -572,7 +572,7 @@ export default function CheckList() {
     for (let p = 1; p <= pageCount; p++) {
       doc.setPage(p);
       const FH = 9;
-      const FY = PH - 5 - FH;
+      const FY = PH - 10 - FH;
       doc.setFillColor(...AZUL);
       doc.rect(L - 4, FY, CW + 8, FH, 'F');
       doc.setFont('Roboto', 'normal');
