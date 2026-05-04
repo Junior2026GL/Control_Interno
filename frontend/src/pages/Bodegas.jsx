@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState, useCallback, useContext, useMemo, useRef } from 'react';
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiDownload,
-  FiPackage, FiUsers, FiRefreshCw, FiEye, FiBarChart2,
+  FiPackage, FiUsers, FiRefreshCw, FiEye, FiBarChart2, FiCalendar,
   FiChevronLeft, FiChevronRight,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
@@ -328,29 +328,52 @@ export default function Bodegas() {
 
     const TW = CW;
     autoTable(doc, {
-      startY: y, margin: { left: L, right: 10 }, tableWidth: TW,
+      startY: y,
+      margin: { left: L, right: PW - L - CW },
       head: [[
-        { content: 'N°',                   styles: { halign: 'center', cellWidth: TW * 0.04  } },
-        { content: 'Diputado Responsable', styles: { cellWidth: TW * 0.20 } },
-        { content: 'Persona que Retiro',   styles: { cellWidth: TW * 0.20 } },
-        { content: 'Departamento',         styles: { cellWidth: TW * 0.11 } },
-        { content: 'Partido Politico',     styles: { cellWidth: TW * 0.175 } },
-        { content: 'Fecha de Entrega',     styles: { cellWidth: TW * 0.13 } },
-        { content: 'Cant.',                styles: { halign: 'center', cellWidth: TW * 0.065 } },
-        { content: '# Orden',              styles: { halign: 'center', cellWidth: TW * 0.059 } },
+        'N°',
+        'Diputado Responsable',
+        'Persona que Retiro',
+        'Departamento',
+        'Partido Politico',
+        'Fecha de Entrega',
+        'Cant.',
+        '# Orden',
       ]],
       body: filtered.map((r, i) => [
-        { content: i + 1, styles: { halign: 'center' } },
+        i + 1,
         sa(r.diputado_nombre), sa(r.persona_retiro), sa(r.departamento), sa(r.partido || '—'),
         sa(fmtFecha(r.fecha_entrega)),
-        { content: r.cantidad_recibida, styles: { halign: 'center' } },
-        { content: r.numero_orden, styles: { halign: 'center' } },
+        r.cantidad_recibida,
+        r.numero_orden,
       ]),
-      headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: 7.5 },
-      bodyStyles: { fontSize: 7.2, textColor: NEGRO },
+      headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: 7.5, halign: 'left', cellPadding: { top: 4, bottom: 4, left: 2.5, right: 2.5 } },
+      bodyStyles: { fontSize: 7.2, textColor: NEGRO, cellPadding: { top: 3, bottom: 3, left: 2.5, right: 2.5 } },
       alternateRowStyles: { fillColor: [237, 241, 250] },
-      styles: { cellPadding: 2.5, lineColor: [180, 200, 235], lineWidth: 0.2, overflow: 'linebreak' },
+      styles: { lineColor: [180, 200, 235], lineWidth: 0.2, overflow: 'linebreak' },
+      columnStyles: {
+        0: { cellWidth: 10,   halign: 'center' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 46 },
+        3: { cellWidth: 28 },
+        4: { cellWidth: 42 },
+        5: { cellWidth: 26,   halign: 'center' },
+        6: { cellWidth: 14,   halign: 'center' },
+        7: { cellWidth: 15,   halign: 'center' },
+      },
     });
+
+    // Pie de página
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      const FH = 9; const FY = PH - 5 - FH;
+      doc.setFillColor(...AZUL); doc.rect(L - 4, FY, CW + 8, FH, 'F');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...BLANCO);
+      doc.text('Congreso Nacional - Pagaduria Especial', L - 1, FY + 5.8);
+      doc.text('Pagina ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
+      doc.text('Generado: ' + fechaGen + ' ' + horaGen, L + CW + 1, FY + 5.8, { align: 'right' });
+    }
 
     doc.save(`entrega_canastas_${now.toISOString().slice(0, 10)}.pdf`);
   };
@@ -424,16 +447,30 @@ export default function Bodegas() {
           </div>
         )}
 
-        <div className="bod-toolbar">
-          <div className="bod-toolbar__search">
-            <FiSearch className="bod-toolbar__search-icon" size={15} />
-            <input className="bod-toolbar__input" placeholder="Buscar por diputado, persona, departamento, # orden…"
-              value={busqueda} onChange={e => setBusqueda(e.target.value)} />
-          </div>
-          <div className="bod-toolbar__filters">
-            <label className="bod-date-label">Desde<input type="date" className="bod-toolbar__date" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)} /></label>
-            <label className="bod-date-label">Hasta<input type="date" className="bod-toolbar__date" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)} /></label>
-            {hayFiltros && (<button className="bod-btn bod-btn--ghost bod-btn--sm" onClick={limpiarFiltros}><FiX size={13} /> Limpiar</button>)}
+        <div className="bod-filter-card">
+          <div className="bod-filter-row">
+            <div className="bod-toolbar__search">
+              <FiSearch className="bod-toolbar__search-icon" size={15} />
+              <input className="bod-toolbar__input" placeholder="Buscar por diputado, persona, departamento, # orden…"
+                value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+            </div>
+            <div className="bod-filter-dates">
+              <div className="bod-filter-date-group">
+                <FiCalendar size={13} className="bod-filter-date-icon" />
+                <span className="bod-filter-date-label">Desde</span>
+                <input type="date" className="bod-filter-date-input" value={filtroDesde} onChange={e => setFiltroDesde(e.target.value)} />
+              </div>
+              <div className="bod-filter-date-group">
+                <FiCalendar size={13} className="bod-filter-date-icon" />
+                <span className="bod-filter-date-label">Hasta</span>
+                <input type="date" className="bod-filter-date-input" value={filtroHasta} onChange={e => setFiltroHasta(e.target.value)} />
+              </div>
+              {hayFiltros && (
+                <button className="bod-btn bod-btn--ghost bod-btn--sm bod-btn--clear" onClick={limpiarFiltros}>
+                  <FiX size={13} /> Limpiar
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

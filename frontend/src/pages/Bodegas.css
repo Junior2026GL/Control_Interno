@@ -84,26 +84,78 @@
 .bod-stat__value { font-size: 1.15rem; font-weight: 700; color: #1f2937; }
 .bod-stat__value--green { color: #16a34a; }
 
-/* ── Toolbar ─────────────────────────────────────────────── */
-.bod-toolbar {
-  display: flex; gap: .75rem; flex-wrap: wrap;
-  margin-bottom: 1rem; align-items: center;
+/* ── Filter card ─────────────────────────────────────────── */
+.bod-filter-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #dce8f8;
+  box-shadow: 0 2px 8px rgba(39,76,141,.07);
+  padding: .9rem 1.1rem;
+  margin-bottom: 1rem;
+}
+.bod-filter-row {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 .bod-toolbar__search {
-  position: relative; flex: 1 1 260px;
+  position: relative; flex: 1 1 240px;
 }
 .bod-toolbar__search-icon {
   position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
   color: #9ca3af; pointer-events: none;
 }
 .bod-toolbar__input {
-  width: 100%; padding: .55rem .75rem .55rem 2rem;
-  border: 1.5px solid #e5e7eb; border-radius: 8px;
+  width: 100%; padding: .55rem .75rem .55rem 2.1rem;
+  border: 1.5px solid #e5e7eb; border-radius: 9px;
   font-size: .85rem; background: #fff; font-family: inherit;
   transition: border-color .18s, box-shadow .18s;
   box-sizing: border-box;
+  height: 38px;
 }
 .bod-toolbar__input:focus { outline: none; border-color: #274C8D; box-shadow: 0 0 0 3px rgba(39,76,141,.12); }
+
+.bod-filter-dates {
+  display: flex; gap: .5rem; flex-wrap: wrap; align-items: center;
+}
+.bod-filter-date-group {
+  display: flex; align-items: center; gap: .4rem;
+  background: #f5f8fd;
+  border: 1.5px solid #dce8f8;
+  border-radius: 9px;
+  padding: 0 .7rem;
+  height: 38px;
+  transition: border-color .18s, box-shadow .18s;
+}
+.bod-filter-date-group:focus-within {
+  border-color: #274C8D;
+  box-shadow: 0 0 0 3px rgba(39,76,141,.1);
+  background: #fff;
+}
+.bod-filter-date-icon { color: #274C8D; flex-shrink: 0; }
+.bod-filter-date-label {
+  font-size: .75rem; font-weight: 700;
+  color: #6b7280; white-space: nowrap;
+}
+.bod-filter-date-input {
+  border: none; background: transparent;
+  font-size: .83rem; font-family: inherit;
+  color: #1f2937; outline: none;
+  width: 120px;
+}
+.bod-btn--clear {
+  border: 1.5px solid #fca5a5;
+  background: #fff5f5;
+  color: #dc2626;
+}
+.bod-btn--clear:hover { background: #fee2e2; border-color: #f87171; }
+
+/* ── Toolbar (legacy kept for backward compat) ───────────── */
+.bod-toolbar {
+  display: flex; gap: .75rem; flex-wrap: wrap;
+  margin-bottom: 1rem; align-items: center;
+}
 .bod-toolbar__filters { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
 .bod-date-label { font-size: .78rem; color: #6b7280; display: flex; flex-direction: column; gap: 2px; }
 .bod-toolbar__date {
