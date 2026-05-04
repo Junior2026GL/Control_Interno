@@ -86,7 +86,7 @@ function ScoreBadge({ score, hero = false }) {
 
 export default function Proveedores() {
   const { user: me } = useContext(AuthContext);
-  const canEdit = me?.rol === 'SUPER_ADMIN' || me?.rol === 'ADMIN';
+  const canEdit = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(me?.rol);
 
   const [tab, setTab]               = useState('listado');
   const [data, setData]             = useState([]);

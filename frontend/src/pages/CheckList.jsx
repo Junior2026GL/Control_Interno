@@ -117,7 +117,7 @@ function FormFields({ values, onChange }) {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CheckList() {
   const { user } = useContext(AuthContext);
-  const canDelete = user?.rol === 'SUPER_ADMIN' || user?.rol === 'ADMIN';
+  const canDelete = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(user?.rol);
 
   const [lista,   setLista]   = useState([]);
   const [loading, setLoading] = useState(false);

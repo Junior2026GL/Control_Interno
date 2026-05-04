@@ -1,6 +1,6 @@
 const db = require('../db');
 
-const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN'];
+const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 
 function sanitize(str) { return (str || '').toString().trim(); }
 function toInt(v) { const n = parseInt(v, 10); return isNaN(n) ? null : n; }

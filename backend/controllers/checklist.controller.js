@@ -37,9 +37,9 @@ function nextNumero(cb) {
 }
 
 // ── GET /api/checklist ─────────────────────────────────────────────────────
-// SUPER_ADMIN / ADMIN: ve todos; ASISTENTE: solo los suyos
+// SUPER_ADMIN / ADMIN / ASISTENTE: ve todos los registros
 exports.getAll = (req, res) => {
-  const canSeeAll = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol);
+  const canSeeAll = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(req.user.rol);
   const sql = canSeeAll
     ? `SELECT cl.*, u.nombre AS creado_por_nombre
        FROM checklist_expediente cl
@@ -61,7 +61,7 @@ exports.getAll = (req, res) => {
 exports.getOne = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
-  const canSeeAll = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol);
+  const canSeeAll = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(req.user.rol);
   const sql = canSeeAll
     ? `SELECT cl.*, u.nombre AS creado_por_nombre FROM checklist_expediente cl
        JOIN usuarios u ON u.id = cl.creado_por WHERE cl.id = ?`
@@ -119,7 +119,7 @@ exports.update = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
 
-  const canEditAll = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol);
+  const canEditAll = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(req.user.rol);
 
   const numero_folios     = sanitize(req.body.numero_folios)     || null;
   const numero_expediente = sanitize(req.body.numero_expediente) || null;
@@ -167,7 +167,7 @@ exports.update = (req, res) => {
 
 // ── DELETE /api/checklist/:id ──────────────────────────────────────────────
 exports.remove = (req, res) => {
-  if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol))
+  if (!['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(req.user.rol))
     return res.status(403).json({ message: 'No tiene permiso para eliminar.' });
 
   const id = parseInt(req.params.id, 10);
