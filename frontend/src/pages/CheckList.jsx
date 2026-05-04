@@ -301,7 +301,7 @@ export default function CheckList() {
     doc.setLineWidth(1.2);
     doc.rect(L - 4, 10, CW + 8, PH - 20, 'S');
 
-    let y = 15;
+    let y = 10;
 
     // ════════════════════════════════════════════════════
     //  ENCABEZADO — [LOGO | INSTITUCIÓN | INFO PANEL]
