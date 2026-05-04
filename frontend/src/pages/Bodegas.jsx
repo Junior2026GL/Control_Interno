@@ -109,6 +109,7 @@ export default function Bodegas() {
   const [filtroHasta, setFiltroHasta]   = useState('');
   const [page, setPage]                 = useState(1);
   const [showStats, setShowStats]        = useState(false);
+  const [showPartidoStats, setShowPartidoStats] = useState(false);
 
   const [dipQuery, setDipQuery]         = useState('');
   const [dipSuggestions, setDipSuggestions] = useState([]);
@@ -224,6 +225,24 @@ export default function Bodegas() {
     });
     const arr = Object.entries(map)
       .map(([depto, v]) => ({ depto, ...v }))
+      .sort((a, b) => b.cantidad - a.cantidad);
+    const maxCant = arr[0]?.cantidad || 1;
+    const rows = arr.map(row => ({ ...row, pct: Math.round((row.cantidad / maxCant) * 100) }));
+    const totalCant = arr.reduce((s, r) => s + r.cantidad, 0);
+    const totalReg  = arr.reduce((s, r) => s + r.registros, 0);
+    return { rows, totalCant, totalReg };
+  }, [registros]);
+
+  const partidoStats = useMemo(() => {
+    const map = {};
+    registros.forEach(r => {
+      const p = (r.partido || 'Sin partido').trim();
+      if (!map[p]) map[p] = { cantidad: 0, registros: 0 };
+      map[p].cantidad += r.cantidad_recibida || 0;
+      map[p].registros += 1;
+    });
+    const arr = Object.entries(map)
+      .map(([partido, v]) => ({ partido, ...v }))
       .sort((a, b) => b.cantidad - a.cantidad);
     const maxCant = arr[0]?.cantidad || 1;
     const rows = arr.map(row => ({ ...row, pct: Math.round((row.cantidad / maxCant) * 100) }));
@@ -426,7 +445,8 @@ export default function Bodegas() {
           <div className="bod-page-header__right">
             <button className="bod-btn bod-btn--outline" onClick={fetchRegistros} title="Actualizar"><FiRefreshCw size={15} /></button>
             <button className="bod-btn bod-btn--outline" onClick={exportPDF} title="Exportar PDF"><FiDownload size={15} /> PDF</button>
-            <button className={`bod-btn ${showStats ? 'bod-btn--primary' : 'bod-btn--outline'}`} onClick={() => setShowStats(s => !s)} title="Estadísticas por departamento"><FiBarChart2 size={15} /> Estadísticas</button>
+            <button className={`bod-btn ${showStats ? 'bod-btn--primary' : 'bod-btn--outline'}`} onClick={() => setShowStats(s => !s)} title="Estadísticas por departamento"><FiBarChart2 size={15} /> Por Depto.</button>
+            <button className={`bod-btn ${showPartidoStats ? 'bod-btn--primary' : 'bod-btn--outline'}`} onClick={() => setShowPartidoStats(s => !s)} title="Estadísticas por partido político"><FiBarChart2 size={15} /> Por Partido</button>
             {canEdit && (
               <button className="bod-btn bod-btn--primary" onClick={openNew}><FiPlus size={15} /> Nuevo Registro</button>
             )}
@@ -451,6 +471,38 @@ export default function Bodegas() {
         </div>
 
         {/* Panel estadísticas por departamento */}
+        {showPartidoStats && (
+          <div className="bod-depto-panel">
+            <div className="bod-depto-panel__header">
+              <FiBarChart2 size={16} />
+              <span>Canastas entregadas por Partido Político</span>
+              <button className="bod-btn bod-btn--ghost bod-btn--sm" onClick={() => setShowPartidoStats(false)}><FiX size={13} /></button>
+            </div>
+            <div className="bod-depto-rows">
+              {partidoStats.rows.length === 0 ? (
+                <p className="bod-depto-empty">No hay datos.</p>
+              ) : partidoStats.rows.map((row, i) => (
+                <div key={row.partido} className="bod-depto-row">
+                  <span className="bod-depto-row__name">{row.partido}</span>
+                  <div className="bod-depto-row__bar-wrap">
+                    <div className="bod-depto-row__bar" style={{ width: `${row.pct}%`, '--bar-i': i }} />
+                  </div>
+                  <span className="bod-depto-row__cant">{row.cantidad.toLocaleString('es-HN')}</span>
+                  <span className="bod-depto-row__regs">{row.registros} reg.</span>
+                </div>
+              ))}
+              {partidoStats.rows.length > 1 && (
+                <div className="bod-depto-row bod-depto-row--total">
+                  <span className="bod-depto-row__name">TOTAL</span>
+                  <div className="bod-depto-row__bar-wrap" />
+                  <span className="bod-depto-row__cant">{partidoStats.totalCant.toLocaleString('es-HN')}</span>
+                  <span className="bod-depto-row__regs">{partidoStats.totalReg} reg.</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {showStats && (
           <div className="bod-depto-panel">
             <div className="bod-depto-panel__header">
