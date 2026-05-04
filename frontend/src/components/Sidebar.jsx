@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut, FiFileText, FiMessageSquare, FiShield, FiEye, FiBriefcase, FiUserCheck, FiRepeat, FiGift, FiMapPin, FiClipboard } from 'react-icons/fi';
+import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut, FiFileText, FiMessageSquare, FiShield, FiEye, FiBriefcase, FiUserCheck, FiRepeat, FiGift, FiMapPin, FiClipboard, FiPackage } from 'react-icons/fi';
 import { AuthContext } from '../context/AuthContext';
 import './Sidebar.css';
 
@@ -27,6 +27,7 @@ export default function Sidebar() {
     { path: '/mapa-alcaldias',           label: 'Mapa Alcaldías',            icon: FiMapPin,        clave: 'mapa-alcaldias',            soloSuperAdmin: false },
     { path: '/alcaldes',                 label: 'Alcaldes Municipales',      icon: FiUserCheck,     clave: 'alcaldes',                  soloSuperAdmin: false },
     { path: '/checklist',               label: 'Check List Expedientes',    icon: FiClipboard,     clave: 'checklist',                 soloSuperAdmin: false },
+    { path: '/bodegas',                  label: 'Retiro de Bodegas',         icon: FiPackage,       clave: 'bodegas',                   soloSuperAdmin: false },
     { path: '/ip-whitelist',            label: 'Acceso por IP',             icon: FiShield,        clave: null,                        soloSuperAdmin: true  },
     { path: '/auditoria',               label: 'Auditoría',                 icon: FiEye,           clave: null,                        soloSuperAdmin: true  },
   ];

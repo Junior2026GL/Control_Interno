@@ -5,6 +5,17 @@
 
 USE control_interno;
 
+-- Crear tabla alcaldes
+CREATE TABLE IF NOT EXISTS alcaldes (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  departamento VARCHAR(100) NOT NULL,
+  municipio    VARCHAR(150) NOT NULL,
+  alcalde      VARCHAR(200) NOT NULL,
+  partido      VARCHAR(50)  NULL,
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Registrar modulo
 INSERT IGNORE INTO modulos (clave, nombre)
 VALUES ('alcaldes', 'Alcaldes Municipales');

@@ -65,5 +65,6 @@ app.use('/api/ayudas-alcaldias', require('./routes/ayudas_alcaldias.routes'));
 app.use('/api/alcaldes',         require('./routes/alcaldes.routes'));
 app.use('/api/proveedores',      require('./routes/proveedores.routes'));
 app.use('/api/checklist',        require('./routes/checklist.routes'));
+app.use('/api/bodegas',          require('./routes/bodegas.routes'));
 
 module.exports = app;
