@@ -309,9 +309,116 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Table column helpers ─────────────────────────────────── */
+.bod-th-num     { width: 48px; text-align: center; }
+.bod-th-center  { text-align: center; }
+.bod-th-actions { width: 110px; text-align: center; }
+.bod-td-num     { text-align: center; font-weight: 700; color: #9ca3af; font-size: .8rem; }
+.bod-td-center  { text-align: center; }
+.bod-td-persona { font-size: .85rem; color: #374151; }
+.bod-td-muted   { font-size: .83rem; color: #6b7280; }
+
+/* ── Chips & badges ──────────────────────────────────────── */
+.bod-diputado   { display: flex; flex-direction: column; gap: 3px; }
+.bod-partido-chip {
+  display: inline-block;
+  padding: .15rem .55rem;
+  background: #eef4fc;
+  color: #274C8D;
+  border-radius: 99px;
+  font-size: .72rem;
+  font-weight: 600;
+  width: fit-content;
+}
+.bod-depto-chip {
+  display: inline-block;
+  padding: .18rem .6rem;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: .78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.bod-fecha {
+  font-size: .83rem;
+  color: #374151;
+  white-space: nowrap;
+}
+.bod-cant {
+  font-weight: 700;
+  color: #0f2044;
+  font-size: .9rem;
+}
+
+/* ── Action buttons ──────────────────────────────────────── */
+.bod-actions {
+  display: flex; gap: 4px; align-items: center; justify-content: center;
+}
+.bod-btn-action {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  border: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .15s, transform .12s;
+  flex-shrink: 0;
+}
+.bod-btn-action:active { transform: scale(.92); }
+.bod-btn-action--view { background: #eef4fc; color: #274C8D; }
+.bod-btn-action--view:hover { background: #dce8f8; }
+.bod-btn-action--edit { background: #fef3c7; color: #b45309; }
+.bod-btn-action--edit:hover { background: #fde68a; }
+.bod-btn-action--del  { background: #fee2e2; color: #dc2626; }
+.bod-btn-action--del:hover  { background: #fca5a5; }
+
+/* ── Modal Ver (detalle) ─────────────────────────────────── */
+.bod-modal--view { max-width: 600px; }
+.bod-view-body   { padding: 1.3rem 1.4rem; overflow-y: auto; }
+
+.bod-view-hero {
+  display: flex; align-items: center; gap: 1rem;
+  background: linear-gradient(135deg, #eef4fc, #dce8f8);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+}
+.bod-view-hero__icon {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #274C8D, #3a6bbf);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; flex-shrink: 0;
+}
+.bod-view-hero__name { font-weight: 700; font-size: 1.05rem; color: #0f2044; margin: 0 0 3px; }
+.bod-view-hero__sub  { font-size: .83rem; color: #4b5563; margin: 0; }
+
+.bod-view-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .9rem 1.4rem;
+  margin-bottom: 1.4rem;
+}
+.bod-view-field { display: flex; flex-direction: column; gap: .25rem; }
+.bod-view-field--full { grid-column: 1 / -1; }
+.bod-view-label {
+  font-size: .72rem; font-weight: 700;
+  color: #9ca3af; text-transform: uppercase; letter-spacing: .06em;
+}
+.bod-view-value { font-size: .92rem; color: #1f2937; font-weight: 500; }
+.bod-view-value--big { font-size: 1.2rem; font-weight: 800; color: #274C8D; }
+
+.bod-view-footer {
+  display: flex; justify-content: flex-end; gap: .7rem;
+  padding-top: 1rem;
+  border-top: 1.5px solid #f3f4f6;
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 640px) {
   .bod-container { padding: 1rem; }
   .bod-modal__body { grid-template-columns: 1fr; }
   .bod-field--full { grid-column: 1; }
+  .bod-view-grid { grid-template-columns: 1fr; }
+  .bod-view-field--full { grid-column: 1; }
 }

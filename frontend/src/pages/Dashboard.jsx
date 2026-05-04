@@ -139,9 +139,9 @@ const ALL_MODULES = [
   },
   {
     path: '/bodegas',
-    label: 'Retiro de Bodegas',
+    label: 'Control de Entrega de Canastas',
     clave: 'bodegas',
-    description: 'Control de retiro de materiales por diputado',
+    description: 'Registro de entrega de canastas por diputado responsable',
     icon: LuLandmark,
     gradient: 'linear-gradient(135deg, #92400e 0%, #b45309 100%)',
   },

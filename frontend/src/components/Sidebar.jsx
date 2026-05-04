@@ -27,7 +27,7 @@ export default function Sidebar() {
     { path: '/mapa-alcaldias',           label: 'Mapa Alcaldías',            icon: FiMapPin,        clave: 'mapa-alcaldias',            soloSuperAdmin: false },
     { path: '/alcaldes',                 label: 'Alcaldes Municipales',      icon: FiUserCheck,     clave: 'alcaldes',                  soloSuperAdmin: false },
     { path: '/checklist',               label: 'Check List Expedientes',    icon: FiClipboard,     clave: 'checklist',                 soloSuperAdmin: false },
-    { path: '/bodegas',                  label: 'Retiro de Bodegas',         icon: FiPackage,       clave: 'bodegas',                   soloSuperAdmin: false },
+    { path: '/bodegas',                  label: 'Control de Entrega de Canastas', icon: FiPackage,  clave: 'bodegas',                   soloSuperAdmin: false },
     { path: '/ip-whitelist',            label: 'Acceso por IP',             icon: FiShield,        clave: null,                        soloSuperAdmin: true  },
     { path: '/auditoria',               label: 'Auditoría',                 icon: FiEye,           clave: null,                        soloSuperAdmin: true  },
   ];
