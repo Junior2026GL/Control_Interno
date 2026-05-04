@@ -284,18 +284,25 @@ export default function CheckList() {
     y += HDR_H + 6;
 
     // ── campos de cabecera ────────────────────────────────────────────────
+    const LINE_W = 60; // ancho de la línea de valor
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(30, 30, 30);
-    doc.text(sa('Número de Folios Expediente:'), L, y);
+    doc.text(sa('Numero de Folios Expediente:'), L, y);
     doc.setFont('helvetica', 'bold');
-    doc.text(sa(cl.numero_folios || ''), L + 72, y);
-    y += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text(sa('Número de Expediente:'), L, y);
-    doc.setFont('helvetica', 'bold');
-    doc.text(sa(cl.numero_expediente || ''), L + 55, y);
+    doc.text(sa(cl.numero_folios || ''), L + 70, y);
+    doc.setDrawColor(30, 30, 30);
+    doc.setLineWidth(0.4);
+    doc.line(L + 70, y + 1, L + 70 + LINE_W, y + 1);
     y += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.text(sa('Numero de Expediente:'), L, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(sa(cl.numero_expediente || ''), L + 54, y);
+    doc.setDrawColor(30, 30, 30);
+    doc.setLineWidth(0.4);
+    doc.line(L + 54, y + 1, L + 54 + LINE_W, y + 1);
+    y += 9;
 
     // ── texto introductorio ───────────────────────────────────────────────
     doc.setFont('helvetica', 'normal');
@@ -330,35 +337,35 @@ export default function CheckList() {
       // columna izquierda
       const chkL = left && (cl[left.key] == 1 || cl[left.key] === true);
       doc.setDrawColor(...AZUL);
-      doc.setLineWidth(0.4);
-      doc.rect(L + 2, y + 1, 5, 5, 'S');
+      doc.setLineWidth(0.5);
+      doc.rect(L + 2, y + 0.5, 6, 6, 'S');
       if (chkL) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        doc.setTextColor(...AZUL);
-        doc.text('X', L + 3.3, y + 5.2);
+        doc.setFontSize(9);
+        doc.setTextColor(20, 20, 20);
+        doc.text('X', L + 3.2, y + 5.5);
       }
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(30, 30, 30);
-      doc.text(sa(left.label), L + 10, y + 5.5);
+      doc.text(sa(left.label), L + 11, y + 5.5);
 
       // columna derecha
       if (right) {
         const chkR = cl[right.key] == 1 || cl[right.key] === true;
         doc.setDrawColor(...AZUL);
-        doc.setLineWidth(0.4);
-        doc.rect(L + colW + 2, y + 1, 5, 5, 'S');
+        doc.setLineWidth(0.5);
+        doc.rect(L + colW + 2, y + 0.5, 6, 6, 'S');
         if (chkR) {
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7);
-          doc.setTextColor(...AZUL);
-          doc.text('X', L + colW + 3.3, y + 5.2);
+          doc.setFontSize(9);
+          doc.setTextColor(20, 20, 20);
+          doc.text('X', L + colW + 3.2, y + 5.5);
         }
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         doc.setTextColor(30, 30, 30);
-        doc.text(sa(right.label), L + colW + 10, y + 5.5);
+        doc.text(sa(right.label), L + colW + 11, y + 5.5);
       }
 
       y += rowH;
@@ -423,7 +430,9 @@ export default function CheckList() {
 
     if (print) {
       doc.autoPrint();
-      window.open(doc.output('bloburl'), '_blank');
+      const blob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(blob);
+      window.location.href = blobUrl;
     } else {
       doc.save(`checklist-${cl.numero}.pdf`);
     }
