@@ -236,8 +236,7 @@ export default function CheckList() {
   };
 
   // ── PDF ───────────────────────────────────────────────────────────────────
-  const generarPDF = async (cl, print = false) => {
-    const doc    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  const generarPDF = async (cl, print = false) => {    try {    const doc    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
     const PW     = doc.internal.pageSize.getWidth();
     const PH     = doc.internal.pageSize.getHeight();
     const L      = 10;
@@ -598,6 +597,10 @@ export default function CheckList() {
       };
     } else {
       doc.save(`checklist-${cl.numero}.pdf`);
+    }
+    } catch (err) {
+      console.error('[generarPDF]', err);
+      showToast('Error al generar el PDF: ' + (err?.message || 'Error desconocido'), 'error');
     }
   };
 
