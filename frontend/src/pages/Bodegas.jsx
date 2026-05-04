@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState, useCallback, useContext, useMemo, useRef } from 'react';
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiDownload,
-  FiPackage, FiUsers, FiRefreshCw, FiEye,
+  FiPackage, FiUsers, FiRefreshCw, FiEye, FiBarChart2,
   FiChevronLeft, FiChevronRight,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
@@ -19,8 +19,8 @@ function today() {
 
 function fmtFecha(fechaStr) {
   if (!fechaStr) return '—';
-  const d = new Date(String(fechaStr).split('T')[0] + 'T12:00:00');
-  return d.toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const [y, m, d] = String(fechaStr).split('T')[0].split('-');
+  return `${d}/${m}/${y}`;
 }
 
 function fmtFechaLarga(fechaStr) {
@@ -106,6 +106,7 @@ export default function Bodegas() {
   const [filtroDesde, setFiltroDesde]   = useState('');
   const [filtroHasta, setFiltroHasta]   = useState('');
   const [page, setPage]                 = useState(1);
+  const [showStats, setShowStats]        = useState(false);
 
   const [dipQuery, setDipQuery]         = useState('');
   const [dipSuggestions, setDipSuggestions] = useState([]);
@@ -198,6 +199,21 @@ export default function Bodegas() {
   const totalCantidad = registros.reduce((s, r) => s + (r.cantidad_recibida || 0), 0);
   const hayFiltros    = busqueda || filtroDesde || filtroHasta;
   const limpiarFiltros = () => { setBusqueda(''); setFiltroDesde(''); setFiltroHasta(''); setPage(1); };
+
+  const deptoStats = useMemo(() => {
+    const map = {};
+    registros.forEach(r => {
+      const d = (r.departamento || 'Sin departamento').trim();
+      if (!map[d]) map[d] = { cantidad: 0, registros: 0 };
+      map[d].cantidad += r.cantidad_recibida || 0;
+      map[d].registros += 1;
+    });
+    const arr = Object.entries(map)
+      .map(([depto, v]) => ({ depto, ...v }))
+      .sort((a, b) => b.cantidad - a.cantidad);
+    const maxCant = arr[0]?.cantidad || 1;
+    return arr.map(row => ({ ...row, pct: Math.round((row.cantidad / maxCant) * 100) }));
+  }, [registros]);
 
   const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM }); setDipQuery(''); setFormErrors({}); setModal(true); };
   const openEdit = (r) => {
@@ -359,6 +375,7 @@ export default function Bodegas() {
           <div className="bod-page-header__right">
             <button className="bod-btn bod-btn--outline" onClick={fetchRegistros} title="Actualizar"><FiRefreshCw size={15} /></button>
             <button className="bod-btn bod-btn--outline" onClick={exportPDF} title="Exportar PDF"><FiDownload size={15} /> PDF</button>
+            <button className={`bod-btn ${showStats ? 'bod-btn--primary' : 'bod-btn--outline'}`} onClick={() => setShowStats(s => !s)} title="Estadísticas por departamento"><FiBarChart2 size={15} /> Estadísticas</button>
             {canEdit && (
               <button className="bod-btn bod-btn--primary" onClick={openNew}><FiPlus size={15} /> Nuevo Registro</button>
             )}
@@ -381,6 +398,31 @@ export default function Bodegas() {
             </div>
           </div>
         </div>
+
+        {/* Panel estadísticas por departamento */}
+        {showStats && (
+          <div className="bod-depto-panel">
+            <div className="bod-depto-panel__header">
+              <FiBarChart2 size={16} />
+              <span>Canastas entregadas por Departamento</span>
+              <button className="bod-btn bod-btn--ghost bod-btn--sm" onClick={() => setShowStats(false)}><FiX size={13} /></button>
+            </div>
+            <div className="bod-depto-rows">
+              {deptoStats.length === 0 ? (
+                <p className="bod-depto-empty">No hay datos.</p>
+              ) : deptoStats.map((row, i) => (
+                <div key={row.depto} className="bod-depto-row">
+                  <span className="bod-depto-row__name">{row.depto}</span>
+                  <div className="bod-depto-row__bar-wrap">
+                    <div className="bod-depto-row__bar" style={{ width: `${row.pct}%`, '--bar-i': i }} />
+                  </div>
+                  <span className="bod-depto-row__cant">{row.cantidad.toLocaleString('es-HN')}</span>
+                  <span className="bod-depto-row__regs">{row.registros} reg.</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="bod-toolbar">
           <div className="bod-toolbar__search">
@@ -411,7 +453,7 @@ export default function Bodegas() {
                   <tr>
                     <th className="bod-th-num">N°</th>
                     <th>Diputado Responsable</th>
-                    <th>Persona que Retiró en las Bodegas</th>
+                    <th>Persona que Retiró</th>
                     <th>Departamento</th>
                     <th>Partido Político</th>
                     <th>Fecha de Entrega</th>
