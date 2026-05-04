@@ -276,26 +276,26 @@ export default function CheckList() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...AZUL);
-    doc.text('CHECK LIST', infoMid, y + 9, { align: 'center' });
+    doc.text('CHECK LIST', infoMid, y + 8, { align: 'center' });
 
     doc.setDrawColor(210, 220, 235);
     doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 11, infoX + INFO_W - 3, y + 11);
+    doc.line(infoX + 3, y + 10, infoX + INFO_W - 3, y + 10);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(100, 120, 160);
-    doc.text('/' + anio, infoMid, y + 17, { align: 'center' });
+    doc.text('/' + anio, infoMid, y + 15, { align: 'center' });
 
     doc.setDrawColor(210, 220, 235);
     doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 19, infoX + INFO_W - 3, y + 19);
+    doc.line(infoX + 3, y + 17, infoX + INFO_W - 3, y + 17);
 
     // caja con número
     const NB_X = infoX + 4;
     const NB_W = INFO_W - 8;
-    const NB_Y = y + 21;
-    const NB_H = 10;
+    const NB_Y = y + 19;
+    const NB_H = 9;
     doc.setFillColor(...BLANCO);
     doc.setDrawColor(...AZUL);
     doc.setLineWidth(0.5);
@@ -303,20 +303,20 @@ export default function CheckList() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(...AZUL);
-    doc.text(String(cl.numero || 0).padStart(4, '0'), infoMid, NB_Y + NB_H - 2, { align: 'center' });
+    doc.text(String(cl.numero || 0).padStart(4, '0'), infoMid, NB_Y + NB_H - 1.5, { align: 'center' });
 
     doc.setDrawColor(210, 220, 235);
     doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 33, infoX + INFO_W - 3, y + 33);
+    doc.line(infoX + 3, y + 30, infoX + INFO_W - 3, y + 30);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
+    doc.setFontSize(7);
     doc.setTextColor(100, 120, 160);
-    doc.text('GENERADO POR', infoMid, y + 37, { align: 'center' });
+    doc.text('GENERADO POR', infoMid, y + 34.5, { align: 'center' });
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     doc.setTextColor(...AZUL);
-    doc.text(genPor, infoMid, y + 41.5, { align: 'center' });
+    doc.text(genPor, infoMid, y + 40, { align: 'center' });
 
     // ════════════════════════════════════════════════════
     //  BARRA TÍTULO AZUL
@@ -437,21 +437,21 @@ export default function CheckList() {
     //  CUADRO OBSERVACIONES
     // ════════════════════════════════════════════════════
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
+    doc.setFontSize(12);
     doc.setTextColor(...NEGRO);
     doc.text('Observaciones:', L, y);
-    y += 4;
-    const obsH = 30;
+    y += 5;
+    const obsH = 32;
     doc.setFillColor(...BLANCO);
     doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
     doc.rect(L, y, CW, obsH, 'FD');
     if (cl.observaciones) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
+      doc.setFontSize(12);
       doc.setTextColor(50, 50, 70);
       const obsLines = doc.splitTextToSize(sa(cl.observaciones), CW - 6);
-      doc.text(obsLines, L + 3, y + 7);
+      doc.text(obsLines, L + 3, y + 8);
     }
     y += obsH + 6;
 
