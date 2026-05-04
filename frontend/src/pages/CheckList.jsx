@@ -177,211 +177,257 @@ export default function CheckList() {
 
   // ── PDF ───────────────────────────────────────────────────────────────────
   const generarPDF = async (cl, print = false) => {
-    const doc  = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-    const PW   = doc.internal.pageSize.getWidth();
-    const PH   = doc.internal.pageSize.getHeight();
-    const L    = 14;
-    const R    = PW - 14;
-    const CW   = R - L;
-    const AZUL = [39, 76, 141];
-    const GR   = [245, 247, 250];
+    const doc    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    const PW     = doc.internal.pageSize.getWidth();
+    const PH     = doc.internal.pageSize.getHeight();
+    const L      = 10;
+    const R      = PW - 10;
+    const CW     = R - L;
+    const AZUL   = [39, 76, 141];
+    const NEGRO  = [20, 20, 20];
+    const BLANCO = [255, 255, 255];
+    const GBKG   = [237, 241, 250];
 
     const sa = s => (s || '').replace(/[ÁÉÍÓÚÑáéíóúñüÜ]/g,
       c => ({ Á:'A',É:'E',Í:'I',Ó:'O',Ú:'U',Ñ:'N',á:'a',é:'e',í:'i',ó:'o',ú:'u',ñ:'n',ü:'u',Ü:'U' }[c] || c));
 
-    // cargar logo
-    const loadImg = (url) => new Promise(resolve => {
-      fetch(url).then(r => r.ok ? r.blob() : null).then(blob => {
-        if (!blob) { resolve(null); return; }
-        const burl = URL.createObjectURL(blob);
-        const img  = new Image();
+    const loadImg = (url) => new Promise(async (resolve) => {
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) { resolve(null); return; }
+        const blob   = await resp.blob();
+        const burl   = URL.createObjectURL(blob);
+        const img    = new Image();
         img.onload = () => {
-          const sc = Math.min(200 / img.naturalWidth, 200 / img.naturalHeight, 1);
-          const cv = document.createElement('canvas');
-          cv.width  = Math.round(img.naturalWidth  * sc);
-          cv.height = Math.round(img.naturalHeight * sc);
-          const ctx = cv.getContext('2d');
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(0, 0, cv.width, cv.height);
-          ctx.drawImage(img, 0, 0, cv.width, cv.height);
-          URL.revokeObjectURL(burl);
-          resolve({ data: cv.toDataURL('image/jpeg', 0.92), w: img.naturalWidth, h: img.naturalHeight });
+          try {
+            const scale  = Math.min(220 / img.naturalWidth, 220 / img.naturalHeight, 1);
+            const canvas = document.createElement('canvas');
+            canvas.width  = Math.round(img.naturalWidth  * scale);
+            canvas.height = Math.round(img.naturalHeight * scale);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(burl);
+            resolve({ data: canvas.toDataURL('image/jpeg', 0.95), w: img.naturalWidth, h: img.naturalHeight });
+          } catch { URL.revokeObjectURL(burl); resolve(null); }
         };
         img.onerror = () => { URL.revokeObjectURL(burl); resolve(null); };
         img.src = burl;
-      }).catch(() => resolve(null));
+      } catch { resolve(null); }
     });
 
     const logoRes = await loadImg('/logo-congreso.png.png');
 
     // ── borde exterior ────────────────────────────────────────────────────
     doc.setDrawColor(...AZUL);
-    doc.setLineWidth(1);
+    doc.setLineWidth(1.2);
     doc.rect(L - 4, 5, CW + 8, PH - 10, 'S');
 
     let y = 10;
 
-    // ── header ────────────────────────────────────────────────────────────
-    const HDR_H  = 38;
-    const LOGO_W = 40;
-    const INFO_W = 52;
+    // ════════════════════════════════════════════════════
+    //  ENCABEZADO — [LOGO | INSTITUCIÓN | INFO PANEL]
+    // ════════════════════════════════════════════════════
+    const LOGO_W = 50;
+    const INFO_W = 62;
     const CENT_W = CW - LOGO_W - INFO_W;
+    const HDR_H  = 42;
 
-    doc.setFillColor(255, 255, 255);
+    doc.setFillColor(...BLANCO);
     doc.setDrawColor(...AZUL);
-    doc.setLineWidth(0.4);
+    doc.setLineWidth(0.5);
     doc.rect(L, y, CW, HDR_H, 'FD');
 
-    // logo
     if (logoRes) {
-      const sz = HDR_H - 6;
-      doc.addImage(logoRes.data, 'JPEG', L + (LOGO_W - sz) / 2, y + 3, sz, sz);
+      const lSize = HDR_H - 6;
+      doc.addImage(logoRes.data, 'JPEG', L + (LOGO_W - lSize) / 2, y + 3, lSize, lSize);
     }
 
-    // separador logo | texto
     doc.setDrawColor(180, 200, 235);
     doc.setLineWidth(0.3);
     doc.line(L + LOGO_W, y + 4, L + LOGO_W, y + HDR_H - 4);
 
-    // texto central
     const hdrCX = L + LOGO_W + CENT_W / 2;
     doc.setTextColor(...AZUL);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text(sa('REPÚBLICA DE HONDURAS'), hdrCX, y + 10, { align: 'center' });
+    doc.setFontSize(13);
+    doc.text('REPUBLICA DE HONDURAS', hdrCX, y + 11, { align: 'center' });
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.5);
-    doc.text('CONGRESO NACIONAL', hdrCX, y + 17, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text('CONGRESO NACIONAL', hdrCX, y + 18, { align: 'center' });
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text(sa('DIRECCIÓN ADMINISTRATIVA'), hdrCX, y + 26, { align: 'center' });
+    doc.setFontSize(15);
+    doc.text('DIRECCION ADMINISTRATIVA', hdrCX, y + 28, { align: 'center' });
 
-    // separador texto | panel derecho
     doc.setDrawColor(180, 200, 235);
     doc.setLineWidth(0.3);
     doc.line(L + LOGO_W + CENT_W, y + 4, L + LOGO_W + CENT_W, y + HDR_H - 4);
 
-    // panel derecho: "CHECK LIST" + año + número
-    const infX  = L + LOGO_W + CENT_W + 2;
-    const infCX = infX + (INFO_W - 4) / 2;
-    const anio  = new Date().getFullYear();
+    // panel derecho: CHECK LIST / año / número
+    const infoX   = L + LOGO_W + CENT_W;
+    const infoMid = infoX + INFO_W / 2;
+    const now     = new Date();
+    const anio    = now.getFullYear();
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...AZUL);
-    doc.text('CHECK LIST', infCX, y + 10, { align: 'center' });
+    doc.text('CHECK LIST', infoMid, y + 9, { align: 'center' });
+
+    doc.setDrawColor(210, 220, 235);
+    doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 11, infoX + INFO_W - 3, y + 11);
+
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`/${anio}`, infCX, y + 17, { align: 'center' });
+    doc.setTextColor(100, 120, 160);
+    doc.text(`/${anio}`, infoMid, y + 17, { align: 'center' });
+
+    doc.setDrawColor(210, 220, 235);
+    doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 19, infoX + INFO_W - 3, y + 19);
+
+    // número en recuadro igual que autorizaciones
+    const NB_X = infoX + 6;
+    const NB_W = INFO_W - 12;
+    const NB_Y = y + 22;
+    const NB_H = 16;
+    doc.setFillColor(...BLANCO);
+    doc.setDrawColor(...AZUL);
+    doc.setLineWidth(0.5);
+    doc.rect(NB_X, NB_Y, NB_W, NB_H, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(...AZUL);
+    doc.text(String(cl.numero).padStart(4, '0'), infoMid, NB_Y + NB_H - 3, { align: 'center' });
+
+    // ════════════════════════════════════════════════════
+    //  BARRA TÍTULO AZUL
+    // ════════════════════════════════════════════════════
+    y += HDR_H;
+    const TBAR_H = 11;
     doc.setFillColor(...AZUL);
     doc.setDrawColor(...AZUL);
-    doc.setLineWidth(0.3);
-    doc.rect(infX + 2, y + 20, INFO_W - 8, 12, 'S');
+    doc.setLineWidth(0);
+    doc.rect(L, y, CW, TBAR_H, 'FD');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(...AZUL);
-    doc.text(sa(String(cl.numero).padStart(4, '0')), infCX, y + 29, { align: 'center' });
+    doc.setFontSize(10.5);
+    doc.setTextColor(...BLANCO);
+    doc.text('CHECK LIST DE EXPEDIENTE DE PAGO', L + CW / 2, y + 7.5, { align: 'center' });
 
-    y += HDR_H + 6;
+    y += TBAR_H + 6;
 
-    // ── campos de cabecera ────────────────────────────────────────────────
-    const LINE_W = 60; // ancho de la línea de valor
+    // ════════════════════════════════════════════════════
+    //  CAMPOS DE CABECERA con línea debajo del valor
+    // ════════════════════════════════════════════════════
+    const LINE_W = 58;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.setTextColor(30, 30, 30);
-    doc.text(sa('Numero de Folios Expediente:'), L, y);
+    doc.setTextColor(...NEGRO);
+    doc.text('Numero de Folios Expediente:', L, y);
     doc.setFont('helvetica', 'bold');
-    doc.text(sa(cl.numero_folios || ''), L + 70, y);
-    doc.setDrawColor(30, 30, 30);
+    doc.text(sa(cl.numero_folios || ''), L + 72, y);
+    doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
-    doc.line(L + 70, y + 1, L + 70 + LINE_W, y + 1);
+    doc.line(L + 72, y + 1, L + 72 + LINE_W, y + 1);
     y += 8;
     doc.setFont('helvetica', 'normal');
-    doc.text(sa('Numero de Expediente:'), L, y);
+    doc.text('Numero de Expediente:', L, y);
     doc.setFont('helvetica', 'bold');
-    doc.text(sa(cl.numero_expediente || ''), L + 54, y);
-    doc.setDrawColor(30, 30, 30);
+    doc.text(sa(cl.numero_expediente || ''), L + 56, y);
+    doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
-    doc.line(L + 54, y + 1, L + 54 + LINE_W, y + 1);
+    doc.line(L + 56, y + 1, L + 56 + LINE_W, y + 1);
     y += 9;
 
-    // ── texto introductorio ───────────────────────────────────────────────
+    // texto introductorio
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9.5);
-    doc.setTextColor(30, 30, 30);
+    doc.setTextColor(...NEGRO);
     const intro = sa(
-      'La Dirección Administrativa del Congreso Nacional, hace constar que, ' +
+      'La Direccion Administrativa del Congreso Nacional, hace constar que, ' +
       'el presente expediente de pago va con la siguiente documentacion:'
     );
     const introLines = doc.splitTextToSize(intro, CW);
     doc.text(introLines, L, y);
-    y += introLines.length * 5 + 4;
+    y += introLines.length * 5 + 5;
 
-    // ── tabla de checkboxes en 2 columnas ─────────────────────────────────
-    const colW  = CW / 2;
-    const rowH  = 9;
+    // ════════════════════════════════════════════════════
+    //  TABLA DE CHECKBOXES — 2 columnas estilo formulario
+    // ════════════════════════════════════════════════════
+    const colW = CW / 2;
+    const rowH = 10;
+    const CB_S = 6;   // tamaño cuadro
+
     const pairs = [];
-    for (let i = 0; i < DOCS.length; i += 2) {
-      pairs.push([DOCS[i], DOCS[i + 1] || null]);
-    }
+    for (let i = 0; i < DOCS.length; i += 2) pairs.push([DOCS[i], DOCS[i + 1] || null]);
 
     for (const [left, right] of pairs) {
-      // fondo alternado sutil
-      doc.setFillColor(...GR);
-      doc.rect(L, y - 1, CW, rowH, 'F');
+      // fondo de fila
+      doc.setFillColor(...GBKG);
+      doc.rect(L, y, CW, rowH, 'F');
 
-      // separador columnas
+      // borde filas
       doc.setDrawColor(210, 220, 235);
       doc.setLineWidth(0.2);
-      doc.line(L + colW, y - 1, L + colW, y + rowH - 1);
+      doc.rect(L, y, CW, rowH, 'S');
+      doc.line(L + colW, y, L + colW, y + rowH);
+
+      const midY = y + rowH / 2;
 
       // columna izquierda
       const chkL = left && (cl[left.key] == 1 || cl[left.key] === true);
-      doc.setDrawColor(...AZUL);
-      doc.setLineWidth(0.5);
-      doc.rect(L + 2, y + 0.5, 6, 6, 'S');
+      doc.setFillColor(...BLANCO);
+      doc.setDrawColor(...NEGRO);
+      doc.setLineWidth(0.45);
+      doc.rect(L + 3, midY - CB_S / 2, CB_S, CB_S, 'FD');
       if (chkL) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.setTextColor(20, 20, 20);
-        doc.text('X', L + 3.2, y + 5.5);
+        doc.setFontSize(10);
+        doc.setTextColor(...NEGRO);
+        doc.text('X', L + 3 + CB_S / 2, midY + 2.2, { align: 'center' });
       }
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      doc.setTextColor(30, 30, 30);
-      doc.text(sa(left.label), L + 11, y + 5.5);
+      doc.setTextColor(...NEGRO);
+      doc.text(sa(left.label), L + 3 + CB_S + 3, midY + 2);
 
       // columna derecha
       if (right) {
         const chkR = cl[right.key] == 1 || cl[right.key] === true;
-        doc.setDrawColor(...AZUL);
-        doc.setLineWidth(0.5);
-        doc.rect(L + colW + 2, y + 0.5, 6, 6, 'S');
+        doc.setFillColor(...BLANCO);
+        doc.setDrawColor(...NEGRO);
+        doc.setLineWidth(0.45);
+        doc.rect(L + colW + 3, midY - CB_S / 2, CB_S, CB_S, 'FD');
         if (chkR) {
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.setTextColor(20, 20, 20);
-          doc.text('X', L + colW + 3.2, y + 5.5);
+          doc.setFontSize(10);
+          doc.setTextColor(...NEGRO);
+          doc.text('X', L + colW + 3 + CB_S / 2, midY + 2.2, { align: 'center' });
         }
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
-        doc.setTextColor(30, 30, 30);
-        doc.text(sa(right.label), L + colW + 11, y + 5.5);
+        doc.setTextColor(...NEGRO);
+        doc.text(sa(right.label), L + colW + 3 + CB_S + 3, midY + 2);
       }
 
       y += rowH;
     }
 
-    y += 4;
+    y += 6;
 
-    // ── cuadro observaciones ──────────────────────────────────────────────
+    // ════════════════════════════════════════════════════
+    //  CUADRO OBSERVACIONES
+    // ════════════════════════════════════════════════════
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
-    doc.setTextColor(30, 30, 30);
+    doc.setTextColor(...NEGRO);
     doc.text('Observaciones:', L, y);
     y += 4;
-    const obsH = 28;
-    doc.setFillColor(250, 250, 252);
-    doc.setDrawColor(180, 200, 235);
+    const obsH = 30;
+    doc.setFillColor(...BLANCO);
+    doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
     doc.rect(L, y, CW, obsH, 'FD');
     if (cl.observaciones) {
@@ -393,39 +439,41 @@ export default function CheckList() {
     }
     y += obsH + 6;
 
-    // ── notas al pie ──────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════
+    //  NOTAS AL PIE
+    // ════════════════════════════════════════════════════
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
-    doc.setTextColor(30, 30, 30);
+    doc.setTextColor(...NEGRO);
     doc.text('Observacion:', L, y);
     y += 4;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const n1 = sa(
+    const n1Lines = doc.splitTextToSize(sa(
       '1. Los expedientes para pago, dependiente de su naturaleza del gasto, son armados con la informacion ' +
       'requerida para la emision de pago, por lo que no todos los expedientes deben llevar la misma informacion ' +
       '(como parte del proceso o como anexo del mismo)'
-    );
-    const n1Lines = doc.splitTextToSize(n1, CW);
+    ), CW);
     doc.text(n1Lines, L, y);
     y += n1Lines.length * 4 + 2;
-    const n2 = sa(
+    const n2Lines = doc.splitTextToSize(sa(
       '2. Las casillas de documentacion que no esten marcadas, es porque esa informacion no aplica para el presente expediente.'
-    );
-    const n2Lines = doc.splitTextToSize(n2, CW);
+    ), CW);
     doc.text(n2Lines, L, y);
-    y += n2Lines.length * 4;
 
-    // ── pie de página ─────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════
+    //  PIE DE PÁGINA
+    // ════════════════════════════════════════════════════
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(130, 140, 160);
+    doc.setDrawColor(180, 200, 235);
+    doc.setLineWidth(0.3);
     doc.line(L, PH - 14, R, PH - 14);
-    doc.text('Congreso Nacional - Dirección Administrativa', L, PH - 10);
-    const now = new Date();
+    doc.text('Congreso Nacional - Direccion Administrativa', L, PH - 9);
     doc.text(
       `Generado: ${now.toLocaleDateString('es-HN')} ${now.toLocaleTimeString('es-HN')}`,
-      R, PH - 10, { align: 'right' }
+      R, PH - 9, { align: 'right' }
     );
 
     if (print) {
