@@ -54,6 +54,66 @@ function countDocs(item) {
 
 const PAGE_SIZE = 10;
 
+// ─── FormFields — definido FUERA del componente para evitar remount en cada render ──
+function FormFields({ values, onChange }) {
+  return (
+    <>
+      <div className="cl-form-row">
+        <div className="cl-form-group">
+          <label>N° de Folios Expediente</label>
+          <input
+            className="cl-input"
+            value={values.numero_folios}
+            onChange={e => onChange('numero_folios', e.target.value)}
+            maxLength={100}
+            placeholder="Ej. 25"
+          />
+        </div>
+        <div className="cl-form-group">
+          <label>N° de Expediente</label>
+          <input
+            className="cl-input"
+            value={values.numero_expediente}
+            onChange={e => onChange('numero_expediente', e.target.value)}
+            maxLength={100}
+            placeholder="Ej. EXP-2026-001"
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="cl-checks-title">Documentación incluida</p>
+        <div className="cl-checks-grid">
+          {DOCS.map(d => (
+            <label
+              key={d.key}
+              className={`cl-check-label ${values[d.key] ? 'checked' : ''}`}
+            >
+              <input
+                type="checkbox"
+                checked={!!values[d.key]}
+                onChange={e => onChange(d.key, e.target.checked)}
+              />
+              {d.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="cl-form-group">
+        <label>Observaciones</label>
+        <textarea
+          className="cl-textarea"
+          value={values.observaciones}
+          onChange={e => onChange('observaciones', e.target.value)}
+          maxLength={2000}
+          placeholder="Observaciones adicionales..."
+        />
+      </div>
+    </>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CheckList() {
   const { user } = useContext(AuthContext);
@@ -540,64 +600,6 @@ export default function CheckList() {
       doc.save(`checklist-${cl.numero}.pdf`);
     }
   };
-
-  // ─── FormFields helper ──────────────────────────────────────────────────
-  const FormFields = ({ values, onChange }) => (
-    <>
-      <div className="cl-form-row">
-        <div className="cl-form-group">
-          <label>N° de Folios Expediente</label>
-          <input
-            className="cl-input"
-            value={values.numero_folios}
-            onChange={e => onChange('numero_folios', e.target.value)}
-            maxLength={100}
-            placeholder="Ej. 25"
-          />
-        </div>
-        <div className="cl-form-group">
-          <label>N° de Expediente</label>
-          <input
-            className="cl-input"
-            value={values.numero_expediente}
-            onChange={e => onChange('numero_expediente', e.target.value)}
-            maxLength={100}
-            placeholder="Ej. EXP-2026-001"
-          />
-        </div>
-      </div>
-
-      <div>
-        <p className="cl-checks-title">Documentación incluida</p>
-        <div className="cl-checks-grid">
-          {DOCS.map(d => (
-            <label
-              key={d.key}
-              className={`cl-check-label ${values[d.key] ? 'checked' : ''}`}
-            >
-              <input
-                type="checkbox"
-                checked={!!values[d.key]}
-                onChange={e => onChange(d.key, e.target.checked)}
-              />
-              {d.label}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="cl-form-group">
-        <label>Observaciones</label>
-        <textarea
-          className="cl-textarea"
-          value={values.observaciones}
-          onChange={e => onChange('observaciones', e.target.value)}
-          maxLength={2000}
-          placeholder="Observaciones adicionales..."
-        />
-      </div>
-    </>
-  );
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
