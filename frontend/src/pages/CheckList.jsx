@@ -337,24 +337,31 @@ export default function CheckList() {
     // ════════════════════════════════════════════════════
     //  CAMPOS DE CABECERA con línea debajo del valor
     // ════════════════════════════════════════════════════
-    const LINE_W = 58;
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
+    // campo folios
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(...NEGRO);
     doc.text('Numero de Folios Expediente:', L, y);
     doc.setFont('helvetica', 'bold');
-    doc.text(sa(cl.numero_folios || ''), L + 72, y);
+    const val1 = sa(cl.numero_folios || '');
+    doc.text(val1, L + 72, y);
+    const lw1 = (val1 ? doc.getTextWidth(val1) : 0) + 6;
     doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
-    doc.line(L + 72, y + 1, L + 72 + LINE_W, y + 1);
+    doc.line(L + 72, y + 1, L + 72 + lw1, y + 1);
     y += 8;
+    // campo expediente
     doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...NEGRO);
     doc.text('Numero de Expediente:', L, y);
     doc.setFont('helvetica', 'bold');
-    doc.text(sa(cl.numero_expediente || ''), L + 56, y);
+    const val2 = sa(cl.numero_expediente || '');
+    doc.text(val2, L + 56, y);
+    const lw2 = (val2 ? doc.getTextWidth(val2) : 0) + 6;
     doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
-    doc.line(L + 56, y + 1, L + 56 + LINE_W, y + 1);
+    doc.line(L + 56, y + 1, L + 56 + lw2, y + 1);
     y += 9;
 
     // texto introductorio
@@ -451,7 +458,7 @@ export default function CheckList() {
       doc.setFontSize(11);
       doc.setTextColor(50, 50, 70);
       const obsLines = doc.splitTextToSize(sa(cl.observaciones), CW - 6);
-      doc.text(obsLines, L + 3, y + 8);
+      doc.text(obsLines, L + 3, y + 5);
     }
     y += obsH + 6;
 
@@ -465,6 +472,7 @@ export default function CheckList() {
     y += 5;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
+    doc.setTextColor(...NEGRO);
     const n1Lines = doc.splitTextToSize(sa(
       '1. Los expedientes para pago, dependiente de su naturaleza del gasto, son armados con la informacion ' +
       'requerida para la emision de pago, por lo que no todos los expedientes deben llevar la misma informacion ' +
