@@ -430,9 +430,7 @@ export default function CheckList() {
 
     if (print) {
       doc.autoPrint();
-      const blob = doc.output('blob');
-      const blobUrl = URL.createObjectURL(blob);
-      window.location.href = blobUrl;
+      window.open(doc.output('bloburl'), '_blank');
     } else {
       doc.save(`checklist-${cl.numero}.pdf`);
     }
