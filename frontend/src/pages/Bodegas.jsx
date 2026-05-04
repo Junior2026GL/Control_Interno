@@ -334,9 +334,9 @@ export default function Bodegas() {
     if (logoDataUrl) { const lSize = HDR_H - 6; doc.addImage(logoDataUrl, 'JPEG', L + (LOGO_W - lSize) / 2, y + 3, lSize, lSize); }
     doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3); doc.line(L + LOGO_W, y + 4, L + LOGO_W, y + HDR_H - 4);
     const instCX = L + LOGO_W + CENT_W / 2;
-    doc.setTextColor(...AZUL); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text('REPUBLICA DE HONDURAS', instCX, y + 11, { align: 'center' });
+    doc.setTextColor(...AZUL); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text('REPÚBLICA DE HONDURAS', instCX, y + 11, { align: 'center' });
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text('CONGRESO NACIONAL', instCX, y + 18, { align: 'center' });
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text('PAGADURIA ESPECIAL', instCX, y + 28, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text('PAGADURÍA ESPECIAL', instCX, y + 28, { align: 'center' });
     doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3); doc.line(L + LOGO_W + CENT_W, y + 4, L + LOGO_W + CENT_W, y + HDR_H - 4);
     const infoX = L + LOGO_W + CENT_W; const infoMid = infoX + INFO_W / 2;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(100, 120, 160); doc.text('REGISTROS', infoMid, y + 7, { align: 'center' });
@@ -361,9 +361,9 @@ export default function Bodegas() {
       head: [[
         'N°',
         'Diputado Responsable',
-        'Persona que Retiro',
+        'Persona que Retiró',
         'Departamento',
-        'Partido Politico',
+        'Partido Político',
         'Fecha de Entrega',
         'Cant.',
         '# Orden',
@@ -398,8 +398,8 @@ export default function Bodegas() {
       const FH = 9; const FY = PH - 5 - FH;
       doc.setFillColor(...AZUL); doc.rect(L - 4, FY, CW + 8, FH, 'F');
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...BLANCO);
-      doc.text('Congreso Nacional - Pagaduria Especial', L - 1, FY + 5.8);
-      doc.text('Pagina ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
+      doc.text('Congreso Nacional - Pagaduría Especial', L - 1, FY + 5.8);
+      doc.text('Página ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
       doc.text('Generado: ' + fechaGen + ' ' + horaGen, L + CW + 1, FY + 5.8, { align: 'right' });
     }
 
@@ -517,7 +517,9 @@ export default function Bodegas() {
                 ? <span>0 registros</span>
                 : <><strong>{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)}</strong> de <strong>{filtered.length}</strong></>}
             </span>
-            <span className="bod-table-info__page">Pág. <strong>{page}</strong> / {totalPages}</span>
+            {filtered.length > 0 && (
+              <span className="bod-table-info__page">Pág. <strong>{page}</strong> / {totalPages}</span>
+            )}
           </div>
           <div className="bod-table-wrap">
             {loading ? (
@@ -702,6 +704,9 @@ export default function Bodegas() {
                         ))}
                       </ul>
                     )}
+                    {dipQuery.trim().length >= 2 && dipSuggestions.length === 0 && (
+                      <p className="bod-autocomplete__no-match">Sin coincidencias</p>
+                    )}
                   </div>
                   {formErrors.diputado_nombre && <span className="bod-error">{formErrors.diputado_nombre}</span>}
                 </div>
@@ -731,12 +736,17 @@ export default function Bodegas() {
                 </div>
                 <div className="bod-field">
                   <label className="bod-label"># Orden *</label>
-                  <input className={`bod-input ${formErrors.numero_orden ? 'bod-input--error' : ''}`} name="numero_orden" value={form.numero_orden} onChange={handleField} placeholder="Ej. 0001" />
+                  <input className={`bod-input ${formErrors.numero_orden ? 'bod-input--error' : ''}`} name="numero_orden" value={form.numero_orden} onChange={handleField} placeholder="Ej. 1, 42, 300…" />
                   {formErrors.numero_orden && <span className="bod-error">{formErrors.numero_orden}</span>}
                 </div>
                 <div className="bod-field bod-field--full">
-                  <label className="bod-label">Observaciones</label>
-                  <textarea className="bod-textarea" name="observaciones" value={form.observaciones} onChange={handleField} placeholder="Observaciones adicionales (opcional)" rows={3} />
+                  <label className="bod-label">
+                    Observaciones
+                    <span className={`bod-obs-counter${form.observaciones.length > 480 ? ' bod-obs-counter--warn' : ''}`}>
+                      {form.observaciones.length} / 500
+                    </span>
+                  </label>
+                  <textarea className="bod-textarea" name="observaciones" value={form.observaciones} onChange={handleField} placeholder="Observaciones adicionales (opcional)" rows={3} maxLength={500} />
                   {formErrors.observaciones && <span className="bod-error">{formErrors.observaciones}</span>}
                 </div>
                 <div className="bod-modal__footer">
