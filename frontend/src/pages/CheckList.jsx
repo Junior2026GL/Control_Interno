@@ -264,43 +264,52 @@ export default function CheckList() {
     doc.setLineWidth(0.3);
     doc.line(L + LOGO_W + CENT_W, y + 4, L + LOGO_W + CENT_W, y + HDR_H - 4);
 
-    // panel derecho: CHECK LIST / año / número
+    // Panel derecho: No. + GENERADO/HORA + GENERADO POR  (igual que autorizaciones)
     const infoX   = L + LOGO_W + CENT_W;
     const infoMid = infoX + INFO_W / 2;
-    const now     = new Date();
-    const anio    = now.getFullYear();
+    const now      = new Date();
+    const fechaGen = now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const horaGen  = now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const genPor   = sa((user?.nombre || 'Sistema').toUpperCase());
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(...AZUL);
-    doc.text('CHECK LIST', infoMid, y + 9, { align: 'center' });
-
-    doc.setDrawColor(210, 220, 235);
-    doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 11, infoX + INFO_W - 3, y + 11);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(6.5);
     doc.setTextColor(100, 120, 160);
-    doc.text(`/${anio}`, infoMid, y + 17, { align: 'center' });
+    doc.text('No.', infoMid, y + 7, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(...AZUL);
+    doc.text(String(cl.numero || 0).padStart(4, '0'), infoMid, y + 15, { align: 'center' });
 
     doc.setDrawColor(210, 220, 235);
     doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 19, infoX + INFO_W - 3, y + 19);
+    doc.line(infoX + 3, y + 17, infoX + INFO_W - 3, y + 17);
 
-    // número en recuadro igual que autorizaciones
-    const NB_X = infoX + 6;
-    const NB_W = INFO_W - 12;
-    const NB_Y = y + 22;
-    const NB_H = 16;
-    doc.setFillColor(...BLANCO);
-    doc.setDrawColor(...AZUL);
-    doc.setLineWidth(0.5);
-    doc.rect(NB_X, NB_Y, NB_W, NB_H, 'FD');
+    const col1 = infoX + 4;
+    const col2 = infoX + INFO_W / 2 + 2;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(6.5);
+    doc.setTextColor(100, 120, 160);
+    doc.text('GENERADO', col1, y + 22);
+    doc.text('HORA',     col2, y + 22);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(20, 20, 20);
+    doc.text(fechaGen, col1, y + 27.5);
+    doc.text(horaGen,  col2, y + 27.5);
+
+    doc.setDrawColor(210, 220, 235);
+    doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 30, infoX + INFO_W - 3, y + 30);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(100, 120, 160);
+    doc.text('GENERADO POR', infoMid, y + 34.5, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
     doc.setTextColor(...AZUL);
-    doc.text(String(cl.numero).padStart(4, '0'), infoMid, NB_Y + NB_H - 3, { align: 'center' });
+    doc.text(genPor, infoMid, y + 40, { align: 'center' });
 
     // ════════════════════════════════════════════════════
     //  BARRA TÍTULO AZUL
@@ -477,8 +486,18 @@ export default function CheckList() {
     );
 
     if (print) {
-      doc.autoPrint();
-      window.open(doc.output('bloburl'), '_blank');
+      const blobUrl = doc.output('bloburl');
+      const iframe  = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+      document.body.appendChild(iframe);
+      iframe.src = blobUrl;
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          setTimeout(() => { document.body.removeChild(iframe); URL.revokeObjectURL(blobUrl); }, 1500);
+        }, 300);
+      };
     } else {
       doc.save(`checklist-${cl.numero}.pdf`);
     }
