@@ -820,47 +820,62 @@ export default function CheckList() {
       {verItem && (
         <div className="cl-backdrop" onClick={e => e.target === e.currentTarget && setVerItem(null)}>
           <div className="cl-modal">
-            <div className="cl-modal-header">
-              <div className="cl-modal-icon"><FiEye size={20} color="#274C8D" /></div>
+            {/* header azul */}
+            <div className="cl-ver-header">
               <div>
-                <h3>Check List #{String(verItem.numero).padStart(4, '0')}</h3>
-                <p>{fmtFecha(verItem.fecha_creacion)} — {verItem.creado_por_nombre}</p>
+                <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 2 }}>N° Check List</div>
+                <div className="cl-ver-num">{String(verItem.numero).padStart(4, '0')}</div>
               </div>
-              <button className="cl-modal-close" onClick={() => setVerItem(null)}><FiX size={18} /></button>
+              <div className="cl-ver-meta" style={{ flex: 1 }}>
+                <span className="cl-ver-meta-fecha">{fmtFecha(verItem.fecha_creacion)}</span>
+                <span className="cl-ver-meta-user">{verItem.creado_por_nombre || '—'}</span>
+                <div className="cl-ver-progress-wrap">
+                  <span className="cl-ver-progress-label">{countDocs(verItem)} de {DOCS.length} documentos</span>
+                  <div className="cl-ver-progress-bar">
+                    <div className="cl-ver-progress-inner"
+                      style={{ width: `${Math.round((countDocs(verItem) / DOCS.length) * 100)}%` }} />
+                  </div>
+                </div>
+              </div>
+              <button className="cl-modal-close" style={{ color: 'rgba(255,255,255,0.7)' }}
+                onClick={() => setVerItem(null)}><FiX size={18} /></button>
             </div>
+
             <div className="cl-ver-body">
-              <div className="cl-ver-row">
-                <span className="cl-ver-label">N° Folios</span>
-                <span>{verItem.numero_folios || '—'}</span>
-              </div>
-              <div className="cl-ver-row">
-                <span className="cl-ver-label">N° Expediente</span>
-                <span>{verItem.numero_expediente || '—'}</span>
-              </div>
-              <div className="cl-ver-row" style={{ flexDirection: 'column', gap: 6 }}>
-                <span className="cl-ver-label">Documentación</span>
-                <div className="cl-ver-checks">
-                  {DOCS.map(d => {
-                    const on = verItem[d.key] == 1 || verItem[d.key] === true;
-                    return (
-                      <div key={d.key} className="cl-ver-check-item">
-                        <span className={`dot ${on ? 'on' : 'off'}`} />
-                        <span style={{ color: on ? '#059669' : '#94a3b8', fontWeight: on ? 600 : 400 }}>
-                          {d.label}
-                        </span>
-                      </div>
-                    );
-                  })}
+              {/* campos */}
+              <div className="cl-ver-fields">
+                <div className="cl-ver-field">
+                  <div className="cl-ver-field-label">N° Folios</div>
+                  <div className="cl-ver-field-value">{verItem.numero_folios || '—'}</div>
+                </div>
+                <div className="cl-ver-field">
+                  <div className="cl-ver-field-label">N° Expediente</div>
+                  <div className="cl-ver-field-value">{verItem.numero_expediente || '—'}</div>
                 </div>
               </div>
+
+              {/* documentos */}
+              <div className="cl-ver-section-title">Documentación</div>
+              <div className="cl-ver-checks">
+                {DOCS.map(d => {
+                  const on = verItem[d.key] == 1 || verItem[d.key] === true;
+                  return (
+                    <div key={d.key} className={`cl-ver-check-item ${on ? 'on' : 'off'}`}>
+                      <span className={`dot ${on ? 'on' : 'off'}`} />
+                      {d.label}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* observaciones */}
               {verItem.observaciones && (
-                <div className="cl-ver-row" style={{ flexDirection: 'column', gap: 4 }}>
-                  <span className="cl-ver-label">Observaciones</span>
-                  <span style={{ fontSize: 13, color: '#475569', whiteSpace: 'pre-wrap' }}>
-                    {verItem.observaciones}
-                  </span>
-                </div>
+                <>
+                  <div className="cl-ver-section-title">Observaciones</div>
+                  <div className="cl-ver-obs">{verItem.observaciones}</div>
+                </>
               )}
+
               <div className="cl-modal-footer" style={{ paddingLeft: 0, paddingRight: 0 }}>
                 <button className="btn-secondary" onClick={() => generarPDF(verItem, false)}>
                   <FiClipboard size={14} /> Descargar PDF
