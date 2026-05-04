@@ -643,13 +643,13 @@ export default function CheckList() {
             <table className="cl-table">
               <thead>
                 <tr>
-                  <th>N°</th>
-                  <th>N° Expediente</th>
-                  <th>N° Folios</th>
+                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>N°</th>
+                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>N° Expediente</th>
+                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>N° Folios</th>
                   <th>Documentos</th>
-                  <th>Fecha</th>
-                  <th>Creado por</th>
-                  <th style={{ textAlign: 'right' }}>Acciones</th>
+                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>Fecha</th>
+                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>Creado por</th>
+                  <th style={{ width: '1%', whiteSpace: 'nowrap', textAlign: 'right' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -670,9 +670,9 @@ export default function CheckList() {
                   const n = countDocs(cl);
                   return (
                     <tr key={cl.id}>
-                      <td><span className="cl-num">{String(cl.numero).padStart(4, '0')}</span></td>
-                      <td>{cl.numero_expediente || '—'}</td>
-                      <td>{cl.numero_folios     || '—'}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}><span className="cl-num">{String(cl.numero).padStart(4, '0')}</span></td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{cl.numero_expediente || '—'}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{cl.numero_folios     || '—'}</td>
                       <td>
                         <div className="cl-docs-bar">
                           <div className="cl-docs-fill">
@@ -684,8 +684,8 @@ export default function CheckList() {
                           <span className="cl-docs-label">{n}/{DOCS.length}</span>
                         </div>
                       </td>
-                      <td>{fmtFecha(cl.fecha_creacion)}</td>
-                      <td>{cl.creado_por_nombre || '—'}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{fmtFecha(cl.fecha_creacion)}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{cl.creado_por_nombre || '—'}</td>
                       <td>
                         <div className="cl-actions">
                           <button
