@@ -269,13 +269,13 @@ export default function CheckList() {
     doc.setTextColor(...AZUL);
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(13);
-    doc.text('REPUBLICA DE HONDURAS', hdrCX, y + 11, { align: 'center' });
+    doc.text('REPÚBLICA DE HONDURAS', hdrCX, y + 11, { align: 'center' });
     doc.setFont('Roboto', 'normal');
     doc.setFontSize(10);
     doc.text('CONGRESO NACIONAL', hdrCX, y + 18, { align: 'center' });
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(15);
-    doc.text('DIRECCION ADMINISTRATIVA', hdrCX, y + 28, { align: 'center' });
+    doc.text('DIRECCIÓN ADMINISTRATIVA', hdrCX, y + 28, { align: 'center' });
 
     doc.setDrawColor(180, 200, 235);
     doc.setLineWidth(0.3);
@@ -386,8 +386,8 @@ export default function CheckList() {
     doc.setFontSize(9.5);
     doc.setTextColor(...NEGRO);
     const intro = sa(
-      'La Direccion Administrativa del Congreso Nacional, hace constar que, ' +
-      'el presente expediente de pago va con la siguiente documentacion:'
+      'La Dirección Administrativa del Congreso Nacional, hace constar que, ' +
+      'el presente expediente de pago va con la siguiente documentación:'
     );
     const introLines = doc.splitTextToSize(intro, CW);
     doc.text(introLines, L, y);
@@ -485,14 +485,14 @@ export default function CheckList() {
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...NEGRO);
-    doc.text('Observacion:', L, y);
+    doc.text('Observación:', L, y);
     y += 5;
     doc.setFont('Roboto', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(...NEGRO);
     const n1Lines = doc.splitTextToSize(sa(
-      '1. Los expedientes para pago, dependiente de su naturaleza del gasto, son armados con la informacion ' +
-      'requerida para la emision de pago, por lo que no todos los expedientes deben llevar la misma informacion ' +
+      '1. Los expedientes para pago, dependiente de su naturaleza del gasto, son armados con la información ' +
+      'requerida para la emisión de pago, por lo que no todos los expedientes deben llevar la misma información ' +
       '(como parte del proceso o como anexo del mismo)'
     ), CW);
     doc.text(n1Lines, L, y);
@@ -501,7 +501,7 @@ export default function CheckList() {
     doc.setFontSize(11);
     doc.setTextColor(...NEGRO);
     const n2Lines = doc.splitTextToSize(sa(
-      '2. Las casillas de documentacion que no esten marcadas, es porque esa informacion no aplica para el presente expediente.'
+      '2. Las casillas de documentación que no estén marcadas, es porque esa información no aplica para el presente expediente.'
     ), CW);
     doc.text(n2Lines, L, y);
 
@@ -518,7 +518,7 @@ export default function CheckList() {
       doc.setFont('Roboto', 'normal');
       doc.setFontSize(9.5);
       doc.setTextColor(...BLANCO);
-      doc.text('Congreso Nacional - Direccion Administrativa', L - 1, FY + 5.8);
+      doc.text('Congreso Nacional - Dirección Administrativa', L - 1, FY + 5.8);
       doc.text('Pagina ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
       doc.text('Generado: ' + fGen + ' ' + hGen, L + CW + 1, FY + 5.8, { align: 'right' });
     }
