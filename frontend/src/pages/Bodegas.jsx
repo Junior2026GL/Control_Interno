@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useContext, useMemo, useRef } from 'react';
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiDownload,
-  FiPackage, FiCalendar, FiUsers, FiFilter, FiRefreshCw,
+  FiPackage, FiUsers, FiRefreshCw,
   FiChevronLeft, FiChevronRight,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
@@ -20,9 +20,7 @@ function today() {
 function fmtFecha(fechaStr) {
   if (!fechaStr) return '—';
   const d = new Date(String(fechaStr).split('T')[0] + 'T12:00:00');
-  return d.toLocaleDateString('es-HN', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
+  return d.toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function fmtFechaCorta(fechaStr) {
@@ -438,28 +436,31 @@ export default function Bodegas() {
     doc.text('RETIRO DE BODEGAS - DIPUTADOS', L + CW / 2, y + 7.5, { align: 'center' });
     y += TBAR_H + 4;
 
+    // Ancho útil de la tabla (margen izq L, margen der 10)
+    const TW = CW; // 259.4 mm en letter landscape
     autoTable(doc, {
       startY: y,
       margin: { left: L, right: 10 },
+      tableWidth: TW,
       head: [[
-        { content: 'N°',                  styles: { halign: 'center', cellWidth: 10 } },
-        { content: 'Diputado Responsable',styles: { cellWidth: 52 } },
-        { content: 'Persona que Retiró',  styles: { cellWidth: 52 } },
-        { content: 'Departamento',        styles: { cellWidth: 32 } },
-        { content: 'Partido Político',    styles: { cellWidth: 48 } },
-        { content: 'Fecha de Entrega',    styles: { cellWidth: 38 } },
-        { content: 'Cant.',               styles: { halign: 'center', cellWidth: 16 } },
-        { content: '# Orden',             styles: { halign: 'center', cellWidth: 22 } },
+        { content: 'N°',                  styles: { halign: 'center', cellWidth: TW * 0.038 } },
+        { content: 'Diputado Responsable',styles: { cellWidth: TW * 0.20 } },
+        { content: 'Persona que Retiró',  styles: { cellWidth: TW * 0.20 } },
+        { content: 'Departamento',        styles: { cellWidth: TW * 0.11 } },
+        { content: 'Partido Político',    styles: { cellWidth: TW * 0.175 } },
+        { content: 'Fecha de Entrega',    styles: { cellWidth: TW * 0.135 } },
+        { content: 'Cant.',               styles: { halign: 'center', cellWidth: TW * 0.065 } },
+        { content: '# Orden',             styles: { halign: 'center', cellWidth: TW * 0.076 } },
       ]],
       body: filtered.map((r, i) => [
-        { content: i + 1,                              styles: { halign: 'center' } },
+        { content: i + 1,              styles: { halign: 'center' } },
         sa(r.diputado_nombre),
         sa(r.persona_retiro),
         sa(r.departamento),
         sa(r.partido || '—'),
         sa(fmtFechaCorta(r.fecha_entrega)),
-        { content: r.cantidad_recibida,                styles: { halign: 'center' } },
-        { content: r.numero_orden,                     styles: { halign: 'center' } },
+        { content: r.cantidad_recibida, styles: { halign: 'center' } },
+        { content: r.numero_orden,      styles: { halign: 'center' } },
       ]),
       headStyles: {
         fillColor: AZUL, textColor: BLANCO,
@@ -467,7 +468,7 @@ export default function Bodegas() {
       },
       bodyStyles: { fontSize: 7.2, textColor: NEGRO },
       alternateRowStyles: { fillColor: [237, 241, 250] },
-      styles: { cellPadding: 2.5, lineColor: [180, 200, 235], lineWidth: 0.2 },
+      styles: { cellPadding: 2.5, lineColor: [180, 200, 235], lineWidth: 0.2, overflow: 'linebreak' },
     });
 
     doc.save(`retiro_bodegas_${now.toISOString().slice(0, 10)}.pdf`);
@@ -526,13 +527,6 @@ export default function Bodegas() {
               <span className="bod-stat__value bod-stat__value--green">
                 {totalCantidad.toLocaleString('es-HN')}
               </span>
-            </div>
-          </div>
-          <div className="bod-stat">
-            <div className="bod-stat__icon bod-stat__icon--amber"><FiCalendar size={20} /></div>
-            <div className="bod-stat__body">
-              <span className="bod-stat__label">Filtrados</span>
-              <span className="bod-stat__value">{filtered.length}</span>
             </div>
           </div>
         </div>
@@ -611,7 +605,7 @@ export default function Bodegas() {
                       <td>{r.persona_retiro}</td>
                       <td>{r.departamento || '—'}</td>
                       <td>{r.partido || '—'}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>{fmtFecha(r.fecha_entrega)}</td>
+                      <td>{fmtFecha(r.fecha_entrega)}</td>
                       <td style={{ textAlign: 'center', fontWeight: 700, color: '#274C8D' }}>
                         {(r.cantidad_recibida || 0).toLocaleString('es-HN')}
                       </td>
