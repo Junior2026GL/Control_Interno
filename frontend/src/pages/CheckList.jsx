@@ -471,19 +471,24 @@ export default function CheckList() {
     doc.text(n2Lines, L, y);
 
     // ════════════════════════════════════════════════════
-    //  PIE DE PÁGINA
+    //  PIE DE PÁGINA — barra azul igual que autorizaciones
     // ════════════════════════════════════════════════════
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(130, 140, 160);
-    doc.setDrawColor(180, 200, 235);
-    doc.setLineWidth(0.3);
-    doc.line(L, PH - 14, R, PH - 14);
-    doc.text('Congreso Nacional - Direccion Administrativa', L, PH - 9);
-    doc.text(
-      `Generado: ${now.toLocaleDateString('es-HN')} ${now.toLocaleTimeString('es-HN')}`,
-      R, PH - 9, { align: 'right' }
-    );
+    const pageCount = doc.internal.getNumberOfPages();
+    const fGen = now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const hGen = now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      const FH = 9;
+      const FY = PH - 5 - FH;
+      doc.setFillColor(...AZUL);
+      doc.rect(L - 4, FY, CW + 8, FH, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(...BLANCO);
+      doc.text('Congreso Nacional - Direccion Administrativa', L - 1, FY + 5.8);
+      doc.text('Pagina ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
+      doc.text('Generado: ' + fGen + ' ' + hGen, L + CW + 1, FY + 5.8, { align: 'right' });
+    }
 
     if (print) {
       const blobUrl = doc.output('bloburl');
