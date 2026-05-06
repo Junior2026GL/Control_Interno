@@ -88,6 +88,7 @@ export default function Proveedores() {
   const { user: me } = useContext(AuthContext);
   const canEdit = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(me?.rol);
 
+  const [servicioInput, setServicioInput] = useState('');
   const [tab, setTab]               = useState('listado');
   const [data, setData]             = useState([]);
   const [loading, setLoading]       = useState(false);
@@ -159,7 +160,7 @@ export default function Proveedores() {
     const rows = filtered.map(r => ({
       'Nombre':         r.nombre,
       'RTN':            r.rtn || '',
-      'RP':             r.rp || '',
+      'Cuenta del Proveedor': r.rp || '',
       'Categoría':      r.categoria,
       'Tipo de servicio': r.tipo_servicio || '',
       'Vendedor':       r.vendedor || '',
@@ -195,7 +196,7 @@ export default function Proveedores() {
         await api.post('/proveedores', form);
         showToast('Proveedor registrado correctamente.');
       }
-      setForm(buildEmpty()); setEditingId(null); setTab('listado'); cargar();
+      setForm(buildEmpty()); setEditingId(null); setTab('listado'); setServicioInput(''); cargar();
     } catch (err) {
       showToast(err?.response?.data?.message || 'Error al guardar.', 'error');
     } finally {
@@ -223,6 +224,7 @@ export default function Proveedores() {
     });
     setEditingId(row.id);
     setTab('nuevo');
+    setServicioInput('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -517,8 +519,8 @@ export default function Proveedores() {
                     value={form.rtn} onChange={e => set('rtn', e.target.value)} maxLength={20}/>
                 </div>
                 <div className="pv-field">
-                  <label className="pv-label">RP</label>
-                  <input className="pv-input" type="text" placeholder="Registro de proveedor"
+                  <label className="pv-label">Cuenta del Proveedor</label>
+                  <input className="pv-input" type="text" placeholder="Cuenta del proveedor"
                     value={form.rp} onChange={e => set('rp', e.target.value)}/>
                 </div>
               </div>
@@ -533,8 +535,46 @@ export default function Proveedores() {
                 </div>
                 <div className="pv-field">
                   <label className="pv-label">Tipo de servicio</label>
-                  <input className="pv-input" type="text" placeholder="Descripción del servicio"
-                    value={form.tipo_servicio} onChange={e => set('tipo_servicio', e.target.value)}/>
+                  <div className="pv-chips-box">
+                    {(form.tipo_servicio ? form.tipo_servicio.split(',').map(s => s.trim()).filter(Boolean) : []).map((chip, i) => (
+                      <span key={i} className="pv-chip">
+                        {chip}
+                        <button type="button" className="pv-chip-remove" onClick={() => {
+                          const arr = form.tipo_servicio.split(',').map(s => s.trim()).filter(Boolean);
+                          arr.splice(i, 1);
+                          set('tipo_servicio', arr.join(', '));
+                        }}>×</button>
+                      </span>
+                    ))}
+                    <input
+                      className="pv-chips-input"
+                      type="text"
+                      placeholder={form.tipo_servicio ? 'Agregar otro…' : 'Escribe y presiona Enter o coma'}
+                      value={servicioInput}
+                      onChange={e => setServicioInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ',') {
+                          e.preventDefault();
+                          const val = servicioInput.trim();
+                          if (!val) return;
+                          const arr = form.tipo_servicio ? form.tipo_servicio.split(',').map(s => s.trim()).filter(Boolean) : [];
+                          if (!arr.includes(val)) { arr.push(val); set('tipo_servicio', arr.join(', ')); }
+                          setServicioInput('');
+                        } else if (e.key === 'Backspace' && !servicioInput) {
+                          const arr = form.tipo_servicio.split(',').map(s => s.trim()).filter(Boolean);
+                          arr.pop();
+                          set('tipo_servicio', arr.join(', '));
+                        }
+                      }}
+                      onBlur={() => {
+                        const val = servicioInput.trim();
+                        if (!val) return;
+                        const arr = form.tipo_servicio ? form.tipo_servicio.split(',').map(s => s.trim()).filter(Boolean) : [];
+                        if (!arr.includes(val)) { arr.push(val); set('tipo_servicio', arr.join(', ')); }
+                        setServicioInput('');
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="pv-field">
                   <label className="pv-label">Estado</label>
@@ -669,14 +709,18 @@ export default function Proveedores() {
                 )}
                 {detail.rp && (
                   <div className="pv-detail-item">
-                    <span className="pv-detail-label">RP</span>
+                    <span className="pv-detail-label">Cuenta del Proveedor</span>
                     <span className="pv-detail-value">{detail.rp}</span>
                   </div>
                 )}
                 {detail.tipo_servicio && (
                   <div className="pv-detail-item">
                     <span className="pv-detail-label">Tipo de servicio</span>
-                    <span className="pv-detail-value">{detail.tipo_servicio}</span>
+                    <span className="pv-detail-value" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      {detail.tipo_servicio.split(',').map(s => s.trim()).filter(Boolean).map((chip, i) => (
+                        <span key={i} className="pv-chip pv-chip--readonly">{chip}</span>
+                      ))}
+                    </span>
                   </div>
                 )}
                 {detail.vendedor && (
