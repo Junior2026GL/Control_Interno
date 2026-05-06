@@ -377,7 +377,7 @@ export default function Bodegas() {
     const FH = 9; const FY = PH - 5 - FH;
     autoTable(doc, {
       startY: y,
-      margin: { left: L, right: PW - L - CW, bottom: FH + 10 },
+      margin: { left: L, right: PW - L - CW, bottom: FH + 18 },
       head: [[
         'N°',
         'Diputado Responsable',
