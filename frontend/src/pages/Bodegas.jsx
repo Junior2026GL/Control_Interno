@@ -373,10 +373,11 @@ export default function Bodegas() {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...BLANCO); doc.text('CONTROL DE ENTREGA DE CANASTAS', L + CW / 2, y + 7.5, { align: 'center' });
     y += TBAR_H + 4;
 
-    const TW = CW;
+    const TOTAL_ALIAS = '{total_pages}';
+    const FH = 9; const FY = PH - 5 - FH;
     autoTable(doc, {
       startY: y,
-      margin: { left: L, right: PW - L - CW, bottom: 22 },
+      margin: { left: L, right: PW - L - CW, bottom: FH + 10 },
       head: [[
         'N°',
         'Diputado Responsable',
@@ -408,19 +409,17 @@ export default function Bodegas() {
         6: { cellWidth: 14,   halign: 'center' },
         7: { cellWidth: 15,   halign: 'center' },
       },
+      didDrawPage: (data) => {
+        // Pie de página dibujado dentro del ciclo de autoTable para que respete el espacio
+        doc.setFillColor(...AZUL); doc.setDrawColor(...AZUL); doc.setLineWidth(0);
+        doc.rect(L - 4, FY, CW + 8, FH, 'F');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...BLANCO);
+        doc.text('Congreso Nacional - Pagaduría Especial', L - 1, FY + 5.8);
+        doc.text('Página ' + data.pageNumber + ' de ' + TOTAL_ALIAS, L + CW / 2, FY + 5.8, { align: 'center' });
+        doc.text('Generado: ' + fechaGen + ' ' + horaGen, L + CW + 1, FY + 5.8, { align: 'right' });
+      },
     });
-
-    // Pie de página
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let p = 1; p <= pageCount; p++) {
-      doc.setPage(p);
-      const FH = 9; const FY = PH - 5 - FH;
-      doc.setFillColor(...AZUL); doc.rect(L - 4, FY, CW + 8, FH, 'F');
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...BLANCO);
-      doc.text('Congreso Nacional - Pagaduría Especial', L - 1, FY + 5.8);
-      doc.text('Página ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
-      doc.text('Generado: ' + fechaGen + ' ' + horaGen, L + CW + 1, FY + 5.8, { align: 'right' });
-    }
+    doc.putTotalPages(TOTAL_ALIAS);
 
     doc.save(`entrega_canastas_${now.toISOString().slice(0, 10)}.pdf`);
   };
