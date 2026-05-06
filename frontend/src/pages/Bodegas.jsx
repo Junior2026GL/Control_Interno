@@ -346,6 +346,7 @@ export default function Bodegas() {
     const L = 10; const CW = PW - L - 10;
     const AZUL = [39, 76, 141]; const NEGRO = [20, 20, 20]; const BLANCO = [255, 255, 255];
 
+    // Borde exterior solo en página 1; en páginas 2+ lo dibuja didDrawPage
     doc.setDrawColor(...AZUL); doc.setLineWidth(1.2); doc.rect(L - 4, 5, CW + 8, PH - 10, 'S');
     let y = 10;
     const LOGO_W = 50; const INFO_W = 62; const CENT_W = CW - LOGO_W - INFO_W; const HDR_H = 42;
@@ -377,7 +378,7 @@ export default function Bodegas() {
     const FH = 9; const FY = PH - 5 - FH;
     autoTable(doc, {
       startY: y,
-      margin: { left: L, right: PW - L - CW, bottom: 5 + FH + 1 },
+      margin: { left: L, right: PW - L - CW, bottom: 5 + FH + 2 },
       head: [[
         'N°',
         'Diputado Responsable',
@@ -410,6 +411,10 @@ export default function Bodegas() {
         7: { cellWidth: 15,   halign: 'center' },
       },
       didDrawPage: (data) => {
+        // Borde exterior en TODAS las páginas (página 1 ya lo tiene, en 2+ se redibuja)
+        if (data.pageNumber > 1) {
+          doc.setDrawColor(...AZUL); doc.setLineWidth(1.2); doc.rect(L - 4, 5, CW + 8, PH - 10, 'S');
+        }
         // Pie de página dibujado dentro del ciclo de autoTable para que respete el espacio
         doc.setFillColor(...AZUL); doc.setDrawColor(...AZUL); doc.setLineWidth(0);
         doc.rect(L - 4, FY, CW + 8, FH, 'F');
