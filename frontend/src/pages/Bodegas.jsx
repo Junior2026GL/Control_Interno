@@ -376,7 +376,7 @@ export default function Bodegas() {
     const TW = CW;
     autoTable(doc, {
       startY: y,
-      margin: { left: L, right: PW - L - CW, bottom: 16 },
+      margin: { left: L, right: PW - L - CW, bottom: 22 },
       head: [[
         'N°',
         'Diputado Responsable',
