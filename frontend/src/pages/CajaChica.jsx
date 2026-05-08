@@ -648,7 +648,7 @@ export default function CajaChica() {
                   <div className="caja-info-bar__sep" />
                   <div className="caja-info-bar__item">
                     <FiBriefcase size={14} className="caja-info-bar__icon" />
-                    <span className="caja-info-bar__label">Cargo:</span>
+                    <span className="caja-info-bar__label">Administrado por:</span>
                     <span className="caja-info-bar__value">{cargoActivo}</span>
                   </div>
                 </>
