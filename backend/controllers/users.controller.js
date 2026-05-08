@@ -27,7 +27,7 @@ function validateFields({ nombre, username, email, password, isCreate }) {
 
 exports.getUsers = (req, res) => {
   db.query(
-    `SELECT id, nombre, username, email, rol, activo,
+    `SELECT id, nombre, username, email, rol, activo, cargo, dependencia,
       login_intentos,
       login_bloqueado_hasta,
       CASE WHEN login_bloqueado_hasta IS NOT NULL AND login_bloqueado_hasta > NOW() THEN 1 ELSE 0 END AS bloqueado
@@ -45,6 +45,8 @@ exports.createUser = async (req, res) => {
   const email    = sanitize(req.body.email).toLowerCase();
   const password = req.body.password || '';
   const rol      = sanitize(req.body.rol);
+  const cargo       = sanitize(req.body.cargo)       || null;
+  const dependencia = sanitize(req.body.dependencia) || null;
 
   const err = validateFields({ nombre, username, email, password, isCreate: true });
   if (err) return res.status(400).json({ message: err });
@@ -59,8 +61,8 @@ exports.createUser = async (req, res) => {
   try {
     const hashed = await bcrypt.hash(password, 10);
     db.query(
-      'INSERT INTO usuarios (nombre, username, email, password, rol) VALUES (?, ?, ?, ?, ?)',
-      [nombre, username, email, hashed, rol],
+      'INSERT INTO usuarios (nombre, username, email, password, rol, cargo, dependencia) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [nombre, username, email, hashed, rol, cargo, dependencia],
       (dbErr) => {
         if (dbErr) {
           if (dbErr.code === 'ER_DUP_ENTRY')
@@ -86,6 +88,8 @@ exports.updateUser = async (req, res) => {
   const password = req.body.password || '';
   const rol      = sanitize(req.body.rol);
   const activo   = req.body.activo ?? 1;
+  const cargo       = req.body.cargo       !== undefined ? sanitize(req.body.cargo)       || null : undefined;
+  const dependencia = req.body.dependencia !== undefined ? sanitize(req.body.dependencia) || null : undefined;
 
   // Validate fields (password optional on edit)
   const fieldErr = validateFields({ nombre, username, email, password: password || 'Placeholder1', isCreate: false });
@@ -140,14 +144,14 @@ exports.updateUser = async (req, res) => {
         if (password.trim()) {
           const hashed = await bcrypt.hash(password, 10);
           db.query(
-            'UPDATE usuarios SET nombre=?, username=?, email=?, password=?, rol=?, activo=? WHERE id=?',
-            [nombre, username, email, hashed, rol, activo, targetId],
+            'UPDATE usuarios SET nombre=?, username=?, email=?, password=?, rol=?, activo=?, cargo=?, dependencia=? WHERE id=?',
+            [nombre, username, email, hashed, rol, activo, cargo ?? null, dependencia ?? null, targetId],
             (dbErr) => handleUpdateResult(dbErr, res)
           );
         } else {
           db.query(
-            'UPDATE usuarios SET nombre=?, username=?, email=?, rol=?, activo=? WHERE id=?',
-            [nombre, username, email, rol, activo, targetId],
+            'UPDATE usuarios SET nombre=?, username=?, email=?, rol=?, activo=?, cargo=?, dependencia=? WHERE id=?',
+            [nombre, username, email, rol, activo, cargo ?? null, dependencia ?? null, targetId],
             (dbErr) => handleUpdateResult(dbErr, res)
           );
         }

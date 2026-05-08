@@ -621,23 +621,43 @@ export default function CajaChica() {
         )}
 
         {/* ── Barra institucional ─────────────────────── */}
-        <div className="caja-info-bar">
-          <div className="caja-info-bar__item">
-            <FiUser size={14} className="caja-info-bar__icon" />
-            <span className="caja-info-bar__label">Asignado a:</span>
-            <span className="caja-info-bar__value">
-              {puedeVerOtros && selectedUid
-                ? usuarios.find(u => u.id === selectedUid)?.nombre || '...'
-                : user?.nombre || user?.email || 'Usuario actual'}
-            </span>
-          </div>
-          <div className="caja-info-bar__sep" />
-          <div className="caja-info-bar__item">
-            <FiBriefcase size={14} className="caja-info-bar__icon" />
-            <span className="caja-info-bar__label">Administrado por:</span>
-            <span className="caja-info-bar__value">Pagaduría Especial</span>
-          </div>
-        </div>
+        {(() => {
+          const usuarioActivo = puedeVerOtros && selectedUid
+            ? usuarios.find(u => u.id === selectedUid)
+            : user;
+          const nombreActivo     = usuarioActivo?.nombre || user?.email || 'Usuario actual';
+          const cargoActivo      = usuarioActivo?.cargo      || null;
+          const dependenciaActiva = usuarioActivo?.dependencia || null;
+          return (
+            <div className="caja-info-bar">
+              <div className="caja-info-bar__item">
+                <FiUser size={14} className="caja-info-bar__icon" />
+                <span className="caja-info-bar__label">Asignado a:</span>
+                <span className="caja-info-bar__value">{nombreActivo}</span>
+              </div>
+              {cargoActivo && (
+                <>
+                  <div className="caja-info-bar__sep" />
+                  <div className="caja-info-bar__item">
+                    <FiBriefcase size={14} className="caja-info-bar__icon" />
+                    <span className="caja-info-bar__label">Cargo:</span>
+                    <span className="caja-info-bar__value">{cargoActivo}</span>
+                  </div>
+                </>
+              )}
+              {dependenciaActiva && (
+                <>
+                  <div className="caja-info-bar__sep" />
+                  <div className="caja-info-bar__item">
+                    <FiBriefcase size={14} className="caja-info-bar__icon" />
+                    <span className="caja-info-bar__label">Dependencia:</span>
+                    <span className="caja-info-bar__value">{dependenciaActiva}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ── Stats ────────────────────────────────────── */}
         <div className="caja-stats">

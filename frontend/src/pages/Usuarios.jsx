@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from 'react';
 import {
   FiPlus, FiSearch, FiEdit2, FiUserX, FiUserCheck,
   FiX, FiUser, FiMail, FiLock, FiUnlock, FiShield, FiAtSign, FiKey, FiCheck,
-  FiEye, FiEyeOff, FiUsers, FiFilter,
+  FiEye, FiEyeOff, FiUsers, FiFilter, FiBriefcase, FiMapPin,
 } from 'react-icons/fi';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -28,7 +28,7 @@ const ROL_META = {
   ASISTENTE:   { label: 'Asistente',    color: '#059669', bg: '#ecfdf5' },
 };
 
-const EMPTY_FORM = { nombre: '', username: '', email: '', password: '', confirmPassword: '', rol: 'ASISTENTE' };
+const EMPTY_FORM = { nombre: '', username: '', email: '', password: '', confirmPassword: '', rol: 'ASISTENTE', cargo: '', dependencia: '' };
 
 const EMAIL_REGEX    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
@@ -136,7 +136,7 @@ export default function Usuarios() {
 
   const openEdit = (u) => {
     setSelected(u);
-    setForm({ nombre: u.nombre, username: u.username, email: u.email, password: '', confirmPassword: '', rol: u.rol });
+    setForm({ nombre: u.nombre, username: u.username, email: u.email, password: '', confirmPassword: '', rol: u.rol, cargo: u.cargo || '', dependencia: u.dependencia || '' });
     setFormErr('');
     setShowModalPass(false);
     setShowConfirmPass(false);
@@ -491,6 +491,30 @@ export default function Usuarios() {
                       value={form.email}
                       onChange={e => setForm({ ...form, email: e.target.value })}
                     />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Cargo <span style={{ color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
+                    <div className="usr-field-wrap">
+                      <FiBriefcase className="usr-field-icon" size={14} />
+                      <input
+                        placeholder="Ej: Tesorero, Director"
+                        value={form.cargo}
+                        onChange={e => setForm({ ...form, cargo: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Dependencia <span style={{ color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
+                    <div className="usr-field-wrap">
+                      <FiMapPin className="usr-field-icon" size={14} />
+                      <input
+                        placeholder="Ej: Alcaldía de Comayagua"
+                        value={form.dependencia}
+                        onChange={e => setForm({ ...form, dependencia: e.target.value })}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

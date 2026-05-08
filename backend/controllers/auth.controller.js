@@ -81,7 +81,7 @@ exports.login = (req, res) => {
     db.query('UPDATE usuarios SET login_intentos=0, login_bloqueado_hasta=NULL WHERE id=?', [user.id]);
 
     const token = jwt.sign(
-      { id: user.id, rol: user.rol, nombre: user.nombre },
+      { id: user.id, rol: user.rol, nombre: user.nombre, cargo: user.cargo || null, dependencia: user.dependencia || null },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
@@ -94,7 +94,9 @@ exports.login = (req, res) => {
       user: {
         id: user.id,
         nombre: user.nombre,
-        rol: user.rol
+        rol: user.rol,
+        cargo: user.cargo || null,
+        dependencia: user.dependencia || null,
       }
     });
   });
