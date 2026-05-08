@@ -92,6 +92,47 @@
   min-width: 200px;
 }
 
+/* ── Barra institucional ──────────────────────────────── */
+.caja-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: linear-gradient(90deg, #f0f4fb, #f8faff);
+  border: 1.5px solid #dde8f5;
+  border-radius: 12px;
+  padding: 10px 20px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.caja-info-bar__item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.caja-info-bar__icon {
+  color: #274C8D;
+  flex-shrink: 0;
+}
+.caja-info-bar__label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+.caja-info-bar__value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0c1f40;
+}
+.caja-info-bar__sep {
+  width: 1px;
+  height: 22px;
+  background: #dde8f5;
+  flex-shrink: 0;
+}
+
 .caja-filters {
   display: flex;
   gap: 6px;

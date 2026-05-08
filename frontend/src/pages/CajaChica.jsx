@@ -4,7 +4,7 @@ import autoTable from 'jspdf-autotable';
 import {
   FiPlus, FiTrendingUp, FiTrendingDown,
   FiList, FiX, FiCalendar,
-  FiFileText, FiTag, FiTrash2, FiAlertTriangle, FiDownload, FiUser, FiEdit2,
+  FiFileText, FiTag, FiTrash2, FiAlertTriangle, FiDownload, FiUser, FiEdit2, FiBriefcase,
 } from 'react-icons/fi';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -619,6 +619,25 @@ export default function CajaChica() {
             </select>
           </div>
         )}
+
+        {/* ── Barra institucional ─────────────────────── */}
+        <div className="caja-info-bar">
+          <div className="caja-info-bar__item">
+            <FiUser size={14} className="caja-info-bar__icon" />
+            <span className="caja-info-bar__label">Asignado a:</span>
+            <span className="caja-info-bar__value">
+              {puedeVerOtros && selectedUid
+                ? usuarios.find(u => u.id === selectedUid)?.nombre || '...'
+                : user?.nombre || user?.email || 'Usuario actual'}
+            </span>
+          </div>
+          <div className="caja-info-bar__sep" />
+          <div className="caja-info-bar__item">
+            <FiBriefcase size={14} className="caja-info-bar__icon" />
+            <span className="caja-info-bar__label">Administrado por:</span>
+            <span className="caja-info-bar__value">Pagaduría Especial</span>
+          </div>
+        </div>
 
         {/* ── Stats ────────────────────────────────────── */}
         <div className="caja-stats">
