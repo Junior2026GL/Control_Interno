@@ -21,6 +21,7 @@ const DEPARTAMENTOS = [
 const PARTIDOS = ['PN','PL','LB','DC','PINU','LIBRE','PAC','OTRO'];
 
 const PARTIDO_COLOR = {
+  // Abreviaciones
   PN:    { backgroundColor: '#dbeafe', color: '#1e40af', borderColor: '#93c5fd' },
   PL:    { backgroundColor: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' },
   LB:    { backgroundColor: '#d1fae5', color: '#065f46', borderColor: '#6ee7b7' },
@@ -29,17 +30,39 @@ const PARTIDO_COLOR = {
   LIBRE: { backgroundColor: '#fce7f3', color: '#9d174d', borderColor: '#f9a8d4' },
   PAC:   { backgroundColor: '#e0f2fe', color: '#0369a1', borderColor: '#7dd3fc' },
   OTRO:  { backgroundColor: '#f1f5f9', color: '#475569', borderColor: '#cbd5e1' },
+  // Nombres completos (tal como se guardan en BD)
+  Nacional:      { backgroundColor: '#dbeafe', color: '#1e40af', borderColor: '#93c5fd' },
+  NACIONAL:      { backgroundColor: '#dbeafe', color: '#1e40af', borderColor: '#93c5fd' },
+  Liberal:       { backgroundColor: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' },
+  LIBERAL:       { backgroundColor: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' },
+  Libre:         { backgroundColor: '#fce7f3', color: '#9d174d', borderColor: '#f9a8d4' },
+  LIBRE2:        { backgroundColor: '#fce7f3', color: '#9d174d', borderColor: '#f9a8d4' },
+  Demócrata:     { backgroundColor: '#ede9fe', color: '#5b21b6', borderColor: '#c4b5fd' },
+  Democrata:     { backgroundColor: '#ede9fe', color: '#5b21b6', borderColor: '#c4b5fd' },
+  Independiente: { backgroundColor: '#f1f5f9', color: '#475569', borderColor: '#cbd5e1' },
+  INDEPENDIENTE: { backgroundColor: '#f1f5f9', color: '#475569', borderColor: '#cbd5e1' },
 };
 
 const PARTIDO_SOLID = {
-  PN:    '#3b82f6',
-  PL:    '#ef4444',
-  LB:    '#10b981',
+  // Abreviaciones
+  PN:    '#2563eb',
+  PL:    '#dc2626',
+  LB:    '#059669',
   DC:    '#7c3aed',
   PINU:  '#d97706',
   LIBRE: '#db2777',
   PAC:   '#0891b2',
   OTRO:  '#94a3b8',
+  // Nombres completos (tal como se guardan en BD)
+  Nacional:      '#2563eb',
+  NACIONAL:      '#2563eb',
+  Liberal:       '#dc2626',
+  LIBERAL:       '#dc2626',
+  Libre:         '#db2777',
+  Demócrata:     '#7c3aed',
+  Democrata:     '#7c3aed',
+  Independiente: '#94a3b8',
+  INDEPENDIENTE: '#94a3b8',
 };
 
 function buildEmpty() {
