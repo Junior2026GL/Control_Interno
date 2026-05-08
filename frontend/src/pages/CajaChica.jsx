@@ -584,7 +584,7 @@ export default function CajaChica() {
         {/* ── Page header ──────────────────────────────── */}
         <div className="usr-page-header">
           <div>
-            <h1>Caja Chica</h1>
+            <h1>Caja Chica y Fondo de Contingencia Administrativa</h1>
             <p>
               {puedeVerOtros && selectedUid
                 ? `Viendo caja de: ${usuarios.find(u => u.id === selectedUid)?.nombre || '...'}`
