@@ -440,7 +440,7 @@ export default function Alcaldes() {
           <div className="alc-analysis-panel">
             <div className="alc-analysis-panel__head">
               <FiPieChart size={16} color="#274C8D"/>
-              <span className="alc-analysis-panel__title">Análisis Político — Distribución de Poder Municipal</span>
+              <span className="alc-analysis-panel__title">Análisis Político — Distribución de Partido Político por Municipalidad</span>
               <button className="alc-analysis-panel__close" onClick={() => setShowAnalysis(false)}><FiX size={16}/></button>
             </div>
             <div className="alc-analysis-body">
