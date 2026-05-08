@@ -3,7 +3,7 @@ import {
   FiPlus, FiRefreshCw, FiEdit3, FiTrash2, FiX,
   FiCheckCircle, FiAlertCircle, FiFilter, FiList,
   FiHome, FiSearch, FiDownload, FiChevronUp, FiChevronDown,
-  FiChevronLeft, FiChevronRight, FiEye, FiMapPin, FiFlag, FiAward,
+  FiChevronLeft, FiChevronRight, FiEye, FiMapPin, FiFlag, FiAward, FiPieChart,
 } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import Navbar from '../components/Navbar';
@@ -31,6 +31,17 @@ const PARTIDO_COLOR = {
   OTRO:  { backgroundColor: '#f1f5f9', color: '#475569', borderColor: '#cbd5e1' },
 };
 
+const PARTIDO_SOLID = {
+  PN:    '#3b82f6',
+  PL:    '#ef4444',
+  LB:    '#10b981',
+  DC:    '#7c3aed',
+  PINU:  '#d97706',
+  LIBRE: '#db2777',
+  PAC:   '#0891b2',
+  OTRO:  '#94a3b8',
+};
+
 function buildEmpty() {
   return { departamento: '', municipio: '', alcalde: '', partido: '' };
 }
@@ -54,6 +65,56 @@ function norm(str) {
 
 const PAGE_SIZE = 10;
 
+function DonutChart({ segments, total, hovered, onHover }) {
+  const R = 72, CX = 110, CY = 110;
+  const CIRC = 2 * Math.PI * R;
+  let cum = 0;
+  const segs = segments.map(([partido, count]) => {
+    const len = total > 0 ? (count / total) * CIRC : 0;
+    const offset = CIRC - cum;
+    cum += len;
+    return { partido, count, len, offset };
+  });
+  const hovSeg = hovered ? segs.find(s => s.partido === hovered) : null;
+  return (
+    <div className="alc-donut-wrap">
+      <svg viewBox="0 0 220 220" className="alc-donut-svg">
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="#edf2ff" strokeWidth={32}/>
+        {segs.map(({ partido, count, len, offset }) => {
+          const color = PARTIDO_SOLID[partido] || '#94a3b8';
+          const isH = hovered === partido;
+          return (
+            <circle key={partido}
+              cx={CX} cy={CY} r={R} fill="none"
+              stroke={color}
+              strokeWidth={isH ? 38 : 30}
+              strokeDasharray={`${len} ${CIRC - len}`}
+              strokeDashoffset={offset}
+              transform={`rotate(-90 ${CX} ${CY})`}
+              style={{ cursor: 'pointer', transition: 'stroke-width .2s', opacity: hovered && !isH ? 0.35 : 1 }}
+              onMouseEnter={() => onHover(partido)}
+              onMouseLeave={() => onHover(null)}
+            />
+          );
+        })}
+        {hovSeg ? (
+          <>
+            <text x={CX} y={CY - 10} textAnchor="middle" fontSize="11" fontWeight="700"
+              fill={PARTIDO_SOLID[hovered] || '#0c1f40'} style={{ letterSpacing: '0.05em' }}>{hovered}</text>
+            <text x={CX} y={CY + 12} textAnchor="middle" fontSize="28" fontWeight="800" fill="#0c1f40">{hovSeg.count}</text>
+            <text x={CX} y={CY + 27} textAnchor="middle" fontSize="9" fontWeight="600" fill="#94a3b8">{((hovSeg.count / total) * 100).toFixed(1)}% del total</text>
+          </>
+        ) : (
+          <>
+            <text x={CX} y={CY - 6} textAnchor="middle" fontSize="30" fontWeight="800" fill="#0c1f40">{total}</text>
+            <text x={CX} y={CY + 14} textAnchor="middle" fontSize="9" fontWeight="700" fill="#94a3b8" style={{ letterSpacing: '0.06em' }}>MUNICIPIOS</text>
+          </>
+        )}
+      </svg>
+    </div>
+  );
+}
+
 export default function Alcaldes() {
   const { user: me } = useContext(AuthContext);
   const canEdit = me?.rol === 'SUPER_ADMIN' || me?.rol === 'ADMIN';
@@ -69,6 +130,8 @@ export default function Alcaldes() {
   const [confirmCfg, setConfirmCfg] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [detail,     setDetail]     = useState(null);
+  const [showAnalysis,  setShowAnalysis]  = useState(false);
+  const [donutHovered,  setDonutHovered]  = useState(null);
 
   // Filtros
   const [filtroDpto,    setFiltroDpto]    = useState('');
@@ -135,6 +198,19 @@ export default function Alcaldes() {
   const totalDepartamentos = useMemo(() => new Set(filtered.map(r => r.departamento).filter(Boolean)).size, [filtered]);
   const totalPartidos      = useMemo(() => new Set(filtered.map(r => r.partido).filter(Boolean)).size, [filtered]);
   const sinPartido         = useMemo(() => filtered.filter(r => !r.partido).length, [filtered]);
+
+  // Partido dominante por departamento (responde al filtro activo)
+  const deptoDominance = useMemo(() => {
+    const dptos = [...new Set(filtered.map(r => r.departamento).filter(Boolean))].sort();
+    return dptos.map(d => {
+      const rows = filtered.filter(r => norm(r.departamento) === norm(d));
+      const counts = {};
+      rows.forEach(r => { if (r.partido) counts[r.partido] = (counts[r.partido] || 0) + 1; });
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const [topPartido, topCount] = sorted[0] || ['—', 0];
+      return { depto: d, total: rows.length, topPartido, topCount };
+    }).sort((a, b) => b.total - a.total);
+  }, [filtered]);
 
   // Paginación
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -317,6 +393,12 @@ export default function Alcaldes() {
                 <FiDownload size={13}/> Exportar
               </button>
             )}
+            <button
+              className={`alc-tool-btn ${showAnalysis ? 'alc-tool-btn--analysis-active' : 'alc-tool-btn--analysis'}`}
+              onClick={() => setShowAnalysis(s => !s)}
+              title="Panel de análisis político">
+              <FiPieChart size={13}/> Análisis
+            </button>
             {canEdit && (
               <button
                 className={`alc-tool-btn ${tab === 'nuevo' ? 'alc-tool-btn--back' : 'alc-tool-btn--new'}`}
@@ -329,6 +411,88 @@ export default function Alcaldes() {
             )}
           </div>
         </div>
+
+        {/* ── PANEL ANÁLISIS ── */}
+        {showAnalysis && (
+          <div className="alc-analysis-panel">
+            <div className="alc-analysis-panel__head">
+              <FiPieChart size={16} color="#274C8D"/>
+              <span className="alc-analysis-panel__title">Análisis Político — Distribución de Poder Municipal</span>
+              <button className="alc-analysis-panel__close" onClick={() => setShowAnalysis(false)}><FiX size={16}/></button>
+            </div>
+            <div className="alc-analysis-body">
+              {/* Donut + Ranking */}
+              <div className="alc-analysis-top">
+                <div>
+                  <div className="alc-analysis-section-title">Distribución por Partido</div>
+                  <DonutChart
+                    segments={partidosEnFiltro}
+                    total={totalMunicipios}
+                    hovered={donutHovered}
+                    onHover={setDonutHovered}
+                  />
+                </div>
+                <div>
+                  <div className="alc-analysis-section-title">Ranking — Alcaldías por Partido · haz clic para filtrar</div>
+                  <div className="alc-analysis-ranking">
+                    {partidosEnFiltro.length === 0 ? (
+                      <p style={{ color: '#94a3b8', fontSize: '13px' }}>No hay datos para mostrar.</p>
+                    ) : partidosEnFiltro.map(([partido, count], i) => {
+                      const pct = totalMunicipios > 0 ? ((count / totalMunicipios) * 100).toFixed(1) : '0.0';
+                      const barPct = Math.round((count / (partidosEnFiltro[0]?.[1] || 1)) * 100);
+                      const color = PARTIDO_SOLID[partido] || '#94a3b8';
+                      const isH = donutHovered === partido;
+                      return (
+                        <div key={partido}
+                          className={`alc-rank-row${isH ? ' alc-rank-row--hovered' : ''}`}
+                          onMouseEnter={() => setDonutHovered(partido)}
+                          onMouseLeave={() => setDonutHovered(null)}
+                          onClick={() => setFiltroPartido(partido === filtroPartido ? '' : partido)}
+                          style={{ cursor: 'pointer' }}>
+                          <span className="alc-rank-num">{i + 1}</span>
+                          <span className="alc-rank-dot" style={{ background: color }}/>
+                          <span className="alc-rank-name">{partido}</span>
+                          <div className="alc-rank-bar-wrap">
+                            <div className="alc-rank-bar" style={{ width: `${barPct}%`, background: color }}/>
+                          </div>
+                          <span className="alc-rank-count">{count}</span>
+                          <span className="alc-rank-pct">{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {/* Partido dominante por depto */}
+              <div>
+                <div className="alc-analysis-section-title">Partido Dominante por Departamento · haz clic para filtrar</div>
+                <div className="alc-depto-grid">
+                  {deptoDominance.map(({ depto, total: dtotal, topPartido, topCount }) => {
+                    const badgeStyle = PARTIDO_COLOR[topPartido] || PARTIDO_COLOR.OTRO;
+                    const isActive = norm(filtroDpto) === norm(depto);
+                    return (
+                      <div key={depto}
+                        className={`alc-depto-card${isActive ? ' alc-depto-card--active' : ''}`}
+                        onClick={() => setFiltroDpto(isActive ? '' : depto)}>
+                        <div className="alc-depto-card__name">{depto}</div>
+                        {topPartido !== '—' ? (
+                          <span className="alc-badge" style={badgeStyle}>
+                            <span className="alc-badge-dot"/>{topPartido}
+                          </span>
+                        ) : (
+                          <span className="alc-depto-card__na">Sin datos</span>
+                        )}
+                        {topPartido !== '—' && (
+                          <div className="alc-depto-card__count">{topCount} de {dtotal} mun.</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Edit indicator */}
         {editingId && tab === 'nuevo' && (

@@ -851,6 +851,206 @@
 }
 .alc-cfm-ok:hover { background: #be123c; }
 
+/* ── TOOLBAR BOTÓN ANÁLISIS ─────────────────────────────────── */
+.alc-tool-btn--analysis {
+  background: #f8fafc;
+  color: #4a5568;
+  border-color: #dde4f0;
+}
+.alc-tool-btn--analysis:hover { background: #edf2ff; color: #274C8D; border-color: #b8d0f5; }
+
+.alc-tool-btn--analysis-active {
+  background: linear-gradient(135deg, #274C8D, #1a3a74);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 3px 12px rgba(39,76,141,0.30);
+}
+.alc-tool-btn--analysis-active:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(39,76,141,0.40); }
+
+/* ── PANEL ANÁLISIS ──────────────────────────────────────────── */
+.alc-analysis-panel {
+  background: white;
+  border: 1.5px solid #e3e9f5;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(39,76,141,0.09);
+  margin-bottom: 14px;
+  animation: alcModalIn .22s ease;
+}
+
+.alc-analysis-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1.5px solid #f0f4fa;
+  background: linear-gradient(90deg, #fafbff, white);
+}
+.alc-analysis-panel__title {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0c1f40;
+}
+.alc-analysis-panel__close {
+  background: none; border: none; cursor: pointer; color: #94a3b8;
+  display: flex; align-items: center; padding: 4px; border-radius: 6px;
+  transition: color .15s, background .15s;
+}
+.alc-analysis-panel__close:hover { background: #f1f5f9; color: #e53e3e; }
+
+.alc-analysis-body {
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.alc-analysis-section-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  margin-bottom: 14px;
+}
+
+/* Top row: donut + ranking */
+.alc-analysis-top {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* Donut SVG */
+.alc-donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.alc-donut-svg {
+  width: 220px;
+  height: 220px;
+  overflow: visible;
+}
+
+/* Ranking de partidos */
+.alc-analysis-ranking { }
+
+.alc-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  margin-bottom: 3px;
+  transition: background .15s;
+  border: 1.5px solid transparent;
+}
+.alc-rank-row:hover,
+.alc-rank-row--hovered {
+  background: #f0f4fb;
+  border-color: #dde8f8;
+}
+
+.alc-rank-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c7d2e8;
+  width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.alc-rank-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.alc-rank-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0c1f40;
+  width: 54px;
+  flex-shrink: 0;
+}
+.alc-rank-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: #f0f4fa;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 80px;
+}
+.alc-rank-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .7s cubic-bezier(.4,0,.2,1);
+  opacity: 0.85;
+}
+.alc-rank-count {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0c1f40;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.alc-rank-pct {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-weight: 600;
+  width: 46px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Grid de departamentos */
+.alc-depto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 10px;
+}
+.alc-depto-card {
+  background: #f8fafc;
+  border: 1.5px solid #e3e9f5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .15s, box-shadow .15s;
+}
+.alc-depto-card:hover {
+  background: #edf2ff;
+  border-color: #b8d0f5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(39,76,141,0.10);
+}
+.alc-depto-card--active {
+  background: #edf2ff;
+  border-color: #274C8D;
+  box-shadow: 0 0 0 3px rgba(39,76,141,0.12);
+}
+.alc-depto-card__name {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #4a5568;
+  line-height: 1.3;
+}
+.alc-depto-card__count {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.alc-depto-card__na {
+  font-size: 11px;
+  color: #d1d5db;
+}
+
 /* ── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .alc-header { flex-direction: column; align-items: flex-start; gap: 16px; }
@@ -859,6 +1059,8 @@
   .alc-toolbar-left { flex-wrap: wrap; }
   .alc-toolbar-right { justify-content: flex-end; }
   .alc-search-wrap { max-width: 100%; flex: 1 1 100%; }
+  .alc-analysis-top { grid-template-columns: 1fr; }
+  .alc-donut-wrap { align-items: center; margin-bottom: 12px; }
 }
 @media (max-width: 640px) {
   .alc-page { padding: 14px 12px 50px; }
@@ -866,4 +1068,5 @@
   .alc-header-title { font-size: 17px; }
   .alc-pagination { flex-direction: column; gap: 8px; }
   .alc-pg-info, .alc-pg-total { min-width: unset; text-align: center; }
+  .alc-depto-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 }
