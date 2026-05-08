@@ -25,6 +25,18 @@ function validateFields({ nombre, username, email, password, isCreate }) {
   return null;
 }
 
+exports.getMe = (req, res) => {
+  db.query(
+    'SELECT id, nombre, username, email, rol, cargo, dependencia FROM usuarios WHERE id = ?',
+    [req.user.id],
+    (err, results) => {
+      if (err) { console.error('[users] Error en getMe:', err); return res.status(500).json({ message: 'Error interno.' }); }
+      if (!results.length) return res.status(404).json({ message: 'Usuario no encontrado.' });
+      res.json(results[0]);
+    }
+  );
+};
+
 exports.getUsers = (req, res) => {
   db.query(
     `SELECT id, nombre, username, email, rol, activo, cargo, dependencia,

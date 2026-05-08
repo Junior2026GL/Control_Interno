@@ -127,6 +127,7 @@ export default function CajaChica() {
   // Selector de usuario (solo SUPER_ADMIN)
   const [usuarios, setUsuarios]       = useState([]);
   const [selectedUid, setSelectedUid] = useState(null); // null = propio
+  const [perfilPropio, setPerfilPropio] = useState(null); // cargo/dependencia frescos del usuario actual
 
   // Para SUPER_ADMIN y ADMIN: cargar lista de usuarios con caja
   useEffect(() => {
@@ -135,6 +136,13 @@ export default function CajaChica() {
       .then(r => setUsuarios(r.data))
       .catch(() => {});
   }, [puedeVerOtros]);
+
+  // Cargar perfil propio para tener cargo/dependencia actualizados sin re-login
+  useEffect(() => {
+    api.get('/users/me', { headers: authHeaders() })
+      .then(r => setPerfilPropio(r.data))
+      .catch(() => {});
+  }, []);
 
   // uidParam: query param a enviar en las peticiones
   const uidParam = puedeVerOtros && selectedUid ? `?usuario_id=${selectedUid}` : '';
@@ -624,7 +632,7 @@ export default function CajaChica() {
         {(() => {
           const usuarioActivo = puedeVerOtros && selectedUid
             ? usuarios.find(u => u.id === selectedUid)
-            : user;
+            : (perfilPropio || user);
           const nombreActivo     = usuarioActivo?.nombre || user?.email || 'Usuario actual';
           const cargoActivo      = usuarioActivo?.cargo      || null;
           const dependenciaActiva = usuarioActivo?.dependencia || null;

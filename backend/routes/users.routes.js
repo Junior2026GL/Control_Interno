@@ -5,6 +5,9 @@ const checkRole = require('../middleware/role');
 const audit = require('../middleware/audit');
 const usersController = require('../controllers/users.controller');
 
+// Perfil propio — cualquier usuario autenticado
+router.get('/me', verifyToken, usersController.getMe);
+
 // Listar usuarios — SUPER_ADMIN y ADMIN
 router.get(
   '/',

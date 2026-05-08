@@ -244,13 +244,13 @@ exports.deleteMovimiento = (req, res) => {
 exports.getUsuariosCaja = (req, res) => {
   const esSuperAdmin = req.user.rol === 'SUPER_ADMIN';
   const sql = esSuperAdmin
-    ? `SELECT u.id, u.nombre
+    ? `SELECT u.id, u.nombre, u.cargo, u.dependencia
        FROM usuarios u
        JOIN usuario_modulos um ON u.id = um.usuario_id
        JOIN modulos m ON m.id = um.modulo_id
        WHERE m.clave = 'caja' AND u.activo = 1 AND u.id != ?
        ORDER BY u.nombre`
-    : `SELECT u.id, u.nombre
+    : `SELECT u.id, u.nombre, u.cargo, u.dependencia
        FROM usuarios u
        JOIN usuario_modulos um ON u.id = um.usuario_id
        JOIN modulos m ON m.id = um.modulo_id
