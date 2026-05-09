@@ -62,6 +62,7 @@ export default function ConstanciaTransferencia() {
   const [toast, setToast]     = useState(null); // {type:'ok'|'error'|'warn'|'info', msg:''}
   const [editingId, setEditingId]   = useState(null);
   const [confirmCfg, setConfirmCfg] = useState(null); // {msg, onOk}
+  const [censoStatus, setCensoStatus] = useState(null); // null | 'searching' | 'found' | 'notfound'
 
   // Historial
   const [historial, setHistorial]     = useState([]);
@@ -78,6 +79,28 @@ export default function ConstanciaTransferencia() {
   };
 
   const askConfirm = (msg, onOk) => setConfirmCfg({ msg, onOk });
+
+  // Auto-búsqueda en censo_nacional al completar 13 dígitos
+  const handleDniChange = async (value) => {
+    set('dni', value);
+    const digits = value.replace(/\D/g, '');
+    if (digits.length !== 13) {
+      setCensoStatus(null);
+      return;
+    }
+    setCensoStatus('searching');
+    try {
+      const { data } = await api.get(`/censo/${digits}`);
+      set('nombre', data.nombreCompleto);
+      setCensoStatus('found');
+    } catch (err) {
+      if (err?.response?.status === 404) {
+        setCensoStatus('notfound');
+      } else {
+        setCensoStatus(null);
+      }
+    }
+  };
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -130,6 +153,7 @@ export default function ConstanciaTransferencia() {
       setPreviewData({ ...form });
       setShowPreview(true);
       setForm(buildEmpty());
+      setCensoStatus(null);
     } catch {
       showToast('Error al guardar la constancia.', 'error');
     } finally {
@@ -281,8 +305,28 @@ export default function ConstanciaTransferencia() {
                 <div className="ct-row-2">
                   <div className="ct-field">
                     <label className="ct-label">Número de Identidad (DNI) <span className="req">*</span></label>
-                    <input className="ct-input" type="text" placeholder="0801-0000-00000"
-                      value={form.dni} onChange={e => set('dni', e.target.value)} required />
+                      <div className="ct-dni-wrap">
+                        <input className="ct-input" type="text" placeholder="0801-0000-00000"
+                          value={form.dni}
+                          onChange={e => handleDniChange(e.target.value)}
+                          maxLength={15}
+                          required />
+                        {censoStatus === 'searching' && (
+                          <span className="ct-dni-status ct-dni-status--searching">
+                            <span className="ct-dni-spinner"/> Buscando…
+                          </span>
+                        )}
+                        {censoStatus === 'found' && (
+                          <span className="ct-dni-status ct-dni-status--found">
+                            ✓ Encontrado
+                          </span>
+                        )}
+                        {censoStatus === 'notfound' && (
+                          <span className="ct-dni-status ct-dni-status--notfound">
+                            ⚠ No encontrado — ingrese el nombre manualmente
+                          </span>
+                        )}
+                      </div>
                   </div>
                   <div className="ct-field">
                     <label className="ct-label">Teléfono</label>
@@ -405,7 +449,7 @@ export default function ConstanciaTransferencia() {
 
             {/* Mobile actions */}
             <div className="ct-actions-mobile">
-              <button type="button" className="ct-btn-reset" onClick={() => setForm(buildEmpty())}>
+              <button type="button" className="ct-btn-reset" onClick={() => { setForm(buildEmpty()); setCensoStatus(null); }}>
                 <FiRefreshCw size={14} /> Limpiar
               </button>
               <button type="submit" className="ct-btn-pdf" disabled={loading}>
@@ -459,7 +503,7 @@ export default function ConstanciaTransferencia() {
               <div className="ct-aside-divider" />
 
               <div className="ct-aside-actions">
-                <button type="button" className="ct-btn-reset" onClick={() => setForm(buildEmpty())}>
+                <button type="button" className="ct-btn-reset" onClick={() => { setForm(buildEmpty()); setCensoStatus(null); }}>
                   <FiRefreshCw size={14} /> Limpiar formulario
                 </button>
                 <button type="submit" form="ct-form" className="ct-btn-pdf" disabled={loading}>
@@ -468,7 +512,7 @@ export default function ConstanciaTransferencia() {
                     : <><FiPrinter size={15} /> {editingId ? 'Actualizar y Ver' : 'Guardar e Imprimir'}</>}
                 </button>
                 {editingId && (
-                  <button type="button" className="ct-btn-reset" onClick={() => { setEditingId(null); setForm(buildEmpty()); }}>
+                  <button type="button" className="ct-btn-reset" onClick={() => { setEditingId(null); setForm(buildEmpty()); setCensoStatus(null); }}>
                     Cancelar edición
                   </button>
                 )}
