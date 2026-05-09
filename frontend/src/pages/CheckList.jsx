@@ -76,7 +76,7 @@ function FormFields({ values, onChange }) {
             value={values.numero_expediente}
             onChange={e => onChange('numero_expediente', e.target.value)}
             maxLength={100}
-            placeholder="Ej. EXP-2026-001"
+            placeholder="Ej. 0005-05-2026"
           />
         </div>
       </div>
