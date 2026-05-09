@@ -25,7 +25,7 @@ const TIPOS_PAGO = ['Cheque', 'Pago Contra-Entrega', 'Transferencia', 'Pago en L
 
 function buildEmpty() {
   return {
-    nombre: '', rtn: '', rp: '', categoria: '', tipo_servicio: '',
+    nombre: '', rtn: '', categoria: '', tipo_servicio: '',
     vendedor: '', telefono: '', correo: '', direccion: '', estado: 'ACTIVO',
     eval_calidad: '', eval_puntualidad: '', eval_precio: '', eval_servicio: '',
     observaciones: '',
@@ -164,8 +164,8 @@ export default function Proveedores() {
     const rows = filtered.map(r => ({
       'Nombre':         r.nombre,
       'RTN':            r.rtn || '',
-      'Cuenta del Proveedor': (() => { try { const p = JSON.parse(r.rp || 'null'); return p?.cuenta || ''; } catch { return r.rp || ''; } })(),
-      'Tipo de Pago': (() => { try { const p = JSON.parse(r.rp || 'null'); return (p?.tipos_pago || []).join(', '); } catch { return ''; } })(),
+      'Cuenta del Proveedor': r.cuenta_proveedor || '',
+      'Tipo de Pago':   r.tipos_pago || '',
       'Categoría':      r.categoria,
       'Tipo de servicio': r.tipo_servicio || '',
       'Vendedor':       r.vendedor || '',
@@ -192,12 +192,12 @@ export default function Proveedores() {
     if (!form.categoria.trim()) { showToast('La categoría es requerida.', 'error'); return; }
     if (form.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo.trim()))
       { showToast('Formato de correo electrónico inválido.', 'error'); return; }
-    // Serializar tipos de pago + cuenta en el campo rp
-    const rpData = JSON.stringify({
-      tipos_pago: form.tipos_pago,
-      cuenta: form.cuenta_proveedor.trim(),
-    });
-    const payload = { ...form, rp: rpData };
+    // Serializar tipos de pago como CSV para la columna tipos_pago
+    const payload = {
+      ...form,
+      cuenta_proveedor: form.cuenta_proveedor.trim() || null,
+      tipos_pago: form.tipos_pago.join(',') || null,
+    };
     setSaving(true);
     try {
       if (editingId) {
@@ -216,22 +216,14 @@ export default function Proveedores() {
   };
 
   const handleEdit = (row) => {
-    // parsear rp: puede ser JSON {tipos_pago, cuenta} o string legacy
+    // parsear tipos_pago desde columna directa (CSV)
     let tipos_pago = [];
-    let cuenta_proveedor = '';
-    try {
-      const parsed = JSON.parse(row.rp || 'null');
-      if (parsed && typeof parsed === 'object') {
-        tipos_pago = parsed.tipos_pago || [];
-        cuenta_proveedor = parsed.cuenta || '';
-      } else if (typeof row.rp === 'string' && row.rp) {
-        cuenta_proveedor = row.rp;
-      }
-    } catch { cuenta_proveedor = row.rp || ''; }
+    if (row.tipos_pago) {
+      tipos_pago = row.tipos_pago.split(',').map(t => t.trim()).filter(Boolean);
+    }
     setForm({
       nombre:          row.nombre || '',
       rtn:             row.rtn || '',
-      rp:              row.rp || '',
       categoria:       row.categoria || '',
       tipo_servicio:   row.tipo_servicio || '',
       vendedor:        row.vendedor || '',
@@ -245,7 +237,7 @@ export default function Proveedores() {
       eval_servicio:   row.eval_servicio ?? '',
       observaciones:   row.observaciones || '',
       tipos_pago,
-      cuenta_proveedor,
+      cuenta_proveedor: row.cuenta_proveedor || '',
     });
     setEditingId(row.id);
     setTab('nuevo');
@@ -756,26 +748,22 @@ export default function Proveedores() {
                     <span className="pv-detail-value" style={{ fontFamily: 'monospace' }}>{detail.rtn}</span>
                   </div>
                 )}
-                {(() => {
-                  let cuenta = ''; let tipos = [];
-                  try { const p = JSON.parse(detail.rp || 'null'); cuenta = p?.cuenta || ''; tipos = p?.tipos_pago || []; } catch { cuenta = detail.rp || ''; }
-                  return (<>
-                    {cuenta && (
-                      <div className="pv-detail-item">
-                        <span className="pv-detail-label">Cuenta del Proveedor</span>
-                        <span className="pv-detail-value" style={{ fontFamily: 'monospace' }}>{cuenta}</span>
-                      </div>
-                    )}
-                    {tipos.length > 0 && (
-                      <div className="pv-detail-item">
-                        <span className="pv-detail-label">Tipo de Pago</span>
-                        <span className="pv-detail-value" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {tipos.map((t, i) => <span key={i} className="pv-chip pv-chip--readonly">{t}</span>)}
-                        </span>
-                      </div>
-                    )}
-                  </>);
-                })()}
+                {detail.cuenta_proveedor && (
+                  <div className="pv-detail-item">
+                    <span className="pv-detail-label">Cuenta del Proveedor</span>
+                    <span className="pv-detail-value" style={{ fontFamily: 'monospace' }}>{detail.cuenta_proveedor}</span>
+                  </div>
+                )}
+                {detail.tipos_pago && (
+                  <div className="pv-detail-item">
+                    <span className="pv-detail-label">Tipo de Pago</span>
+                    <span className="pv-detail-value" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      {detail.tipos_pago.split(',').map(t => t.trim()).filter(Boolean).map((t, i) => (
+                        <span key={i} className="pv-chip pv-chip--readonly">{t}</span>
+                      ))}
+                    </span>
+                  </div>
+                )}
                 {detail.tipo_servicio && (
                   <div className="pv-detail-item">
                     <span className="pv-detail-label">Tipo de servicio</span>
