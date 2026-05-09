@@ -643,15 +643,24 @@ export default function CheckList() {
           ) : (
             <>
               <table className="cl-table">
+                <colgroup>
+                  <col style={{ width: '44px' }} />
+                  <col style={{ width: '170px' }} />
+                  <col style={{ width: '90px' }} />
+                  <col style={{ width: '170px' }} />
+                  <col style={{ width: '110px' }} />
+                  <col />
+                  <col style={{ width: '148px' }} />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th><span className="cl-th-inner">#</span></th>
+                    <th style={{ textAlign: 'center' }}><span className="cl-th-inner" style={{ justifyContent: 'center' }}>#</span></th>
                     <th><span className="cl-th-inner">N° Expediente</span></th>
-                    <th><span className="cl-th-inner">N° Folios</span></th>
+                    <th style={{ textAlign: 'center' }}><span className="cl-th-inner" style={{ justifyContent: 'center' }}>N° Folios</span></th>
                     <th><span className="cl-th-inner">Documentos</span></th>
                     <th><span className="cl-th-inner">Fecha</span></th>
                     <th><span className="cl-th-inner">Creado por</span></th>
-                    <th><span className="cl-th-inner">Acciones</span></th>
+                    <th style={{ textAlign: 'center' }}><span className="cl-th-inner" style={{ justifyContent: 'center' }}>Acciones</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -660,11 +669,11 @@ export default function CheckList() {
                     return (
                       <tr key={cl.id} className={idx % 2 === 1 ? 'cl-tr-alt' : ''}>
                         <td className="cl-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
-                        <td style={{ whiteSpace: 'nowrap', fontWeight: 600, color: '#274C8D' }}>
-                          {String(cl.numero).padStart(4, '0')}
-                          {cl.numero_expediente ? <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>{cl.numero_expediente}</div> : null}
+                        <td>
+                          <span style={{ fontWeight: 700, color: '#274C8D', fontSize: 13 }}>{String(cl.numero).padStart(4, '0')}</span>
+                          {cl.numero_expediente ? <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400, marginTop: 2 }}>{cl.numero_expediente}</div> : null}
                         </td>
-                        <td style={{ whiteSpace: 'nowrap' }}>{cl.numero_folios || '—'}</td>
+                        <td style={{ textAlign: 'center', fontWeight: 600 }}>{cl.numero_folios || '—'}</td>
                         <td>
                           <div className="cl-docs-bar">
                             <div className="cl-docs-fill">
@@ -677,7 +686,7 @@ export default function CheckList() {
                         <td style={{ whiteSpace: 'nowrap' }}>{fmtFecha(cl.fecha_creacion)}</td>
                         <td style={{ whiteSpace: 'nowrap' }}>{cl.creado_por_nombre || '—'}</td>
                         <td>
-                          <div className="cl-actions">
+                          <div className="cl-actions" style={{ justifyContent: 'center' }}>
                             <button className="cl-act-btn cl-act-btn--view" title="Ver detalle" onClick={() => setVerItem(cl)}><FiEye size={13}/></button>
                             <button className="cl-act-btn cl-act-btn--print" title="Imprimir PDF" onClick={() => generarPDF(cl, true)}><FiPrinter size={13}/></button>
                             <button className="cl-act-btn cl-act-btn--dl" title="Descargar PDF" onClick={() => generarPDF(cl, false)}><FiClipboard size={13}/></button>

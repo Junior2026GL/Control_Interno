@@ -171,6 +171,7 @@
   border-collapse: collapse;
   font-size: 12.5px;
   min-width: 760px;
+  table-layout: fixed;
 }
 .cl-table thead tr {
   background: linear-gradient(90deg, #0f2744, #274C8D);
