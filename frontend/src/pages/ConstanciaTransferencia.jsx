@@ -650,8 +650,10 @@ export default function ConstanciaTransferencia() {
               <div className="ct-doc-header">
                 <img src="/logo-congreso.png.png" alt="Logo" className="ct-doc-logo" onError={e => e.target.style.display='none'} />
                 <div className="ct-doc-inst">
-                  <p className="ct-doc-inst-mid">CONGRESO NACIONAL DE LA REPÚBLICA DE HONDURAS</p>
-                  <p className="ct-doc-inst-bot">Despacho del Pagador Especial</p>
+                  <p className="ct-doc-inst-top">REPÚBLICA DE HONDURAS</p>
+                  <p className="ct-doc-inst-mid">CONGRESO NACIONAL</p>
+                  <p className="ct-doc-inst-bot">PAGADURÍA ESPECIAL</p>
+                  <p className="ct-doc-inst-sub">Despacho del Pagador Especial</p>
                 </div>
               </div>
               <div className="ct-doc-title-bar">

@@ -144,10 +144,14 @@ export async function generarConstanciaPdf(data) {
   // Institución centrada
   const instCX = L + LOGO_W + (CW - LOGO_W) / 2;
   doc.setTextColor(...AZUL);
-  doc.setFont('helvetica', 'bold');   doc.setFontSize(12);
-  doc.text('CONGRESO NACIONAL DE LA REPÚBLICA DE HONDURAS', instCX, y + 15, { align: 'center' });
+  doc.setFont('helvetica', 'bold');   doc.setFontSize(13);
+  doc.text('REPÚBLICA DE HONDURAS', instCX, y + 10, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  doc.text('Despacho del Pagador Especial', instCX, y + 24, { align: 'center' });
+  doc.text('CONGRESO NACIONAL', instCX, y + 17, { align: 'center' });
+  doc.setFont('helvetica', 'bold');   doc.setFontSize(16);
+  doc.text('PAGADURÍA ESPECIAL', instCX, y + 27, { align: 'center' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.text('Despacho del Pagador Especial', instCX, y + 34, { align: 'center' });
 
   // ════ BARRA TÍTULO ════
   y += HDR_H;
@@ -244,10 +248,14 @@ export async function generarConstanciaPdf(data) {
   doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
   doc.line(L + LOGO_W, y + 4, L + LOGO_W, y + HDR_H - 4);
   doc.setTextColor(...AZUL);
-  doc.setFont('helvetica', 'bold');   doc.setFontSize(12);
-  doc.text('CONGRESO NACIONAL DE LA REPÚBLICA DE HONDURAS', instCX, y + 15, { align: 'center' });
+  doc.setFont('helvetica', 'bold');   doc.setFontSize(13);
+  doc.text('REPÚBLICA DE HONDURAS', instCX, y + 10, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  doc.text('Despacho del Pagador Especial', instCX, y + 24, { align: 'center' });
+  doc.text('CONGRESO NACIONAL', instCX, y + 17, { align: 'center' });
+  doc.setFont('helvetica', 'bold');   doc.setFontSize(16);
+  doc.text('PAGADURÍA ESPECIAL', instCX, y + 27, { align: 'center' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.text('Despacho del Pagador Especial', instCX, y + 34, { align: 'center' });
   y += HDR_H;
   doc.setFillColor(...AZUL);
   doc.rect(L, y, CW, TBAR_H, 'F');
