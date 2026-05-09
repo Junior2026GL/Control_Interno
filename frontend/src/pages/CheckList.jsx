@@ -643,54 +643,52 @@ export default function CheckList() {
           ) : (
             <>
               <table className="cl-table">
-                <colgroup>
-                  <col style={{ width: '40px' }} />
-                  <col style={{ width: '130px' }} />
-                  <col style={{ width: '80px' }} />
-                  <col style={{ width: '160px' }} />
-                  <col style={{ width: '100px' }} />
-                  <col style={{ width: '150px' }} />
-                  <col style={{ width: '140px' }} />
-                </colgroup>
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'center' }}><span className="cl-th-inner" style={{ justifyContent: 'center' }}>#</span></th>
+                    <th><span className="cl-th-inner cl-th-center">#</span></th>
                     <th><span className="cl-th-inner">N° Expediente</span></th>
-                    <th style={{ textAlign: 'center' }}><span className="cl-th-inner" style={{ justifyContent: 'center' }}>N° Folios</span></th>
+                    <th><span className="cl-th-inner cl-th-center">N° Folios</span></th>
                     <th><span className="cl-th-inner">Documentos</span></th>
                     <th><span className="cl-th-inner">Fecha</span></th>
                     <th><span className="cl-th-inner">Creado por</span></th>
-                    <th style={{ textAlign: 'center' }}><span className="cl-th-inner" style={{ justifyContent: 'center' }}>Acciones</span></th>
+                    <th><span className="cl-th-inner cl-th-center">Acciones</span></th>
                   </tr>
                 </thead>
                 <tbody>
                   {listaPaginada.map((cl, idx) => {
                     const n = countDocs(cl);
+                    const pct = Math.round((n / DOCS.length) * 100);
+                    const docsColor = pct === 100 ? '#065f46' : pct >= 50 ? '#1e40af' : '#b45309';
+                    const docsBg   = pct === 100 ? '#d1fae5' : pct >= 50 ? '#dbeafe' : '#fef9c3';
                     return (
                       <tr key={cl.id} className={idx % 2 === 1 ? 'cl-tr-alt' : ''}>
                         <td className="cl-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                         <td>
-                          <span style={{ fontWeight: 700, color: '#274C8D', fontSize: 13 }}>{String(cl.numero).padStart(4, '0')}</span>
-                          {cl.numero_expediente ? <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400, marginTop: 2 }}>{cl.numero_expediente}</div> : null}
+                          <div className="cl-exp-wrap">
+                            <div className="cl-avatar">{String(cl.numero).padStart(4, '0').slice(-2)}</div>
+                            <div>
+                              <div className="cl-exp-num">{String(cl.numero).padStart(4, '0')}</div>
+                              {cl.numero_expediente && <div className="cl-exp-sub">{cl.numero_expediente}</div>}
+                            </div>
+                          </div>
                         </td>
-                        <td style={{ textAlign: 'center', fontWeight: 600 }}>{cl.numero_folios || '—'}</td>
+                        <td className="cl-td-center cl-folios">{cl.numero_folios || '—'}</td>
                         <td>
                           <div className="cl-docs-bar">
                             <div className="cl-docs-fill">
-                              <div className="cl-docs-fill-inner"
-                                style={{ width: `${Math.round((n / DOCS.length) * 100)}%` }} />
+                              <div className="cl-docs-fill-inner" style={{ width: `${pct}%` }} />
                             </div>
-                            <span className="cl-docs-label">{n}/{DOCS.length}</span>
+                            <span className="cl-docs-badge" style={{ background: docsBg, color: docsColor }}>{n}/{DOCS.length}</span>
                           </div>
                         </td>
-                        <td style={{ whiteSpace: 'nowrap' }}>{fmtFecha(cl.fecha_creacion)}</td>
-                        <td style={{ whiteSpace: 'nowrap' }}>{cl.creado_por_nombre || '—'}</td>
+                        <td className="cl-td-fecha">{fmtFecha(cl.fecha_creacion)}</td>
+                        <td className="cl-td-creado">{cl.creado_por_nombre || '—'}</td>
                         <td>
-                          <div className="cl-actions" style={{ justifyContent: 'center' }}>
-                            <button className="cl-act-btn cl-act-btn--view" title="Ver detalle" onClick={() => setVerItem(cl)}><FiEye size={13}/></button>
-                            <button className="cl-act-btn cl-act-btn--print" title="Imprimir PDF" onClick={() => generarPDF(cl, true)}><FiPrinter size={13}/></button>
-                            <button className="cl-act-btn cl-act-btn--dl" title="Descargar PDF" onClick={() => generarPDF(cl, false)}><FiClipboard size={13}/></button>
-                            <button className="cl-act-btn cl-act-btn--edit" title="Editar" onClick={() => openEditar(cl)}><FiEdit2 size={13}/></button>
+                          <div className="cl-actions">
+                            <button className="cl-act-btn cl-act-btn--view"  title="Ver detalle"   onClick={() => setVerItem(cl)}><FiEye size={13}/></button>
+                            <button className="cl-act-btn cl-act-btn--print" title="Imprimir PDF"  onClick={() => generarPDF(cl, true)}><FiPrinter size={13}/></button>
+                            <button className="cl-act-btn cl-act-btn--dl"    title="Descargar PDF" onClick={() => generarPDF(cl, false)}><FiClipboard size={13}/></button>
+                            <button className="cl-act-btn cl-act-btn--edit"  title="Editar"        onClick={() => openEditar(cl)}><FiEdit2 size={13}/></button>
                             {canDelete && (
                               <button className="cl-act-btn cl-act-btn--del" title="Eliminar" onClick={() => setDelItem(cl)}><FiTrash2 size={13}/></button>
                             )}

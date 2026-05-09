@@ -167,83 +167,82 @@
 }
 
 .cl-table {
-  width: auto;
-  min-width: 100%;
+  width: 100%;
+  min-width: 780px;
   border-collapse: collapse;
   font-size: 12.5px;
-  table-layout: auto;
 }
 .cl-table thead tr {
   background: linear-gradient(90deg, #0f2744, #274C8D);
 }
 .cl-table thead th {
-  padding: 0;
-  text-align: left;
-  color: white;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
+  padding: 0; text-align: left; color: white;
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; white-space: nowrap;
 }
-.cl-th-inner {
-  display: flex; align-items: center; gap: 4px;
-  padding: 11px 12px;
-}
+.cl-th-inner { display: flex; align-items: center; gap: 4px; padding: 11px 12px; }
+.cl-th-center { justify-content: center; }
 .cl-table tbody tr { border-bottom: 1px solid #f0f4fa; transition: background .15s; }
 .cl-table tbody tr:last-child { border-bottom: none; }
 .cl-table tbody tr:hover { background: #eff6ff; }
 .cl-tr-alt { background: #fafcff; }
 .cl-table td { padding: 10px 12px; color: #1a2332; vertical-align: middle; }
 
-.cl-td-num { color: #94a3b8; font-size: 12px; width: 40px; text-align: center; }
+.cl-td-num    { color: #94a3b8; font-size: 12px; width: 40px; text-align: center; }
+.cl-td-center { text-align: center; }
+.cl-td-fecha  { white-space: nowrap; font-size: 12.5px; color: #374151; }
+.cl-td-creado { font-size: 12.5px; color: #374151; }
+.cl-folios    { font-weight: 700; color: #0f2744; }
+
+/* Avatar + expediente */
+.cl-exp-wrap  { display: flex; align-items: center; gap: 10px; }
+.cl-avatar {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1d4ed8; font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.cl-exp-num { font-weight: 700; color: #274C8D; font-size: 13.5px; }
+.cl-exp-sub { font-size: 10.5px; color: #94a3b8; margin-top: 2px; }
 
 /* tfoot */
-.cl-tfoot-row td {
-  padding: 8px 12px;
-  font-size: 12px;
-  color: #94a3b8;
-  border-top: 1px solid #f0f4fa;
-  background: #fafcff;
-}
+.cl-tfoot-row { background: #eff6ff !important; border-top: 2px solid #bfdbfe; }
+.cl-tfoot-row td { padding: 9px 12px; font-size: 12px; color: #6b7a99; }
+.cl-tfoot-row strong { color: #1d4ed8; }
 
-.cl-docs-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+/* Barra de documentos */
+.cl-docs-bar  { display: flex; align-items: center; gap: 8px; }
 .cl-docs-fill {
-  flex: 1;
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 99px;
-  overflow: hidden;
-  min-width: 60px;
+  flex: 1; height: 6px; background: #e2e8f0;
+  border-radius: 99px; overflow: hidden; min-width: 60px;
 }
 .cl-docs-fill-inner {
-  height: 100%;
-  border-radius: 99px;
+  height: 100%; border-radius: 99px;
   background: linear-gradient(90deg, #274C8D, #3b82f6);
   transition: width 0.3s;
 }
-.cl-docs-label { font-size: 12px; color: #64748b; white-space: nowrap; }
-
-/* ── Action buttons in table ─────────────────────────────────────────────── */
-.cl-actions { display: flex; gap: 4px; align-items: center; }
-.cl-act-btn {
-  width: 28px; height: 28px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 7px;
-  background: #fff;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: #64748b;
-  transition: all 0.14s;
+.cl-docs-badge {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap;
 }
-.cl-act-btn:hover         { background: #eff6ff; border-color: #274C8D; color: #274C8D; }
-.cl-act-btn--del:hover    { background: #fff1f2; border-color: #fecdd3; color: #e11d48; }
-.cl-act-btn--print:hover  { background: #f0fdf4; border-color: #a7f3d0; color: #059669; }
-.cl-act-btn--view:hover   { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+
+/* Botones de acción — estilo Proveedores */
+.cl-actions { display: flex; gap: 5px; align-items: center; }
+.cl-act-btn {
+  width: 30px; height: 30px; border-radius: 7px; border: 1.5px solid;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .18s, transform .15s; flex-shrink: 0;
+}
+.cl-act-btn--view  { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; }
+.cl-act-btn--view:hover  { background: #1d4ed8; color: white; border-color: #1d4ed8; transform: scale(1.07); }
+.cl-act-btn--print { background: #f0fdf4; color: #059669; border-color: #6ee7b7; }
+.cl-act-btn--print:hover { background: #059669; color: white; border-color: #059669; transform: scale(1.07); }
+.cl-act-btn--dl    { background: #f5f3ff; color: #7c3aed; border-color: #c4b5fd; }
+.cl-act-btn--dl:hover    { background: #7c3aed; color: white; border-color: #7c3aed; transform: scale(1.07); }
+.cl-act-btn--edit  { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+.cl-act-btn--edit:hover  { background: #d97706; color: white; border-color: #d97706; transform: scale(1.07); }
+.cl-act-btn--del   { background: #fff5f5; color: #e53e3e; border-color: #fecaca; }
+.cl-act-btn--del:hover   { background: #e53e3e; color: white; border-color: #e53e3e; transform: scale(1.07); }
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
 .cl-empty {
