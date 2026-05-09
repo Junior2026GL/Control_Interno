@@ -82,8 +82,8 @@ export default function ConstanciaTransferencia() {
 
   // Auto-búsqueda en censo_nacional al completar 13 dígitos
   const handleDniChange = async (value) => {
-    set('dni', value);
-    const digits = value.replace(/\D/g, '');
+    const digits = value.replace(/\D/g, '').slice(0, 13);
+    set('dni', digits);
     if (digits.length !== 13) {
       setCensoStatus(null);
       return;
@@ -298,19 +298,14 @@ export default function ConstanciaTransferencia() {
               </div>
               <div className="ct-fields">
                 <div className="ct-field-full">
-                  <label className="ct-label">Nombre Completo <span className="req">*</span></label>
-                  <input className="ct-input" type="text" placeholder="Nombre completo del beneficiario"
-                    value={form.nombre} onChange={e => set('nombre', e.target.value.toUpperCase())} required />
-                </div>
-                <div className="ct-row-2">
-                  <div className="ct-field">
-                    <label className="ct-label">Número de Identidad (DNI) <span className="req">*</span></label>
-                      <div className="ct-dni-wrap">
-                        <input className="ct-input" type="text" placeholder="0801-0000-00000"
-                          value={form.dni}
-                          onChange={e => handleDniChange(e.target.value)}
-                          maxLength={15}
-                          required />
+                  <label className="ct-label">Número de Identidad (DNI) <span className="req">*</span></label>
+                    <div className="ct-dni-wrap">
+                      <input className="ct-input" type="text" inputMode="numeric" pattern="[0-9]{13}"
+                        placeholder="0801199900000"
+                        value={form.dni}
+                        onChange={e => handleDniChange(e.target.value)}
+                        maxLength={13}
+                        required />
                         {censoStatus === 'searching' && (
                           <span className="ct-dni-status ct-dni-status--searching">
                             <span className="ct-dni-spinner"/> Buscando…
@@ -327,7 +322,13 @@ export default function ConstanciaTransferencia() {
                           </span>
                         )}
                       </div>
-                  </div>
+                </div>
+                <div className="ct-field-full">
+                  <label className="ct-label">Nombre Completo <span className="req">*</span></label>
+                  <input className="ct-input" type="text" placeholder="Nombre completo del beneficiario"
+                    value={form.nombre} onChange={e => set('nombre', e.target.value.toUpperCase())} required />
+                </div>
+                <div className="ct-row-2">
                   <div className="ct-field">
                     <label className="ct-label">Teléfono</label>
                     <div className="ct-icon-field">
@@ -336,13 +337,13 @@ export default function ConstanciaTransferencia() {
                         value={form.telefono} onChange={e => set('telefono', e.target.value)} />
                     </div>
                   </div>
-                </div>
-                <div className="ct-field-full">
-                  <label className="ct-label">Dirección</label>
-                  <div className="ct-icon-field">
-                    <FiMapPin size={14} className="ct-icon" />
-                    <input className="ct-input ct-has-icon" type="text" placeholder="Dirección del beneficiario"
-                      value={form.direccion} onChange={e => set('direccion', e.target.value)} />
+                  <div className="ct-field">
+                    <label className="ct-label">Dirección</label>
+                    <div className="ct-icon-field">
+                      <FiMapPin size={14} className="ct-icon" />
+                      <input className="ct-input ct-has-icon" type="text" placeholder="Dirección del beneficiario"
+                        value={form.direccion} onChange={e => set('direccion', e.target.value)} />
+                    </div>
                   </div>
                 </div>
                 <div className="ct-field-full">
