@@ -20,7 +20,7 @@ function buildEmpty() {
     // Sección III
     concepto: '',
     // Ciudad de firma
-    ciudadFirma: '',
+    ciudadFirma: 'Tegucigalpa, M.D.C.',
   };
 }
 
