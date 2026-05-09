@@ -21,12 +21,16 @@ const CATEGORIAS = [
 const ESTADOS = ['ACTIVO', 'INACTIVO', 'SUSPENDIDO'];
 const PAGE_SIZE = 10;
 
+const TIPOS_PAGO = ['Cheque', 'Pago Contra-Entrega', 'Transferencia', 'Pago en Línea'];
+
 function buildEmpty() {
   return {
     nombre: '', rtn: '', rp: '', categoria: '', tipo_servicio: '',
     vendedor: '', telefono: '', correo: '', direccion: '', estado: 'ACTIVO',
     eval_calidad: '', eval_puntualidad: '', eval_precio: '', eval_servicio: '',
     observaciones: '',
+    tipos_pago: [],
+    cuenta_proveedor: '',
   };
 }
 
@@ -160,7 +164,8 @@ export default function Proveedores() {
     const rows = filtered.map(r => ({
       'Nombre':         r.nombre,
       'RTN':            r.rtn || '',
-      'Cuenta del Proveedor': r.rp || '',
+      'Cuenta del Proveedor': (() => { try { const p = JSON.parse(r.rp || 'null'); return p?.cuenta || ''; } catch { return r.rp || ''; } })(),
+      'Tipo de Pago': (() => { try { const p = JSON.parse(r.rp || 'null'); return (p?.tipos_pago || []).join(', '); } catch { return ''; } })(),
       'Categoría':      r.categoria,
       'Tipo de servicio': r.tipo_servicio || '',
       'Vendedor':       r.vendedor || '',
@@ -187,13 +192,19 @@ export default function Proveedores() {
     if (!form.categoria.trim()) { showToast('La categoría es requerida.', 'error'); return; }
     if (form.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo.trim()))
       { showToast('Formato de correo electrónico inválido.', 'error'); return; }
+    // Serializar tipos de pago + cuenta en el campo rp
+    const rpData = JSON.stringify({
+      tipos_pago: form.tipos_pago,
+      cuenta: form.cuenta_proveedor.trim(),
+    });
+    const payload = { ...form, rp: rpData };
     setSaving(true);
     try {
       if (editingId) {
-        await api.put(`/proveedores/${editingId}`, form);
+        await api.put(`/proveedores/${editingId}`, payload);
         showToast('Proveedor actualizado correctamente.');
       } else {
-        await api.post('/proveedores', form);
+        await api.post('/proveedores', payload);
         showToast('Proveedor registrado correctamente.');
       }
       setForm(buildEmpty()); setEditingId(null); setTab('listado'); setServicioInput(''); cargar();
@@ -205,6 +216,18 @@ export default function Proveedores() {
   };
 
   const handleEdit = (row) => {
+    // parsear rp: puede ser JSON {tipos_pago, cuenta} o string legacy
+    let tipos_pago = [];
+    let cuenta_proveedor = '';
+    try {
+      const parsed = JSON.parse(row.rp || 'null');
+      if (parsed && typeof parsed === 'object') {
+        tipos_pago = parsed.tipos_pago || [];
+        cuenta_proveedor = parsed.cuenta || '';
+      } else if (typeof row.rp === 'string' && row.rp) {
+        cuenta_proveedor = row.rp;
+      }
+    } catch { cuenta_proveedor = row.rp || ''; }
     setForm({
       nombre:          row.nombre || '',
       rtn:             row.rtn || '',
@@ -221,6 +244,8 @@ export default function Proveedores() {
       eval_precio:     row.eval_precio ?? '',
       eval_servicio:   row.eval_servicio ?? '',
       observaciones:   row.observaciones || '',
+      tipos_pago,
+      cuenta_proveedor,
     });
     setEditingId(row.id);
     setTab('nuevo');
@@ -520,8 +545,32 @@ export default function Proveedores() {
                 </div>
                 <div className="pv-field">
                   <label className="pv-label">Cuenta del Proveedor</label>
-                  <input className="pv-input" type="text" placeholder="Cuenta del proveedor"
-                    value={form.rp} onChange={e => set('rp', e.target.value)}/>
+                  <input
+                    className="pv-input"
+                    type="text"
+                    placeholder="Número de cuenta bancaria"
+                    value={form.cuenta_proveedor}
+                    onChange={e => set('cuenta_proveedor', e.target.value)}
+                  />
+                  <label className="pv-label" style={{ marginTop: 10 }}>Tipo de Pago</label>
+                  <div className="pv-payment-checks">
+                    {TIPOS_PAGO.map(tipo => (
+                      <label key={tipo} className="pv-check-label">
+                        <input
+                          type="checkbox"
+                          className="pv-checkbox"
+                          checked={form.tipos_pago.includes(tipo)}
+                          onChange={() => {
+                            const arr = form.tipos_pago.includes(tipo)
+                              ? form.tipos_pago.filter(t => t !== tipo)
+                              : [...form.tipos_pago, tipo];
+                            set('tipos_pago', arr);
+                          }}
+                        />
+                        <span>{tipo}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="pv-row3">
@@ -707,12 +756,26 @@ export default function Proveedores() {
                     <span className="pv-detail-value" style={{ fontFamily: 'monospace' }}>{detail.rtn}</span>
                   </div>
                 )}
-                {detail.rp && (
-                  <div className="pv-detail-item">
-                    <span className="pv-detail-label">Cuenta del Proveedor</span>
-                    <span className="pv-detail-value">{detail.rp}</span>
-                  </div>
-                )}
+                {(() => {
+                  let cuenta = ''; let tipos = [];
+                  try { const p = JSON.parse(detail.rp || 'null'); cuenta = p?.cuenta || ''; tipos = p?.tipos_pago || []; } catch { cuenta = detail.rp || ''; }
+                  return (<>
+                    {cuenta && (
+                      <div className="pv-detail-item">
+                        <span className="pv-detail-label">Cuenta del Proveedor</span>
+                        <span className="pv-detail-value" style={{ fontFamily: 'monospace' }}>{cuenta}</span>
+                      </div>
+                    )}
+                    {tipos.length > 0 && (
+                      <div className="pv-detail-item">
+                        <span className="pv-detail-label">Tipo de Pago</span>
+                        <span className="pv-detail-value" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {tipos.map((t, i) => <span key={i} className="pv-chip pv-chip--readonly">{t}</span>)}
+                        </span>
+                      </div>
+                    )}
+                  </>);
+                })()}
                 {detail.tipo_servicio && (
                   <div className="pv-detail-item">
                     <span className="pv-detail-label">Tipo de servicio</span>

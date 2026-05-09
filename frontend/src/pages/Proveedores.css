@@ -311,6 +311,26 @@
 .pv-input:focus { border-color: #274C8D; background: white; box-shadow: 0 0 0 3px rgba(39,76,141,0.10); }
 .pv-textarea { resize: vertical; min-height: 80px; }
 
+/* Tipo de pago - checkboxes */
+.pv-payment-checks {
+  display: flex; flex-wrap: wrap; gap: 8px 16px;
+  padding: 10px 12px;
+  border: 1.5px solid #dde4f0; border-radius: 10px;
+  background: #f8fafc;
+  margin-top: 4px;
+}
+.pv-check-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: #1a2332; cursor: pointer;
+  user-select: none;
+}
+.pv-check-label:hover span { color: #274C8D; }
+.pv-checkbox {
+  width: 16px; height: 16px;
+  accent-color: #274C8D;
+  cursor: pointer;
+}
+
 /* Chips - Tipo de servicio */
 .pv-chips-box {
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
