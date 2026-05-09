@@ -377,9 +377,9 @@ export default function CheckList() {
     doc.setLineWidth(0.5);
     doc.rect(NB_X, NB_Y, NB_W, NB_H, 'FD');
     doc.setFont('Roboto', 'bold');
-    doc.setFontSize(13);
+    doc.setFontSize(11);
     doc.setTextColor(...AZUL);
-    doc.text(String(cl.numero || 0).padStart(4, '0'), infoMid, NB_Y + NB_H - 1.5, { align: 'center' });
+    doc.text(String(cl.numero || 0).padStart(4, '0') + '-' + anio, infoMid, NB_Y + NB_H - 1.5, { align: 'center' });
 
     doc.setDrawColor(210, 220, 235);
     doc.setLineWidth(0.2);
