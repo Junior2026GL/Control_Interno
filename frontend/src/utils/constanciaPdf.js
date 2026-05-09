@@ -355,7 +355,7 @@ export async function generarConstanciaPdf(data) {
   y += 38;
 
   // ── Líneas de firma ──────────────────────────────────
-  const sigW  = 60;
+  const sigW  = 110;
 
   const sigC = PW / 2 - sigW / 2;
   hline(sigC, y, sigC + sigW, AZUL, 0.5);
