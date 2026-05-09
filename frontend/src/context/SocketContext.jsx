@@ -29,7 +29,7 @@ export function SocketProvider({ children }) {
 
     const socket = io(BACKEND_URL, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionDelay: 2000,
     });
