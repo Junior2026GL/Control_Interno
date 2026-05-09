@@ -746,6 +746,11 @@
 /* ============================================================
    Print Preview Modal
    ============================================================ */
+/* Contenedor oculto para impresión directa (sin modal de vista previa) */
+.ct-doc-hidden {
+  display: none;
+}
+
 .ct-print-overlay {
   position: fixed;
   inset: 0;
@@ -951,6 +956,7 @@
   body * { visibility: hidden !important; display: revert; }
 
   /* Mostrar solo el documento */
+  .ct-doc-hidden { display: block !important; }
   .ct-doc, .ct-doc * {
     visibility: visible !important;
   }

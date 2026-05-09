@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   FiUser, FiFileText, FiCalendar,
   FiPhone, FiMail, FiMapPin, FiDownload,
@@ -70,8 +70,15 @@ export default function ConstanciaTransferencia() {
   const [histError, setHistError]     = useState('');
   const [deletingId, setDeletingId]   = useState(null);
   const [viewItem, setViewItem]         = useState(null);
-  const [showPreview, setShowPreview]   = useState(false);
   const [previewData, setPreviewData]   = useState(null);
+  const [shouldPrint, setShouldPrint]   = useState(false);
+
+  // Auto-imprimir tras guardar
+  useEffect(() => {
+    if (!shouldPrint || !previewData) return;
+    window.print();
+    setShouldPrint(false);
+  }, [shouldPrint, previewData]);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -151,7 +158,7 @@ export default function ConstanciaTransferencia() {
         showToast('Constancia guardada correctamente.', 'ok');
       }
       setPreviewData({ ...form });
-      setShowPreview(true);
+      setShouldPrint(true);
       setForm(buildEmpty());
       setCensoStatus(null);
     } catch {
@@ -161,17 +168,6 @@ export default function ConstanciaTransferencia() {
     }
   };
 
-  const handleImprimir = () => {
-    window.print();
-  };
-
-  const handleDescargarPdf = async () => {
-    try {
-      await generarConstanciaPdf(previewData);
-    } catch {
-      showToast('Error al generar el PDF.', 'error');
-    }
-  };
 
   const handleEdit = (c) => {
     setForm({
@@ -686,20 +682,10 @@ export default function ConstanciaTransferencia() {
       )}
 
       {/* ── Print preview modal ─────────────────────────────── */}
-      {showPreview && previewData && (
-        <div className="ct-print-overlay" onClick={() => setShowPreview(false)}>
-          <div className="ct-print-box" onClick={e => e.stopPropagation()}>
-            <div className="ct-print-toolbar no-print">
-              <span className="ct-print-toolbar-title"><FiFileText size={16} /> Vista Previa — Constancia de Transferencia</span>
-              <div className="ct-print-toolbar-actions">
-                <button className="ct-toolbar-btn ct-toolbar-btn--dl" onClick={handleDescargarPdf}><FiDownload size={14}/> Descargar PDF</button>
-                <button className="ct-toolbar-btn ct-toolbar-btn--print" onClick={handleImprimir}><FiPrinter size={14}/> Imprimir</button>
-                <button className="ct-print-close" onClick={() => setShowPreview(false)}><FiX size={18}/></button>
-              </div>
-            </div>
-
-            {/* ── Documento imprimible ── */}
-            <div className="ct-doc">
+      {/* Documento oculto — solo visible en impresión */}
+      {previewData && (
+        <div className="ct-doc-hidden">
+          <div className="ct-doc">
               <div className="ct-doc-header">
                 <img src="/logo-congreso.png.png" alt="Logo" className="ct-doc-logo" onError={e => e.target.style.display='none'} />
                 <div className="ct-doc-inst">
@@ -793,7 +779,6 @@ export default function ConstanciaTransferencia() {
                 <p>Persona que recibe la transferencia</p>
                 <p className="ct-doc-firma-huella">Firma y huella</p>
               </div>
-            </div>
           </div>
         </div>
       )}
