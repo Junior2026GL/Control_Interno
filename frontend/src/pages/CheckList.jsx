@@ -665,7 +665,7 @@ export default function CheckList() {
                         <td className="cl-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                         <td>
                           <div className="cl-exp-wrap">
-                            <div className="cl-avatar">{String(cl.numero).padStart(4, '0').slice(-2)}</div>
+                            <div className="cl-avatar">{String(cl.numero).padStart(4, '0')}</div>
                             <div>
                               <div className="cl-exp-num">{String(cl.numero).padStart(4, '0')}</div>
                               {cl.numero_expediente && <div className="cl-exp-sub">{cl.numero_expediente}</div>}

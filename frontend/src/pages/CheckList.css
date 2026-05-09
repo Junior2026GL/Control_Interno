@@ -197,12 +197,12 @@
 /* Avatar + expediente */
 .cl-exp-wrap  { display: flex; align-items: center; gap: 10px; }
 .cl-avatar {
-  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  width: 46px; height: 34px; border-radius: 10px; flex-shrink: 0;
   background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-  color: #1d4ed8; font-size: 12px; font-weight: 800;
+  color: #1d4ed8; font-size: 11px; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
 }
-.cl-exp-num { font-weight: 700; color: #274C8D; font-size: 13.5px; }
+.cl-exp-num { font-weight: 700; color: #274C8D; font-size: 15px; }
 .cl-exp-sub { font-size: 10.5px; color: #94a3b8; margin-top: 2px; }
 
 /* tfoot */
