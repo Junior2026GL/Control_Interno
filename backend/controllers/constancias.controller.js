@@ -41,8 +41,8 @@ exports.getOne = (req, res) => {
 
 // POST /api/constancias
 exports.create = (req, res) => {
-  const { nombre, dni, telefono, direccion, correo,
-          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;
+  const { nombre, dni, telefono, direccion, nombreEntidad, rtn, correo,
+          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto, ciudadFirma } = req.body;
   if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
   if (!dni?.trim()) return res.status(400).json({ message: 'El DNI es requerido.' });
   const montoNum = parseFloat(monto);
@@ -58,8 +58,8 @@ exports.create = (req, res) => {
   if (!concepto?.trim()) return res.status(400).json({ message: 'El concepto es requerido.' });
   const usuarioId = req.user?.id || null;
   db.query(
-    `INSERT INTO constancias_transferencia (nombre,dni,telefono,direccion,correo,monto,tipo_cuenta,banco_receptor,numero_cuenta,fecha_dia,fecha_mes,fecha_anio,concepto,usuario_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(correo||'').trim(),montoNum,(tipoCuenta||'').trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),usuarioId],
+    `INSERT INTO constancias_transferencia (nombre,dni,telefono,direccion,nombre_entidad,rtn,correo,monto,tipo_cuenta,banco_receptor,numero_cuenta,fecha_dia,fecha_mes,fecha_anio,concepto,ciudad_firma,usuario_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(nombreEntidad||'').trim(),(rtn||'').trim(),(correo||'').trim(),montoNum,(tipoCuenta||'').trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),(ciudadFirma||'').trim(),usuarioId],
     (err, result) => {
       if (err) { console.error('[constancias] create:', err); return res.status(500).json({ message: 'Error al guardar la constancia.' }); }
       res.status(201).json({ id: result.insertId, message: 'Constancia guardada correctamente.' });
@@ -71,8 +71,8 @@ exports.create = (req, res) => {
 exports.update = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!id || id <= 0) return res.status(400).json({ message: 'ID inv�lido.' });
-  const { nombre, dni, telefono, direccion, correo,
-          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto } = req.body;
+  const { nombre, dni, telefono, direccion, nombreEntidad, rtn, correo,
+          monto, tipoCuenta, bancoReceptor, numeroCuenta, fechaDia, fechaMes, fechaAnio, concepto, ciudadFirma } = req.body;
   if (!nombre?.trim()) return res.status(400).json({ message: 'El nombre es requerido.' });
   if (!dni?.trim()) return res.status(400).json({ message: 'El DNI es requerido.' });
   const montoNum = parseFloat(monto);
@@ -89,8 +89,8 @@ exports.update = (req, res) => {
   const esAdmin = ROLES_ADMIN.includes(req.user.rol);
   const doUpdate = () => {
     db.query(
-      `UPDATE constancias_transferencia SET nombre=?,dni=?,telefono=?,direccion=?,correo=?,monto=?,tipo_cuenta=?,banco_receptor=?,numero_cuenta=?,fecha_dia=?,fecha_mes=?,fecha_anio=?,concepto=? WHERE id=?`,
-      [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(correo||'').trim(),montoNum,(tipoCuenta||'').trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),id],
+      `UPDATE constancias_transferencia SET nombre=?,dni=?,telefono=?,direccion=?,nombre_entidad=?,rtn=?,correo=?,monto=?,tipo_cuenta=?,banco_receptor=?,numero_cuenta=?,fecha_dia=?,fecha_mes=?,fecha_anio=?,concepto=?,ciudad_firma=? WHERE id=?`,
+      [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(nombreEntidad||'').trim(),(rtn||'').trim(),(correo||'').trim(),montoNum,(tipoCuenta||'').trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),(ciudadFirma||'').trim(),id],
       (err, result) => {
         if (err) { console.error('[constancias] update:', err); return res.status(500).json({ message: 'Error al actualizar la constancia.' }); }
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Constancia no encontrada.' });

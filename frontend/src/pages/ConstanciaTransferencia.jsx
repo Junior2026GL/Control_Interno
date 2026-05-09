@@ -13,12 +13,14 @@ import './ConstanciaTransferencia.css';
 function buildEmpty() {
   return {
     // Sección I
-    nombre: '', dni: '', telefono: '', direccion: '', correo: '',
+    nombre: '', dni: '', telefono: '', direccion: '', nombreEntidad: '', rtn: '', correo: '',
     // Sección II
     monto: '', bancoReceptor: '', tipoCuenta: '', numeroCuenta: '',
     fechaDia: '', fechaMes: '', fechaAnio: '',
     // Sección III
     concepto: '',
+    // Ciudad de firma
+    ciudadFirma: '',
   };
 }
 
@@ -149,19 +151,22 @@ export default function ConstanciaTransferencia() {
 
   const handleEdit = (c) => {
     setForm({
-      nombre:       c.nombre || '',
-      dni:          c.dni || '',
-      telefono:     c.telefono || '',
-      direccion:    c.direccion || '',
-      correo:       c.correo || '',
-      monto:        c.monto || '',
+      nombre:        c.nombre || '',
+      dni:           c.dni || '',
+      telefono:      c.telefono || '',
+      direccion:     c.direccion || '',
+      nombreEntidad: c.nombre_entidad || '',
+      rtn:           c.rtn || '',
+      correo:        c.correo || '',
+      monto:         c.monto || '',
       bancoReceptor: c.banco_receptor || '',
-      tipoCuenta:   c.tipo_cuenta || '',
-      numeroCuenta: c.numero_cuenta || '',
-      fechaDia:     String(c.fecha_dia || ''),
-      fechaMes:     c.fecha_mes || '',
-      fechaAnio:    String(c.fecha_anio || ''),
-      concepto:     c.concepto || '',
+      tipoCuenta:    c.tipo_cuenta || '',
+      numeroCuenta:  c.numero_cuenta || '',
+      fechaDia:      String(c.fecha_dia || ''),
+      fechaMes:      c.fecha_mes || '',
+      fechaAnio:     String(c.fecha_anio || ''),
+      concepto:      c.concepto || '',
+      ciudadFirma:   c.ciudad_firma || '',
     });
     setEditingId(c.id);
     setTab('nueva');
@@ -173,12 +178,13 @@ export default function ConstanciaTransferencia() {
     try {
       const data = {
         nombre: c.nombre, dni: c.dni, telefono: c.telefono,
-        direccion: c.direccion, correo: c.correo,
+        direccion: c.direccion, nombreEntidad: c.nombre_entidad, rtn: c.rtn, correo: c.correo,
         monto: c.monto,
         bancoReceptor: c.banco_receptor, tipoCuenta: c.tipo_cuenta,
         numeroCuenta: c.numero_cuenta,
         fechaDia: c.fecha_dia, fechaMes: c.fecha_mes, fechaAnio: c.fecha_anio,
         concepto: c.concepto,
+        ciudadFirma: c.ciudad_firma,
       };
       await generarConstanciaPdf(data);
     } catch {
@@ -269,14 +275,24 @@ export default function ConstanciaTransferencia() {
                     </div>
                   </div>
                 </div>
+                <div className="ct-field-full">
+                  <label className="ct-label">Dirección</label>
+                  <div className="ct-icon-field">
+                    <FiMapPin size={14} className="ct-icon" />
+                    <input className="ct-input ct-has-icon" type="text" placeholder="Dirección del beneficiario"
+                      value={form.direccion} onChange={e => set('direccion', e.target.value)} />
+                  </div>
+                </div>
+                <div className="ct-field-full">
+                  <label className="ct-label">Nombre de la Entidad</label>
+                  <input className="ct-input" type="text" placeholder="Nombre de la entidad u organización"
+                    value={form.nombreEntidad} onChange={e => set('nombreEntidad', e.target.value.toUpperCase())} />
+                </div>
                 <div className="ct-row-2">
                   <div className="ct-field">
-                    <label className="ct-label">Dirección</label>
-                    <div className="ct-icon-field">
-                      <FiMapPin size={14} className="ct-icon" />
-                      <input className="ct-input ct-has-icon" type="text" placeholder="Dirección del beneficiario"
-                        value={form.direccion} onChange={e => set('direccion', e.target.value)} />
-                    </div>
+                    <label className="ct-label">RTN</label>
+                    <input className="ct-input" type="text" placeholder="Registro Tributario Nacional"
+                      value={form.rtn} onChange={e => set('rtn', e.target.value)} />
                   </div>
                   <div className="ct-field">
                     <label className="ct-label">Correo Electrónico</label>
@@ -364,6 +380,24 @@ export default function ConstanciaTransferencia() {
                   <textarea className="ct-input ct-textarea" rows={4}
                     placeholder="Describa el motivo o concepto del pago realizado…"
                     value={form.concepto} onChange={e => set('concepto', e.target.value)} required />
+                </div>
+              </div>
+            </div>
+
+            {/* ── IV. Lugar de Firma ───────────────────────────── */}
+            <div className="ct-section">
+              <div className="ct-section-head">
+                <span className="ct-step-num">4</span>
+                <div>
+                  <h2 className="ct-section-title">Lugar de Firma</h2>
+                  <p className="ct-section-desc">Ciudad donde se firma la constancia</p>
+                </div>
+              </div>
+              <div className="ct-fields">
+                <div className="ct-field-full">
+                  <label className="ct-label">Ciudad</label>
+                  <input className="ct-input" type="text" placeholder="Ej: Tegucigalpa M.D.C."
+                    value={form.ciudadFirma} onChange={e => set('ciudadFirma', e.target.value)} />
                 </div>
               </div>
             </div>
@@ -559,6 +593,8 @@ export default function ConstanciaTransferencia() {
                 <div className="ct-view-row"><span className="ct-view-key">DNI</span><span className="ct-view-val">{viewItem.dni}</span></div>
                 {viewItem.telefono && <div className="ct-view-row"><span className="ct-view-key">Teléfono</span><span className="ct-view-val">{viewItem.telefono}</span></div>}
                 {viewItem.direccion && <div className="ct-view-row"><span className="ct-view-key">Dirección</span><span className="ct-view-val">{viewItem.direccion}</span></div>}
+                {viewItem.nombre_entidad && <div className="ct-view-row"><span className="ct-view-key">Entidad</span><span className="ct-view-val">{viewItem.nombre_entidad}</span></div>}
+                {viewItem.rtn && <div className="ct-view-row"><span className="ct-view-key">RTN</span><span className="ct-view-val">{viewItem.rtn}</span></div>}
                 {viewItem.correo && <div className="ct-view-row"><span className="ct-view-key">Correo</span><span className="ct-view-val">{viewItem.correo}</span></div>}
               </div>
               {(viewItem.funcionario || viewItem.cargo || viewItem.dependencia) && (
@@ -614,9 +650,8 @@ export default function ConstanciaTransferencia() {
               <div className="ct-doc-header">
                 <img src="/logo-congreso.png.png" alt="Logo" className="ct-doc-logo" onError={e => e.target.style.display='none'} />
                 <div className="ct-doc-inst">
-                  <p className="ct-doc-inst-top">REPÚBLICA DE HONDURAS</p>
-                  <p className="ct-doc-inst-mid">CONGRESO NACIONAL</p>
-                  <p className="ct-doc-inst-bot">PAGADURÍA ESPECIAL</p>
+                  <p className="ct-doc-inst-mid">CONGRESO NACIONAL DE LA REPÚBLICA DE HONDURAS</p>
+                  <p className="ct-doc-inst-bot">Despacho del Pagador Especial</p>
                 </div>
               </div>
               <div className="ct-doc-title-bar">
@@ -637,9 +672,17 @@ export default function ConstanciaTransferencia() {
                   <span className="ct-doc-label">Teléfono:</span>
                   <span className="ct-doc-value">{previewData.telefono || '—'}</span>
                 </div>
-                <div className="ct-doc-field">
+                <div className="ct-doc-field ct-doc-field--full">
                   <span className="ct-doc-label">Dirección:</span>
                   <span className="ct-doc-value">{previewData.direccion || '—'}</span>
+                </div>
+                <div className="ct-doc-field ct-doc-field--full">
+                  <span className="ct-doc-label">Nombre de la entidad:</span>
+                  <span className="ct-doc-value">{previewData.nombreEntidad || '—'}</span>
+                </div>
+                <div className="ct-doc-field">
+                  <span className="ct-doc-label">RTN:</span>
+                  <span className="ct-doc-value">{previewData.rtn || '—'}</span>
                 </div>
                 <div className="ct-doc-field">
                   <span className="ct-doc-label">Correo electrónico:</span>
@@ -685,14 +728,15 @@ export default function ConstanciaTransferencia() {
                 <p>Yo, <strong>{previewData.nombre}</strong>, de generales arriba indicadas <strong>DECLARO BAJO FE DE JURAMENTO</strong> que:</p>
                 <p>1. He recibido mediante transferencia electrónica bancaria la cantidad anteriormente indicada.</p>
                 <p>2. El monto corresponde al concepto descrito en el presente documento.</p>
-                <p>3. Confirmo que el pago ha sido recibido a mi entera satisfacción, sin que exista reclamo posterior relacionado con esta transferencia.</p>
+                <p>3. Confirmo que la transferencia ha sido recibida a mi entera satisfacción, sin que exista reclamo posterior relacionado con esta transferencia.</p>
                 <p>4. Reconozco que la presente constancia sirve como respaldo administrativo y financiero del pago realizado.</p>
-                <p className="ct-doc-cierre">Para los efectos administrativos y legales correspondientes, se firma la presente constancia en la ciudad de Tegucigalpa M.D.C., a los <strong>{previewData.fechaDia}</strong> días del mes de <strong>{previewData.fechaMes}</strong> del año <strong>{previewData.fechaAnio}</strong>.</p>
+                <p className="ct-doc-cierre">Para los efectos administrativos y legales correspondientes, se firma la presente constancia en la ciudad de <strong>{previewData.ciudadFirma || '___________________________'}</strong>, a los <strong>{previewData.fechaDia}</strong> días del mes de <strong>{previewData.fechaMes}</strong> del año <strong>{previewData.fechaAnio}</strong>.</p>
               </div>
 
               <div className="ct-doc-firma">
                 <div className="ct-doc-firma-line"></div>
                 <p>Persona que recibe la transferencia</p>
+                <p className="ct-doc-firma-huella">Firma y huella</p>
               </div>
             </div>
           </div>

@@ -84,13 +84,17 @@ exports.create = (req, res) => {
   if (!numero_orden || numero_orden.length < 1 || numero_orden.length > 30)
     return res.status(400).json({ message: 'El número de orden es requerido (máx. 30 caracteres).' });
 
+  const numero_orden_norm = /^\d+$/.test(numero_orden)
+    ? numero_orden.padStart(4, '0')
+    : numero_orden;
+
   db.query(
     `INSERT INTO retiro_bodegas
        (diputado_id, diputado_nombre, departamento, partido, persona_retiro,
         fecha_entrega, cantidad_recibida, numero_orden, observaciones, usuario_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [dip_id, diputado_nombre, departamento, partido, persona_retiro,
-     fecha_entrega, cantNum, numero_orden, observaciones, req.user.id],
+     fecha_entrega, cantNum, numero_orden_norm, observaciones, req.user.id],
     (err, result) => {
       if (err) {
         console.error('[retiro_bodegas] create:', err);
@@ -162,13 +166,17 @@ exports.update = (req, res) => {
   if (!numero_orden || numero_orden.length < 1 || numero_orden.length > 30)
     return res.status(400).json({ message: 'El número de orden es requerido.' });
 
+  const numero_orden_norm = /^\d+$/.test(numero_orden)
+    ? numero_orden.padStart(4, '0')
+    : numero_orden;
+
   db.query(
     `UPDATE retiro_bodegas
      SET diputado_id=?, diputado_nombre=?, departamento=?, partido=?, persona_retiro=?,
          fecha_entrega=?, cantidad_recibida=?, numero_orden=?, observaciones=?
      WHERE id=?`,
     [dip_id, diputado_nombre, departamento, partido, persona_retiro,
-     fecha_entrega, cantNum, numero_orden, observaciones, id],
+     fecha_entrega, cantNum, numero_orden_norm, observaciones, id],
     (err, result) => {
       if (err) {
         console.error('[retiro_bodegas] update:', err);

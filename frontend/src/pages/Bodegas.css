@@ -334,7 +334,9 @@
 /* ── Campos del form ─────────────────────────────────────── */
 .bod-field { display: flex; flex-direction: column; gap: .35rem; }
 .bod-field--full { grid-column: 1 / -1; }
-.bod-label { font-size: .8rem; font-weight: 600; color: #374151; }
+.bod-label { font-size: .8rem; font-weight: 600; color: #374151; display: flex; justify-content: space-between; align-items: center; }
+.bod-obs-counter { font-size: .73rem; font-weight: 400; color: #9ca3af; }
+.bod-obs-counter--warn { color: #dc2626; font-weight: 600; }
 .bod-input {
   padding: .55rem .8rem;
   border: 1.5px solid #e5e7eb; border-radius: 8px;
@@ -373,6 +375,12 @@
 .bod-autocomplete__item:hover { background: #eef4fc; }
 .bod-autocomplete__name { font-weight: 600; font-size: .88rem; color: #0f2044; }
 .bod-autocomplete__sub  { font-size: .75rem; color: #6b7280; }
+.bod-autocomplete__no-match {
+  padding: .7rem 1rem; font-size: .82rem; color: #9ca3af;
+  font-style: italic; margin: 0;
+  border: 1.5px solid #f3f4f6; border-radius: 8px;
+  background: #fafafa; margin-top: 3px;
+}
 
 /* ── Confirm dialog ──────────────────────────────────────── */
 .bod-confirm {

@@ -914,6 +914,11 @@
   color: #333;
   margin: 0;
 }
+.ct-doc-firma-huella {
+  font-size: 11px;
+  color: #555;
+  margin-top: 2px !important;
+}
 
 /* ── Print media ───────────────────────────────── */
 @media print {

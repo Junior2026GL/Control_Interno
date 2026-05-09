@@ -144,12 +144,10 @@ export async function generarConstanciaPdf(data) {
   // Institución centrada
   const instCX = L + LOGO_W + (CW - LOGO_W) / 2;
   doc.setTextColor(...AZUL);
-  doc.setFont('helvetica', 'bold');   doc.setFontSize(13);
-  doc.text('REPÚBLICA DE HONDURAS', instCX, y + 11, { align: 'center' });
+  doc.setFont('helvetica', 'bold');   doc.setFontSize(12);
+  doc.text('CONGRESO NACIONAL DE LA REPÚBLICA DE HONDURAS', instCX, y + 15, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  doc.text('CONGRESO NACIONAL', instCX, y + 18, { align: 'center' });
-  doc.setFont('helvetica', 'bold');   doc.setFontSize(16);
-  doc.text('PAGADURÍA ESPECIAL', instCX, y + 29, { align: 'center' });
+  doc.text('Despacho del Pagador Especial', instCX, y + 24, { align: 'center' });
 
   // ════ BARRA TÍTULO ════
   y += HDR_H;
@@ -173,8 +171,14 @@ export async function generarConstanciaPdf(data) {
   drawField('Teléfono:',                  data.telefono, xR, y, halfR);
   y += ROW;
 
-  drawField('Dirección:',          data.direccion, ML, y, halfL);
-  drawField('Correo electrónico:', data.correo,    xR, y, halfR);
+  drawField('Dirección:', data.direccion, ML, y, CW);
+  y += ROW;
+
+  drawField('Nombre de la entidad:', data.nombreEntidad, ML, y, CW);
+  y += ROW;
+
+  drawField('RTN:', data.rtn, ML, y, halfL);
+  drawField('Correo electrónico:', data.correo, xR, y, halfR);
   y += ROW + 2;
 
   y = secHeader('II. DATOS DE LA TRANSFERENCIA ELECTRÓNICA', y);
@@ -240,12 +244,10 @@ export async function generarConstanciaPdf(data) {
   doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
   doc.line(L + LOGO_W, y + 4, L + LOGO_W, y + HDR_H - 4);
   doc.setTextColor(...AZUL);
-  doc.setFont('helvetica', 'bold');   doc.setFontSize(13);
-  doc.text('REPÚBLICA DE HONDURAS', instCX, y + 11, { align: 'center' });
+  doc.setFont('helvetica', 'bold');   doc.setFontSize(12);
+  doc.text('CONGRESO NACIONAL DE LA REPÚBLICA DE HONDURAS', instCX, y + 15, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  doc.text('CONGRESO NACIONAL', instCX, y + 18, { align: 'center' });
-  doc.setFont('helvetica', 'bold');   doc.setFontSize(16);
-  doc.text('PAGADURÍA ESPECIAL', instCX, y + 29, { align: 'center' });
+  doc.text('Despacho del Pagador Especial', instCX, y + 24, { align: 'center' });
   y += HDR_H;
   doc.setFillColor(...AZUL);
   doc.rect(L, y, CW, TBAR_H, 'F');
@@ -279,7 +281,7 @@ export async function generarConstanciaPdf(data) {
   const items = [
     '1. He recibido mediante transferencia electrónica bancaria la cantidad anteriormente indicada.',
     '2. El monto corresponde al concepto descrito en el presente documento.',
-    '3. Confirmo que el pago ha sido recibido a mi entera satisfacción, sin que exista reclamo posterior relacionado con esta transferencia.',
+    '3. Confirmo que la transferencia ha sido recibida a mi entera satisfacción, sin que exista reclamo posterior relacionado con esta transferencia.',
     '4. Reconozco que la presente constancia sirve como respaldo administrativo y financiero del pago realizado.',
   ];
   items.forEach(item => {
@@ -293,16 +295,25 @@ export async function generarConstanciaPdf(data) {
   // Párrafo de cierre con la fecha real del documento
   normal(9.5); doc.setTextColor(...NEGRO);
   const p1 = 'Para los efectos administrativos y legales correspondientes, se firma la presente constancia';
-  const p2 = 'en la ciudad de Tegucigalpa M.D.C., a los';
-  const p3 = 'días del mes de';
+  const ciudadTexto = data.ciudadFirma ? data.ciudadFirma : '_______________________';
+  const p2a = 'en la ciudad de ';
+  const p2b = ', a los';
+  const p3 = 'dias del mes de';
   const p4 = 'del año';
 
   doc.text(p1, ML, y); y += 6;
 
-  // línea 2: "a los [dia] días del mes de [mes] del año [anio]."
+  // Línea 2: ciudad + a los
   const x1 = ML;
-  doc.text(p2, x1, y);
-  const x2 = x1 + doc.getTextWidth(p2) + 2;
+  doc.text(p2a, x1, y);
+  const xCiudad = x1 + doc.getTextWidth(p2a);
+  bold(9.5); doc.setTextColor(...AZUL_OSC);
+  doc.text(ciudadTexto, xCiudad, y);
+  hline(xCiudad, y + 0.5, xCiudad + doc.getTextWidth(ciudadTexto) + 1, AZUL, 0.4);
+  normal(9.5); doc.setTextColor(...NEGRO);
+  const xP2b = xCiudad + doc.getTextWidth(ciudadTexto) + 2;
+  doc.text(p2b, xP2b, y);
+  const x2 = xP2b + doc.getTextWidth(p2b) + 2;
 
   // día en negrita con subrayado
   bold(9.5); doc.setTextColor(...AZUL_OSC);
@@ -337,8 +348,6 @@ export async function generarConstanciaPdf(data) {
 
   // ── Líneas de firma ──────────────────────────────────
   const sigW  = 60;
-  const sigL  = ML + 18;
-  const sigR  = ML + CW - 18 - sigW;
 
   const sigC = PW / 2 - sigW / 2;
   hline(sigC, y, sigC + sigW, AZUL, 0.5);
@@ -346,6 +355,9 @@ export async function generarConstanciaPdf(data) {
 
   normal(12); doc.setTextColor(...NEGRO);
   doc.text('Persona que recibe la transferencia', PW / 2, y, { align: 'center' });
+  y += 6;
+  normal(10); doc.setTextColor(80, 80, 80);
+  doc.text('Firma y huella', PW / 2, y, { align: 'center' });
 
   drawFooter(2, 2);
 
