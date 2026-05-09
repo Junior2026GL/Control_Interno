@@ -524,7 +524,7 @@ export default function Proveedores() {
               </div>
             </div>
             <div className="pv-fields">
-              <div className="pv-row3">
+              <div className="pv-row2">
                 <div className="pv-field">
                   <label className="pv-label">Nombre del proveedor <span className="pv-req">*</span></label>
                   <input className="pv-input" type="text" placeholder="Razón social o nombre comercial"
@@ -535,7 +535,11 @@ export default function Proveedores() {
                   <input className="pv-input" type="text" placeholder="0000-0000-000000"
                     value={form.rtn} onChange={e => set('rtn', e.target.value)} maxLength={20}/>
                 </div>
-                <div className="pv-field">
+              </div>
+
+              {/* Cuenta + Tipo de pago */}
+              <div className="pv-payment-row">
+                <div className="pv-field pv-payment-cuenta">
                   <label className="pv-label">Cuenta del Proveedor</label>
                   <input
                     className="pv-input"
@@ -544,7 +548,9 @@ export default function Proveedores() {
                     value={form.cuenta_proveedor}
                     onChange={e => set('cuenta_proveedor', e.target.value)}
                   />
-                  <label className="pv-label" style={{ marginTop: 10 }}>Tipo de Pago</label>
+                </div>
+                <div className="pv-field pv-payment-tipos">
+                  <label className="pv-label">Tipo de Pago</label>
                   <div className="pv-payment-checks">
                     {TIPOS_PAGO.map(tipo => (
                       <label key={tipo} className="pv-check-label">
