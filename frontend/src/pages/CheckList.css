@@ -203,7 +203,6 @@
   display: flex; align-items: center; justify-content: center;
 }
 .cl-exp-num { font-weight: 700; color: #274C8D; font-size: 15px; }
-.cl-exp-sub { font-size: 10.5px; color: #94a3b8; margin-top: 2px; }
 
 /* tfoot */
 .cl-tfoot-row { background: #eff6ff !important; border-top: 2px solid #bfdbfe; }

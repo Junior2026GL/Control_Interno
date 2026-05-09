@@ -666,10 +666,7 @@ export default function CheckList() {
                         <td>
                           <div className="cl-exp-wrap">
                             <div className="cl-avatar">{String(cl.numero).padStart(4, '0')}</div>
-                            <div>
-                              <div className="cl-exp-num">{String(cl.numero).padStart(4, '0')}</div>
-                              {cl.numero_expediente && <div className="cl-exp-sub">{cl.numero_expediente}</div>}
-                            </div>
+                            <div className="cl-exp-num">{cl.numero_expediente || '—'}</div>
                           </div>
                         </td>
                         <td className="cl-td-center cl-folios">{cl.numero_folios || '—'}</td>
