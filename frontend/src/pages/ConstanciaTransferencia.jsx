@@ -192,6 +192,24 @@ export default function ConstanciaTransferencia() {
     }
   };
 
+  const handleImprimirHistorial = async (c) => {
+    try {
+      const data = {
+        nombre: c.nombre, dni: c.dni, telefono: c.telefono,
+        direccion: c.direccion, nombreEntidad: c.nombre_entidad, rtn: c.rtn, correo: c.correo,
+        monto: c.monto,
+        bancoReceptor: c.banco_receptor, tipoCuenta: c.tipo_cuenta,
+        numeroCuenta: c.numero_cuenta,
+        fechaDia: c.fecha_dia, fechaMes: c.fecha_mes, fechaAnio: c.fecha_anio,
+        concepto: c.concepto,
+        ciudadFirma: c.ciudad_firma,
+      };
+      await generarConstanciaPdf(data, true);
+    } catch {
+      showToast('Error al imprimir la constancia.', 'error');
+    }
+  };
+
   const handleVer = (c) => setViewItem(c);
 
   const handleEliminar = (id) => {
@@ -535,6 +553,13 @@ export default function ConstanciaTransferencia() {
                         onClick={() => handleVer(c)}
                       >
                         <FiEye size={14} />
+                      </button>
+                      <button
+                        className="ct-hist-btn ct-hist-btn--print"
+                        title="Imprimir"
+                        onClick={() => handleImprimirHistorial(c)}
+                      >
+                        <FiPrinter size={14} />
                       </button>
                       <button
                         className="ct-hist-btn ct-hist-btn--dl"

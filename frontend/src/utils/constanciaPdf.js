@@ -43,7 +43,7 @@ function numeroALetras(num) {
   return r.trim() + ` LEMPIRAS CON ${dec.toString().padStart(2, '0')}/100`;
 }
 
-export async function generarConstanciaPdf(data) {
+export async function generarConstanciaPdf(data, printMode = false) {
   const logoData = await loadImg('/logo-congreso.png.png');
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
@@ -370,5 +370,11 @@ export async function generarConstanciaPdf(data) {
   drawFooter(2, 2);
 
   const nombreFile = (data.nombre || 'constancia').replace(/\s+/g, '_');
-  doc.save(`Constancia_Transferencia_${nombreFile}.pdf`);
+  if (printMode) {
+    doc.autoPrint();
+    const blobUrl = doc.output('bloburl');
+    window.open(blobUrl, '_blank');
+  } else {
+    doc.save(`Constancia_Transferencia_${nombreFile}.pdf`);
+  }
 }

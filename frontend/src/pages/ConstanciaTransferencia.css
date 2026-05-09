@@ -549,6 +549,12 @@
 }
 .ct-hist-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.ct-hist-btn--print {
+  background: #f0f9ff;
+  color: #0369a1;
+}
+.ct-hist-btn--print:hover:not(:disabled) { background: #0369a1; color: white; transform: scale(1.08); }
+
 .ct-hist-btn--dl {
   background: #ebf0fb;
   color: #274C8D;

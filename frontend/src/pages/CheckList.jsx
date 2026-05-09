@@ -583,18 +583,9 @@ export default function CheckList() {
     }
 
     if (print) {
+      doc.autoPrint();
       const blobUrl = doc.output('bloburl');
-      const iframe  = document.createElement('iframe');
-      iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
-      document.body.appendChild(iframe);
-      iframe.src = blobUrl;
-      iframe.onload = () => {
-        setTimeout(() => {
-          iframe.contentWindow.focus();
-          iframe.contentWindow.print();
-          setTimeout(() => { document.body.removeChild(iframe); URL.revokeObjectURL(blobUrl); }, 1500);
-        }, 300);
-      };
+      window.open(blobUrl, '_blank');
     } else {
       doc.save(`checklist-${cl.numero}.pdf`);
     }
