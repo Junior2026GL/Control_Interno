@@ -1,4 +1,23 @@
 /* ============================================================
+   Banner institucional
+   ============================================================ */
+.dash-banner {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 20px rgba(15, 39, 68, 0.18);
+}
+
+.dash-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  max-height: 180px;
+}
+
+/* ============================================================
    App Shell
    ============================================================ */
 .app-shell {

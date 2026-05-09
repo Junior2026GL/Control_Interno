@@ -212,6 +212,12 @@ export default function Dashboard() {
     <div className="app-shell">
       <Navbar />
       <main className="launcher-main">
+
+        {/* ── Banner institucional ────────────────────────────── */}
+        <div className="dash-banner">
+          <img src="/BannerPrincipal.jpg" alt="Congreso Nacional" className="dash-banner-img" />
+        </div>
+
         <div className="launcher-header">
           <div className="launcher-avatar">
             <LuUserCheck size={32} color="white" />
