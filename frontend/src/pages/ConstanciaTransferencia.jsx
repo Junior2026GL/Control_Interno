@@ -19,7 +19,7 @@ function buildEmpty() {
     fechaDia: '', fechaMes: '', fechaAnio: '',
     // Sección III
     concepto: '',
-    // Ciudad de firma
+    // Ciudad de firma (siempre Tegucigalpa M.D.C.)
     ciudadFirma: 'Tegucigalpa, M.D.C.',
   };
 }
@@ -402,23 +402,6 @@ export default function ConstanciaTransferencia() {
               </div>
             </div>
 
-            {/* ── IV. Lugar de Firma ───────────────────────────── */}
-            <div className="ct-section">
-              <div className="ct-section-head">
-                <span className="ct-step-num">4</span>
-                <div>
-                  <h2 className="ct-section-title">Lugar de Firma</h2>
-                  <p className="ct-section-desc">Ciudad donde se firma la constancia</p>
-                </div>
-              </div>
-              <div className="ct-fields">
-                <div className="ct-field-full">
-                  <label className="ct-label">Ciudad</label>
-                  <input className="ct-input" type="text" placeholder="Ej: Tegucigalpa M.D.C."
-                    value={form.ciudadFirma} onChange={e => set('ciudadFirma', e.target.value)} />
-                </div>
-              </div>
-            </div>
 
             {/* Mobile actions */}
             <div className="ct-actions-mobile">
