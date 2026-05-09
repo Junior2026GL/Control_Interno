@@ -644,13 +644,13 @@ export default function CheckList() {
             <>
               <table className="cl-table">
                 <colgroup>
-                  <col style={{ width: '44px' }} />
-                  <col style={{ width: '170px' }} />
-                  <col style={{ width: '90px' }} />
-                  <col style={{ width: '170px' }} />
-                  <col style={{ width: '110px' }} />
-                  <col />
-                  <col style={{ width: '148px' }} />
+                  <col style={{ width: '40px' }} />
+                  <col style={{ width: '130px' }} />
+                  <col style={{ width: '80px' }} />
+                  <col style={{ width: '160px' }} />
+                  <col style={{ width: '100px' }} />
+                  <col style={{ width: '150px' }} />
+                  <col style={{ width: '140px' }} />
                 </colgroup>
                 <thead>
                   <tr>

@@ -167,11 +167,11 @@
 }
 
 .cl-table {
-  width: 100%;
+  width: auto;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 12.5px;
-  min-width: 760px;
-  table-layout: fixed;
+  table-layout: auto;
 }
 .cl-table thead tr {
   background: linear-gradient(90deg, #0f2744, #274C8D);
