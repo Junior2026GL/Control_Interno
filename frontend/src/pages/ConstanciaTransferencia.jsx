@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
   FiUser, FiFileText, FiCalendar,
   FiPhone, FiMail, FiMapPin, FiDownload,
@@ -70,15 +70,6 @@ export default function ConstanciaTransferencia() {
   const [histError, setHistError]     = useState('');
   const [deletingId, setDeletingId]   = useState(null);
   const [viewItem, setViewItem]         = useState(null);
-  const [previewData, setPreviewData]   = useState(null);
-  const [shouldPrint, setShouldPrint]   = useState(false);
-
-  // Auto-imprimir tras guardar
-  useEffect(() => {
-    if (!shouldPrint || !previewData) return;
-    window.print();
-    setShouldPrint(false);
-  }, [shouldPrint, previewData]);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -157,10 +148,10 @@ export default function ConstanciaTransferencia() {
         await api.post('/constancias', form);
         showToast('Constancia guardada correctamente.', 'ok');
       }
-      setPreviewData({ ...form });
-      setShouldPrint(true);
+      const snapshot = { ...form };
       setForm(buildEmpty());
       setCensoStatus(null);
+      await generarConstanciaPdf(snapshot, true);
     } catch {
       showToast('Error al guardar la constancia.', 'error');
     } finally {
@@ -677,108 +668,6 @@ export default function ConstanciaTransferencia() {
                 <FiDownload size={15} /> Descargar PDF
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Print preview modal ─────────────────────────────── */}
-      {/* Documento oculto — solo visible en impresión */}
-      {previewData && (
-        <div className="ct-doc-hidden">
-          <div className="ct-doc">
-              <div className="ct-doc-header">
-                <img src="/logo-congreso.png.png" alt="Logo" className="ct-doc-logo" onError={e => e.target.style.display='none'} />
-                <div className="ct-doc-inst">
-                  <p className="ct-doc-inst-top">REPÚBLICA DE HONDURAS</p>
-                  <p className="ct-doc-inst-mid">CONGRESO NACIONAL</p>
-                  <p className="ct-doc-inst-bot">PAGADURÍA ESPECIAL</p>
-                  <p className="ct-doc-inst-sub">Despacho del Pagador Especial</p>
-                </div>
-              </div>
-              <div className="ct-doc-title-bar">
-                CONSTANCIA DE RECEPCIÓN DE TRANSFERENCIA ELECTRÓNICA
-              </div>
-
-              <div className="ct-doc-section-title">I. DATOS DE LA PERSONA QUE RECIBE LA TRANSFERENCIA</div>
-              <div className="ct-doc-fields">
-                <div className="ct-doc-field ct-doc-field--full">
-                  <span className="ct-doc-label">Nombre completo:</span>
-                  <span className="ct-doc-value">{previewData.nombre}</span>
-                </div>
-                <div className="ct-doc-field">
-                  <span className="ct-doc-label">Número de Identidad (DNI):</span>
-                  <span className="ct-doc-value">{previewData.dni}</span>
-                </div>
-                <div className="ct-doc-field">
-                  <span className="ct-doc-label">Teléfono:</span>
-                  <span className="ct-doc-value">{previewData.telefono || '—'}</span>
-                </div>
-                <div className="ct-doc-field ct-doc-field--full">
-                  <span className="ct-doc-label">Dirección:</span>
-                  <span className="ct-doc-value">{previewData.direccion || '—'}</span>
-                </div>
-                <div className="ct-doc-field ct-doc-field--full">
-                  <span className="ct-doc-label">Nombre de la entidad:</span>
-                  <span className="ct-doc-value">{previewData.nombreEntidad || '—'}</span>
-                </div>
-                <div className="ct-doc-field">
-                  <span className="ct-doc-label">RTN:</span>
-                  <span className="ct-doc-value">{previewData.rtn || '—'}</span>
-                </div>
-                <div className="ct-doc-field">
-                  <span className="ct-doc-label">Correo electrónico:</span>
-                  <span className="ct-doc-value">{previewData.correo || '—'}</span>
-                </div>
-              </div>
-
-              <div className="ct-doc-section-title">II. DATOS DE LA TRANSFERENCIA ELECTRÓNICA</div>
-              <div className="ct-doc-fields">
-                <div className="ct-doc-field ct-doc-field--full">
-                  <span className="ct-doc-label">Monto recibido:</span>
-                  <span className="ct-doc-value ct-doc-monto">
-                    L. {parseFloat(previewData.monto).toLocaleString('es-HN', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="ct-doc-field ct-doc-field--full">
-                  <span className="ct-doc-label">Monto en letras:</span>
-                  <span className="ct-doc-value">{numeroALetrasPreview(previewData.monto)}</span>
-                </div>
-                <div className="ct-doc-field">
-                  <span className="ct-doc-label">Banco receptor:</span>
-                  <span className="ct-doc-value">{previewData.bancoReceptor}</span>
-                </div>
-                <div className="ct-doc-field">
-                  <span className="ct-doc-label">Tipo de cuenta:</span>
-                  <span className="ct-doc-value">{previewData.tipoCuenta || '—'}</span>
-                </div>
-                <div className="ct-doc-field">
-                  <span className="ct-doc-label">Número de cuenta:</span>
-                  <span className="ct-doc-value">{previewData.numeroCuenta}</span>
-                </div>
-                <div className="ct-doc-field">
-                  <span className="ct-doc-label">Fecha de la transferencia:</span>
-                  <span className="ct-doc-value">{previewData.fechaDia} / {previewData.fechaMes} / {previewData.fechaAnio}</span>
-                </div>
-              </div>
-
-              <div className="ct-doc-section-title">III. CONCEPTO DE LA TRANSFERENCIA</div>
-              <div className="ct-doc-concepto">{previewData.concepto}</div>
-
-              <div className="ct-doc-section-title">IV. DECLARACIÓN DE RECEPCIÓN</div>
-              <div className="ct-doc-declaracion">
-                <p>Yo, <strong>{previewData.nombre}</strong>, de generales arriba indicadas <strong>DECLARO BAJO FE DE JURAMENTO</strong> que:</p>
-                <p>1. He recibido mediante transferencia electrónica bancaria la cantidad anteriormente indicada.</p>
-                <p>2. El monto corresponde al concepto descrito en el presente documento.</p>
-                <p>3. Confirmo que la transferencia ha sido recibida a mi entera satisfacción, sin que exista reclamo posterior relacionado con esta transferencia.</p>
-                <p>4. Reconozco que la presente constancia sirve como respaldo administrativo y financiero del pago realizado.</p>
-                <p className="ct-doc-cierre">Para los efectos administrativos y legales correspondientes, se firma la presente constancia en la ciudad de <strong>{previewData.ciudadFirma || '___________________________'}</strong>, a los <strong>{previewData.fechaDia}</strong> días del mes de <strong>{previewData.fechaMes}</strong> del año <strong>{previewData.fechaAnio}</strong>.</p>
-              </div>
-
-              <div className="ct-doc-firma">
-                <div className="ct-doc-firma-line"></div>
-                <p>Persona que recibe la transferencia</p>
-                <p className="ct-doc-firma-huella">Firma y huella</p>
-              </div>
           </div>
         </div>
       )}
