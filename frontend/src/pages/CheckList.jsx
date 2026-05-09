@@ -358,41 +358,32 @@ export default function CheckList() {
     doc.setLineWidth(0.2);
     doc.line(infoX + 3, y + 10, infoX + INFO_W - 3, y + 10);
 
-    doc.setFont('Roboto', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(100, 120, 160);
-    doc.text('/' + anio, infoMid, y + 15, { align: 'center' });
-
-    doc.setDrawColor(210, 220, 235);
-    doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 17, infoX + INFO_W - 3, y + 17);
-
     // caja con número
     const NB_X = infoX + 4;
     const NB_W = INFO_W - 8;
-    const NB_Y = y + 19;
-    const NB_H = 9;
+    const NB_Y = y + 13;
+    const NB_H = 11;
     doc.setFillColor(...BLANCO);
     doc.setDrawColor(...AZUL);
     doc.setLineWidth(0.5);
     doc.rect(NB_X, NB_Y, NB_W, NB_H, 'FD');
     doc.setFont('Roboto', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(14);
     doc.setTextColor(...AZUL);
-    doc.text(String(cl.numero || 0).padStart(4, '0') + '-' + anio, infoMid, NB_Y + NB_H - 1.5, { align: 'center' });
+    doc.text(String(cl.numero || 0).padStart(4, '0') + '-' + anio, infoMid, NB_Y + NB_H - 2, { align: 'center' });
 
     doc.setDrawColor(210, 220, 235);
     doc.setLineWidth(0.2);
-    doc.line(infoX + 3, y + 30, infoX + INFO_W - 3, y + 30);
+    doc.line(infoX + 3, y + 27, infoX + INFO_W - 3, y + 27);
 
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(100, 120, 160);
-    doc.text('GENERADO POR', infoMid, y + 34.5, { align: 'center' });
+    doc.text('GENERADO POR', infoMid, y + 31.5, { align: 'center' });
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(...AZUL);
-    doc.text(genPor, infoMid, y + 40, { align: 'center' });
+    doc.text(genPor, infoMid, y + 37, { align: 'center' });
 
     // ════════════════════════════════════════════════════
     //  BARRA TÍTULO AZUL
