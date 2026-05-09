@@ -356,7 +356,7 @@ export default function Proveedores() {
             )}
             {canEdit && (
               <button
-                className={tab === 'nuevo' ? 'btn-secondary' : 'btn-primary'}
+                className={tab === 'nuevo' ? 'pv-tool-btn pv-tool-btn--back' : 'pv-tool-btn pv-tool-btn--new'}
                 onClick={() => tab === 'nuevo' ? cancelEdit() : setTab('nuevo')}
               >
                 {tab === 'nuevo'
