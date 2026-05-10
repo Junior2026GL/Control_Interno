@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const VALID_TIPOS = ['RECARGA', 'EGRESO', 'INGRESO'];
 const VALID_CATEGORIAS = [
@@ -115,6 +116,7 @@ exports.createMovimiento = (req, res) => {
         console.error('[caja] Error en createMovimiento:', err);
         return res.status(500).json({ message: 'Error interno del servidor.' });
       }
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'caja', detalle: `Registró movimiento ${tipo}: Lps. ${montoFinal.toLocaleString('es-HN')} — ${descripcion}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Movimiento registrado correctamente', id: result.insertId });
     }
   );
@@ -210,6 +212,7 @@ exports.updateMovimiento = (req, res) => {
           console.error('[caja] Error en updateMovimiento (update):', updateErr);
           return res.status(500).json({ message: 'Error interno del servidor.' });
         }
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'caja', detalle: `Actualizó movimiento ID #${id} — ${descripcion}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.json({ message: 'Movimiento actualizado correctamente.' });
       }
     );
@@ -235,6 +238,7 @@ exports.deleteMovimiento = (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Movimiento no encontrado.' });
     }
+    logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'caja', detalle: `Eliminó movimiento ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
     res.json({ message: 'Movimiento eliminado correctamente' });
   });
 };

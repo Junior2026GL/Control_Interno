@@ -1,5 +1,6 @@
 const db = require('../db');
 const bcrypt = require('bcryptjs');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const ROLES_VALIDOS  = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 const EMAIL_REGEX    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -82,6 +83,7 @@ exports.createUser = async (req, res) => {
           console.error('[users] Error en createUser:', dbErr);
           return res.status(500).json({ message: 'Error al crear usuario.' });
         }
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'usuarios', detalle: `Creó usuario: ${username} — Rol: ${rol}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.status(201).json({ message: 'Usuario creado correctamente.' });
       }
     );
@@ -158,13 +160,13 @@ exports.updateUser = async (req, res) => {
           db.query(
             'UPDATE usuarios SET nombre=?, username=?, email=?, password=?, rol=?, activo=?, cargo=?, dependencia=? WHERE id=?',
             [nombre, username, email, hashed, rol, activo, cargo ?? null, dependencia ?? null, targetId],
-            (dbErr) => handleUpdateResult(dbErr, res)
+            (dbErr) => handleUpdateResult(dbErr, res, { usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'usuarios', detalle: `Actualizó usuario ID #${targetId}: ${username}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' })
           );
         } else {
           db.query(
             'UPDATE usuarios SET nombre=?, username=?, email=?, rol=?, activo=?, cargo=?, dependencia=? WHERE id=?',
             [nombre, username, email, rol, activo, cargo ?? null, dependencia ?? null, targetId],
-            (dbErr) => handleUpdateResult(dbErr, res)
+            (dbErr) => handleUpdateResult(dbErr, res, { usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'usuarios', detalle: `Actualizó usuario ID #${targetId}: ${username}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' })
           );
         }
       } catch (err) {
@@ -175,13 +177,14 @@ exports.updateUser = async (req, res) => {
   });
 };
 
-function handleUpdateResult(err, res) {
+function handleUpdateResult(err, res, logData) {
   if (err) {
     if (err.code === 'ER_DUP_ENTRY')
       return res.status(409).json({ message: 'El username o correo ya está en uso.' });
     console.error('[users] Error en updateUser UPDATE:', err);
     return res.status(500).json({ message: 'Error al actualizar usuario.' });
   }
+  if (logData) logEvent(logData);
   res.json({ message: 'Usuario actualizado correctamente.' });
 }
 
@@ -216,6 +219,7 @@ exports.deleteUser = (req, res) => {
     function doDeactivate() {
       db.query('UPDATE usuarios SET activo=0 WHERE id=?', [targetId], (dbErr) => {
         if (dbErr) { console.error('[users] Error en deleteUser deactivate:', dbErr); return res.status(500).json({ message: 'Error al desactivar usuario.' }); }
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'usuarios', detalle: `Desactivó usuario ID #${targetId}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.json({ message: 'Usuario desactivado correctamente.' });
       });
     }

@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN'];
 const PARTIDOS    = ['PN', 'PL', 'LB', 'DC', 'PINU'];
@@ -100,6 +101,7 @@ exports.create = (req, res) => {
         console.error('[ayudas_alcaldias] create:', err);
         return res.status(500).json({ message: 'Error interno del servidor.' });
       }
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'ayudas_alcaldias', detalle: `Registró ayuda a alcaldía — ${(beneficiario||'').toString().trim().toUpperCase()}, ${(departamento||'').toString().trim().toUpperCase()}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.status(201).json({ id: result.insertId, message: 'Registro creado correctamente.' });
     }
   );
@@ -162,6 +164,7 @@ exports.update = (req, res) => {
         console.error('[ayudas_alcaldias] update:', err);
         return res.status(500).json({ message: 'Error interno del servidor.' });
       }
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'ayudas_alcaldias', detalle: `Actualizó ayuda a alcaldía ID #${id} — ${(beneficiario||'').toString().trim().toUpperCase()}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Registro actualizado correctamente.' });
     }
   );

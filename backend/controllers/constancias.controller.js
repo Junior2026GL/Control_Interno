@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const MESES_VALIDOS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -62,6 +63,7 @@ exports.create = (req, res) => {
     [nombre.trim(),dni.trim(),(telefono||'').trim(),(direccion||'').trim(),(nombreEntidad||'').trim(),(rtn||'').trim(),(correo||'').trim(),montoNum,(tipoCuenta||'').trim(),bancoReceptor.trim(),numeroCuenta.trim(),dia,fechaMes.trim(),anio,concepto.trim(),(ciudadFirma||'').trim(),usuarioId],
     (err, result) => {
       if (err) { console.error('[constancias] create:', err); return res.status(500).json({ message: 'Error al guardar la constancia.' }); }
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'constancias', detalle: `Creó constancia para: ${nombre.trim()} — Lps. ${montoNum.toLocaleString('es-HN')}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.status(201).json({ id: result.insertId, message: 'Constancia guardada correctamente.' });
     }
   );
@@ -94,6 +96,7 @@ exports.update = (req, res) => {
       (err, result) => {
         if (err) { console.error('[constancias] update:', err); return res.status(500).json({ message: 'Error al actualizar la constancia.' }); }
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Constancia no encontrada.' });
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'constancias', detalle: `Actualizó constancia ID #${id} — ${nombre.trim()}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.json({ message: 'Constancia actualizada correctamente.' });
       }
     );
@@ -116,6 +119,7 @@ exports.remove = (req, res) => {
     db.query('DELETE FROM constancias_transferencia WHERE id = ?', [id], (err, result) => {
       if (err) { console.error('[constancias] remove:', err); return res.status(500).json({ message: 'Error al eliminar la constancia.' }); }
       if (result.affectedRows === 0) return res.status(404).json({ message: 'Constancia no encontrada.' });
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'constancias', detalle: `Eliminó constancia ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Constancia eliminada.' });
     });
   };

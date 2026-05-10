@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 function sanitize(str) { return (str || '').toString().trim(); }
 
@@ -121,7 +122,10 @@ exports.create = (req, res) => {
       }));
 
       Promise.all([...detallePromises, ...diasPromises])
-        .then(() => res.status(201).json({ message: 'Viático creado.', id: vId }))
+        .then(() => {
+          logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'viaticos', detalle: `Creó viático — ${motivo_viaje}, ${lugar}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
+          res.status(201).json({ message: 'Viático creado.', id: vId });
+        })
         .catch(() => res.status(500).json({ message: 'Error al guardar detalles.' }));
     }
   );
@@ -134,6 +138,7 @@ exports.remove = (req, res) => {
   db.query('DELETE FROM viaticos WHERE id = ?', [id], (err, r) => {
     if (err) return res.status(500).json({ message: 'Error al eliminar.' });
     if (!r.affectedRows) return res.status(404).json({ message: 'No encontrado.' });
+    logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'viaticos', detalle: `Eliminó viático ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
     res.json({ message: 'Viático eliminado.' });
   });
 };
@@ -193,7 +198,10 @@ exports.update = (req, res) => {
           }));
 
           Promise.all([...detalleP, ...diasP])
-            .then(() => res.json({ message: 'Viático actualizado.' }))
+            .then(() => {
+              logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'viaticos', detalle: `Actualizó viático ID #${id} — ${motivo_viaje}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
+              res.json({ message: 'Viático actualizado.' });
+            })
             .catch(() => res.status(500).json({ message: 'Error al guardar detalles.' }));
         });
       });

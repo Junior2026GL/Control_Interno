@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 const DATE_REGEX  = /^\d{4}-\d{2}-\d{2}$/;
@@ -100,6 +101,7 @@ exports.create = (req, res) => {
         console.error('[retiro_bodegas] create:', err);
         return res.status(500).json({ message: 'Error interno del servidor.' });
       }
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'bodegas', detalle: `Registró entrega de canastas — ${diputado_nombre}, ${departamento} (${cantNum} unidades)`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.status(201).json({ id: result.insertId, message: 'Retiro registrado correctamente.' });
     }
   );
@@ -184,6 +186,7 @@ exports.update = (req, res) => {
       }
       if (result.affectedRows === 0)
         return res.status(404).json({ message: 'Registro no encontrado.' });
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'bodegas', detalle: `Actualizó retiro ID #${id} — ${diputado_nombre}, ${departamento}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Retiro actualizado correctamente.' });
     }
   );
@@ -204,6 +207,7 @@ exports.remove = (req, res) => {
     }
     if (result.affectedRows === 0)
       return res.status(404).json({ message: 'Registro no encontrado.' });
+    logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'bodegas', detalle: `Eliminó retiro de canastas ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
     res.json({ message: 'Retiro eliminado correctamente.' });
   });
 };

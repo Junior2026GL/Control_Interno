@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 
@@ -113,6 +114,7 @@ exports.createAyuda = (req, res) => {
         console.error('[ayudas] createAyuda:', err);
         return res.status(500).json({ message: 'Error interno del servidor.' });
       }
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'ayudas', detalle: `Registró ayuda para: ${nombre_completo} — Tipo: ${tipo_ayuda}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.status(201).json({ id: result.insertId, message: 'Ayuda registrada correctamente.' });
     }
   );
@@ -187,6 +189,7 @@ exports.updateAyuda = (req, res) => {
       }
       if (result.affectedRows === 0)
         return res.status(404).json({ message: 'Ayuda no encontrada.' });
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'ayudas', detalle: `Actualizó ayuda ID #${id} — ${nombre_completo}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Ayuda actualizada correctamente.' });
     }
   );
@@ -207,6 +210,7 @@ exports.deleteAyuda = (req, res) => {
     }
     if (result.affectedRows === 0)
       return res.status(404).json({ message: 'Ayuda no encontrada.' });
+    logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'ayudas', detalle: `Eliminó ayuda ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
     res.json({ message: 'Ayuda eliminada correctamente.' });
   });
 };

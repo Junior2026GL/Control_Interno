@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN'];
 
@@ -43,6 +44,7 @@ exports.create = (req, res) => {
         console.error('[alcaldes] create:', err);
         return res.status(500).json({ message: 'Error interno del servidor.' });
       }
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'alcaldes', detalle: `Registró alcalde: ${alcalde} — ${municipio}, ${departamento}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.status(201).json({ id: result.insertId, message: 'Alcalde registrado correctamente.' });
     }
   );
@@ -75,6 +77,7 @@ exports.update = (req, res) => {
       }
       if (result.affectedRows === 0)
         return res.status(404).json({ message: 'Registro no encontrado.' });
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'alcaldes', detalle: `Actualizó alcalde ID #${id}: ${alcalde} — ${municipio}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Alcalde actualizado correctamente.' });
     }
   );
@@ -95,6 +98,7 @@ exports.remove = (req, res) => {
     }
     if (result.affectedRows === 0)
       return res.status(404).json({ message: 'Registro no encontrado.' });
+    logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'alcaldes', detalle: `Eliminó alcalde ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
     res.json({ message: 'Alcalde eliminado correctamente.' });
   });
 };

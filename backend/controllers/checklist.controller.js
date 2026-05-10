@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const BOOL_FIELDS = [
   'orden_pago_da', 'validacion_factura_sar', 'formato_sap', 'orden_compra',
@@ -108,6 +109,7 @@ exports.create = (req, res) => {
       ],
       (err2, result) => {
         if (err2) { console.error('[checklist] create:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'checklist', detalle: `Creó expediente N° ${numero}${numero_expediente ? ' — ' + numero_expediente : ''}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.status(201).json({ id: result.insertId, numero, message: 'Check list creado correctamente.' });
       }
     );
@@ -159,6 +161,7 @@ exports.update = (req, res) => {
       ],
       (err2) => {
         if (err2) { console.error('[checklist] update UPDATE:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'checklist', detalle: `Actualizó expediente ID #${id}${numero_expediente ? ' — ' + numero_expediente : ''}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.json({ message: 'Check list actualizado correctamente.' });
       }
     );
@@ -176,6 +179,7 @@ exports.remove = (req, res) => {
   db.query('DELETE FROM checklist_expediente WHERE id = ?', [id], (err, result) => {
     if (err) { console.error('[checklist] remove:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
     if (result.affectedRows === 0) return res.status(404).json({ message: 'Check list no encontrado.' });
+    logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'checklist', detalle: `Eliminó expediente ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
     res.json({ message: 'Check list eliminado correctamente.' });
   });
 };

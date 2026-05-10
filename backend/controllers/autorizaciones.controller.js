@@ -1,5 +1,6 @@
 const db      = require('../db');
 const bcrypt  = require('bcryptjs');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 const VALID_TIPOS = ['CHEQUE', 'CONTRA_ENTREGA', 'TRANSFERENCIA', 'PAGO_LINEA'];
 const MONTO_MAX   = 99_999_999;
@@ -136,6 +137,7 @@ exports.create = (req, res) => {
       [numero, tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, req.user.id],
       (err2, result) => {
         if (err2) { console.error('[autorizaciones] Error en create INSERT:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'autorizaciones', detalle: `Creó autorización N° ${numero} — Beneficiario: ${beneficiario}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.status(201).json({ message: 'Autorización creada.', id: result.insertId, numero });
       }
     );
@@ -204,6 +206,7 @@ exports.update = (req, res) => {
       [tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, id],
       (err2) => {
         if (err2) { console.error('[autorizaciones] Error en update UPDATE:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'autorizaciones', detalle: `Actualizó autorización ID #${id} — ${beneficiario}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.json({ message: 'Autorización actualizada correctamente.' });
       }
     );
@@ -247,6 +250,7 @@ exports.autorizar = (req, res) => {
           if (err3) { console.error('[autorizaciones] Error en autorizar UPDATE:', err3); return res.status(500).json({ message: 'Error interno del servidor.' }); }
           if (result.affectedRows === 0)
             return res.status(409).json({ message: 'La autorización ya fue procesada o no existe.' });
+          logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'autorizaciones', detalle: `Autorizó/firmó autorización ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
           res.json({ message: 'Autorización firmada y aprobada correctamente.' });
         }
       );
@@ -276,6 +280,7 @@ exports.rechazar = (req, res) => {
       if (err) { console.error('[autorizaciones] Error en rechazar:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
       if (result.affectedRows === 0)
         return res.status(409).json({ message: 'La autorización ya fue procesada o no existe.' });
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'autorizaciones', detalle: `Rechazó autorización ID #${id} — Motivo: ${motivo.substring(0, 100)}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Autorización rechazada.' });
     }
   );
@@ -297,6 +302,7 @@ exports.remove = (req, res) => {
       if (err) { console.error('[autorizaciones] Error en remove:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
       if (result.affectedRows === 0)
         return res.status(409).json({ message: 'Solo se pueden eliminar autorizaciones pendientes.' });
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'autorizaciones', detalle: `Eliminó autorización ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Autorización eliminada.' });
     }
   );
