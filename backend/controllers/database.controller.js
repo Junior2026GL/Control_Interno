@@ -168,6 +168,7 @@ function performBackup() {
       `--host=${process.env.DB_HOST}`,
       `--user=${process.env.DB_USER}`,
       `--password=${process.env.DB_PASSWORD}`,
+      `--ignore-table=${process.env.DB_NAME}.censo_nacional`,
       '--databases',
       process.env.DB_NAME,
     ];
