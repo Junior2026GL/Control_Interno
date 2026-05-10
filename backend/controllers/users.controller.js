@@ -28,7 +28,7 @@ function validateFields({ nombre, username, email, password, isCreate }) {
 
 exports.getMe = (req, res) => {
   db.query(
-    'SELECT id, nombre, username, email, rol, cargo, dependencia FROM usuarios WHERE id = ?',
+    'SELECT id, nombre, username, email, telefono, rol, cargo, dependencia FROM usuarios WHERE id = ?',
     [req.user.id],
     (err, results) => {
       if (err) { console.error('[users] Error en getMe:', err); return res.status(500).json({ message: 'Error interno.' }); }
@@ -40,7 +40,7 @@ exports.getMe = (req, res) => {
 
 exports.getUsers = (req, res) => {
   db.query(
-    `SELECT id, nombre, username, email, rol, activo, cargo, dependencia,
+    `SELECT id, nombre, username, email, telefono, rol, activo, cargo, dependencia,
       login_intentos,
       login_bloqueado_hasta,
       CASE WHEN login_bloqueado_hasta IS NOT NULL AND login_bloqueado_hasta > NOW() THEN 1 ELSE 0 END AS bloqueado

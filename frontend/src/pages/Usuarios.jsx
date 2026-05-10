@@ -28,13 +28,24 @@ import './Usuarios.css';
 const ROLES = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 
 const MODULOS_LABELS = {
-  'caja':          'Caja Chica',
-  'usuarios':      'Gestión de Usuarios',
-  'autorizaciones':'Autorizaciones de Pago',
-  'asistente-ia':  'Asistente IA',
-  'diputados':     'Diputados',
-  'viaticos':           'Viáticos',
+  'caja':                 'Caja Chica',
+  'usuarios':             'Gestión de Usuarios',
+  'base-datos':           'Base de Datos',
+  'autorizaciones':       'Autorizaciones de Pago',
+  'asistente-ia':         'Asistente IA',
+  'diputados':            'Diputados',
+  'viaticos':             'Viáticos',
   'reportes-presupuesto': 'Reportes Presupuesto',
+  'presupuesto':          'Presupuesto Social',
+  'bodegas':              'Bodegas',
+  'ayudas':               'Ayudas',
+  'ayudas_alcaldias':     'Ayudas Alcaldías',
+  'alcaldes':             'Alcaldes',
+  'proveedores':          'Proveedores',
+  'checklist':            'Checklist',
+  'constancias':          'Constancias',
+  'censo':                'Censo',
+  'chat':                 'Chat',
 };
 
 const ROL_META = {
