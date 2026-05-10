@@ -14,7 +14,6 @@ const ROLES = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 const MODULOS_LABELS = {
   'caja':          'Caja Chica',
   'usuarios':      'Gestión de Usuarios',
-  'base-datos':    'Base de Datos',
   'autorizaciones':'Autorizaciones de Pago',
   'asistente-ia':  'Asistente IA',
   'diputados':     'Diputados',

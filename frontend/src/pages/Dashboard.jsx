@@ -2,7 +2,7 @@ import { useContext, useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LuWallet, LuUsers, LuClipboardCheck,
-  LuDatabase, LuBrainCircuit, LuShieldCheck, LuSquareActivity,
+  LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore,
 } from 'react-icons/lu';
@@ -34,14 +34,6 @@ const ALL_MODULES = [
     description: 'Administración de usuarios y roles',
     icon: LuUsers,
     gradient: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
-  },
-  {
-    path: '/base-datos',
-    label: 'Base de Datos',
-    clave: 'base-datos',
-    description: 'Backups, exportación e importación',
-    icon: LuDatabase,
-    gradient: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%)',
   },
   {
     path: '/chat',

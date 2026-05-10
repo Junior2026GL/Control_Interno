@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
 import CajaChica from './pages/CajaChica';
-import BaseDatos from './pages/BaseDatos';
 import Autorizaciones from './pages/Autorizaciones';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -43,7 +42,6 @@ export default function App() {
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             <Route path="/usuarios" element={<ModuleRoute modulo="usuarios"><Usuarios /></ModuleRoute>} />
             <Route path="/caja" element={<ModuleRoute modulo="caja"><CajaChica /></ModuleRoute>} />
-            <Route path="/base-datos" element={<ModuleRoute modulo="base-datos"><BaseDatos /></ModuleRoute>} />
             <Route path="/autorizaciones" element={<ModuleRoute modulo="autorizaciones"><Autorizaciones /></ModuleRoute>} />
             <Route path="/chat" element={<ModuleRoute modulo="asistente-ia"><Chat /></ModuleRoute>} />
             <Route path="/ip-whitelist" element={<RoleRoute roles={['SUPER_ADMIN']}><IpWhitelist /></RoleRoute>} />

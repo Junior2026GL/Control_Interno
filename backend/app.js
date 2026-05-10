@@ -54,7 +54,6 @@ app.use('/api/auth',            loginLimiter, require('./routes/auth.routes'));
 app.use('/api/users',           require('./routes/users.routes'));
 app.use('/api/caja',            require('./routes/caja.routes'));
 app.use('/api/modulos',         require('./routes/modulos.routes'));
-app.use('/api/database',        require('./routes/database.routes'));
 app.use('/api/autorizaciones',  require('./routes/autorizaciones.routes'));
 app.use('/api/chat',            require('./routes/chat.routes'));
 app.use('/api/ip-whitelist',    require('./routes/ip-whitelist.routes'));
