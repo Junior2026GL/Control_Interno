@@ -38,6 +38,9 @@ app.use(cors({
     // In development allow any localhost origin regardless of port
     if (isDev && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
       return cb(null, true);
+    // Allow any Railway-hosted subdomain (mismo hosting del proyecto)
+    if (/^https:\/\/[a-zA-Z0-9-]+\.up\.railway\.app$/.test(origin))
+      return cb(null, true);
     if (allowedOrigins.includes(origin)) return cb(null, true);
     cb(new Error('Origen no permitido por CORS'));
   },
