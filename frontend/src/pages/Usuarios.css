@@ -172,15 +172,16 @@
   align-items: center;
   gap: 7px;
   padding: 10px 20px;
-  background: #274C8D;
+  background: linear-gradient(120deg, #0f2744 0%, #1d4491 100%);
   color: white;
   border: none;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
   white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(27,68,145,0.30);
 }
 
 .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }

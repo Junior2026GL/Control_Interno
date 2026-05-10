@@ -660,16 +660,16 @@ export default function Usuarios() {
       {/* ── Permissions Modal ── */}
       {permsUser && (
         <div className="modal-overlay" onClick={() => setPermsUser(null)}>
-          <div className="modal-box perms-modal" onClick={e => e.stopPropagation()}>
+          <div className="um-modal perms-modal" onClick={e => e.stopPropagation()}>
 
             {/* Header con gradiente */}
-            <div className="perms-mhead">
-              <div className="perms-mhead-icon"><FiKey size={20} /></div>
-              <div className="perms-mhead-texts">
+            <div className="um-header">
+              <div className="um-header-avatar" style={{ background: '#1d4491' }}><FiKey size={20} /></div>
+              <div className="um-header-info">
                 <h2>Acceso a Módulos</h2>
                 <p>{permsUser.nombre}</p>
               </div>
-              <button className="perms-mhead-close" onClick={() => setPermsUser(null)} aria-label="Cerrar">
+              <button className="um-header-close" onClick={() => setPermsUser(null)} aria-label="Cerrar">
                 <FiX size={18} />
               </button>
             </div>
@@ -704,9 +704,9 @@ export default function Usuarios() {
             </div>
 
             {/* Footer */}
-            <div className="perms-mfooter">
-              <button className="perms-btn-cancel" onClick={() => setPermsUser(null)}>Cancelar</button>
-              <button className="perms-btn-save" onClick={savePerms} disabled={permsSaving}>
+            <div className="um-footer">
+              <button className="btn-secondary" onClick={() => setPermsUser(null)}>Cancelar</button>
+              <button className="btn-primary" onClick={savePerms} disabled={permsSaving}>
                 {permsSaving ? 'Guardando…' : <><FiCheck size={15} /> Guardar Módulos</>}
               </button>
             </div>
