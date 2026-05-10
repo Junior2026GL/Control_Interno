@@ -31,6 +31,8 @@ function buildEmpty() {
     observaciones: '',
     tipos_pago: [],
     cuenta_proveedor: '',
+    nombre_banco: '',
+    tipo_cuenta: '',
   };
 }
 
@@ -238,6 +240,8 @@ export default function Proveedores() {
       observaciones:   row.observaciones || '',
       tipos_pago,
       cuenta_proveedor: row.cuenta_proveedor || '',
+      nombre_banco:     row.nombre_banco || '',
+      tipo_cuenta:      row.tipo_cuenta || '',
     });
     setEditingId(row.id);
     setTab('nuevo');
@@ -549,6 +553,28 @@ export default function Proveedores() {
                     onChange={e => set('cuenta_proveedor', e.target.value)}
                   />
                 </div>
+                <div className="pv-field">
+                  <label className="pv-label">Nombre del Banco</label>
+                  <input
+                    className="pv-input"
+                    type="text"
+                    placeholder="Ej. Banco Atlantida"
+                    value={form.nombre_banco}
+                    onChange={e => set('nombre_banco', e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+                <div className="pv-field">
+                  <label className="pv-label">Tipo de Cuenta</label>
+                  <select className="pv-input pv-select" value={form.tipo_cuenta} onChange={e => set('tipo_cuenta', e.target.value)}>
+                    <option value="">Seleccione…</option>
+                    <option value="Cuenta Corriente">Cuenta Corriente</option>
+                    <option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
+                    <option value="Cuenta Maestra">Cuenta Maestra</option>
+                  </select>
+                </div>
+              </div>
+              <div className="pv-payment-tipos-row">
                 <div className="pv-field pv-payment-tipos">
                   <label className="pv-label">Tipo de Pago</label>
                   <div className="pv-payment-checks">
