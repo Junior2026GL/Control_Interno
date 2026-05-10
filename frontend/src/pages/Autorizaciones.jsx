@@ -398,19 +398,15 @@ export default function Autorizaciones() {
   };
 
   // ── autorizar ────────────────────────────────────────────────────────────
-  const handleAutorizar = async (e) => {
-    e.preventDefault();
-    if (!password) { setPassErr('Ingrese su contraseña.'); return; }
+  const handleAutorizar = async () => {
     setSigning(true);
-    setPassErr('');
     try {
-      await api.put(`/autorizaciones/${autItem.id}/autorizar`, { password }, { headers: authHeaders() });
+      await api.put(`/autorizaciones/${autItem.id}/autorizar`, {}, { headers: authHeaders() });
       setAutItem(null);
-      setPassword('');
       fetchLista();
       showToast('Autorización firmada y aprobada.', 'ok');
     } catch (err) {
-      setPassErr(err.response?.data?.message || 'Error al autorizar.');
+      showToast(err.response?.data?.message || 'Error al autorizar.');
     } finally {
       setSigning(false);
     }
