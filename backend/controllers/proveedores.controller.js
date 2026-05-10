@@ -34,6 +34,8 @@ exports.create = (req, res) => {
   const nombre            = sanitize(req.body.nombre);
   const rtn               = sanitize(req.body.rtn) || null;
   const cuenta_proveedor  = sanitize(req.body.cuenta_proveedor) || null;
+  const nombre_banco      = sanitize(req.body.nombre_banco) || null;
+  const tipo_cuenta       = sanitize(req.body.tipo_cuenta) || null;
   const tipos_pago        = sanitize(req.body.tipos_pago) || null;
   const categoria         = sanitize(req.body.categoria);
   const tipo_servicio     = sanitize(req.body.tipo_servicio) || null;
@@ -59,11 +61,11 @@ exports.create = (req, res) => {
 
   db.query(
     `INSERT INTO proveedores
-      (nombre, rtn, cuenta_proveedor, tipos_pago, categoria, tipo_servicio, vendedor,
+      (nombre, rtn, cuenta_proveedor, nombre_banco, tipo_cuenta, tipos_pago, categoria, tipo_servicio, vendedor,
        telefono, correo, direccion, estado, eval_calidad, eval_puntualidad, eval_precio,
        eval_servicio, observaciones, registrado_por)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [nombre, rtn, cuenta_proveedor, tipos_pago, categoria, tipo_servicio, vendedor,
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [nombre, rtn, cuenta_proveedor, nombre_banco, tipo_cuenta, tipos_pago, categoria, tipo_servicio, vendedor,
      telefono, correo, direccion, estado, eval_calidad, eval_puntualidad, eval_precio,
      eval_servicio, observaciones, registrado_por],
     (err, result) => {
@@ -89,6 +91,8 @@ exports.update = (req, res) => {
   const nombre            = sanitize(req.body.nombre);
   const rtn               = sanitize(req.body.rtn) || null;
   const cuenta_proveedor  = sanitize(req.body.cuenta_proveedor) || null;
+  const nombre_banco      = sanitize(req.body.nombre_banco) || null;
+  const tipo_cuenta       = sanitize(req.body.tipo_cuenta) || null;
   const tipos_pago        = sanitize(req.body.tipos_pago) || null;
   const categoria         = sanitize(req.body.categoria);
   const tipo_servicio     = sanitize(req.body.tipo_servicio) || null;
@@ -113,11 +117,11 @@ exports.update = (req, res) => {
 
   db.query(
     `UPDATE proveedores SET
-      nombre=?, rtn=?, cuenta_proveedor=?, tipos_pago=?, categoria=?, tipo_servicio=?,
+      nombre=?, rtn=?, cuenta_proveedor=?, nombre_banco=?, tipo_cuenta=?, tipos_pago=?, categoria=?, tipo_servicio=?,
       vendedor=?, telefono=?, correo=?, direccion=?, estado=?,
       eval_calidad=?, eval_puntualidad=?, eval_precio=?, eval_servicio=?, observaciones=?
      WHERE id=?`,
-    [nombre, rtn, cuenta_proveedor, tipos_pago, categoria, tipo_servicio, vendedor,
+    [nombre, rtn, cuenta_proveedor, nombre_banco, tipo_cuenta, tipos_pago, categoria, tipo_servicio, vendedor,
      telefono, correo, direccion, estado,
      eval_calidad, eval_puntualidad, eval_precio, eval_servicio, observaciones, id],
     (err, result) => {
