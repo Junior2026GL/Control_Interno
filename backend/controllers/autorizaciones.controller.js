@@ -214,7 +214,7 @@ exports.update = (req, res) => {
 };
 
 // ── PUT /api/autorizaciones/:id/autorizar ─────────────────────────────────────
-// Solo ADMIN y SUPER_ADMIN — requiere contraseña del autorizador
+// Solo ADMIN y SUPER_ADMIN — la sesión JWT es suficiente, no requiere contraseña
 exports.autorizar = (req, res) => {
   if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol))
     return res.status(403).json({ message: 'No tiene permiso para autorizar.' });
@@ -222,40 +222,24 @@ exports.autorizar = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
 
-  const { password } = req.body;
-  if (!password || typeof password !== 'string' || password.length < 1)
-    return res.status(400).json({ message: 'La contraseña es requerida para firmar.' });
+  const firmaNombre = req.user.nombre || '';
 
-  // 1. Verificar contraseña del autorizador (y obtener nombre para la firma)
-  db.query('SELECT password, nombre FROM usuarios WHERE id = ?', [req.user.id], (err, rows) => {
-    if (err) { console.error('[autorizaciones] Error en autorizar SELECT:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
-    if (!rows.length) return res.status(401).json({ message: 'Usuario no encontrado.' });
-
-    bcrypt.compare(password, rows[0].password, (err2, match) => {
-      if (err2) { console.error('[autorizaciones] Error en bcrypt.compare:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
-      if (!match) return res.status(401).json({ message: 'Contraseña incorrecta. Firma no aplicada.' });
-
-      const firmaNombre = rows[0].nombre || req.user.nombre || '';
-
-      // 2. Marcar como AUTORIZADO
-      db.query(
-        `UPDATE autorizaciones_pago
-         SET estado = 'AUTORIZADO',
-             autorizado_por = ?,
-             fecha_autorizacion = NOW(),
-             firma_nombre = ?
-         WHERE id = ? AND estado = 'PENDIENTE'`,
-        [req.user.id, firmaNombre, id],
-        (err3, result) => {
-          if (err3) { console.error('[autorizaciones] Error en autorizar UPDATE:', err3); return res.status(500).json({ message: 'Error interno del servidor.' }); }
-          if (result.affectedRows === 0)
-            return res.status(409).json({ message: 'La autorización ya fue procesada o no existe.' });
-          logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'autorizaciones', detalle: `Autorizó/firmó autorización ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
-          res.json({ message: 'Autorización firmada y aprobada correctamente.' });
-        }
-      );
-    });
-  });
+  db.query(
+    `UPDATE autorizaciones_pago
+     SET estado = 'AUTORIZADO',
+         autorizado_por = ?,
+         fecha_autorizacion = NOW(),
+         firma_nombre = ?
+     WHERE id = ? AND estado = 'PENDIENTE'`,
+    [req.user.id, firmaNombre, id],
+    (err, result) => {
+      if (err) { console.error('[autorizaciones] Error en autorizar UPDATE:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+      if (result.affectedRows === 0)
+        return res.status(409).json({ message: 'La autorización ya fue procesada o no existe.' });
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'autorizaciones', detalle: `Autorizó/firmó autorización ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
+      res.json({ message: 'Autorización firmada y aprobada correctamente.' });
+    }
+  );
 };
 
 // ── PUT /api/autorizaciones/:id/rechazar ──────────────────────────────────────

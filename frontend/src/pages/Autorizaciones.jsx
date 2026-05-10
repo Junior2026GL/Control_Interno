@@ -157,8 +157,6 @@ export default function Autorizaciones() {
 
   // modal autorizar
   const [autItem, setAutItem]       = useState(null);
-  const [password, setPassword]     = useState('');
-  const [passErr, setPassErr]       = useState('');
   const [signing, setSigning]       = useState(false);
 
   // modal rechazar
@@ -1393,7 +1391,7 @@ export default function Autorizaciones() {
                           {/* Autorizar / Rechazar (solo admin, solo PENDIENTE) */}
                           {esAdmin && a.estado === 'PENDIENTE' && (
                             <>
-                              <button className="action-btn approve" title="Autorizar (firma digital)" onClick={() => { setAutItem(a); setPassword(''); setPassErr(''); }}>
+                              <button className="action-btn approve" title="Autorizar" onClick={() => setAutItem(a)}>
                                 <FiCheckCircle size={14} />
                               </button>
                               <button className="action-btn reject" title="Rechazar" onClick={() => { setRechItem(a); setMotivo(''); setMotivoErr(''); }}>
@@ -1733,40 +1731,60 @@ export default function Autorizaciones() {
         <div className="modal-overlay" onClick={() => setAutItem(null)}>
           <div className="aut-modal aut-modal-firma" onClick={e => e.stopPropagation()}>
             <div className="aut-modal-header aut-header-firma">
-              <div className="aut-modal-icon"><FiLock size={20} color="#059669" /></div>
+              <div className="aut-modal-icon"><FiCheckCircle size={20} color="#059669" /></div>
               <div>
-                <h3>Firma Digital</h3>
-                <p>Autorización No. {String(autItem.numero).padStart(4,'0')} — {autItem.beneficiario}</p>
+                <h3>Confirmar Autorización</h3>
+                <p>No. {String(autItem.numero).padStart(4,'0')} — {autItem.beneficiario}</p>
               </div>
               <button className="modal-close-btn" onClick={() => setAutItem(null)}><FiX size={18} /></button>
             </div>
-            <form onSubmit={handleAutorizar} className="aut-form">
+            <div className="aut-form">
               <div className="aut-firma-info">
-                <p>Para autorizar este documento debe ingresar su <strong>contraseña</strong>. Esta acción equivale a una firma digital y quedará registrada en el sistema.</p>
+                <p>Al confirmar, esta acción quedará registrada en el sistema con su nombre como autorizador.</p>
                 <div className="aut-firma-resumen">
                   <span>Beneficiario: <strong>{autItem.beneficiario}</strong></span>
                   <span>Monto: <strong>{fmtMonto(autItem.monto)}</strong></span>
+                  <span>Tipo: <strong>{TIPO_LABELS[autItem.tipo_pago] || autItem.tipo_pago}</strong></span>
                 </div>
-              </div>
-              <div className="aut-form-group">
-                <label><FiLock size={12} /> Contraseña de autorización</label>
-                <input
-                  type="password"
-                  className={`caja-input${passErr ? ' input-error' : ''}`}
-                  placeholder="Ingrese su contraseña"
-                  value={password}
-                  autoFocus
-                  onChange={e => { setPassword(e.target.value); setPassErr(''); }}
-                />
-                {passErr && <span className="field-error">{passErr}</span>}
               </div>
               <div className="caja-modal-actions">
                 <button type="button" className="btn-secondary" onClick={() => setAutItem(null)}>Cancelar</button>
-                <button type="submit" className="btn-success" disabled={signing}>
+                <button type="button" className="btn-success" disabled={signing} onClick={handleAutorizar}>
                   <FiCheckCircle size={14} /> {signing ? 'Firmando…' : 'Firmar y Autorizar'}
                 </button>
               </div>
-            </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {autItem && (
+        <div className="modal-overlay" onClick={() => setAutItem(null)}>
+          <div className="aut-modal aut-modal-firma" onClick={e => e.stopPropagation()}>
+            <div className="aut-modal-header aut-header-firma">
+              <div className="aut-modal-icon"><FiCheckCircle size={20} color="#059669" /></div>
+              <div>
+                <h3>Confirmar Autorización</h3>
+                <p>No. {String(autItem.numero).padStart(4,'0')} — {autItem.beneficiario}</p>
+              </div>
+              <button className="modal-close-btn" onClick={() => setAutItem(null)}><FiX size={18} /></button>
+            </div>
+            <div className="aut-form">
+              <div className="aut-firma-info">
+                <p>Al confirmar, esta acción quedará registrada en el sistema con su nombre como autorizador.</p>
+                <div className="aut-firma-resumen">
+                  <span>Beneficiario: <strong>{autItem.beneficiario}</strong></span>
+                  <span>Monto: <strong>{fmtMonto(autItem.monto)}</strong></span>
+                  <span>Tipo: <strong>{TIPO_LABELS[autItem.tipo_pago] || autItem.tipo_pago}</strong></span>
+                </div>
+              </div>
+              <div className="caja-modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setAutItem(null)}>Cancelar</button>
+                <button type="button" className="btn-success" disabled={signing} onClick={handleAutorizar}>
+                  <FiCheckCircle size={14} /> {signing ? 'Firmando…' : 'Firmar y Autorizar'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
