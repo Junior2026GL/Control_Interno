@@ -60,6 +60,7 @@ exports.createUser = async (req, res) => {
   const rol      = sanitize(req.body.rol);
   const cargo       = sanitize(req.body.cargo)       || null;
   const dependencia = sanitize(req.body.dependencia) || null;
+  const telefono    = sanitize(req.body.telefono)    || null;
 
   const err = validateFields({ nombre, username, email, password, isCreate: true });
   if (err) return res.status(400).json({ message: err });
@@ -74,8 +75,8 @@ exports.createUser = async (req, res) => {
   try {
     const hashed = await bcrypt.hash(password, 10);
     db.query(
-      'INSERT INTO usuarios (nombre, username, email, password, rol, cargo, dependencia) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [nombre, username, email, hashed, rol, cargo, dependencia],
+      'INSERT INTO usuarios (nombre, username, email, password, rol, cargo, dependencia, telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [nombre, username, email, hashed, rol, cargo, dependencia, telefono],
       (dbErr) => {
         if (dbErr) {
           if (dbErr.code === 'ER_DUP_ENTRY')
@@ -104,6 +105,7 @@ exports.updateUser = async (req, res) => {
   const activo   = req.body.activo ?? 1;
   const cargo       = req.body.cargo       !== undefined ? sanitize(req.body.cargo)       || null : undefined;
   const dependencia = req.body.dependencia !== undefined ? sanitize(req.body.dependencia) || null : undefined;
+  const telefono    = req.body.telefono    !== undefined ? sanitize(req.body.telefono)    || null : undefined;
 
   // Validate fields (password optional on edit)
   const fieldErr = validateFields({ nombre, username, email, password: password || 'Placeholder1', isCreate: false });
@@ -158,14 +160,14 @@ exports.updateUser = async (req, res) => {
         if (password.trim()) {
           const hashed = await bcrypt.hash(password, 10);
           db.query(
-            'UPDATE usuarios SET nombre=?, username=?, email=?, password=?, rol=?, activo=?, cargo=?, dependencia=? WHERE id=?',
-            [nombre, username, email, hashed, rol, activo, cargo ?? null, dependencia ?? null, targetId],
+            'UPDATE usuarios SET nombre=?, username=?, email=?, password=?, rol=?, activo=?, cargo=?, dependencia=?, telefono=? WHERE id=?',
+            [nombre, username, email, hashed, rol, activo, cargo ?? null, dependencia ?? null, telefono ?? null, targetId],
             (dbErr) => handleUpdateResult(dbErr, res, { usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'usuarios', detalle: `Actualizó usuario ID #${targetId}: ${username}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' })
           );
         } else {
           db.query(
-            'UPDATE usuarios SET nombre=?, username=?, email=?, rol=?, activo=?, cargo=?, dependencia=? WHERE id=?',
-            [nombre, username, email, rol, activo, cargo ?? null, dependencia ?? null, targetId],
+            'UPDATE usuarios SET nombre=?, username=?, email=?, rol=?, activo=?, cargo=?, dependencia=?, telefono=? WHERE id=?',
+            [nombre, username, email, rol, activo, cargo ?? null, dependencia ?? null, telefono ?? null, targetId],
             (dbErr) => handleUpdateResult(dbErr, res, { usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'usuarios', detalle: `Actualizó usuario ID #${targetId}: ${username}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' })
           );
         }

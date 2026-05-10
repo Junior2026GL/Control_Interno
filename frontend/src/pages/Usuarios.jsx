@@ -43,7 +43,7 @@ const ROL_META = {
   ASISTENTE:   { label: 'Asistente',    color: '#059669', bg: '#ecfdf5' },
 };
 
-const EMPTY_FORM = { nombre: '', username: '', email: '', password: '', confirmPassword: '', rol: 'ASISTENTE', cargo: '', dependencia: '' };
+const EMPTY_FORM = { nombre: '', username: '', email: '', telefono: '', password: '', confirmPassword: '', rol: 'ASISTENTE', cargo: '', dependencia: '' };
 
 const EMAIL_REGEX    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
@@ -151,7 +151,7 @@ export default function Usuarios() {
 
   const openEdit = (u) => {
     setSelected(u);
-    setForm({ nombre: u.nombre, username: u.username, email: u.email, password: '', confirmPassword: '', rol: u.rol, cargo: u.cargo || '', dependencia: u.dependencia || '' });
+    setForm({ nombre: u.nombre, username: u.username, email: u.email, telefono: u.telefono || '', password: '', confirmPassword: '', rol: u.rol, cargo: u.cargo || '', dependencia: u.dependencia || '' });
     setFormErr('');
     setShowModalPass(false);
     setShowConfirmPass(false);
@@ -442,197 +442,169 @@ export default function Usuarios() {
       {/* ── Create / Edit Modal ── */}
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-box usr-edit-modal" onClick={e => e.stopPropagation()}>
-            <div className="usr-modal-layout">
+          <div className="um-modal" onClick={e => e.stopPropagation()}>
 
-              {/* ── SIDEBAR IZQUIERDO ── */}
-              <div className="usr-msidebar" style={{ '--role-color': ROL_META[form.rol]?.color || '#274C8D' }}>
-                <button className="usr-msidebar-close" onClick={closeModal} aria-label="Cerrar"><FiX size={16} /></button>
-
-                <div className="usr-msidebar-avatar" style={{ background: `linear-gradient(135deg, ${ROL_META[form.rol]?.color || '#274C8D'}, ${ROL_META[form.rol]?.color || '#1a3a52'}99)` }}>
-                  {form.nombre ? form.nombre.trim().charAt(0).toUpperCase() : <FiUser size={30} />}
-                </div>
-
-                <div className="usr-msidebar-name">
-                  {form.nombre.trim() || (modal === 'create' ? 'Nuevo usuario' : 'Usuario')}
-                </div>
-                {form.username && (
-                  <div className="usr-msidebar-user">@{form.username}</div>
-                )}
-
-                {form.rol && (
-                  <span className="usr-msidebar-role" style={{ background: ROL_META[form.rol]?.bg, color: ROL_META[form.rol]?.color }}>
-                    <FiShield size={10} /> {ROL_META[form.rol]?.label}
-                  </span>
-                )}
-
-                {form.email && EMAIL_REGEX.test(form.email) && (
-                  <div className="usr-msidebar-email"><FiMail size={11} /> {form.email}</div>
-                )}
-
-                {form.cargo && (
-                  <div className="usr-msidebar-meta"><FiBriefcase size={11} /> {form.cargo}</div>
-                )}
-                {form.dependencia && (
-                  <div className="usr-msidebar-meta"><FiMapPin size={11} /> {form.dependencia}</div>
-                )}
-
-                <div className="usr-msidebar-divider" />
-                <div className="usr-msidebar-footer-label">
-                  {modal === 'create' ? <><FiUserPlus size={12} /> Creando cuenta</> : <><FiEdit2 size={12} /> Editando perfil</>}
-                </div>
+            {/* HEADER */}
+            <div className="um-header" style={{ '--um-role-color': ROL_META[form.rol]?.color || '#274C8D' }}>
+              <div className="um-header-avatar">
+                {form.nombre ? form.nombre.trim().charAt(0).toUpperCase() : <FiUser size={22} />}
               </div>
+              <div className="um-header-info">
+                <h2>{modal === 'create' ? 'Nuevo Usuario' : 'Editar Usuario'}</h2>
+                <p>{form.nombre.trim() || (modal === 'create' ? 'Completa el formulario' : 'Modifica la información')}</p>
+              </div>
+              {form.rol && (
+                <span className="um-header-role" style={{ background: ROL_META[form.rol]?.bg, color: ROL_META[form.rol]?.color }}>
+                  <FiShield size={10} /> {ROL_META[form.rol]?.label}
+                </span>
+              )}
+              <button className="um-header-close" onClick={closeModal}><FiX size={16} /></button>
+            </div>
 
-              {/* ── FORMULARIO DERECHO ── */}
-              <form className="usr-modal-right" onSubmit={handleSave}>
+            {/* BODY */}
+            <form onSubmit={handleSave}>
+              <div className="um-body">
 
-                <div className="usr-modal-right-header">
-                  <h2>{modal === 'create' ? 'Nuevo Usuario' : 'Editar Usuario'}</h2>
-                  <p>{modal === 'create' ? 'Completa los datos para crear la cuenta' : 'Modifica la información del usuario'}</p>
-                </div>
-
-                <div className="usr-modal-scroll">
-
-                  {/* — Sección: Información personal — */}
-                  <div className="usr-section-heading"><FiUser size={13} /> Información personal</div>
-
-                  <div className="usr-form-grid2">
-                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                      <label>Nombre completo <span className="usr-req">*</span></label>
-                      <div className="usr-field-wrap">
-                        <FiUser className="usr-field-icon" size={14} />
-                        <input required placeholder="Ej: Juan Pérez" value={form.nombre}
-                          onChange={e => setForm({ ...form, nombre: e.target.value })} />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label>Usuario <span className="usr-req">*</span></label>
-                      <div className="usr-field-wrap">
-                        <FiAtSign className="usr-field-icon" size={14} />
-                        <input required placeholder="jperez" value={form.username}
-                          onChange={e => setForm({ ...form, username: e.target.value })} />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label>Correo electrónico <span className="usr-req">*</span></label>
-                      <div className="usr-field-wrap">
-                        <FiMail className="usr-field-icon" size={14} />
-                        <input type="email" required placeholder="correo@ejemplo.com" value={form.email}
-                          onChange={e => setForm({ ...form, email: e.target.value })} />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label>Cargo <span className="usr-opt">opcional</span></label>
-                      <div className="usr-field-wrap">
-                        <FiBriefcase className="usr-field-icon" size={14} />
-                        <input placeholder="Ej: Tesorero, Director" value={form.cargo}
-                          onChange={e => setForm({ ...form, cargo: e.target.value })} />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label>Dependencia <span className="usr-opt">opcional</span></label>
-                      <div className="usr-field-wrap">
-                        <FiMapPin className="usr-field-icon" size={14} />
-                        <input placeholder="Ej: Alcaldía de Comayagua" value={form.dependencia}
-                          onChange={e => setForm({ ...form, dependencia: e.target.value })} />
-                      </div>
+                {/* — Sección identidad — */}
+                <div className="um-section-label"><FiUser size={12} /> Información personal</div>
+                <div className="um-grid2">
+                  <div className="um-field" style={{ gridColumn: '1 / -1' }}>
+                    <label>Nombre completo <span className="um-req">*</span></label>
+                    <div className="um-input-wrap">
+                      <FiUser className="um-icon" size={14} />
+                      <input required placeholder="Ej: Juan Pérez López" value={form.nombre}
+                        onChange={e => setForm({ ...form, nombre: e.target.value })} />
                     </div>
                   </div>
+                  <div className="um-field">
+                    <label>Usuario <span className="um-req">*</span></label>
+                    <div className="um-input-wrap">
+                      <FiAtSign className="um-icon" size={14} />
+                      <input required placeholder="jperez" value={form.username}
+                        onChange={e => setForm({ ...form, username: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="um-field">
+                    <label>Correo electrónico <span className="um-req">*</span></label>
+                    <div className="um-input-wrap">
+                      <FiMail className="um-icon" size={14} />
+                      <input type="email" required placeholder="correo@congresonacional.hn" value={form.email}
+                        onChange={e => setForm({ ...form, email: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="um-field">
+                    <label>Teléfono <span className="um-opt">opcional</span></label>
+                    <div className="um-input-wrap">
+                      <FiPhone className="um-icon" size={14} />
+                      <input type="tel" placeholder="+504 9999-9999" value={form.telefono}
+                        onChange={e => setForm({ ...form, telefono: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="um-field">
+                    <label>Cargo <span className="um-opt">opcional</span></label>
+                    <div className="um-input-wrap">
+                      <FiBriefcase className="um-icon" size={14} />
+                      <input placeholder="Ej: Tesorero, Director" value={form.cargo}
+                        onChange={e => setForm({ ...form, cargo: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="um-field">
+                    <label>Dependencia <span className="um-opt">opcional</span></label>
+                    <div className="um-input-wrap">
+                      <FiMapPin className="um-icon" size={14} />
+                      <input placeholder="Ej: Alcaldía de Comayagua" value={form.dependencia}
+                        onChange={e => setForm({ ...form, dependencia: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
 
-                  {/* — Sección: Acceso y permisos — */}
-                  <div className="usr-section-heading" style={{ marginTop: 4 }}><FiLock size={13} /> Acceso y permisos</div>
+                {/* — Sección acceso — */}
+                <div className="um-section-label" style={{ marginTop: 6 }}><FiLock size={12} /> Acceso y permisos</div>
+                <div className="um-grid2">
+                  <div className="um-field">
+                    <label>Rol <span className="um-req">*</span></label>
+                    <div className="um-input-wrap">
+                      <FiShield className="um-icon" size={14} />
+                      <select value={form.rol} onChange={e => setForm({ ...form, rol: e.target.value })}>
+                        {getRolesParaSelector(me?.rol).map(r => (
+                          <option key={r} value={r}>{ROL_META[r]?.label || r}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="um-field">
+                    <label>
+                      Contraseña
+                      {modal === 'create' ? <span className="um-req"> *</span> : <span className="um-opt"> vacío = sin cambios</span>}
+                    </label>
+                    <div className="um-input-wrap um-pass-wrap">
+                      <FiLock className="um-icon" size={14} />
+                      <input
+                        type={showModalPass ? 'text' : 'password'}
+                        required={modal === 'create'}
+                        placeholder={modal === 'edit' ? '••••••••' : 'Mín. 8 car., 1 may., 1 núm.'}
+                        value={form.password}
+                        onChange={e => setForm({ ...form, password: e.target.value })}
+                      />
+                      <button type="button" className="um-eye" onClick={() => setShowModalPass(v => !v)} tabIndex={-1}>
+                        {showModalPass ? <FiEyeOff size={14} /> : <FiEye size={14} />}
+                      </button>
+                    </div>
+                    {form.password && (() => {
+                      const s = calcPassStrength(form.password);
+                      return (
+                        <div className="um-strength">
+                          <div className="um-strength-bar">
+                            {[1,2,3,4,5].map(i => (
+                              <div key={i} className="um-strength-seg" style={{ background: i <= s.score ? s.color : '#e2e8f0' }} />
+                            ))}
+                          </div>
+                          <span className="um-strength-txt" style={{ color: s.color }}>{s.label}</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
 
-                  <div className="usr-form-grid2">
-                    <div className="form-group">
-                      <label>
-                        Contraseña {modal === 'create' && <span className="usr-req">*</span>}
-                        {modal === 'edit' && <span className="usr-opt">vacío = sin cambios</span>}
-                      </label>
-                      <div className="usr-field-wrap usr-field-pass">
-                        <FiLock className="usr-field-icon" size={14} />
+                  {modal === 'create' && (
+                    <div className="um-field" style={{ gridColumn: '1 / -1' }}>
+                      <label>Confirmar contraseña <span className="um-req">*</span></label>
+                      <div className="um-input-wrap um-pass-wrap">
+                        <FiLock className="um-icon" size={14} />
                         <input
-                          type={showModalPass ? 'text' : 'password'}
-                          required={modal === 'create'}
-                          placeholder={modal === 'edit' ? '••••••••' : 'Mín. 8 car., 1 may., 1 núm.'}
-                          value={form.password}
-                          onChange={e => setForm({ ...form, password: e.target.value })}
+                          type={showConfirmPass ? 'text' : 'password'}
+                          required placeholder="Repite la contraseña"
+                          value={form.confirmPassword}
+                          onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
                         />
-                        <button type="button" className="pass-eye-btn" onClick={() => setShowModalPass(v => !v)} tabIndex={-1}>
-                          {showModalPass ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                        <button type="button" className="um-eye" onClick={() => setShowConfirmPass(v => !v)} tabIndex={-1}>
+                          {showConfirmPass ? <FiEyeOff size={14} /> : <FiEye size={14} />}
                         </button>
                       </div>
-                      {/* Strength meter */}
-                      {form.password && (() => {
-                        const s = calcPassStrength(form.password);
-                        return (
-                          <div className="usr-strength">
-                            <div className="usr-strength-bar">
-                              {[1,2,3,4,5].map(i => (
-                                <div key={i} className="usr-strength-seg" style={{ background: i <= s.score ? s.color : '#e2e8f0' }} />
-                              ))}
-                            </div>
-                            <span className="usr-strength-label" style={{ color: s.color }}>{s.label}</span>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="form-group">
-                      <label>Rol <span className="usr-req">*</span></label>
-                      <div className="usr-field-wrap">
-                        <FiShield className="usr-field-icon" size={14} />
-                        <select value={form.rol} onChange={e => setForm({ ...form, rol: e.target.value })}>
-                          {getRolesParaSelector(me?.rol).map(r => (
-                            <option key={r} value={r}>{ROL_META[r]?.label || r}</option>
-                          ))}
-                        </select>
-                      </div>
-                      {form.rol && (
-                        <span className="usr-rol-preview" style={{ color: ROL_META[form.rol]?.color, background: ROL_META[form.rol]?.bg }}>
-                          {ROL_META[form.rol]?.label}
-                        </span>
+                      {form.password && form.confirmPassword && (
+                        <div className={`um-match ${form.password === form.confirmPassword ? 'ok' : 'no'}`}>
+                          {form.password === form.confirmPassword
+                            ? <><FiCheck size={11} /> Las contraseñas coinciden</>
+                            : <><FiX size={11} /> Las contraseñas no coinciden</>}
+                        </div>
                       )}
                     </div>
-
-                    {modal === 'create' && (
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <label>Confirmar contraseña <span className="usr-req">*</span></label>
-                        <div className="usr-field-wrap usr-field-pass">
-                          <FiLock className="usr-field-icon" size={14} />
-                          <input
-                            type={showConfirmPass ? 'text' : 'password'}
-                            required placeholder="Repite la contraseña"
-                            value={form.confirmPassword}
-                            onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-                          />
-                          <button type="button" className="pass-eye-btn" onClick={() => setShowConfirmPass(v => !v)} tabIndex={-1}>
-                            {showConfirmPass ? <FiEyeOff size={15} /> : <FiEye size={15} />}
-                          </button>
-                        </div>
-                        {form.password && form.confirmPassword && (
-                          <div className={`usr-pass-match ${form.password === form.confirmPassword ? 'match' : 'nomatch'}`}>
-                            {form.password === form.confirmPassword
-                              ? <><FiCheck size={12} /> Las contraseñas coinciden</>
-                              : <><FiX size={12} /> Las contraseñas no coinciden</>}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                </div>{/* end scroll */}
-
-                {formErr && <div className="form-error" style={{ margin: '0 20px' }}>{formErr}</div>}
-
-                <div className="usr-modal-footer">
-                  <button type="button" className="btn-secondary" onClick={closeModal}>Cancelar</button>
-                  <button type="submit" className="btn-primary" disabled={saving}>
-                    {saving ? 'Guardando…' : modal === 'create' ? <><FiUserPlus size={14} /> Crear Usuario</> : <><FiCheck size={14} /> Guardar Cambios</>}
-                  </button>
+                  )}
                 </div>
 
-              </form>
-            </div>
+              </div>
+
+              {formErr && <div className="um-error"><FiX size={13} /> {formErr}</div>}
+
+              {/* FOOTER */}
+              <div className="um-footer">
+                <button type="button" className="btn-secondary" onClick={closeModal}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={saving}>
+                  {saving ? 'Guardando…' : modal === 'create'
+                    ? <><FiUserPlus size={14} /> Crear Usuario</>
+                    : <><FiCheck size={14} /> Guardar Cambios</>}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
