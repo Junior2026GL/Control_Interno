@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from 'react';
 import {
   FiPlus, FiSearch, FiEdit2, FiUserX, FiUserCheck,
   FiX, FiUser, FiMail, FiLock, FiUnlock, FiShield, FiAtSign, FiKey, FiCheck,
-  FiEye, FiEyeOff, FiUsers, FiFilter, FiBriefcase, FiMapPin, FiUserPlus,
+  FiEye, FiEyeOff, FiUsers, FiFilter, FiBriefcase, FiMapPin, FiUserPlus, FiPhone,
 } from 'react-icons/fi';
 
 // ── Password strength ─────────────────────────────────────────
