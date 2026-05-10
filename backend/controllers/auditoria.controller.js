@@ -28,7 +28,7 @@ exports.getAll = (req, res) => {
 
       const total = countResult[0].total;
       db.query(
-        `SELECT id, usuario_id, usuario_nombre, accion, modulo, detalle, ip, metodo, ruta, resultado, creado_en
+        `SELECT id, usuario_id, usuario_nombre, accion, modulo, detalle, ip, pais, ciudad, metodo, ruta, resultado, creado_en
          FROM auditoria ${where}
          ORDER BY creado_en DESC
          LIMIT ? OFFSET ?`,
@@ -76,7 +76,7 @@ exports.exportAll = (req, res) => {
   const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
 
   db.query(
-    `SELECT id, usuario_nombre, accion, modulo, detalle, ip, metodo, ruta, resultado, creado_en
+    `SELECT id, usuario_nombre, accion, modulo, detalle, ip, pais, ciudad, metodo, ruta, resultado, creado_en
      FROM auditoria ${where}
      ORDER BY creado_en DESC
      LIMIT 5000`,

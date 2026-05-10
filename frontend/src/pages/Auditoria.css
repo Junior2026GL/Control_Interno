@@ -294,6 +294,9 @@
 
 .aud-td-fecha  { white-space: nowrap; color: #718096; font-size: 0.78rem; }
 .aud-td-ip     { font-family: monospace; font-size: 0.8rem; }
+.aud-td-ubicacion { white-space: nowrap; font-size: 0.82rem; }
+.aud-ciudad    { color: var(--text-main, #2d3748); margin-right: 4px; }
+.aud-pais-code { display: inline-block; background: #e2e8f0; color: #4a5568; font-size: 0.7rem; font-weight: 700; border-radius: 3px; padding: 1px 4px; letter-spacing: 0.05em; }
 .aud-td-ruta   { font-family: monospace; font-size: 0.78rem; color: #718096; }
 .aud-td-detalle{ font-size: 0.8rem; color: #718096; }
 .aud-anon      { color: #a0aec0; font-style: italic; }

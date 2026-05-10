@@ -7,7 +7,8 @@
  *                          todas las mutaciones (POST, PUT, PATCH, DELETE)
  */
 
-const db = require('../db');
+const db     = require('../db');
+const geoip  = require('geoip-lite');
 
 function normalizeIP(ip) {
   if (!ip) return 'desconocida';
@@ -24,6 +25,17 @@ function getClientIP(req) {
     if (first) return normalizeIP(first);
   }
   return normalizeIP(req.ip || req.socket?.remoteAddress);
+}
+
+// Resuelve país (código ISO-2) y ciudad a partir de la IP usando base de datos local
+function getGeo(ip) {
+  try {
+    const geo = geoip.lookup(ip);
+    if (!geo) return { pais: null, ciudad: null };
+    return { pais: geo.country || null, ciudad: geo.city || null };
+  } catch {
+    return { pais: null, ciudad: null };
+  }
 }
 
 /**
@@ -50,11 +62,13 @@ function logEvent({
   ruta           = null,
   resultado      = 'EXITO',
 }) {
+  const cleanIP = normalizeIP(ip);
+  const { pais, ciudad } = getGeo(cleanIP);
   db.query(
     `INSERT INTO auditoria
-       (usuario_id, usuario_nombre, accion, modulo, detalle, ip, metodo, ruta, resultado)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [usuario_id, usuario_nombre, accion, modulo, detalle, normalizeIP(ip), metodo, ruta, resultado],
+       (usuario_id, usuario_nombre, accion, modulo, detalle, ip, pais, ciudad, metodo, ruta, resultado)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [usuario_id, usuario_nombre, accion, modulo, detalle, cleanIP, pais, ciudad, metodo, ruta, resultado],
     (err) => {
       if (err) console.error('[AUDIT] Error registrando evento:', err.message);
     }

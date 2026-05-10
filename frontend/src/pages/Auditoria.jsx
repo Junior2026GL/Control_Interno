@@ -152,13 +152,15 @@ export default function Auditoria() {
         ACTUALIZAR:'Actualizar', ELIMINAR:'Eliminar',
         ACCESO_DENEGADO:'Acceso denegado',
       };
-      const header = ['Fecha', 'Accion', 'Modulo', 'Usuario', 'IP', 'Metodo', 'Ruta', 'Detalle', 'Resultado'];
+      const header = ['Fecha', 'Accion', 'Modulo', 'Usuario', 'IP', 'Pais', 'Ciudad', 'Metodo', 'Ruta', 'Detalle', 'Resultado'];
       const csvRows = rows.map(row => [
         formatFecha(row.creado_en),
         ACCION_MAP[row.accion] || row.accion || '',
         row.modulo || '',
         row.usuario_nombre || 'Anonimo',
         row.ip || '',
+        countryName(row.pais) || '',
+        row.ciudad || '',
         row.metodo || '',
         row.ruta || '',
         (row.detalle || '').replace(/"/g, '""'),
@@ -204,6 +206,21 @@ export default function Auditoria() {
   const sa = s => (s || '').replace(/[ÁÉÍÓÚÑáéíóúñ]/g,
     c => ({ Á:'A',É:'E',Í:'I',Ó:'O',Ú:'U',Ñ:'N',
              á:'a',é:'e',í:'i',ó:'o',ú:'u',ñ:'n' }[c] || c));
+
+  // Convierte código ISO-2 de país en nombre completo (español)
+  const cn = new Intl.DisplayNames(['es'], { type: 'region' });
+  function countryName(code) {
+    if (!code) return null;
+    try { return cn.of(code); } catch { return code; }
+  }
+  // Emoji de bandera a partir del código ISO-2
+  function countryFlag(code) {
+    if (!code || code.length !== 2) return '';
+    return String.fromCodePoint(
+      0x1F1E6 + code.toUpperCase().charCodeAt(0) - 65,
+      0x1F1E6 + code.toUpperCase().charCodeAt(1) - 65
+    );
+  }
 
   // ── PDF Export ─────────────────────────────────────────
   const handleExportPDF = async () => {
@@ -317,27 +334,29 @@ export default function Auditoria() {
       autoTable(doc, {
         startY,
         margin: { top: 57, left: L, right: 14 },
-        head: [['Fecha', 'Accion', 'Modulo', 'Usuario', 'IP', 'Detalle', 'Resultado']],
+        head: [['Fecha', 'Accion', 'Modulo', 'Usuario', 'IP', 'Ubicacion', 'Detalle', 'Resultado']],
         body: rows.map(row => [
           formatFecha(row.creado_en),
           sa(ACCION_MAP[row.accion] || row.accion || '—'),
           sa(row.modulo || '—'),
           sa(row.usuario_nombre || 'Anonimo'),
           row.ip || '—',
-          sa((row.detalle || '—').substring(0, 70)),
+          sa([row.ciudad, countryName(row.pais)].filter(Boolean).join(', ') || '—'),
+          sa((row.detalle || '—').substring(0, 60)),
           row.resultado || '—',
         ]),
         styles: { fontSize: 7.5, cellPadding: 3, font: 'helvetica', textColor: [20,20,20], overflow: 'ellipsize' },
         headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: 8 },
         alternateRowStyles: { fillColor: [245, 248, 255] },
         columnStyles: {
-          0: { cellWidth: 32 },
-          1: { cellWidth: 26 },
-          2: { cellWidth: 22 },
-          3: { cellWidth: 38 },
+          0: { cellWidth: 28 },
+          1: { cellWidth: 22 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 32 },
           4: { cellWidth: 22 },
-          5: { cellWidth: 'auto' },
-          6: { cellWidth: 20 },
+          5: { cellWidth: 28 },
+          6: { cellWidth: 'auto' },
+          7: { cellWidth: 18 },
         },
         willDrawPage: (data) => {
           if (data.pageNumber > 1) drawPage();
@@ -530,6 +549,7 @@ export default function Auditoria() {
                     <td><span className="aud-skeleton" style={{ width: 55 }} /></td>
                     <td><span className="aud-skeleton" style={{ width: 110 }} /></td>
                     <td><span className="aud-skeleton" style={{ width: 80 }} /></td>
+                    <td><span className="aud-skeleton" style={{ width: 90 }} /></td>
                     <td><span className="aud-skeleton" style={{ width: 180 }} /></td>
                     <td><span className="aud-skeleton" style={{ width: 55 }} /></td>
                   </tr>
@@ -550,6 +570,7 @@ export default function Auditoria() {
                   <th>Módulo</th>
                   <th><FiUser size={11} /> Usuario</th>
                   <th><FiWifi size={11} /> IP</th>
+                  <th>Ubicación</th>
                   <th>Detalle</th>
                   <th>Resultado</th>
                 </tr>
@@ -565,6 +586,15 @@ export default function Auditoria() {
                       <td><span className="aud-modulo-tag">{row.modulo || '—'}</span></td>
                       <td>{row.usuario_nombre || <span className="aud-anon">Anónimo</span>}</td>
                       <td className="aud-td-ip">{row.ip}</td>
+                      <td className="aud-td-ubicacion">
+                        {(row.pais || row.ciudad) ? (
+                          <span title={[row.ciudad, countryName(row.pais)].filter(Boolean).join(', ')}>
+                            {countryFlag(row.pais)}{' '}
+                            {row.ciudad ? <span className="aud-ciudad">{row.ciudad}</span> : null}
+                            {row.pais ? <span className="aud-pais-code">{row.pais}</span> : null}
+                          </span>
+                        ) : '—'}
+                      </td>
                       <td className="aud-td-detalle" title={row.detalle}>{row.detalle ? row.detalle.substring(0, 70) + (row.detalle.length > 70 ? '…' : '') : '—'}</td>
                       <td><span className={`aud-badge ${resColor}`}>{row.resultado}</span></td>
                     </tr>
@@ -628,6 +658,8 @@ export default function Auditoria() {
                   ['Módulo', detailRow.modulo],
                   ['Usuario', detailRow.usuario_nombre || 'Anónimo'],
                   ['IP', detailRow.ip],
+                  ['País', [countryFlag(detailRow.pais), countryName(detailRow.pais)].filter(Boolean).join(' ')],
+                  ['Ciudad', detailRow.ciudad],
                   ['Método HTTP', detailRow.metodo],
                   ['Ruta', detailRow.ruta],
                   ['Resultado', detailRow.resultado],
