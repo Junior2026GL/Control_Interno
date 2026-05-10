@@ -32,7 +32,17 @@ function getGeo(ip) {
   try {
     const geo = geoip.lookup(ip);
     if (!geo) return { pais: null, ciudad: null };
-    return { pais: geo.country || null, ciudad: geo.city || null };
+    const pais = geo.country || null;
+    // Prioridad: city → timezone city → null
+    let ciudad = (geo.city && geo.city.trim()) || null;
+    if (!ciudad && geo.timezone) {
+      // "America/Tegucigalpa" → "Tegucigalpa" | "America/New_York" → "New York"
+      const parts = geo.timezone.split('/');
+      if (parts.length >= 2) {
+        ciudad = parts[parts.length - 1].replace(/_/g, ' ');
+      }
+    }
+    return { pais, ciudad };
   } catch {
     return { pais: null, ciudad: null };
   }
