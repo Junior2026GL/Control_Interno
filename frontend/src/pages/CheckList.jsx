@@ -22,23 +22,24 @@ function fmtFecha(str) {
   return d.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-// ── definición de los 16 documentos ──────────────────────────────────────────
+// ── definición de los 17 documentos ──────────────────────────────────────────
 const DOCS = [
   { key: 'orden_pago_da',          label: 'Orden de Pago D.A.' },
+  { key: 'acta_recepcion',         label: 'Acta de Recepción' },
+  { key: 'acta_entrega',           label: 'Acta de Entrega' },
   { key: 'validacion_factura_sar', label: 'Validación de Factura SAR' },
+  { key: 'factura_original',       label: 'Factura Original' },
   { key: 'formato_sap',            label: 'Formato SAP' },
   { key: 'orden_compra',           label: 'Orden de Compra' },
-  { key: 'acta_recepcion',         label: 'Acta de Recepción' },
-  { key: 'resumen_cotizacion',     label: 'Resumen Cotización' },
-  { key: 'acta_entrega',           label: 'Acta de Entrega' },
-  { key: 'cotizaciones',           label: 'Cotizaciones' },
-  { key: 'factura_original',       label: 'Factura Original' },
-  { key: 'memo_requisicion',       label: 'Memo de Requisición' },
-  { key: 'solicitud_eventos',      label: 'Solicitud de Eventos' },
-  { key: 'informe_tecnico',        label: 'Informe Técnico' },
-  { key: 'validacion_rtn',         label: 'Validación RTN Proveedores' },
-  { key: 'constancia_legal',       label: 'Constancia Inf. Legal Proveedores' },
   { key: 'solvencia_fiscal',       label: 'Solvencia Fiscal' },
+  { key: 'permiso_operacion',      label: 'Permiso de Operación' },
+  { key: 'validacion_rtn',         label: 'Validación RTN Proveedores' },
+  { key: 'resumen_cotizacion',     label: 'Resumen Cotización' },
+  { key: 'cotizaciones',           label: 'Cotizaciones' },
+  { key: 'informe_tecnico',        label: 'Informe Técnico' },
+  { key: 'solicitud_eventos',      label: 'Solicitud de Eventos' },
+  { key: 'memo_requisicion',       label: 'Memo de Requisición' },
+  { key: 'constancia_legal',       label: 'Constancia Inf. Legal Proveedores' },
   { key: 'otros',                  label: 'Otros' },
 ];
 

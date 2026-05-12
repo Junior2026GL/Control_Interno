@@ -2,10 +2,10 @@ const db = require('../db');
 const { logEvent, getClientIP } = require('../middleware/audit');
 
 const BOOL_FIELDS = [
-  'orden_pago_da', 'validacion_factura_sar', 'formato_sap', 'orden_compra',
-  'acta_recepcion', 'resumen_cotizacion', 'acta_entrega', 'cotizaciones',
-  'factura_original', 'memo_requisicion', 'solicitud_eventos', 'informe_tecnico',
-  'validacion_rtn', 'constancia_legal', 'solvencia_fiscal', 'otros',
+  'orden_pago_da', 'acta_recepcion', 'acta_entrega', 'validacion_factura_sar',
+  'factura_original', 'formato_sap', 'orden_compra', 'solvencia_fiscal',
+  'permiso_operacion', 'validacion_rtn', 'resumen_cotizacion', 'cotizaciones',
+  'informe_tecnico', 'solicitud_eventos', 'memo_requisicion', 'constancia_legal', 'otros',
 ];
 
 function sanitize(str) { return (str || '').toString().trim(); }
@@ -93,18 +93,18 @@ exports.create = (req, res) => {
     db.query(
       `INSERT INTO checklist_expediente
         (numero, numero_folios, numero_expediente,
-         orden_pago_da, validacion_factura_sar, formato_sap, orden_compra,
-         acta_recepcion, resumen_cotizacion, acta_entrega, cotizaciones,
-         factura_original, memo_requisicion, solicitud_eventos, informe_tecnico,
-         validacion_rtn, constancia_legal, solvencia_fiscal, otros,
+         orden_pago_da, acta_recepcion, acta_entrega, validacion_factura_sar,
+         factura_original, formato_sap, orden_compra, solvencia_fiscal,
+         permiso_operacion, validacion_rtn, resumen_cotizacion, cotizaciones,
+         informe_tecnico, solicitud_eventos, memo_requisicion, constancia_legal, otros,
          observaciones, creado_por)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         numero, numero_folios, numero_expediente,
-        bools.orden_pago_da, bools.validacion_factura_sar, bools.formato_sap, bools.orden_compra,
-        bools.acta_recepcion, bools.resumen_cotizacion, bools.acta_entrega, bools.cotizaciones,
-        bools.factura_original, bools.memo_requisicion, bools.solicitud_eventos, bools.informe_tecnico,
-        bools.validacion_rtn, bools.constancia_legal, bools.solvencia_fiscal, bools.otros,
+        bools.orden_pago_da, bools.acta_recepcion, bools.acta_entrega, bools.validacion_factura_sar,
+        bools.factura_original, bools.formato_sap, bools.orden_compra, bools.solvencia_fiscal,
+        bools.permiso_operacion, bools.validacion_rtn, bools.resumen_cotizacion, bools.cotizaciones,
+        bools.informe_tecnico, bools.solicitud_eventos, bools.memo_requisicion, bools.constancia_legal, bools.otros,
         observaciones, req.user.id,
       ],
       (err2, result) => {
@@ -145,18 +145,18 @@ exports.update = (req, res) => {
     db.query(
       `UPDATE checklist_expediente SET
          numero_folios = ?, numero_expediente = ?,
-         orden_pago_da = ?, validacion_factura_sar = ?, formato_sap = ?, orden_compra = ?,
-         acta_recepcion = ?, resumen_cotizacion = ?, acta_entrega = ?, cotizaciones = ?,
-         factura_original = ?, memo_requisicion = ?, solicitud_eventos = ?, informe_tecnico = ?,
-         validacion_rtn = ?, constancia_legal = ?, solvencia_fiscal = ?, otros = ?,
+         orden_pago_da = ?, acta_recepcion = ?, acta_entrega = ?, validacion_factura_sar = ?,
+         factura_original = ?, formato_sap = ?, orden_compra = ?, solvencia_fiscal = ?,
+         permiso_operacion = ?, validacion_rtn = ?, resumen_cotizacion = ?, cotizaciones = ?,
+         informe_tecnico = ?, solicitud_eventos = ?, memo_requisicion = ?, constancia_legal = ?, otros = ?,
          observaciones = ?
        WHERE id = ?`,
       [
         numero_folios, numero_expediente,
-        bools.orden_pago_da, bools.validacion_factura_sar, bools.formato_sap, bools.orden_compra,
-        bools.acta_recepcion, bools.resumen_cotizacion, bools.acta_entrega, bools.cotizaciones,
-        bools.factura_original, bools.memo_requisicion, bools.solicitud_eventos, bools.informe_tecnico,
-        bools.validacion_rtn, bools.constancia_legal, bools.solvencia_fiscal, bools.otros,
+        bools.orden_pago_da, bools.acta_recepcion, bools.acta_entrega, bools.validacion_factura_sar,
+        bools.factura_original, bools.formato_sap, bools.orden_compra, bools.solvencia_fiscal,
+        bools.permiso_operacion, bools.validacion_rtn, bools.resumen_cotizacion, bools.cotizaciones,
+        bools.informe_tecnico, bools.solicitud_eventos, bools.memo_requisicion, bools.constancia_legal, bools.otros,
         observaciones, id,
       ],
       (err2) => {
