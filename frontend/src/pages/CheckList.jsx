@@ -131,6 +131,7 @@ export default function CheckList() {
   const [form,       setForm]       = useState(buildEmpty());
   const [formErr,    setFormErr]    = useState('');
   const [saving,     setSaving]     = useState(false);
+  const [ordenReservada, setOrdenReservada] = useState(null); // { id, numero, anio }
 
   const [editItem,   setEditItem]   = useState(null);
   const [editForm,   setEditForm]   = useState(buildEmpty());
@@ -173,13 +174,48 @@ export default function CheckList() {
   const totalPages    = Math.max(1, Math.ceil(listaMostrada.length / PAGE_SIZE));
   const listaPaginada = listaMostrada.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // ── abrir modal crear: reservar orden automáticamente ────────────────────
+  const openCrear = async () => {
+    const anio = new Date().getFullYear();
+    const mes  = String(new Date().getMonth() + 1).padStart(2, '0');
+    let orden  = null;
+    try {
+      const { data } = await api.post('/orden-checklist/reservar', { anio }, { headers: authHeaders() });
+      orden = data;
+    } catch { /* sin órdenes disponibles, se puede crear sin número */ }
+    const base = buildEmpty();
+    if (orden) {
+      const num = String(orden.numero).padStart(4, '0');
+      base.numero_expediente = `${num}-${mes}-${anio}`;
+    }
+    setOrdenReservada(orden);
+    setForm(base);
+    setFormErr('');
+    setModalCrear(true);
+  };
+
+  // ── cancelar modal crear: liberar orden reservada ──────────────────────
+  const cancelCrear = async () => {
+    if (ordenReservada) {
+      try { await api.post('/orden-checklist/liberar', { id: ordenReservada.id }, { headers: authHeaders() }); } catch { /* silencioso */ }
+      setOrdenReservada(null);
+    }
+    setModalCrear(false);
+    setForm(buildEmpty());
+  };
+
   // ── crear ─────────────────────────────────────────────────────────────────
   const handleCrear = async (e) => {
     e.preventDefault();
     setFormErr('');
     setSaving(true);
     try {
-      await api.post('/checklist', form, { headers: authHeaders() });
+      const res = await api.post('/checklist', form, { headers: authHeaders() });
+      // Confirmar la orden reservada vinculándola al checklist creado
+      if (ordenReservada) {
+        try { await api.post('/orden-checklist/confirmar', { id: ordenReservada.id, checklist_id: res.data.id }, { headers: authHeaders() }); } catch { /* silencioso */ }
+        setOrdenReservada(null);
+      }
       setModalCrear(false);
       setForm(buildEmpty());
       fetchLista();
@@ -629,7 +665,7 @@ export default function CheckList() {
               <FiRefreshCw size={15} />
             </button>
             <button className="cl-tool-btn-new"
-              onClick={() => { setForm(buildEmpty()); setFormErr(''); setModalCrear(true); }}>
+              onClick={openCrear}>
               <FiPlus size={13} /> Nuevo Check List
             </button>
           </div>
@@ -763,7 +799,7 @@ export default function CheckList() {
                 {formErr && <div className="cl-server-err">{formErr}</div>}
               </div>
               <div className="cl-modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setModalCrear(false)}>Cancelar</button>
+                <button type="button" className="btn-secondary" onClick={cancelCrear}>Cancelar</button>
                 <button type="submit" className="btn-primary" disabled={saving}>
                   {saving ? 'Guardando…' : 'Crear Check List'}
                 </button>

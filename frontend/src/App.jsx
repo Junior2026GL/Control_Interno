@@ -23,6 +23,7 @@ import MapaAlcaldias from './pages/MapaAlcaldias';
 import Alcaldes from './pages/Alcaldes';
 import Proveedores from './pages/Proveedores';
 import CheckList from './pages/CheckList';
+import OrdenChecklist from './pages/OrdenChecklist';
 import Bodegas from './pages/Bodegas';
 import PrivateRoute from './components/PrivateRoute';
 import RoleRoute from './components/RoleRoute';
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="/alcaldes" element={<ModuleRoute modulo="alcaldes"><Alcaldes /></ModuleRoute>} />
             <Route path="/proveedores" element={<ModuleRoute modulo="proveedores"><Proveedores /></ModuleRoute>} />
             <Route path="/checklist" element={<ModuleRoute modulo="checklist"><CheckList /></ModuleRoute>} />
+            <Route path="/orden-checklist" element={<ModuleRoute modulo="orden-checklist"><OrdenChecklist /></ModuleRoute>} />
             <Route path="/bodegas" element={<ModuleRoute modulo="bodegas"><Bodegas /></ModuleRoute>} />
           </Routes>
         </SocketProvider>
