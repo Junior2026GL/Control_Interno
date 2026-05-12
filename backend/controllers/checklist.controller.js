@@ -81,6 +81,8 @@ exports.create = (req, res) => {
   const numero_folios     = sanitize(req.body.numero_folios)     || null;
   const numero_expediente = sanitize(req.body.numero_expediente) || null;
   const observaciones     = sanitize(req.body.observaciones)     || null;
+  // Si viene numero_orden (de orden_checklist), usarlo en lugar del auto-incremental
+  const numero_orden      = req.body.numero_orden ? parseInt(req.body.numero_orden, 10) : null;
 
   if (observaciones && observaciones.length > 2000)
     return res.status(400).json({ message: 'Las observaciones no pueden superar 2000 caracteres.' });
@@ -88,8 +90,7 @@ exports.create = (req, res) => {
   const bools = {};
   for (const f of BOOL_FIELDS) bools[f] = toBool(req.body[f]);
 
-  nextNumero((err, numero) => {
-    if (err) { console.error('[checklist] nextNumero:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+  const doInsert = (numero) => {
     db.query(
       `INSERT INTO checklist_expediente
         (numero, numero_folios, numero_expediente,
@@ -113,7 +114,17 @@ exports.create = (req, res) => {
         res.status(201).json({ id: result.insertId, numero, message: 'Check list creado correctamente.' });
       }
     );
-  });
+  };
+
+  if (numero_orden) {
+    // Formatear igual que nextNumero: string de 4 dígitos
+    doInsert(String(numero_orden).padStart(4, '0'));
+  } else {
+    nextNumero((err, numero) => {
+      if (err) { console.error('[checklist] nextNumero:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+      doInsert(numero);
+    });
+  }
 };
 
 // ── PUT /api/checklist/:id ─────────────────────────────────────────────────

@@ -210,7 +210,7 @@ export default function CheckList() {
     setFormErr('');
     setSaving(true);
     try {
-      const res = await api.post('/checklist', form, { headers: authHeaders() });
+      const res = await api.post('/checklist', { ...form, numero_orden: ordenReservada?.numero }, { headers: authHeaders() });
       // Confirmar la orden reservada vinculándola al checklist creado
       if (ordenReservada) {
         try { await api.post('/orden-checklist/confirmar', { id: ordenReservada.id, checklist_id: res.data.id }, { headers: authHeaders() }); } catch { /* silencioso */ }
