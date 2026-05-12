@@ -938,7 +938,7 @@ export default function ReportesPresupuesto() {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colSpan={4} className="rp-tfoot-lbl">Totales (p\u00e1gina visible)</td>
+                        <td colSpan={4} className="rp-tfoot-lbl">Totales (página visible)</td>
                         <td className="rp-tfoot-total">{formatHNL(rSlice.reduce((s,r) => s + (r.monto_asignado||0), 0))}</td>
                         <td className="rp-tfoot-total">{formatHNL(rSlice.reduce((s,r) => s + r.ejecutado, 0))}</td>
                         <td className="rp-tfoot-total">{formatHNL(rSlice.reduce((s,r) => s + (r.disponible||0), 0))}</td>
