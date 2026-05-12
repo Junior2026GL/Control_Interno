@@ -1,9 +1,6 @@
 const db = require('../db');
 const { logEvent, getClientIP } = require('../middleware/audit');
 
-const db = require('../db');
-const { logEvent, getClientIP } = require('../middleware/audit');
-
 const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 
 // ── Auto-liberar órdenes reservadas por más de 15 minutos ─────────────────

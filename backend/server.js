@@ -76,3 +76,19 @@ app.set('emitToUser', emitToUser);
 server.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+
+// ── Auto-liberar órdenes reservadas por más de 15 minutos ─────────────────
+const db = require('./db');
+setInterval(() => {
+  db.query(
+    `UPDATE orden_checklist
+     SET estado = 'libre', usuario_id = NULL, fecha_registro = NULL, checklist_id = NULL
+     WHERE estado = 'reservado'
+       AND fecha_registro < DATE_SUB(NOW(), INTERVAL 15 MINUTE)`,
+    (err, result) => {
+      if (err) return;
+      if (result && result.affectedRows > 0)
+        console.log(`[orden_checklist] Auto-liberadas ${result.affectedRows} órdenes expiradas.`);
+    }
+  );
+}, 60 * 1000);
