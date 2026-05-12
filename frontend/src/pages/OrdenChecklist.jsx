@@ -59,16 +59,24 @@ export default function OrdenChecklist() {
     fetchOrdenes(anio);
   }, [anio, fetchOrdenes]);
 
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = 'ok') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
   // ── Generar órdenes ────────────────────────────────────────────────────
   const handleGenerar = async () => {
     setGenLoading(true);
     setGenMsg('');
     try {
       const { data } = await api.post('/orden-checklist/generar', { anio: genAnio, cantidad: genCantidad });
-      setGenMsg(data.message);
       await fetchAnios();
       if (genAnio === anio) await fetchOrdenes(anio);
       else setAnio(genAnio);
+      setShowGenerar(false);
+      showToast(data.message, 'ok');
     } catch (e) {
       setGenMsg(e.response?.data?.message || 'Error al generar órdenes.');
     } finally {
@@ -168,6 +176,11 @@ export default function OrdenChecklist() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* ── Toast ── */}
+        {toast && (
+          <div className={`oc-toast oc-toast--${toast.type}`}>{toast.msg}</div>
         )}
 
         {/* ── Tooltip ── */}
