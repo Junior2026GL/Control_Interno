@@ -499,11 +499,12 @@ export default function CheckList() {
       doc.setDrawColor(210, 220, 235);
       doc.setLineWidth(0.2);
       doc.rect(L, y, CW, rowH, 'S');
-      doc.line(L + colW, y, L + colW, y + rowH);
+      // línea divisoria central solo si hay columna derecha
+      if (right) doc.line(L + colW, y, L + colW, y + rowH);
 
       const midY = y + rowH / 2;
 
-      // columna izquierda
+      // columna izquierda (ocupa todo el ancho si no hay derecha)
       const chkL = left && (cl[left.key] == 1 || cl[left.key] === true);
       doc.setFillColor(...BLANCO);
       doc.setDrawColor(...NEGRO);
