@@ -13,7 +13,7 @@ import { AuthContext } from '../context/AuthContext';
 import './ReportesPresupuesto.css';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const YEARS        = Array.from({ length: 8 }, (_, i) => 2030 - i);
+const YEARS        = [2026, 2027, 2028, 2029, 2030];
 const PAGE_SIZE    = 15;
 
 function formatHNL(v) {
