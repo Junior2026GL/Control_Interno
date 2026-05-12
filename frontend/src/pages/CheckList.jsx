@@ -783,7 +783,7 @@ export default function CheckList() {
           MODAL CREAR
       ══════════════════════════════════════════════════════════ */}
       {modalCrear && (
-        <div className="cl-backdrop" onClick={e => e.target === e.currentTarget && setModalCrear(false)}>
+        <div className="cl-backdrop" onClick={e => e.target === e.currentTarget && cancelCrear()}>
           <div className="cl-modal">
             <div className="cl-modal-header">
               <div className="cl-modal-icon"><FiClipboard size={20} color="#274C8D" /></div>
@@ -791,7 +791,7 @@ export default function CheckList() {
                 <h3>Nuevo Check List</h3>
                 <p>Complete la documentación del expediente</p>
               </div>
-              <button className="cl-modal-close" onClick={() => setModalCrear(false)}><FiX size={18} /></button>
+              <button className="cl-modal-close" onClick={cancelCrear}><FiX size={18} /></button>
             </div>
             <form onSubmit={handleCrear}>
               <div className="cl-form">

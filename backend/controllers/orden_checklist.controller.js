@@ -1,7 +1,25 @@
 const db = require('../db');
 const { logEvent, getClientIP } = require('../middleware/audit');
 
+const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
+
 const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
+
+// ── Auto-liberar órdenes reservadas por más de 15 minutos ─────────────────
+setInterval(() => {
+  db.query(
+    `UPDATE orden_checklist
+     SET estado = 'libre', usuario_id = NULL, fecha_registro = NULL, checklist_id = NULL
+     WHERE estado = 'reservado'
+       AND fecha_registro < DATE_SUB(NOW(), INTERVAL 15 MINUTE)`,
+    (err, result) => {
+      if (err) return;
+      if (result.affectedRows > 0)
+        console.log(`[orden_checklist] Auto-liberadas ${result.affectedRows} órdenes expiradas.`);
+    }
+  );
+}, 60 * 1000); // cada 1 minuto
 
 // ── GET /api/orden-checklist?anio=2026 ────────────────────────────────────
 // Devuelve todas las órdenes de un año (para el grid)
