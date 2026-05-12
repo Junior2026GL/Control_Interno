@@ -17,7 +17,7 @@ import { AuthContext } from '../context/AuthContext';
 import './PresupuestoDiputados.css';
 
 const CURRENT_YEAR     = new Date().getFullYear();
-const YEARS            = Array.from({ length: 8 }, (_, i) => 2030 - i);
+const YEARS            = [2026, 2027, 2028, 2029, 2030];
 const RESUMEN_PAGE_SIZE = 10;
 const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const MESES_LARGOS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto',
