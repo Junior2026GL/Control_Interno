@@ -4,7 +4,7 @@ import {
   LuWallet, LuUsers, LuClipboardCheck,
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
-  LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore,
+  LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -128,6 +128,14 @@ const ALL_MODULES = [
     description: 'Control de documentación para expedientes de pago',
     icon: LuClipboardCheck,
     gradient: 'linear-gradient(135deg, #164e63 0%, #0891b2 100%)',
+  },
+  {
+    path: '/orden-checklist',
+    label: 'Órdenes de Checklist',
+    clave: 'orden-checklist',
+    description: 'Control de correlativos de órdenes por año',
+    icon: LuListOrdered,
+    gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
   },
   {
     path: '/bodegas',
