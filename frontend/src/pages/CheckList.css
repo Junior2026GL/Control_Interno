@@ -360,9 +360,11 @@
 .cl-checks-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(9, auto);
+  grid-auto-flow: column;
   gap: 8px 12px;
 }
-@media (max-width: 500px) { .cl-checks-grid { grid-template-columns: 1fr; } }
+@media (max-width: 500px) { .cl-checks-grid { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; } }
 
 .cl-check-label {
   display: flex;
