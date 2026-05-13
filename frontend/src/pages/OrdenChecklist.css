@@ -1,5 +1,5 @@
 /* --------------------------------------------------
-   ORDEN CHECKLIST — diseño profesional
+   ORDEN CHECKLIST ï¿½ diseï¿½o profesional
    -------------------------------------------------- */
 
 .oc-page {
@@ -152,6 +152,8 @@
 .oc-stat--reservado .oc-stat-icon { color: #d97706; }
 .oc-stat--usado     .oc-stat-val  { color: #2563eb; }
 .oc-stat--usado     .oc-stat-icon { color: #2563eb; }
+.oc-stat--anulado   .oc-stat-val  { color: #dc2626; }
+.oc-stat--anulado   .oc-stat-icon { color: #dc2626; }
 
 /* -- Barra de uso ----------------------------------- */
 .oc-usage-bar-wrap {
@@ -212,6 +214,7 @@
 .oc-ley-libre     { background: #e2e8f0; }
 .oc-ley-reservado { background: #f59e0b; }
 .oc-ley-usado     { background: #3b82f6; }
+.oc-ley-anulado   { background: #ef4444; }
 
 /* -- Error ----------------------------------------- */
 .oc-error {
@@ -270,8 +273,17 @@
   border-color: #93c5fd;
   cursor: pointer;
 }
+.oc-cell--anulado {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+  cursor: pointer;
+  text-decoration: line-through;
+  opacity: 0.8;
+}
 .oc-cell--usado:hover,
-.oc-cell--reservado:hover {
+.oc-cell--reservado:hover,
+.oc-cell--anulado:hover {
   transform: scale(1.12);
   box-shadow: 0 4px 14px rgba(0,0,0,0.15);
   z-index: 2;
@@ -332,6 +344,16 @@
   color: #93c5fd;
   margin-bottom: 2px;
 }
+.oc-tooltip-anulado {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fca5a5;
+  background: rgba(239,68,68,0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  width: fit-content;
+}
 
 /* -- Toast ----------------------------------------- */
 .oc-toast {
@@ -357,7 +379,7 @@
 }
 
 /* --------------------------------------------------
-   MODAL — diseño profesional
+   MODAL ï¿½ diseï¿½o profesional
    -------------------------------------------------- */
 .oc-modal-overlay {
   position: fixed;

@@ -24,7 +24,8 @@ exports.getByAnio = (req, res) => {
   const anio = parseInt(req.query.anio, 10) || new Date().getFullYear();
   db.query(
     `SELECT oc.*, u.nombre AS usuario_nombre,
-            cl.numero AS checklist_numero
+            cl.numero AS checklist_numero,
+            cl.estado AS checklist_estado
      FROM orden_checklist oc
      LEFT JOIN usuarios u ON u.id = oc.usuario_id
      LEFT JOIN checklist_expediente cl ON cl.id = oc.checklist_id

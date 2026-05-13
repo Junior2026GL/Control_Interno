@@ -95,10 +95,11 @@ export default function OrdenChecklist() {
 
   // Estadísticas
   const total      = ordenes.length;
-  const usadas     = ordenes.filter(o => o.estado === 'usado').length;
+  const usadas     = ordenes.filter(o => o.estado === 'usado' && o.checklist_estado !== 'anulado').length;
+  const anuladas   = ordenes.filter(o => o.estado === 'usado' && o.checklist_estado === 'anulado').length;
   const libres     = ordenes.filter(o => o.estado === 'libre').length;
   const reservadas = ordenes.filter(o => o.estado === 'reservado').length;
-  const pctUsadas  = total > 0 ? Math.round((usadas / total) * 100) : 0;
+  const pctUsadas  = total > 0 ? Math.round(((usadas + anuladas) / total) * 100) : 0;
 
   return (
     <>
@@ -164,6 +165,15 @@ export default function OrdenChecklist() {
               <span className="oc-stat-lbl">Usadas</span>
             </div>
           </div>
+          {anuladas > 0 && (
+            <div className="oc-stat oc-stat--anulado">
+              <FiAlertCircle className="oc-stat-icon" />
+              <div className="oc-stat-body">
+                <span className="oc-stat-val">{anuladas}</span>
+                <span className="oc-stat-lbl">Anuladas</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Barra de uso ── */}
@@ -184,6 +194,7 @@ export default function OrdenChecklist() {
           <span className="oc-ley-item"><span className="oc-ley-dot oc-ley-libre" />Libre</span>
           <span className="oc-ley-item"><span className="oc-ley-dot oc-ley-reservado" />Reservada</span>
           <span className="oc-ley-item"><span className="oc-ley-dot oc-ley-usado" />Usada</span>
+          <span className="oc-ley-item"><span className="oc-ley-dot oc-ley-anulado" />Anulada</span>
         </div>
 
         {/* ── Error ── */}
@@ -207,22 +218,25 @@ export default function OrdenChecklist() {
           </div>
         ) : (
           <div className="oc-grid">
-            {ordenes.map(o => (
-              <div
-                key={o.id}
-                className={`oc-cell oc-cell--${o.estado}`}
-                onMouseEnter={e => {
-                  if (o.estado !== 'libre') {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip({ o, x: rect.left, y: rect.bottom + 8 });
-                  }
-                }}
-                onMouseLeave={() => setTooltip(null)}
-                title={o.estado !== 'libre' ? `${pad(o.numero)}-${anio}` : undefined}
-              >
-                {pad(o.numero)}
-              </div>
-            ))}
+            {ordenes.map(o => {
+              const esAnulado = o.estado === 'usado' && o.checklist_estado === 'anulado';
+              return (
+                <div
+                  key={o.id}
+                  className={`oc-cell ${esAnulado ? 'oc-cell--anulado' : `oc-cell--${o.estado}`}`}
+                  onMouseEnter={e => {
+                    if (o.estado !== 'libre') {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setTooltip({ o, esAnulado, x: rect.left, y: rect.bottom + 8 });
+                    }
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                  title={o.estado !== 'libre' ? `${pad(o.numero)}-${anio}` : undefined}
+                >
+                  {pad(o.numero)}
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -241,6 +255,7 @@ export default function OrdenChecklist() {
             style={{ top: tooltip.y + window.scrollY, left: tooltip.x }}
           >
             <span className="oc-tooltip-num">{pad(tooltip.o.numero)}-{anio}</span>
+            {tooltip.esAnulado && <span className="oc-tooltip-anulado">⚠ ANULADO</span>}
             {tooltip.o.checklist_numero && (
               <span>Checklist: <strong>{tooltip.o.checklist_numero}-{anio}</strong></span>
             )}
