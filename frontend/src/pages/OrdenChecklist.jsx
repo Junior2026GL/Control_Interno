@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useContext } from 'react';
-import { FiRefreshCw, FiPlusCircle } from 'react-icons/fi';
+import { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import { FiRefreshCw, FiPlusCircle, FiX, FiHash, FiCheckCircle, FiAlertCircle, FiList } from 'react-icons/fi';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -14,21 +14,33 @@ export default function OrdenChecklist() {
   const { user } = useContext(AuthContext);
   const isAdmin  = ROLES_ADMIN.includes(user?.rol);
 
-  const [anio,    setAnio]    = useState(CURRENT_YEAR);
-  const [ordenes, setOrdenes] = useState([]);
-  const [anios,   setAnios]   = useState([CURRENT_YEAR]);
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState('');
+  const [anio,      setAnio]      = useState(CURRENT_YEAR);
+  const [ordenes,   setOrdenes]   = useState([]);
+  const [anios,     setAnios]     = useState([CURRENT_YEAR]);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState('');
 
   // Modal generar
-  const [showGenerar,   setShowGenerar]   = useState(false);
-  const [genAnio,       setGenAnio]       = useState(CURRENT_YEAR);
-  const [genCantidad,   setGenCantidad]   = useState(100);
-  const [genLoading,    setGenLoading]    = useState(false);
-  const [genMsg,        setGenMsg]        = useState('');
+  const [showGenerar, setShowGenerar] = useState(false);
+  const [genAnio,     setGenAnio]     = useState(CURRENT_YEAR);
+  const [genCantidad, setGenCantidad] = useState(100);
+  const [genLoading,  setGenLoading]  = useState(false);
+  const [genMsg,      setGenMsg]      = useState({ text: '', type: '' });
 
   // Tooltip hover
-  const [tooltip, setTooltip] = useState(null); // { id, x, y }
+  const [tooltip, setTooltip] = useState(null);
+
+  // Cerrar modal con Escape
+  const modalRef = useRef(null);
+  useEffect(() => {
+    if (!showGenerar) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showGenerar]);
+
+  const closeModal = () => { setShowGenerar(false); setGenMsg({ text: '', type: '' }); };
+  const openModal  = () => { setShowGenerar(true);  setGenAnio(anio); setGenMsg({ text: '', type: '' }); };
 
   const fetchAnios = useCallback(async () => {
     try {
@@ -51,112 +63,147 @@ export default function OrdenChecklist() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchAnios();
-  }, [fetchAnios]);
-
-  useEffect(() => {
-    fetchOrdenes(anio);
-  }, [anio, fetchOrdenes]);
+  useEffect(() => { fetchAnios(); }, [fetchAnios]);
+  useEffect(() => { fetchOrdenes(anio); }, [anio, fetchOrdenes]);
 
   const [toast, setToast] = useState(null);
-
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
   };
 
-  // ── Generar órdenes ────────────────────────────────────────────────────
   const handleGenerar = async () => {
+    if (!genCantidad || genCantidad < 1 || genCantidad > 1000) {
+      setGenMsg({ text: 'La cantidad debe ser entre 1 y 1000.', type: 'err' });
+      return;
+    }
     setGenLoading(true);
-    setGenMsg('');
+    setGenMsg({ text: '', type: '' });
     try {
       const { data } = await api.post('/orden-checklist/generar', { anio: genAnio, cantidad: genCantidad });
       await fetchAnios();
       if (genAnio === anio) await fetchOrdenes(anio);
       else setAnio(genAnio);
-      setShowGenerar(false);
+      closeModal();
       showToast(data.message, 'ok');
     } catch (e) {
-      setGenMsg(e.response?.data?.message || 'Error al generar órdenes.');
+      setGenMsg({ text: e.response?.data?.message || 'Error al generar órdenes.', type: 'err' });
     } finally {
       setGenLoading(false);
     }
   };
 
-  // ── Estadísticas ───────────────────────────────────────────────────────
-  const total    = ordenes.length;
-  const usadas   = ordenes.filter(o => o.estado === 'usado').length;
-  const libres   = ordenes.filter(o => o.estado === 'libre').length;
+  // Estadísticas
+  const total      = ordenes.length;
+  const usadas     = ordenes.filter(o => o.estado === 'usado').length;
+  const libres     = ordenes.filter(o => o.estado === 'libre').length;
   const reservadas = ordenes.filter(o => o.estado === 'reservado').length;
+  const pctUsadas  = total > 0 ? Math.round((usadas / total) * 100) : 0;
 
   return (
     <>
       <Navbar />
       <div className="oc-page">
 
-        {/* ── Header ── */}
-        <div className="oc-header">
-          <div className="oc-header-left">
-            <h1 className="oc-title">Órdenes de Checklist</h1>
-            <p className="oc-subtitle">Control de correlativos por año</p>
+        {/* ── Hero Header ── */}
+        <div className="oc-hero">
+          <div className="oc-hero-left">
+            <div className="oc-hero-icon"><FiList size={22} /></div>
+            <div>
+              <h1 className="oc-title">Órdenes de Checklist</h1>
+              <p className="oc-subtitle">Control de correlativos por año fiscal</p>
+            </div>
           </div>
-          <div className="oc-header-right">
+          <div className="oc-hero-right">
             <select
               className="oc-year-select"
               value={anio}
               onChange={e => setAnio(+e.target.value)}
+              aria-label="Seleccionar año"
             >
               {anios.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
-            <button className="oc-btn-refresh" onClick={() => fetchOrdenes(anio)} title="Actualizar">
-              <FiRefreshCw />
+            <button className="oc-btn-refresh" onClick={() => fetchOrdenes(anio)} title="Actualizar lista" aria-label="Actualizar">
+              <FiRefreshCw size={15} />
             </button>
             {isAdmin && (
-              <button className="oc-btn-generar" onClick={() => { setShowGenerar(true); setGenMsg(''); }}>
-                <FiPlusCircle /> Generar órdenes
+              <button className="oc-btn-generar" onClick={openModal}>
+                <FiPlusCircle size={15} /> Generar órdenes
               </button>
             )}
           </div>
         </div>
 
-        {/* ── Estadísticas ── */}
+        {/* ── Stats ── */}
         <div className="oc-stats">
           <div className="oc-stat">
-            <span className="oc-stat-val">{total}</span>
-            <span className="oc-stat-lbl">Total</span>
+            <FiHash className="oc-stat-icon" />
+            <div className="oc-stat-body">
+              <span className="oc-stat-val">{total}</span>
+              <span className="oc-stat-lbl">Total</span>
+            </div>
           </div>
           <div className="oc-stat oc-stat--libre">
-            <span className="oc-stat-val">{libres}</span>
-            <span className="oc-stat-lbl">Libres</span>
+            <FiList className="oc-stat-icon" />
+            <div className="oc-stat-body">
+              <span className="oc-stat-val">{libres}</span>
+              <span className="oc-stat-lbl">Libres</span>
+            </div>
           </div>
           <div className="oc-stat oc-stat--reservado">
-            <span className="oc-stat-val">{reservadas}</span>
-            <span className="oc-stat-lbl">Reservadas</span>
+            <FiAlertCircle className="oc-stat-icon" />
+            <div className="oc-stat-body">
+              <span className="oc-stat-val">{reservadas}</span>
+              <span className="oc-stat-lbl">Reservadas</span>
+            </div>
           </div>
           <div className="oc-stat oc-stat--usado">
-            <span className="oc-stat-val">{usadas}</span>
-            <span className="oc-stat-lbl">Usadas</span>
+            <FiCheckCircle className="oc-stat-icon" />
+            <div className="oc-stat-body">
+              <span className="oc-stat-val">{usadas}</span>
+              <span className="oc-stat-lbl">Usadas</span>
+            </div>
           </div>
         </div>
+
+        {/* ── Barra de uso ── */}
+        {total > 0 && (
+          <div className="oc-usage-bar-wrap">
+            <div className="oc-usage-bar-labels">
+              <span>Uso del correlativo {anio}</span>
+              <span className="oc-usage-pct">{pctUsadas}% utilizado</span>
+            </div>
+            <div className="oc-usage-bar-bg">
+              <div className="oc-usage-bar-fill" style={{ width: `${pctUsadas}%` }} />
+            </div>
+          </div>
+        )}
 
         {/* ── Leyenda ── */}
         <div className="oc-leyenda">
-          <span className="oc-ley-item"><span className="oc-ley-box oc-ley-libre" />Libre</span>
-          <span className="oc-ley-item"><span className="oc-ley-box oc-ley-reservado" />Reservada</span>
-          <span className="oc-ley-item"><span className="oc-ley-box oc-ley-usado" />Usada</span>
+          <span className="oc-ley-item"><span className="oc-ley-dot oc-ley-libre" />Libre</span>
+          <span className="oc-ley-item"><span className="oc-ley-dot oc-ley-reservado" />Reservada</span>
+          <span className="oc-ley-item"><span className="oc-ley-dot oc-ley-usado" />Usada</span>
         </div>
 
         {/* ── Error ── */}
-        {error && <p className="oc-error">{error}</p>}
+        {error && (
+          <div className="oc-error">
+            <FiAlertCircle size={15} /> {error}
+          </div>
+        )}
 
-        {/* ── Grid de órdenes ── */}
+        {/* ── Grid ── */}
         {loading ? (
-          <div className="oc-loading">Cargando órdenes...</div>
+          <div className="oc-loading">
+            <div className="oc-spinner" />
+            <span>Cargando órdenes...</span>
+          </div>
         ) : ordenes.length === 0 ? (
           <div className="oc-empty">
-            <p>No hay órdenes para el año {anio}.</p>
-            {isAdmin && <p>Usa "Generar órdenes" para crear el correlativo.</p>}
+            <FiList size={40} className="oc-empty-icon" />
+            <p>No hay órdenes para el año <strong>{anio}</strong>.</p>
+            {isAdmin && <p className="oc-empty-hint">Usa "Generar órdenes" para crear el correlativo.</p>}
           </div>
         ) : (
           <div className="oc-grid">
@@ -167,10 +214,11 @@ export default function OrdenChecklist() {
                 onMouseEnter={e => {
                   if (o.estado !== 'libre') {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip({ o, x: rect.left, y: rect.bottom + 6 });
+                    setTooltip({ o, x: rect.left, y: rect.bottom + 8 });
                   }
                 }}
                 onMouseLeave={() => setTooltip(null)}
+                title={o.estado !== 'libre' ? `${pad(o.numero)}-${anio}` : undefined}
               >
                 {pad(o.numero)}
               </div>
@@ -180,7 +228,10 @@ export default function OrdenChecklist() {
 
         {/* ── Toast ── */}
         {toast && (
-          <div className={`oc-toast oc-toast--${toast.type}`}>{toast.msg}</div>
+          <div className={`oc-toast oc-toast--${toast.type}`}>
+            {toast.type === 'ok' ? <FiCheckCircle size={15} /> : <FiAlertCircle size={15} />}
+            {toast.msg}
+          </div>
         )}
 
         {/* ── Tooltip ── */}
@@ -189,9 +240,9 @@ export default function OrdenChecklist() {
             className="oc-tooltip"
             style={{ top: tooltip.y + window.scrollY, left: tooltip.x }}
           >
-            <strong>{pad(tooltip.o.numero)}-{anio}</strong>
+            <span className="oc-tooltip-num">{pad(tooltip.o.numero)}-{anio}</span>
             {tooltip.o.checklist_numero && (
-              <span>Checklist: {tooltip.o.checklist_numero}-{anio}</span>
+              <span>Checklist: <strong>{tooltip.o.checklist_numero}-{anio}</strong></span>
             )}
             <span>👤 {tooltip.o.usuario_nombre || '—'}</span>
             {tooltip.o.fecha_registro && (
@@ -202,38 +253,66 @@ export default function OrdenChecklist() {
 
         {/* ── Modal generar órdenes ── */}
         {showGenerar && (
-          <div className="oc-modal-overlay" onClick={() => setShowGenerar(false)}>
-            <div className="oc-modal" onClick={e => e.stopPropagation()}>
-              <h2 className="oc-modal-title">Generar Órdenes</h2>
+          <div className="oc-modal-overlay" onClick={closeModal} role="dialog" aria-modal="true" aria-labelledby="oc-modal-heading">
+            <div className="oc-modal" ref={modalRef} onClick={e => e.stopPropagation()}>
 
-              <div className="oc-modal-row">
-                <label>Año</label>
-                <input
-                  type="number"
-                  className="oc-input"
-                  value={genAnio}
-                  min={2020} max={2100}
-                  onChange={e => setGenAnio(+e.target.value)}
-                />
-              </div>
-              <div className="oc-modal-row">
-                <label>Cantidad a agregar</label>
-                <input
-                  type="number"
-                  className="oc-input"
-                  value={genCantidad}
-                  min={1} max={1000}
-                  onChange={e => setGenCantidad(+e.target.value)}
-                />
-                <small>Se agregarán después del último número existente para ese año.</small>
+              {/* Cabecera modal */}
+              <div className="oc-modal-header">
+                <div className="oc-modal-header-left">
+                  <div className="oc-modal-header-icon"><FiPlusCircle size={18} /></div>
+                  <div>
+                    <h2 className="oc-modal-title" id="oc-modal-heading">Generar Órdenes</h2>
+                    <p className="oc-modal-subtitle">Se agregarán al final del correlativo</p>
+                  </div>
+                </div>
+                <button className="oc-modal-close" onClick={closeModal} aria-label="Cerrar">
+                  <FiX size={18} />
+                </button>
               </div>
 
-              {genMsg && <p className={`oc-modal-msg ${genMsg.includes('Error') ? 'oc-modal-msg--err' : 'oc-modal-msg--ok'}`}>{genMsg}</p>}
+              <div className="oc-modal-body">
+                <div className="oc-modal-row">
+                  <label htmlFor="oc-gen-anio">Año</label>
+                  <input
+                    id="oc-gen-anio"
+                    type="number"
+                    className="oc-input"
+                    value={genAnio}
+                    min={2020}
+                    max={2100}
+                    onChange={e => setGenAnio(+e.target.value)}
+                  />
+                </div>
+                <div className="oc-modal-row">
+                  <label htmlFor="oc-gen-cant">Cantidad a agregar</label>
+                  <input
+                    id="oc-gen-cant"
+                    type="number"
+                    className="oc-input"
+                    value={genCantidad}
+                    min={1}
+                    max={1000}
+                    onChange={e => setGenCantidad(+e.target.value)}
+                  />
+                  <small>Rango permitido: 1 – 1 000 órdenes por operación.</small>
+                </div>
 
-              <div className="oc-modal-actions">
-                <button className="oc-btn-cancel" onClick={() => setShowGenerar(false)}>Cancelar</button>
+                {genMsg.text && (
+                  <div className={`oc-modal-msg oc-modal-msg--${genMsg.type}`}>
+                    {genMsg.type === 'err' ? <FiAlertCircle size={14} /> : <FiCheckCircle size={14} />}
+                    {genMsg.text}
+                  </div>
+                )}
+              </div>
+
+              <div className="oc-modal-footer">
+                <button className="oc-btn-cancel" onClick={closeModal} disabled={genLoading}>
+                  Cancelar
+                </button>
                 <button className="oc-btn-confirm" onClick={handleGenerar} disabled={genLoading}>
-                  {genLoading ? 'Generando...' : 'Generar'}
+                  {genLoading
+                    ? <><span className="oc-btn-spinner" /> Generando...</>
+                    : <><FiPlusCircle size={14} /> Generar</>}
                 </button>
               </div>
             </div>
