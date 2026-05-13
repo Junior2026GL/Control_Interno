@@ -576,7 +576,7 @@ export default function CheckList() {
     doc.text('Observación:', L, y);
     y += 4;
     doc.setFont('Roboto', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setTextColor(...NEGRO);
     const n1Lines = doc.splitTextToSize(sa(
       '1. Los expedientes para pago, dependiente de su naturaleza del gasto, son armados con la información ' +
@@ -584,9 +584,9 @@ export default function CheckList() {
       '(como parte del proceso o como anexo del mismo)'
     ), CW);
     doc.text(n1Lines, L, y);
-    y += n1Lines.length * 4.5 + 2;
+    y += n1Lines.length * 5 + 2;
     doc.setFont('Roboto', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setTextColor(...NEGRO);
     const n2Lines = doc.splitTextToSize(sa(
       '2. Las casillas de documentación que no estén marcadas, es porque esa información no aplica para el presente expediente.'
