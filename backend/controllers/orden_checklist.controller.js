@@ -180,13 +180,16 @@ exports.generar = (req, res) => {
 };
 
 // ── GET /api/orden-checklist/anios ───────────────────────────────────────
-// Devuelve los años que tienen órdenes generadas
+// Devuelve los años disponibles: siempre 2026-2030 + los que tengan órdenes
 exports.getAnios = (req, res) => {
+  const FIXED = [2026, 2027, 2028, 2029, 2030];
   db.query(
     `SELECT DISTINCT anio FROM orden_checklist ORDER BY anio DESC`,
     (err, rows) => {
       if (err) { console.error('[orden_checklist] getAnios:', err); return res.status(500).json({ message: 'Error interno.' }); }
-      res.json(rows.map(r => r.anio));
+      const fromDB = rows.map(r => r.anio);
+      const merged = [...new Set([...FIXED, ...fromDB])].sort((a, b) => a - b);
+      res.json(merged);
     }
   );
 };
