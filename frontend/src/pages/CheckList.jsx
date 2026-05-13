@@ -142,7 +142,7 @@ export default function CheckList() {
   const [delItem,    setDelItem]    = useState(null);  // modal anular
   const [delMotivo,  setDelMotivo]  = useState('');
   const [deleting,   setDeleting]   = useState(false);
-  const [showAnulados, setShowAnulados] = useState(false);
+  const [tabFiltro,  setTabFiltro]  = useState('activos'); // 'activos' | 'anulados' | 'todos'
 
   // ── toast helper ─────────────────────────────────────────────────────────
   const showToast = (msg, type = 'error') => {
@@ -161,10 +161,18 @@ export default function CheckList() {
 
   useEffect(() => { fetchLista(); }, [fetchLista]);
 
-  // ── filtro / paginación ──────────────────────────────────────────────────
+  // ── contadores ───────────────────────────────────────────
+  const cntActivos  = lista.filter(cl => cl.estado !== 'anulado').length;
+  const cntAnulados = lista.filter(cl => cl.estado === 'anulado').length;
+
+  // ── filtro / paginación ────────────────────────────────────────
   const listaMostrada = (() => {
     const q = busqueda.trim().toLowerCase();
-    const base = showAnulados ? lista : lista.filter(cl => cl.estado !== 'anulado');
+    const base = tabFiltro === 'activos'
+      ? lista.filter(cl => cl.estado !== 'anulado')
+      : tabFiltro === 'anulados'
+        ? lista.filter(cl => cl.estado === 'anulado')
+        : lista;
     if (!q) return base;
     return base.filter(cl =>
       String(cl.numero).includes(q) ||
@@ -270,6 +278,7 @@ export default function CheckList() {
       await api.post(`/checklist/${delItem.id}/anular`, { motivo: delMotivo }, { headers: authHeaders() });
       closeAnular();
       fetchLista();
+      setTabFiltro('anulados');
       showToast('Check list anulado correctamente.', 'ok');
     } catch (err) {
       showToast(err.response?.data?.message || 'Error al anular.', 'error');
@@ -648,9 +657,15 @@ export default function CheckList() {
           </div>
           <div className="cl-header-stats">
             <div className="cl-hstat">
-              <span className="cl-hstat-val">{lista.length}</span>
-              <span className="cl-hstat-lbl">Registros</span>
+              <span className="cl-hstat-val">{cntActivos}</span>
+              <span className="cl-hstat-lbl">Activos</span>
             </div>
+            {cntAnulados > 0 && (
+              <div className="cl-hstat cl-hstat--anulado">
+                <span className="cl-hstat-val">{cntAnulados}</span>
+                <span className="cl-hstat-lbl">Anulados</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -666,17 +681,23 @@ export default function CheckList() {
                 onChange={e => { setBusqueda(e.target.value); setPage(1); }}
               />
             </div>
+            {/* Tabs de filtro */}
+            <div className="cl-tabs">
+              <button
+                className={`cl-tab ${tabFiltro === 'activos' ? 'cl-tab--active' : ''}`}
+                onClick={() => { setTabFiltro('activos'); setPage(1); }}
+              >Activos <span className="cl-tab-cnt">{cntActivos}</span></button>
+              <button
+                className={`cl-tab ${tabFiltro === 'anulados' ? 'cl-tab--anulado cl-tab--active-anulado' : ''}`}
+                onClick={() => { setTabFiltro('anulados'); setPage(1); }}
+              >Anulados <span className="cl-tab-cnt">{cntAnulados}</span></button>
+              <button
+                className={`cl-tab ${tabFiltro === 'todos' ? 'cl-tab--active' : ''}`}
+                onClick={() => { setTabFiltro('todos'); setPage(1); }}
+              >Todos <span className="cl-tab-cnt">{lista.length}</span></button>
+            </div>
           </div>
           <div className="cl-toolbar-right">
-            {canDelete && (
-              <button
-                className={`cl-tool-icon ${showAnulados ? 'cl-tool-icon--active' : ''}`}
-                onClick={() => { setShowAnulados(v => !v); setPage(1); }}
-                title={showAnulados ? 'Ocultar anulados' : 'Mostrar anulados'}
-              >
-                <FiSlash size={15} />
-              </button>
-            )}
             <button className="cl-tool-icon" onClick={fetchLista} title="Actualizar">
               <FiRefreshCw size={15} />
             </button>

@@ -43,6 +43,53 @@
 .cl-hstat-val { font-size: 20px; font-weight: 800; color: white; line-height: 1; }
 .cl-hstat-lbl { font-size: 10px; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
 .cl-hstat-sep { width: 1px; height: 32px; background: rgba(255,255,255,0.22); }
+.cl-hstat--anulado { border-left: 1px solid rgba(255,255,255,0.18); padding-left: 20px; }
+.cl-hstat--anulado .cl-hstat-val { color: #fde68a; }
+.cl-hstat--anulado .cl-hstat-lbl { color: rgba(253,230,138,0.75); }
+
+/* ── Tabs filtro ──────────────────────────────────────────────────────── */
+.cl-tabs {
+  display: flex;
+  gap: 2px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+}
+.cl-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.cl-tab:hover { background: #e2e8f0; color: #334155; }
+.cl-tab--active { background: #fff; color: #1e3a5f; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.cl-tab--anulado { color: #92400e; }
+.cl-tab--active-anulado { background: #fef3c7; color: #92400e; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.cl-tab-cnt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 99px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 700;
+}
+.cl-tab--active .cl-tab-cnt { background: #dbeafe; color: #1d4ed8; }
+.cl-tab--active-anulado .cl-tab-cnt { background: #fde68a; color: #92400e; }
 
 /* ── Toolbar ─────────────────────────────────────────────────────────────── */
 .cl-toolbar {
