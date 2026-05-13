@@ -30,7 +30,6 @@ exports.create = (req, res) => {
   const partido      = sanitize(req.body.partido).toUpperCase() || null;
   const correo       = sanitize(req.body.correo).toLowerCase() || null;
   const telefono     = sanitize(req.body.telefono) || null;
-  const observaciones = sanitize(req.body.observaciones) || null;
 
   if (!departamento) return res.status(400).json({ message: 'El departamento es requerido.' });
   if (!municipio)    return res.status(400).json({ message: 'El municipio es requerido.' });
@@ -42,8 +41,8 @@ exports.create = (req, res) => {
   if (telefono && telefono.length > 30)  return res.status(400).json({ message: 'Teléfono demasiado largo (máx. 30).' });
 
   db.query(
-    `INSERT INTO alcaldias (departamento, municipio, alcalde, partido, correo, telefono, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [departamento, municipio, alcalde, partido, correo, telefono, observaciones],
+    `INSERT INTO alcaldias (departamento, municipio, alcalde, partido, correo, telefono) VALUES (?, ?, ?, ?, ?, ?)`,
+    [departamento, municipio, alcalde, partido, correo, telefono],
     (err, result) => {
       if (err) {
         console.error('[alcaldes] create:', err);
@@ -69,15 +68,14 @@ exports.update = (req, res) => {
   const partido      = sanitize(req.body.partido).toUpperCase() || null;
   const correo       = sanitize(req.body.correo).toLowerCase() || null;
   const telefono     = sanitize(req.body.telefono) || null;
-  const observaciones = sanitize(req.body.observaciones) || null;
 
   if (!departamento) return res.status(400).json({ message: 'El departamento es requerido.' });
   if (!municipio)    return res.status(400).json({ message: 'El municipio es requerido.' });
   if (!alcalde)      return res.status(400).json({ message: 'El nombre del alcalde es requerido.' });
 
   db.query(
-    `UPDATE alcaldias SET departamento=?, municipio=?, alcalde=?, partido=?, correo=?, telefono=?, observaciones=? WHERE id=?`,
-    [departamento, municipio, alcalde, partido, correo, telefono, observaciones, id],
+    `UPDATE alcaldias SET departamento=?, municipio=?, alcalde=?, partido=?, correo=?, telefono=? WHERE id=?`,
+    [departamento, municipio, alcalde, partido, correo, telefono, id],
     (err, result) => {
       if (err) {
         console.error('[alcaldes] update:', err);

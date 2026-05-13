@@ -4,7 +4,7 @@ import {
   FiCheckCircle, FiAlertCircle, FiFilter, FiList,
   FiHome, FiSearch, FiDownload, FiChevronUp, FiChevronDown,
   FiChevronLeft, FiChevronRight, FiEye, FiMapPin, FiFlag, FiAward, FiPieChart,
-  FiMail, FiPhone, FiFileText,
+  FiMail, FiPhone,
 } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import Navbar from '../components/Navbar';
@@ -67,7 +67,7 @@ const PARTIDO_SOLID = {
 };
 
 function buildEmpty() {
-  return { departamento: '', municipio: '', alcalde: '', partido: '', correo: '', telefono: '', observaciones: '' };
+  return { departamento: '', municipio: '', alcalde: '', partido: '', correo: '', telefono: '' };
 }
 
 function applySort(arr, { col, dir }) {
@@ -262,7 +262,6 @@ export default function Alcaldes() {
       'Partido':      r.partido      || '',
       'Correo':       r.correo       || '',
       'Teléfono':     r.telefono     || '',
-      'Observaciones':r.observaciones|| '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -302,7 +301,6 @@ export default function Alcaldes() {
       partido:       row.partido       || '',
       correo:        row.correo        || '',
       telefono:      row.telefono      || '',
-      observaciones: row.observaciones || '',
     });
     setEditingId(row.id);
     setTab('nuevo');
@@ -728,12 +726,6 @@ export default function Alcaldes() {
                     value={form.telefono} onChange={e => set('telefono', e.target.value)}/>
                 </div>
               </div>
-              <div className="alc-field">
-                <label className="alc-label">Observaciones</label>
-                <textarea className="alc-input alc-textarea" rows={3}
-                  placeholder="Notas adicionales (opcional)"
-                  value={form.observaciones} onChange={e => set('observaciones', e.target.value)}/>
-              </div>
             </div>
             <div className="alc-form-footer">
               <button type="button" className="alc-btn-cancel" onClick={cancelEdit}>
@@ -825,12 +817,6 @@ export default function Alcaldes() {
                   <div className="alc-detail-item">
                     <span className="alc-detail-label"><FiPhone size={11}/> Teléfono</span>
                     <span className="alc-detail-value">{detail.telefono}</span>
-                  </div>
-                )}
-                {detail.observaciones && (
-                  <div className="alc-detail-item alc-detail-item--full">
-                    <span className="alc-detail-label"><FiFileText size={11}/> Observaciones</span>
-                    <span className="alc-detail-value alc-detail-obs">{detail.observaciones}</span>
                   </div>
                 )}
               </div>
