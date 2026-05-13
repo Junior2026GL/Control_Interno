@@ -28,6 +28,9 @@ exports.create = (req, res) => {
   const municipio    = sanitize(req.body.municipio).toUpperCase();
   const alcalde      = sanitize(req.body.alcalde).toUpperCase();
   const partido      = sanitize(req.body.partido).toUpperCase() || null;
+  const correo       = sanitize(req.body.correo).toLowerCase() || null;
+  const telefono     = sanitize(req.body.telefono) || null;
+  const observaciones = sanitize(req.body.observaciones) || null;
 
   if (!departamento) return res.status(400).json({ message: 'El departamento es requerido.' });
   if (!municipio)    return res.status(400).json({ message: 'El municipio es requerido.' });
@@ -35,10 +38,12 @@ exports.create = (req, res) => {
   if (departamento.length > 100) return res.status(400).json({ message: 'Departamento demasiado largo (máx. 100).' });
   if (municipio.length > 150)    return res.status(400).json({ message: 'Municipio demasiado largo (máx. 150).' });
   if (alcalde.length > 200)      return res.status(400).json({ message: 'Nombre de alcalde demasiado largo (máx. 200).' });
+  if (correo && correo.length > 150)     return res.status(400).json({ message: 'Correo demasiado largo (máx. 150).' });
+  if (telefono && telefono.length > 30)  return res.status(400).json({ message: 'Teléfono demasiado largo (máx. 30).' });
 
   db.query(
-    `INSERT INTO alcaldias (departamento, municipio, alcalde, partido) VALUES (?, ?, ?, ?)`,
-    [departamento, municipio, alcalde, partido],
+    `INSERT INTO alcaldias (departamento, municipio, alcalde, partido, correo, telefono, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [departamento, municipio, alcalde, partido, correo, telefono, observaciones],
     (err, result) => {
       if (err) {
         console.error('[alcaldes] create:', err);
@@ -62,14 +67,17 @@ exports.update = (req, res) => {
   const municipio    = sanitize(req.body.municipio).toUpperCase();
   const alcalde      = sanitize(req.body.alcalde).toUpperCase();
   const partido      = sanitize(req.body.partido).toUpperCase() || null;
+  const correo       = sanitize(req.body.correo).toLowerCase() || null;
+  const telefono     = sanitize(req.body.telefono) || null;
+  const observaciones = sanitize(req.body.observaciones) || null;
 
   if (!departamento) return res.status(400).json({ message: 'El departamento es requerido.' });
   if (!municipio)    return res.status(400).json({ message: 'El municipio es requerido.' });
   if (!alcalde)      return res.status(400).json({ message: 'El nombre del alcalde es requerido.' });
 
   db.query(
-    `UPDATE alcaldias SET departamento=?, municipio=?, alcalde=?, partido=? WHERE id=?`,
-    [departamento, municipio, alcalde, partido, id],
+    `UPDATE alcaldias SET departamento=?, municipio=?, alcalde=?, partido=?, correo=?, telefono=?, observaciones=? WHERE id=?`,
+    [departamento, municipio, alcalde, partido, correo, telefono, observaciones, id],
     (err, result) => {
       if (err) {
         console.error('[alcaldes] update:', err);

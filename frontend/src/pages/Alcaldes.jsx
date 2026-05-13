@@ -4,6 +4,7 @@ import {
   FiCheckCircle, FiAlertCircle, FiFilter, FiList,
   FiHome, FiSearch, FiDownload, FiChevronUp, FiChevronDown,
   FiChevronLeft, FiChevronRight, FiEye, FiMapPin, FiFlag, FiAward, FiPieChart,
+  FiMail, FiPhone, FiFileText,
 } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import Navbar from '../components/Navbar';
@@ -66,7 +67,7 @@ const PARTIDO_SOLID = {
 };
 
 function buildEmpty() {
-  return { departamento: '', municipio: '', alcalde: '', partido: '' };
+  return { departamento: '', municipio: '', alcalde: '', partido: '', correo: '', telefono: '', observaciones: '' };
 }
 
 function applySort(arr, { col, dir }) {
@@ -259,6 +260,9 @@ export default function Alcaldes() {
       'Municipio':    r.municipio    || '',
       'Alcalde':      r.alcalde      || '',
       'Partido':      r.partido      || '',
+      'Correo':       r.correo       || '',
+      'Teléfono':     r.telefono     || '',
+      'Observaciones':r.observaciones|| '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -292,10 +296,13 @@ export default function Alcaldes() {
 
   const handleEdit = (row) => {
     setForm({
-      departamento: row.departamento || '',
-      municipio:    row.municipio    || '',
-      alcalde:      row.alcalde      || '',
-      partido:      row.partido      || '',
+      departamento:  row.departamento  || '',
+      municipio:     row.municipio     || '',
+      alcalde:       row.alcalde       || '',
+      partido:       row.partido       || '',
+      correo:        row.correo        || '',
+      telefono:      row.telefono      || '',
+      observaciones: row.observaciones || '',
     });
     setEditingId(row.id);
     setTab('nuevo');
@@ -709,6 +716,24 @@ export default function Alcaldes() {
                   )}
                 </div>
               </div>
+              <div className="alc-row2">
+                <div className="alc-field">
+                  <label className="alc-label">Correo electrónico</label>
+                  <input className="alc-input" type="email" placeholder="correo@ejemplo.com"
+                    value={form.correo} onChange={e => set('correo', e.target.value)}/>
+                </div>
+                <div className="alc-field">
+                  <label className="alc-label">Teléfono</label>
+                  <input className="alc-input" type="text" placeholder="Ej. 9999-9999"
+                    value={form.telefono} onChange={e => set('telefono', e.target.value)}/>
+                </div>
+              </div>
+              <div className="alc-field">
+                <label className="alc-label">Observaciones</label>
+                <textarea className="alc-input alc-textarea" rows={3}
+                  placeholder="Notas adicionales (opcional)"
+                  value={form.observaciones} onChange={e => set('observaciones', e.target.value)}/>
+              </div>
             </div>
             <div className="alc-form-footer">
               <button type="button" className="alc-btn-cancel" onClick={cancelEdit}>
@@ -788,6 +813,26 @@ export default function Alcaldes() {
                       : '—'}
                   </span>
                 </div>
+                {detail.correo && (
+                  <div className="alc-detail-item">
+                    <span className="alc-detail-label"><FiMail size={11}/> Correo electrónico</span>
+                    <span className="alc-detail-value">
+                      <a href={`mailto:${detail.correo}`} className="alc-detail-link">{detail.correo}</a>
+                    </span>
+                  </div>
+                )}
+                {detail.telefono && (
+                  <div className="alc-detail-item">
+                    <span className="alc-detail-label"><FiPhone size={11}/> Teléfono</span>
+                    <span className="alc-detail-value">{detail.telefono}</span>
+                  </div>
+                )}
+                {detail.observaciones && (
+                  <div className="alc-detail-item alc-detail-item--full">
+                    <span className="alc-detail-label"><FiFileText size={11}/> Observaciones</span>
+                    <span className="alc-detail-value alc-detail-obs">{detail.observaciones}</span>
+                  </div>
+                )}
               </div>
             </div>
 
