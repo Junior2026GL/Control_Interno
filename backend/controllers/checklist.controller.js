@@ -179,18 +179,38 @@ exports.update = (req, res) => {
   });
 };
 
-// ── DELETE /api/checklist/:id ──────────────────────────────────────────────
-exports.remove = (req, res) => {
-  if (!['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(req.user.rol))
-    return res.status(403).json({ message: 'No tiene permiso para eliminar.' });
+// ── DELETE /api/checklist/:id — bloqueado, usar /anular ───────────────────
+exports.remove = (_req, res) => {
+  return res.status(405).json({ message: 'La eliminación está deshabilitada. Use la opción de Anular.' });
+};
 
-  const id = parseInt(req.params.id, 10);
+// ── POST /api/checklist/:id/anular ────────────────────────────────────────
+exports.anular = (req, res) => {
+  if (!['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(req.user.rol))
+    return res.status(403).json({ message: 'No tiene permiso para anular.' });
+
+  const id     = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
 
-  db.query('DELETE FROM checklist_expediente WHERE id = ?', [id], (err, result) => {
-    if (err) { console.error('[checklist] remove:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'Check list no encontrado.' });
-    logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'checklist', detalle: `Eliminó expediente ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
-    res.json({ message: 'Check list eliminado correctamente.' });
-  });
+  const motivo = (req.body.motivo || '').toString().trim();
+  if (!motivo) return res.status(400).json({ message: 'Debe indicar el motivo de anulación.' });
+  if (motivo.length > 500) return res.status(400).json({ message: 'El motivo no puede superar 500 caracteres.' });
+
+  db.query(
+    `UPDATE checklist_expediente
+     SET estado = 'anulado', motivo_anulacion = ?, anulado_por = ?, fecha_anulacion = NOW()
+     WHERE id = ? AND estado = 'activo'`,
+    [motivo, req.user.id, id],
+    (err, result) => {
+      if (err) { console.error('[checklist] anular:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+      if (result.affectedRows === 0) return res.status(404).json({ message: 'Check list no encontrado o ya estaba anulado.' });
+      logEvent({
+        usuario_id: req.user.id, usuario_nombre: req.user.nombre || null,
+        accion: 'ANULAR', modulo: 'checklist',
+        detalle: `Anuló expediente ID #${id}. Motivo: ${motivo}`,
+        ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO',
+      });
+      res.json({ message: 'Check list anulado correctamente.' });
+    }
+  );
 };

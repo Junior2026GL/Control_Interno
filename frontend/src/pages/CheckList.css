@@ -93,6 +93,7 @@
   transition: background .18s, color .18s;
 }
 .cl-tool-icon:hover { background: #eff6ff; color: #274C8D; }
+.cl-tool-icon--active { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
 
 .cl-tool-btn-new {
   display: inline-flex; align-items: center; gap: 6px;
@@ -240,8 +241,24 @@
 .cl-act-btn--dl:hover    { background: #7c3aed; color: white; border-color: #7c3aed; transform: scale(1.07); }
 .cl-act-btn--edit  { background: #fffbeb; color: #d97706; border-color: #fde68a; }
 .cl-act-btn--edit:hover  { background: #d97706; color: white; border-color: #d97706; transform: scale(1.07); }
-.cl-act-btn--del   { background: #fff5f5; color: #e53e3e; border-color: #fecaca; }
-.cl-act-btn--del:hover   { background: #e53e3e; color: white; border-color: #e53e3e; transform: scale(1.07); }
+.cl-act-btn--del   { background: #fff7ed; color: #d97706; border-color: #fde68a; }
+.cl-act-btn--del:hover   { background: #d97706; color: white; border-color: #d97706; transform: scale(1.07); }
+
+/* ── Anulado styles ──────────────────────────────────────────────────────── */
+.cl-tr-anulado td { opacity: 0.55; }
+.cl-badge-anulado {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
 .cl-empty {

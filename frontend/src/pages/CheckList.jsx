@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useContext } from 'react';
 import {
-  FiPlus, FiX, FiEye, FiEdit2, FiTrash2, FiSearch,
+  FiPlus, FiX, FiEye, FiEdit2, FiSlash, FiSearch,
   FiPrinter, FiRefreshCw, FiClipboard,
-  FiChevronLeft, FiChevronRight,
+  FiChevronLeft, FiChevronRight, FiAlertTriangle,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
 import api from '../api/axios';
@@ -139,8 +139,10 @@ export default function CheckList() {
   const [editing,    setEditing]    = useState(false);
 
   const [verItem,    setVerItem]    = useState(null);
-  const [delItem,    setDelItem]    = useState(null);
+  const [delItem,    setDelItem]    = useState(null);  // modal anular
+  const [delMotivo,  setDelMotivo]  = useState('');
   const [deleting,   setDeleting]   = useState(false);
+  const [showAnulados, setShowAnulados] = useState(false);
 
   // ── toast helper ─────────────────────────────────────────────────────────
   const showToast = (msg, type = 'error') => {
@@ -162,8 +164,9 @@ export default function CheckList() {
   // ── filtro / paginación ──────────────────────────────────────────────────
   const listaMostrada = (() => {
     const q = busqueda.trim().toLowerCase();
-    if (!q) return lista;
-    return lista.filter(cl =>
+    const base = showAnulados ? lista : lista.filter(cl => cl.estado !== 'anulado');
+    if (!q) return base;
+    return base.filter(cl =>
       String(cl.numero).includes(q) ||
       (cl.numero_expediente || '').toLowerCase().includes(q) ||
       (cl.numero_folios     || '').toLowerCase().includes(q) ||
@@ -255,18 +258,21 @@ export default function CheckList() {
     }
   };
 
-  // ── eliminar ──────────────────────────────────────────────────────────────
-  const handleEliminar = async () => {
+  // ── anular ────────────────────────────────────────────────────────────
+  const openAnular = (cl) => { setDelItem(cl); setDelMotivo(''); };
+  const closeAnular = () => { setDelItem(null); setDelMotivo(''); };
+
+  const handleAnular = async () => {
     if (!delItem) return;
+    if (!delMotivo.trim()) { showToast('Debe indicar el motivo de anulación.', 'error'); return; }
     setDeleting(true);
     try {
-      await api.delete(`/checklist/${delItem.id}`, { headers: authHeaders() });
-      setDelItem(null);
+      await api.post(`/checklist/${delItem.id}/anular`, { motivo: delMotivo }, { headers: authHeaders() });
+      closeAnular();
       fetchLista();
-      showToast('Check list eliminado.', 'ok');
+      showToast('Check list anulado correctamente.', 'ok');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Error al eliminar.');
-      setDelItem(null);
+      showToast(err.response?.data?.message || 'Error al anular.', 'error');
     } finally {
       setDeleting(false);
     }
@@ -662,6 +668,15 @@ export default function CheckList() {
             </div>
           </div>
           <div className="cl-toolbar-right">
+            {canDelete && (
+              <button
+                className={`cl-tool-icon ${showAnulados ? 'cl-tool-icon--active' : ''}`}
+                onClick={() => { setShowAnulados(v => !v); setPage(1); }}
+                title={showAnulados ? 'Ocultar anulados' : 'Mostrar anulados'}
+              >
+                <FiSlash size={15} />
+              </button>
+            )}
             <button className="cl-tool-icon" onClick={fetchLista} title="Actualizar">
               <FiRefreshCw size={15} />
             </button>
@@ -699,12 +714,17 @@ export default function CheckList() {
                     const docsColor = pct === 100 ? '#065f46' : pct >= 50 ? '#1e40af' : '#b45309';
                     const docsBg   = pct === 100 ? '#d1fae5' : pct >= 50 ? '#dbeafe' : '#fef9c3';
                     return (
-                      <tr key={cl.id} className={idx % 2 === 1 ? 'cl-tr-alt' : ''}>
+                      <tr key={cl.id} className={`${idx % 2 === 1 ? 'cl-tr-alt' : ''} ${cl.estado === 'anulado' ? 'cl-tr-anulado' : ''}`}>
                         <td className="cl-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                         <td>
                           <div className="cl-exp-wrap">
                             <div className="cl-avatar">{String(cl.numero).padStart(4, '0')}</div>
-                            <div className="cl-exp-num">{cl.numero_expediente || '—'}</div>
+                            <div>
+                              <div className="cl-exp-num">{cl.numero_expediente || '—'}</div>
+                              {cl.estado === 'anulado' && (
+                                <span className="cl-badge-anulado">ANULADO</span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="cl-td-center cl-folios">{cl.numero_folios || '—'}</td>
@@ -723,9 +743,11 @@ export default function CheckList() {
                             <button className="cl-act-btn cl-act-btn--view"  title="Ver detalle"   onClick={() => setVerItem(cl)}><FiEye size={13}/></button>
                             <button className="cl-act-btn cl-act-btn--print" title="Imprimir PDF"  onClick={() => generarPDF(cl, true)}><FiPrinter size={13}/></button>
                             <button className="cl-act-btn cl-act-btn--dl"    title="Descargar PDF" onClick={() => generarPDF(cl, false)}><FiClipboard size={13}/></button>
-                            <button className="cl-act-btn cl-act-btn--edit"  title="Editar"        onClick={() => openEditar(cl)}><FiEdit2 size={13}/></button>
-                            {canDelete && (
-                              <button className="cl-act-btn cl-act-btn--del" title="Eliminar" onClick={() => setDelItem(cl)}><FiTrash2 size={13}/></button>
+                            {cl.estado !== 'anulado' && (
+                              <button className="cl-act-btn cl-act-btn--edit" title="Editar" onClick={() => openEditar(cl)}><FiEdit2 size={13}/></button>
+                            )}
+                            {canDelete && cl.estado !== 'anulado' && (
+                              <button className="cl-act-btn cl-act-btn--del" title="Anular" onClick={() => openAnular(cl)}><FiSlash size={13}/></button>
                             )}
                           </div>
                         </td>
@@ -916,30 +938,43 @@ export default function CheckList() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          MODAL CONFIRMAR ELIMINAR
+          MODAL ANULAR
       ══════════════════════════════════════════════════════════ */}
       {delItem && (
-        <div className="cl-backdrop" onClick={e => e.target === e.currentTarget && setDelItem(null)}>
+        <div className="cl-backdrop" onClick={e => e.target === e.currentTarget && closeAnular()}>
           <div className="cl-modal cl-modal-sm">
             <div className="cl-modal-header cl-modal-header-danger">
-              <div className="cl-modal-icon"><FiTrash2 size={20} color="#e11d48" /></div>
+              <div className="cl-modal-icon"><FiAlertTriangle size={20} color="#d97706" /></div>
               <div>
-                <h3>Eliminar Check List</h3>
-                <p>Esta acción no se puede deshacer.</p>
+                <h3>Anular Check List</h3>
+                <p>El registro quedará como anulado con trazabilidad completa.</p>
               </div>
-              <button className="cl-modal-close" onClick={() => setDelItem(null)}><FiX size={18} /></button>
+              <button className="cl-modal-close" onClick={closeAnular}><FiX size={18} /></button>
             </div>
             <div className="cl-form" style={{ paddingBottom: 4 }}>
-              <p style={{ margin: 0, fontSize: 14, color: '#475569' }}>
-                ¿Eliminar el check list&nbsp;
+              <p style={{ margin: '0 0 12px', fontSize: 14, color: '#475569' }}>
+                Anular el check list&nbsp;
                 <strong>#{String(delItem.numero).padStart(4, '0')}</strong>
-                {delItem.numero_expediente ? ` — ${delItem.numero_expediente}` : ''}?
+                {delItem.numero_expediente ? ` — ${delItem.numero_expediente}` : ''}.
               </p>
+              <div className="cl-form-group">
+                <label>Motivo de anulación <span style={{color:'#e11d48'}}>*</span></label>
+                <textarea
+                  className="cl-textarea"
+                  style={{ minHeight: 80 }}
+                  placeholder="Indique el motivo por el que se anula este expediente..."
+                  value={delMotivo}
+                  onChange={e => setDelMotivo(e.target.value)}
+                  maxLength={500}
+                  autoFocus
+                />
+                <small style={{ color: '#94a3b8', fontSize: 11 }}>{delMotivo.length}/500</small>
+              </div>
             </div>
             <div className="cl-modal-footer">
-              <button className="btn-secondary" onClick={() => setDelItem(null)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleEliminar} disabled={deleting}>
-                {deleting ? 'Eliminando…' : 'Sí, eliminar'}
+              <button className="btn-secondary" onClick={closeAnular} disabled={deleting}>Cancelar</button>
+              <button className="btn-danger" onClick={handleAnular} disabled={deleting || !delMotivo.trim()}>
+                {deleting ? 'Anulando…' : <><FiSlash size={13}/> Anular expediente</>}
               </button>
             </div>
           </div>
