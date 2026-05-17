@@ -460,19 +460,11 @@ export default function Proveedores() {
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot>
-                    <tr className="pv-tfoot-row">
-                      <td colSpan={9}>
-                        Mostrando <strong>{paginated.length}</strong> de <strong>{filtered.length}</strong> proveedores
-                        {filtered.length !== data.length && <> · {data.length} en total</>}
-                      </td>
-                    </tr>
-                  </tfoot>
                 </table>
               </div>
 
               {/* Paginación */}
-              {totalPages > 1 && (
+              {filtered.length > 0 && (
                 <div className="std-pg">
                   <span className="std-pg-info">
                     {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de <strong>{filtered.length}</strong>
