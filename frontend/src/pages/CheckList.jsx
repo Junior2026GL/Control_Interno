@@ -715,112 +715,104 @@ export default function CheckList() {
           ) : listaMostrada.length === 0 ? (
             <div className="cl-empty"><FiClipboard size={40} /><p>No hay check lists registrados.</p></div>
           ) : (
-            <>
-              <table className="cl-table">
-                <thead>
-                  <tr>
-                    <th><span className="cl-th-inner cl-th-center">#</span></th>
-                    <th><span className="cl-th-inner">N° Expediente</span></th>
-                    <th><span className="cl-th-inner cl-th-center">N° Folios</span></th>
-                    <th><span className="cl-th-inner">Documentos</span></th>
-                    <th><span className="cl-th-inner">Fecha</span></th>
-                    <th><span className="cl-th-inner">Creado por</span></th>
-                    <th><span className="cl-th-inner cl-th-center">Acciones</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listaPaginada.map((cl, idx) => {
-                    const n = countDocs(cl);
-                    const pct = Math.round((n / DOCS.length) * 100);
-                    const docsColor = pct === 100 ? '#065f46' : pct >= 50 ? '#1e40af' : '#b45309';
-                    const docsBg   = pct === 100 ? '#d1fae5' : pct >= 50 ? '#dbeafe' : '#fef9c3';
-                    return (
-                      <tr key={cl.id} className={`${idx % 2 === 1 ? 'cl-tr-alt' : ''} ${cl.estado === 'anulado' ? 'cl-tr-anulado' : ''}`}>
-                        <td className="cl-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
-                        <td>
-                          <div className="cl-exp-wrap">
-                            <div className="cl-avatar">{String(cl.numero).padStart(4, '0')}</div>
-                            <div>
-                              <div className="cl-exp-num">{cl.numero_expediente || '—'}</div>
-                              {cl.estado === 'anulado' && (
-                                <span className="cl-badge-anulado">ANULADO</span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="cl-td-center cl-folios">{cl.numero_folios || '—'}</td>
-                        <td>
-                          <div className="cl-docs-bar">
-                            <div className="cl-docs-fill">
-                              <div className="cl-docs-fill-inner" style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className="cl-docs-badge" style={{ background: docsBg, color: docsColor }}>{n}/{DOCS.length}</span>
-                          </div>
-                        </td>
-                        <td className="cl-td-fecha">{fmtFecha(cl.fecha_creacion)}</td>
-                        <td className="cl-td-creado">{cl.creado_por_nombre || '—'}</td>
-                        <td>
-                          <div className="cl-actions">
-                            <button className="cl-act-btn cl-act-btn--view"  title="Ver detalle"   onClick={() => setVerItem(cl)}><FiEye size={13}/></button>
-                            <button className="cl-act-btn cl-act-btn--print" title="Imprimir PDF"  onClick={() => generarPDF(cl, true)}><FiPrinter size={13}/></button>
-                            <button className="cl-act-btn cl-act-btn--dl"    title="Descargar PDF" onClick={() => generarPDF(cl, false)}><FiClipboard size={13}/></button>
-                            {cl.estado !== 'anulado' && (
-                              <button className="cl-act-btn cl-act-btn--edit" title="Editar" onClick={() => openEditar(cl)}><FiEdit2 size={13}/></button>
-                            )}
-                            {canDelete && cl.estado !== 'anulado' && (
-                              <button className="cl-act-btn cl-act-btn--del" title="Anular" onClick={() => openAnular(cl)}><FiSlash size={13}/></button>
+            <table className="cl-table">
+              <thead>
+                <tr>
+                  <th><span className="cl-th-inner cl-th-center">#</span></th>
+                  <th><span className="cl-th-inner">N° Expediente</span></th>
+                  <th><span className="cl-th-inner cl-th-center">N° Folios</span></th>
+                  <th><span className="cl-th-inner">Documentos</span></th>
+                  <th><span className="cl-th-inner">Fecha</span></th>
+                  <th><span className="cl-th-inner">Creado por</span></th>
+                  <th><span className="cl-th-inner cl-th-center">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {listaPaginada.map((cl, idx) => {
+                  const n = countDocs(cl);
+                  const pct = Math.round((n / DOCS.length) * 100);
+                  const docsColor = pct === 100 ? '#065f46' : pct >= 50 ? '#1e40af' : '#b45309';
+                  const docsBg   = pct === 100 ? '#d1fae5' : pct >= 50 ? '#dbeafe' : '#fef9c3';
+                  return (
+                    <tr key={cl.id} className={`${idx % 2 === 1 ? 'cl-tr-alt' : ''} ${cl.estado === 'anulado' ? 'cl-tr-anulado' : ''}`}>
+                      <td className="cl-td-num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
+                      <td>
+                        <div className="cl-exp-wrap">
+                          <div className="cl-avatar">{String(cl.numero).padStart(4, '0')}</div>
+                          <div>
+                            <div className="cl-exp-num">{cl.numero_expediente || '—'}</div>
+                            {cl.estado === 'anulado' && (
+                              <span className="cl-badge-anulado">ANULADO</span>
                             )}
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="cl-tfoot-row">
-                    <td colSpan={7}>
-                      Mostrando <strong>{listaPaginada.length}</strong> de <strong>{listaMostrada.length}</strong> registros
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-
-              {totalPages > 1 && (
-                <div className="std-pg">
-                  <span className="std-pg-info">
-                    {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, listaMostrada.length)} de <strong>{listaMostrada.length}</strong>
-                  </span>
-                  <div className="std-pg-controls">
-                    <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-                    <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-                    {(() => {
-                      const maxBtns = 7;
-                      let start = Math.max(1, page - Math.floor(maxBtns / 2));
-                      let end   = Math.min(totalPages, start + maxBtns - 1);
-                      if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
-                      const pages = [];
-                      if (start > 1) {
-                        pages.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPage(1)}>1</button>);
-                        if (start > 2) pages.push(<span key="el" className="std-pg-ellipsis">…</span>);
-                      }
-                      for (let p = start; p <= end; p++) {
-                        pages.push(<button key={p} className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`} onClick={() => setPage(p)}>{p}</button>);
-                      }
-                      if (end < totalPages) {
-                        if (end < totalPages - 1) pages.push(<span key="er" className="std-pg-ellipsis">…</span>);
-                        pages.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
-                      }
-                      return pages;
-                    })()}
-                    <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-                    <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-                  </div>
-                  <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
-                </div>
-              )}
-            </>
+                        </div>
+                      </td>
+                      <td className="cl-td-center cl-folios">{cl.numero_folios || '—'}</td>
+                      <td>
+                        <div className="cl-docs-bar">
+                          <div className="cl-docs-fill">
+                            <div className="cl-docs-fill-inner" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="cl-docs-badge" style={{ background: docsBg, color: docsColor }}>{n}/{DOCS.length}</span>
+                        </div>
+                      </td>
+                      <td className="cl-td-fecha">{fmtFecha(cl.fecha_creacion)}</td>
+                      <td className="cl-td-creado">{cl.creado_por_nombre || '—'}</td>
+                      <td>
+                        <div className="cl-actions">
+                          <button className="cl-act-btn cl-act-btn--view"  title="Ver detalle"   onClick={() => setVerItem(cl)}><FiEye size={13}/></button>
+                          <button className="cl-act-btn cl-act-btn--print" title="Imprimir PDF"  onClick={() => generarPDF(cl, true)}><FiPrinter size={13}/></button>
+                          <button className="cl-act-btn cl-act-btn--dl"    title="Descargar PDF" onClick={() => generarPDF(cl, false)}><FiClipboard size={13}/></button>
+                          {cl.estado !== 'anulado' && (
+                            <button className="cl-act-btn cl-act-btn--edit" title="Editar" onClick={() => openEditar(cl)}><FiEdit2 size={13}/></button>
+                          )}
+                          {canDelete && cl.estado !== 'anulado' && (
+                            <button className="cl-act-btn cl-act-btn--del" title="Anular" onClick={() => openAnular(cl)}><FiSlash size={13}/></button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
+
+        {/* ── PAGINACIÓN ── */}
+        {!loading && listaMostrada.length > PAGE_SIZE && (
+          <div className="std-pg">
+            <span className="std-pg-info">
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, listaMostrada.length)} de <strong>{listaMostrada.length}</strong>
+            </span>
+            <div className="std-pg-controls">
+              <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+              <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+              {(() => {
+                const maxBtns = 7;
+                let start = Math.max(1, page - Math.floor(maxBtns / 2));
+                let end   = Math.min(totalPages, start + maxBtns - 1);
+                if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                const pages = [];
+                if (start > 1) {
+                  pages.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPage(1)}>1</button>);
+                  if (start > 2) pages.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                }
+                for (let p = start; p <= end; p++) {
+                  pages.push(<button key={p} className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`} onClick={() => setPage(p)}>{p}</button>);
+                }
+                if (end < totalPages) {
+                  if (end < totalPages - 1) pages.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                  pages.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
+                }
+                return pages;
+              })()}
+              <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+              <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
+            </div>
+            <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
+          </div>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════════════════════
