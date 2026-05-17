@@ -30,11 +30,53 @@ function getDayName(isoStr) {
   return days[d.getDay()];
 }
 
+// Calcula los anchos de columna adaptativos para una tabla con `diaCount` días
+function computeColStyles(CW, diaCount) {
+  const FIXED_NO = 7;
+  const MIN_DATE = 13;
+  const MIN_TOT  = 16;
+  let nombreW  = 54;
+  let detalleW = 44;
+  let fechaW   = 22;
+
+  if (diaCount > 0) {
+    const avail = CW - FIXED_NO - nombreW - detalleW;
+    const raw   = Math.floor(avail / (diaCount + 1));
+    if (raw < MIN_DATE) {
+      const totalND = CW - FIXED_NO - MIN_DATE * (diaCount + 1);
+      nombreW  = Math.max(40, Math.round(totalND * 0.55));
+      detalleW = Math.max(30, totalND - nombreW);
+      fechaW   = MIN_DATE;
+    } else {
+      fechaW = Math.min(22, raw);
+      const surplus = CW - FIXED_NO - nombreW - detalleW - fechaW * diaCount - MIN_TOT;
+      if (surplus > 0) {
+        nombreW  = Math.min(75, nombreW  + Math.round(surplus * 0.6));
+        detalleW = Math.min(60, detalleW + Math.round(surplus * 0.4));
+      }
+    }
+  }
+  const FIXED_TOT = CW - FIXED_NO - nombreW - detalleW - fechaW * diaCount;
+  return {
+    0: { cellWidth: FIXED_NO,  halign: 'center' },
+    1: { cellWidth: nombreW,   halign: 'center' },
+    2: { cellWidth: detalleW,  halign: 'left'   },
+    ...Object.fromEntries(Array.from({ length: diaCount }, (_, i) => [i + 3, { cellWidth: fechaW, halign: 'center' }])),
+    [3 + diaCount]: { cellWidth: FIXED_TOT, halign: 'right' },
+  };
+}
+
 export async function generarPdfViatico(v, nombreUsuario) {
   const logoData = await loadImg('/logo-congreso.png.png');
 
+  // Separar días de viaje (RESUMEN) y días de estadía (DETALLE)
+  const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
+  const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
+  // Fallback: si no hay días de estadía, mostrar los mismos días de viaje en DETALLE
+  const diasDetalle = diasEstadia.length ? diasEstadia : diasViaje;
+
   // Auto-switch: carta (≤7 días) o legal/oficio (>7 días)
-  const totalDias = (v.dias || []).length;
+  const totalDias = Math.max(diasViaje.length, diasDetalle.length);
   const formato   = totalDias > 7 ? 'legal' : 'letter';
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: formato });
@@ -145,62 +187,27 @@ export async function generarPdfViatico(v, nombreUsuario) {
   y += 2.5;
 
   // -------------------------------------------------------
-  // FECHAS
+  // COLUMNAS Y TOTALES POR TABLA
   // -------------------------------------------------------
-  const dias    = v.dias || [];
-  const maxDays = Math.min(dias.length, 13);
+  const maxDaysViaje   = Math.min(diasViaje.length, 13);
+  const maxDaysDetalle = Math.min(diasDetalle.length, 13);
 
-  // Encabezado de fecha: "LUNES\n2/3/2026"
-  const colFechas = dias.slice(0, maxDays).map(d => {
-    const s = (d.fecha || '').substring(0, 10);
-    const [yy, mm, dd] = s.split('-');
-    const dayName = getDayName(s);
-    return dayName + '\n' + parseInt(dd, 10) + '/' + parseInt(mm, 10) + '/' + yy;
-  });
-
-  const totalUSD = dias.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
-
-  // Anchos adaptativos: fecha mín 13 mm, nombre y detalle con caps razonables
-  const FIXED_NO   = 7;
-  const MIN_DATE   = 13;
-  const MIN_TOT    = 16;
-
-  // Anchos base: suficientes para nombres largos y "ALIMENTACIÓN Y HOSPEDAJE"
-  let nombreW  = 54;
-  let detalleW = 44;
-  let fechaW   = 22;
-
-  if (maxDays > 0) {
-    const avail = CW - FIXED_NO - nombreW - detalleW;
-    const raw   = Math.floor(avail / (maxDays + 1)); // +1 reserva columna TOTAL
-
-    if (raw < MIN_DATE) {
-      // Muchos días: comprimir nombre/detalle para que quepan las fechas a mínimo
-      const totalND = CW - FIXED_NO - MIN_DATE * (maxDays + 1);
-      nombreW  = Math.max(40, Math.round(totalND * 0.55));
-      detalleW = Math.max(30, totalND - nombreW);
-      fechaW   = MIN_DATE;
-    } else {
-      // Pocos días: limitar fecha a 22 mm y repartir sobrante entre nombre y detalle
-      fechaW = Math.min(22, raw);
-      const surplus = CW - FIXED_NO - nombreW - detalleW - fechaW * maxDays - MIN_TOT;
-      if (surplus > 0) {
-        nombreW  = Math.min(75, nombreW  + Math.round(surplus * 0.6));
-        detalleW = Math.min(60, detalleW + Math.round(surplus * 0.4));
-      }
-    }
+  function buildColFechas(arr, maxDays) {
+    return arr.slice(0, maxDays).map(d => {
+      const s = (d.fecha || '').substring(0, 10);
+      const [yy, mm, dd] = s.split('-');
+      return getDayName(s) + '\n' + parseInt(dd, 10) + '/' + parseInt(mm, 10) + '/' + yy;
+    });
   }
 
-  // TOTAL toma exactamente el sobrante → suma de anchos = CW siempre
-  const FIXED_TOT = CW - FIXED_NO - nombreW - detalleW - fechaW * maxDays;
+  const colFechasViaje   = buildColFechas(diasViaje,   maxDaysViaje);
+  const colFechasDetalle = buildColFechas(diasDetalle, maxDaysDetalle);
 
-  const baseColStyles = {
-    0: { cellWidth: FIXED_NO,  halign: 'center' },
-    1: { cellWidth: nombreW,   halign: 'center' },
-    2: { cellWidth: detalleW,  halign: 'left'   },
-    ...Object.fromEntries(colFechas.map((_, i) => [i + 3, { cellWidth: fechaW, halign: 'center' }])),
-    [3 + colFechas.length]: { cellWidth: FIXED_TOT, halign: 'right' },
-  };
+  const totalUSD         = diasViaje.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
+  const totalUSD_detalle = diasDetalle.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
+
+  const baseColStylesViaje   = computeColStyles(CW, maxDaysViaje);
+  const baseColStylesDetalle = computeColStyles(CW, maxDaysDetalle);
 
   const headStyle = {
     fillColor: C_AZUL,
@@ -218,7 +225,9 @@ export async function generarPdfViatico(v, nombreUsuario) {
     lineWidth: 0.2,
   };
 
-  // ---- TABLA 1: RESUMEN -----------------------------------
+  const nombrePrincipal = (v.detalle && v.detalle[0]?.nombre) || v.diputado_nombre || '';
+
+  // ---- TABLA 1: RESUMEN (3 filas fijas) -------------------
   doc.setFillColor(...C_AZUL);
   doc.rect(M, y, CW, 5, 'F');
   doc.setTextColor(...C_BLANCO);
@@ -227,29 +236,26 @@ export async function generarPdfViatico(v, nombreUsuario) {
   doc.text('RESUMEN DE VIATICOS:', M + 3, y + 3.6);
   y += 5;
 
-  const nombrePrincipal = (v.detalle && v.detalle[0]?.nombre) || v.diputado_nombre || '';
-  const realResumenCount = (v.detalle || []).length;
-
-  const resumenBody = (v.detalle || []).map((row, idx) => {
-    const montos = dias.slice(0, maxDays).map(d =>
+  const RESUMEN_LABELS = ['ALIMENTACIÓN Y HOSPEDAJE', 'COMPLEMENTO', 'OTROS'];
+  const resumenBody = RESUMEN_LABELS.map((detalleLabel, idx) => {
+    const montos = diasViaje.slice(0, maxDaysViaje).map(d =>
       idx === 0 && parseFloat(d.monto) > 0 ? '$' + parseFloat(d.monto).toFixed(2) : ''
     );
-    const tot = idx === 0 ? '$' + totalUSD.toFixed(2) : '';
-    const nombre = (row.nombre || (idx === 0 ? nombrePrincipal : '')).toUpperCase();
-    return [String(idx + 1), nombre, row.detalle || 'ALIMENTACION Y HOSPEDAJE', ...montos, tot];
+    const tot = idx === 0 ? '$' + totalUSD.toFixed(2) : '$0.00';
+    const nombre = idx === 0 ? nombrePrincipal.toUpperCase() : '';
+    return [String(idx + 1), nombre, detalleLabel, ...montos, tot];
   });
-
-  resumenBody.push(['', 'TOTAL:', '', ...colFechas.map(() => ''), '$' + totalUSD.toFixed(2)]);
+  resumenBody.push(['', 'TOTAL:', '', ...colFechasViaje.map(() => ''), '$' + totalUSD.toFixed(2)]);
 
   autoTable(doc, {
     startY: y,
-    head: [['No.', 'NOMBRE', 'DETALLE', ...colFechas, 'TOTAL']],
+    head: [['No.', 'NOMBRE', 'DETALLE', ...colFechasViaje, 'TOTAL']],
     body: resumenBody,
     margin: { left: M, right: M },
     tableWidth: CW,
     styles: bodyStyle,
     headStyles: headStyle,
-    columnStyles: baseColStyles,
+    columnStyles: baseColStylesViaje,
     didParseCell: ({ row, cell, column }) => {
       if (row.section === 'body') {
         if (row.index === resumenBody.length - 1) {
@@ -259,7 +265,7 @@ export async function generarPdfViatico(v, nombreUsuario) {
         } else if (row.index % 2 === 1) {
           cell.styles.fillColor = [250, 252, 255];
         }
-        if (column.index === 3 + colFechas.length) {
+        if (column.index === 3 + colFechasViaje.length) {
           cell.styles.textColor = C_AZUL;
           cell.styles.fontStyle = 'bold';
         }
@@ -268,7 +274,7 @@ export async function generarPdfViatico(v, nombreUsuario) {
   });
   y = doc.lastAutoTable.finalY + 1.5;
 
-  // ---- TABLA 2: DETALLE ----------------------------------
+  // ---- TABLA 2: DETALLE (mín. 3 filas) -------------------
   doc.setFillColor(...C_AZUL);
   doc.rect(M, y, CW, 5, 'F');
   doc.setTextColor(...C_BLANCO);
@@ -277,28 +283,30 @@ export async function generarPdfViatico(v, nombreUsuario) {
   doc.text('DETALLE HOSPEDAJE Y ALIMENTACION', M + 3, y + 3.6);
   y += 5;
 
-  const realDetalleCount = (v.detalle || []).length;
+  // Rellenar hasta mínimo 3 filas
+  const detalleRows = [...(v.detalle || [])];
+  while (detalleRows.length < 3) detalleRows.push({ nombre: '', cargo: '', detalle: '' });
 
-  const detalleBody = (v.detalle || []).map((row, idx) => {
-    const montos = dias.slice(0, maxDays).map(d =>
+  const detalleBody = detalleRows.map((row, idx) => {
+    const montos = diasDetalle.slice(0, maxDaysDetalle).map(d =>
       idx === 0 && parseFloat(d.monto) > 0 ? '$' + parseFloat(d.monto).toFixed(2) : ''
     );
-    const tot = idx === 0 ? '$' + totalUSD.toFixed(2) : '';
+    const tot = idx === 0 ? '$' + totalUSD_detalle.toFixed(2) : '$0.00';
     const nombre = (row.nombre || (idx === 0 ? nombrePrincipal : '')).toUpperCase();
     const cargo  = (row.cargo  || (idx === 0 ? v.cargo || '' : '')).toUpperCase();
     return [String(idx + 1), nombre, cargo, ...montos, tot];
   });
-  detalleBody.push(['', 'TOTAL:', '', ...colFechas.map(() => ''), '$' + totalUSD.toFixed(2)]);
+  detalleBody.push(['', 'TOTAL:', '', ...colFechasDetalle.map(() => ''), '$' + totalUSD_detalle.toFixed(2)]);
 
   autoTable(doc, {
     startY: y,
-    head: [['No.', 'NOMBRE', 'CARGO', ...colFechas, 'TOTAL']],
+    head: [['No.', 'NOMBRE', 'CARGO', ...colFechasDetalle, 'TOTAL']],
     body: detalleBody,
     margin: { left: M, right: M },
     tableWidth: CW,
     styles: bodyStyle,
     headStyles: headStyle,
-    columnStyles: baseColStyles,
+    columnStyles: baseColStylesDetalle,
     didParseCell: ({ row, cell, column }) => {
       if (row.section === 'body') {
         if (row.index === detalleBody.length - 1) {
@@ -308,7 +316,7 @@ export async function generarPdfViatico(v, nombreUsuario) {
         } else if (row.index % 2 === 1) {
           cell.styles.fillColor = [250, 252, 255];
         }
-        if (column.index === 3 + colFechas.length) {
+        if (column.index === 3 + colFechasDetalle.length) {
           cell.styles.textColor = C_AZUL;
           cell.styles.fontStyle = 'bold';
         }

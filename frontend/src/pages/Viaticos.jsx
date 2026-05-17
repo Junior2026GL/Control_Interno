@@ -54,15 +54,19 @@ function buildEmptyForm(userName) {
     diputado_id: '',
     diputado_nombre: '',
     cargo: '',
-    fecha_inicio: '',
+    periodo_dias: '',         // manual, permite decimal (ej: 3.5)
+    fecha_inicio: '',         // rango días de VIAJE → tabla RESUMEN
     fecha_fin: '',
+    fecha_inicio_estadia: '', // rango días de ESTADÍA → tabla DETALLE
+    fecha_fin_estadia: '',
     tasa_cambio: '',
     nota1: NOTA1_DEFAULT,
     nota2: NOTA2_DEFAULT,
     elaborado_por: userName || '',
     detalle: [{ ...EMPTY_DETALLE }],
-    dias: [],        // [{ fecha, monto }]
-    montoDefault: '', // monto aplicado automático por día
+    dias_viaje:   [],  // [{ fecha, monto }] – usados en RESUMEN
+    dias_estadia: [],  // [{ fecha, monto }] – usados en DETALLE
+    montoDefault: '',
   };
 }
 
@@ -152,7 +156,7 @@ export default function Viaticos() {
     } finally { setDniLoading(false); }
   };
 
-  // ── Auto-generar días cuando cambia fecha inicio/fin ────────────
+  // ── Auto-generar días de VIAJE (RESUMEN) cuando cambia fecha inicio/fin ──
   useEffect(() => {
     if (!form.fecha_inicio || !form.fecha_fin) return;
     if (form.fecha_fin < form.fecha_inicio) return;
@@ -160,25 +164,37 @@ export default function Viaticos() {
     const monto = parseFloat(form.montoDefault) || 0;
     setForm(f => ({
       ...f,
-      dias: fechas.map((fecha, idx) => {
-        const existing = f.dias.find(d => d.fecha === fecha);
-        // primer y último día pueden tener monto 0 (como el Excel muestra)
-        const defaultMonto = (idx === 0) ? 0 : monto;
-        return existing || { fecha, monto: defaultMonto };
+      dias_viaje: fechas.map(fecha => {
+        const existing = f.dias_viaje.find(d => d.fecha === fecha);
+        return existing || { fecha, monto };
       }),
     }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.fecha_inicio, form.fecha_fin]);
 
-  // Aplicar monto default a todos los días (excepto primero y último)
+  // ── Auto-generar días de ESTADÍA (DETALLE) cuando cambia fecha estadía ──
+  useEffect(() => {
+    if (!form.fecha_inicio_estadia || !form.fecha_fin_estadia) return;
+    if (form.fecha_fin_estadia < form.fecha_inicio_estadia) return;
+    const fechas = getAllDates(form.fecha_inicio_estadia, form.fecha_fin_estadia);
+    const monto = parseFloat(form.montoDefault) || 0;
+    setForm(f => ({
+      ...f,
+      dias_estadia: fechas.map(fecha => {
+        const existing = f.dias_estadia.find(d => d.fecha === fecha);
+        return existing || { fecha, monto };
+      }),
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.fecha_inicio_estadia, form.fecha_fin_estadia]);
+
+  // Aplicar monto default a TODOS los días (viaje y estadía)
   const applyDefaultMonto = () => {
     const monto = parseFloat(form.montoDefault) || 0;
     setForm(f => ({
       ...f,
-      dias: f.dias.map((d, idx) => ({
-        ...d,
-        monto: (idx === 0 || idx === f.dias.length - 1) ? 0 : monto,
-      })),
+      dias_viaje:   f.dias_viaje.map(d => ({ ...d, monto })),
+      dias_estadia: f.dias_estadia.map(d => ({ ...d, monto })),
     }));
   };
 
@@ -189,7 +205,8 @@ export default function Viaticos() {
     if (!form.motivo_viaje.trim()) return setFormErr('El motivo de viaje es requerido.');
     if (!form.lugar.trim())        return setFormErr('El lugar es requerido.');
     if (!form.diputado_id)         return setFormErr('Busca al diputado por DNI primero.');
-    if (!form.fecha_inicio || !form.fecha_fin) return setFormErr('Las fechas son requeridas.');
+    if (!form.fecha_inicio || !form.fecha_fin) return setFormErr('Las fechas de viaje son requeridas.');
+    if (!form.periodo_dias)        return setFormErr('El período de tiempo es requerido.');
     if (!form.tasa_cambio)         return setFormErr('La tasa de cambio es requerida.');
 
     const payload = {
@@ -202,8 +219,12 @@ export default function Viaticos() {
       tasa_cambio:  parseFloat(form.tasa_cambio),
       nota1:        form.nota1,
       nota2:        form.nota2,
+      periodo_dias: parseFloat(form.periodo_dias) || 1,
       detalle:      form.detalle,
-      dias:         form.dias,
+      dias: [
+        ...form.dias_viaje.map(d => ({ fecha: d.fecha, monto: parseFloat(d.monto) || 0, tipo: 'viaje' })),
+        ...form.dias_estadia.map(d => ({ fecha: d.fecha, monto: parseFloat(d.monto) || 0, tipo: 'estadia' })),
+      ],
     };
     setSaving(true);
     try {
@@ -262,8 +283,7 @@ export default function Viaticos() {
     (v.motivo_viaje || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalDias = form.dias.length;
-  const totalUSD  = form.dias.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
+  const totalUSD  = form.dias_viaje.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
   const totalLPS  = totalUSD * (parseFloat(form.tasa_cambio) || 0);
 
   const openModal = () => {
@@ -277,6 +297,10 @@ export default function Viaticos() {
     try {
       const res = await api.get(`/viaticos/${id}`, { headers: authHeaders() });
       const v = res.data;
+      const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
+      const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
+      const fecEstStart = diasEstadia.length ? (diasEstadia[0].fecha || '').substring(0, 10) : '';
+      const fecEstEnd   = diasEstadia.length ? (diasEstadia[diasEstadia.length - 1].fecha || '').substring(0, 10) : '';
       setForm({
         motivo_viaje:   v.motivo_viaje || '',
         lugar:          v.lugar || '',
@@ -284,14 +308,18 @@ export default function Viaticos() {
         diputado_id:    v.diputado_id,
         diputado_nombre: v.diputado_nombre || '',
         cargo:          v.cargo || '',
+        periodo_dias:   v.periodo_dias != null ? String(v.periodo_dias) : '',
         fecha_inicio:   (v.fecha_inicio || '').substring(0, 10),
         fecha_fin:      (v.fecha_fin || '').substring(0, 10),
+        fecha_inicio_estadia: fecEstStart,
+        fecha_fin_estadia:    fecEstEnd,
         tasa_cambio:    v.tasa_cambio || '',
         nota1:          v.nota1 || '',
         nota2:          v.nota2 || '',
         elaborado_por:  me?.nombre || '',
-        detalle: v.detalle?.length ? v.detalle : [{ nombre: '', cargo: '', detalle: '' }],
-        dias:    (v.dias || []).map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
+        detalle:    v.detalle?.length ? v.detalle : [{ nombre: '', cargo: '', detalle: '' }],
+        dias_viaje:   diasViaje.map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
+        dias_estadia: diasEstadia.map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
         montoDefault: '',
       });
       setEditingId(id);
@@ -450,7 +478,7 @@ export default function Viaticos() {
                 </div>
                 <div className="vt-view-row">
                   <span className="vt-view-lbl">Total USD</span>
-                  <span className="vt-view-val vt-view-total">${(viewData.dias || []).reduce((s, d) => s + (parseFloat(d.monto) || 0), 0).toFixed(2)}</span>
+                  <span className="vt-view-val vt-view-total">${((viewData.dias_viaje || viewData.dias || []).reduce((s, d) => s + (parseFloat(d.monto) || 0), 0)).toFixed(2)}</span>
                 </div>
                 <div className="vt-view-row">
                   <span className="vt-view-lbl">Elaborado por</span>
@@ -458,12 +486,27 @@ export default function Viaticos() {
                 </div>
               </div>
 
-              {/* Días */}
-              {(viewData.dias || []).length > 0 && (
+              {/* Días de viaje */}
+              {(viewData.dias_viaje || viewData.dias || []).length > 0 && (
                 <>
-                  <div className="vt-view-subtitle">Días y Montos</div>
+                  <div className="vt-view-subtitle">Días de Viaje (RESUMEN)</div>
                   <div className="vt-dias-grid">
-                    {viewData.dias.map((d, i) => (
+                    {(viewData.dias_viaje || viewData.dias).map((d, i) => (
+                      <div key={i} className="vt-dia-cell">
+                        <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
+                        <span className="vt-dia-monto">${parseFloat(d.monto || 0).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Días de estadía */}
+              {(viewData.dias_estadia || []).length > 0 && (
+                <>
+                  <div className="vt-view-subtitle">Días de Estadía (DETALLE)</div>
+                  <div className="vt-dias-grid">
+                    {viewData.dias_estadia.map((d, i) => (
                       <div key={i} className="vt-dia-cell">
                         <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
                         <span className="vt-dia-monto">${parseFloat(d.monto || 0).toFixed(2)}</span>
@@ -539,15 +582,6 @@ export default function Viaticos() {
                   <input value={form.lugar} onChange={e => setForm({...form, lugar: e.target.value})}
                     placeholder="Ej: ANDALUCÍA, ESPAÑA" />
                 </div>
-                <div className="vt-field">
-                  <label>TASA DE CAMBIO (L por $1) *</label>
-                  <div className="vt-input-icon">
-                    <FiDollarSign size={13} />
-                    <input type="number" step="0.01" min="0" value={form.tasa_cambio}
-                      onChange={e => setForm({...form, tasa_cambio: e.target.value})}
-                      placeholder="Ej: 26.63" />
-                  </div>
-                </div>
               </div>
 
               {/* ── Sección 2: Diputado ── */}
@@ -577,18 +611,33 @@ export default function Viaticos() {
                 </div>
               </div>
 
-              {/* ── Sección 3: Fechas y días ── */}
-              <div className="vt-section-title"><FiCalendar size={13} /> Período y Montos</div>
+              {/* ── Sección 3: Días de Viaje (RESUMEN) ── */}
+              <div className="vt-section-title"><FiCalendar size={13} /> Días de Viaje — Tabla RESUMEN</div>
               <div className="vt-grid-2">
                 <div className="vt-field">
-                  <label>FECHA INICIO *</label>
+                  <label>FECHA INICIO VIAJE *</label>
                   <input type="date" value={form.fecha_inicio}
                     onChange={e => setForm({...form, fecha_inicio: e.target.value})} />
                 </div>
                 <div className="vt-field">
-                  <label>FECHA FIN *</label>
+                  <label>FECHA FIN VIAJE *</label>
                   <input type="date" value={form.fecha_fin}
                     onChange={e => setForm({...form, fecha_fin: e.target.value})} />
+                </div>
+                <div className="vt-field">
+                  <label>PERÍODO DE TIEMPO *</label>
+                  <input type="number" step="0.5" min="0.5" value={form.periodo_dias}
+                    onChange={e => setForm({...form, periodo_dias: e.target.value})}
+                    placeholder="Ej: 3.5" />
+                </div>
+                <div className="vt-field">
+                  <label>TASA DE CAMBIO (L por $1) *</label>
+                  <div className="vt-input-icon">
+                    <FiDollarSign size={13} />
+                    <input type="number" step="0.01" min="0" value={form.tasa_cambio}
+                      onChange={e => setForm({...form, tasa_cambio: e.target.value})}
+                      placeholder="Ej: 26.63" />
+                  </div>
                 </div>
                 <div className="vt-field">
                   <label>MONTO POR DÍA (USD)</label>
@@ -602,24 +651,24 @@ export default function Viaticos() {
                 <div className="vt-field vt-field-center">
                   <label>&nbsp;</label>
                   <button type="button" className="vt-btn-apply" onClick={applyDefaultMonto}
-                    disabled={!form.montoDefault || form.dias.length === 0}>
+                    disabled={!form.montoDefault || (form.dias_viaje.length === 0 && form.dias_estadia.length === 0)}>
                     Aplicar a todos los días
                   </button>
                 </div>
               </div>
 
-              {/* Tabla de días */}
-              {form.dias.length > 0 && (
+              {/* Días de viaje */}
+              {form.dias_viaje.length > 0 && (
                 <div className="vt-dias-wrap">
                   <div className="vt-dias-header">
-                    <span>Días del período ({totalDias} días)</span>
+                    <span>Días de viaje ({form.dias_viaje.length} días)</span>
                     <span className="vt-dias-total">
                       Total: <strong>${totalUSD.toFixed(2)}</strong>
                       {form.tasa_cambio ? <> = <strong>L {totalLPS.toLocaleString('es-HN', {minimumFractionDigits:2})}</strong></> : null}
                     </span>
                   </div>
                   <div className="vt-dias-grid">
-                    {form.dias.map((d, idx) => (
+                    {form.dias_viaje.map((d, idx) => (
                       <div key={d.fecha} className="vt-dia-cell">
                         <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
                         <div className="vt-input-icon small">
@@ -628,9 +677,55 @@ export default function Viaticos() {
                             type="number" step="0.01" min="0"
                             value={d.monto}
                             onChange={e => {
-                              const newDias = [...form.dias];
-                              newDias[idx] = { ...d, monto: e.target.value };
-                              setForm(f => ({...f, dias: newDias}));
+                              const arr = [...form.dias_viaje];
+                              arr[idx] = { ...d, monto: e.target.value };
+                              setForm(f => ({...f, dias_viaje: arr}));
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Sección 4: Días de Estadía (DETALLE) ── */}
+              <div className="vt-section-title"><FiCalendar size={13} /> Días de Estadía — Tabla DETALLE</div>
+              <div className="vt-grid-2">
+                <div className="vt-field">
+                  <label>FECHA INICIO ESTADÍA</label>
+                  <input type="date" value={form.fecha_inicio_estadia}
+                    onChange={e => setForm({...form, fecha_inicio_estadia: e.target.value})} />
+                </div>
+                <div className="vt-field">
+                  <label>FECHA FIN ESTADÍA</label>
+                  <input type="date" value={form.fecha_fin_estadia}
+                    onChange={e => setForm({...form, fecha_fin_estadia: e.target.value})} />
+                </div>
+              </div>
+
+              {/* Días de estadía */}
+              {form.dias_estadia.length > 0 && (
+                <div className="vt-dias-wrap">
+                  <div className="vt-dias-header">
+                    <span>Días de estadía ({form.dias_estadia.length} días)</span>
+                    <span className="vt-dias-total">
+                      Total: <strong>${form.dias_estadia.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0).toFixed(2)}</strong>
+                    </span>
+                  </div>
+                  <div className="vt-dias-grid">
+                    {form.dias_estadia.map((d, idx) => (
+                      <div key={d.fecha} className="vt-dia-cell">
+                        <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
+                        <div className="vt-input-icon small">
+                          <span>$</span>
+                          <input
+                            type="number" step="0.01" min="0"
+                            value={d.monto}
+                            onChange={e => {
+                              const arr = [...form.dias_estadia];
+                              arr[idx] = { ...d, monto: e.target.value };
+                              setForm(f => ({...f, dias_estadia: arr}));
                             }}
                           />
                         </div>

@@ -63,9 +63,11 @@ exports.getOne = (req, res) => {
       db.query('SELECT * FROM viaticos_detalle WHERE viatico_id = ? ORDER BY id', [id], (e2, detalle) => {
         if (e2) return res.status(500).json({ message: 'Error al obtener detalle.' });
 
-        db.query('SELECT * FROM viaticos_dias WHERE viatico_id = ? ORDER BY fecha', [id], (e3, dias) => {
+        db.query('SELECT * FROM viaticos_dias WHERE viatico_id = ? ORDER BY tipo, fecha', [id], (e3, dias) => {
           if (e3) return res.status(500).json({ message: 'Error al obtener días.' });
-          res.json({ ...viatico, detalle, dias });
+          const dias_viaje   = dias.filter(d => d.tipo === 'viaje'   || !d.tipo);
+          const dias_estadia = dias.filter(d => d.tipo === 'estadia');
+          res.json({ ...viatico, detalle, dias_viaje, dias_estadia });
         });
       });
     }
@@ -86,17 +88,18 @@ exports.create = (req, res) => {
   const detalle       = Array.isArray(req.body.detalle) ? req.body.detalle : [];
   const dias          = Array.isArray(req.body.dias)    ? req.body.dias    : [];
 
+  const periodo_dias = parseFloat(req.body.periodo_dias);
+
   if (!motivo_viaje || !lugar || isNaN(diputado_id) || !fecha_inicio || !fecha_fin || !cargo)
     return res.status(400).json({ message: 'Faltan campos requeridos.' });
-
-  // Calcular periodo_dias
-  const diff = Math.round((new Date(fecha_fin) - new Date(fecha_inicio)) / 86400000) + 1;
-  const periodo_dias = diff > 0 ? diff : 1;
+  if (isNaN(periodo_dias) || periodo_dias <= 0)
+    return res.status(400).json({ message: 'El período de tiempo es requerido.' });
 
   db.query(
     `INSERT INTO viaticos (motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
        cargo, tasa_cambio, nota1, nota2, creado_por)
      VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+
     [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
      cargo, tasa_cambio, nota1, nota2, req.user.id],
     (err, result) => {
@@ -115,8 +118,8 @@ exports.create = (req, res) => {
       // Insertar días
       const diasPromises = dias.map(d => new Promise((resolve, reject) => {
         db.query(
-          `INSERT INTO viaticos_dias (viatico_id, fecha, monto) VALUES (?,?,?)`,
-          [vId, d.fecha, parseFloat(d.monto) || 0],
+          `INSERT INTO viaticos_dias (viatico_id, fecha, monto, tipo) VALUES (?,?,?,?)`,
+          [vId, d.fecha, parseFloat(d.monto) || 0, d.tipo || 'viaje'],
           (e) => e ? reject(e) : resolve()
         );
       }));
@@ -160,16 +163,18 @@ exports.update = (req, res) => {
   const detalle      = Array.isArray(req.body.detalle) ? req.body.detalle : [];
   const dias         = Array.isArray(req.body.dias)    ? req.body.dias    : [];
 
+  const periodo_dias = parseFloat(req.body.periodo_dias);
+
   if (!motivo_viaje || !lugar || isNaN(diputado_id) || !fecha_inicio || !fecha_fin || !cargo)
     return res.status(400).json({ message: 'Faltan campos requeridos.' });
-
-  const diff = Math.round((new Date(fecha_fin) - new Date(fecha_inicio)) / 86400000) + 1;
-  const periodo_dias = diff > 0 ? diff : 1;
+  if (isNaN(periodo_dias) || periodo_dias <= 0)
+    return res.status(400).json({ message: 'El período de tiempo es requerido.' });
 
   db.query(
     `UPDATE viaticos SET motivo_viaje=?, lugar=?, diputado_id=?, periodo_dias=?,
        fecha_inicio=?, fecha_fin=?, cargo=?, tasa_cambio=?, nota1=?, nota2=?
      WHERE id=?`,
+
     [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
      cargo, tasa_cambio, nota1, nota2, id],
     (err, r) => {
@@ -191,8 +196,8 @@ exports.update = (req, res) => {
           }));
           const diasP = dias.map(d => new Promise((resolve, reject) => {
             db.query(
-              `INSERT INTO viaticos_dias (viatico_id, fecha, monto) VALUES (?,?,?)`,
-              [id, d.fecha, parseFloat(d.monto) || 0],
+              `INSERT INTO viaticos_dias (viatico_id, fecha, monto, tipo) VALUES (?,?,?,?)`,
+              [id, d.fecha, parseFloat(d.monto) || 0, d.tipo || 'viaje'],
               (e) => e ? reject(e) : resolve()
             );
           }));
