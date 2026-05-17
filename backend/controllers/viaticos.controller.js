@@ -3,6 +3,30 @@ const { logEvent, getClientIP } = require('../middleware/audit');
 
 function sanitize(str) { return (str || '').toString().trim(); }
 
+// Inserta un día con tipo si la columna ya existe; si no (migración pendiente),
+// inserta sin tipo para no bloquear la app.
+function insertDia(viatico_id, d, cb) {
+  const monto = parseFloat(d.monto) || 0;
+  const tipo  = d.tipo || 'viaje';
+  db.query(
+    'INSERT INTO viaticos_dias (viatico_id, fecha, monto, tipo) VALUES (?,?,?,?)',
+    [viatico_id, d.fecha, monto, tipo],
+    (e) => {
+      if (!e) return cb(null);
+      if (e.code === 'ER_BAD_FIELD_ERROR') {
+        // La columna tipo aún no existe → ejecutar migrate_viaticos_v2.sql
+        db.query(
+          'INSERT INTO viaticos_dias (viatico_id, fecha, monto) VALUES (?,?,?)',
+          [viatico_id, d.fecha, monto],
+          cb
+        );
+      } else {
+        cb(e);
+      }
+    }
+  );
+}
+
 // GET /api/viaticos/diputado/:identidad — buscar diputado por DNI
 exports.getByDNI = (req, res) => {
   const identidad = sanitize(req.params.identidad);
@@ -116,13 +140,9 @@ exports.create = (req, res) => {
       }));
 
       // Insertar días
-      const diasPromises = dias.map(d => new Promise((resolve, reject) => {
-        db.query(
-          `INSERT INTO viaticos_dias (viatico_id, fecha, monto, tipo) VALUES (?,?,?,?)`,
-          [vId, d.fecha, parseFloat(d.monto) || 0, d.tipo || 'viaje'],
-          (e) => e ? reject(e) : resolve()
-        );
-      }));
+      const diasPromises = dias.map(d => new Promise((resolve, reject) =>
+        insertDia(vId, d, (e) => e ? reject(e) : resolve())
+      ));
 
       Promise.all([...detallePromises, ...diasPromises])
         .then(() => {
@@ -194,13 +214,9 @@ exports.update = (req, res) => {
               (e) => e ? reject(e) : resolve()
             );
           }));
-          const diasP = dias.map(d => new Promise((resolve, reject) => {
-            db.query(
-              `INSERT INTO viaticos_dias (viatico_id, fecha, monto, tipo) VALUES (?,?,?,?)`,
-              [id, d.fecha, parseFloat(d.monto) || 0, d.tipo || 'viaje'],
-              (e) => e ? reject(e) : resolve()
-            );
-          }));
+          const diasP = dias.map(d => new Promise((resolve, reject) =>
+            insertDia(id, d, (e) => e ? reject(e) : resolve())
+          ));
 
           Promise.all([...detalleP, ...diasP])
             .then(() => {
