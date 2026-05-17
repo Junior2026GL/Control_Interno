@@ -7,6 +7,7 @@ import './OrdenChecklist.css';
 
 const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN'];
 const CURRENT_YEAR = new Date().getFullYear();
+const PAGE_SIZE = 100;
 
 function pad(n) { return String(n).padStart(4, '0'); }
 
@@ -64,7 +65,9 @@ export default function OrdenChecklist() {
   }, []);
 
   useEffect(() => { fetchAnios(); }, [fetchAnios]);
-  useEffect(() => { fetchOrdenes(anio); }, [anio, fetchOrdenes]);
+  useEffect(() => { fetchOrdenes(anio); setPage(1); }, [anio, fetchOrdenes]);
+
+  const [page, setPage] = useState(1);
 
   const [toast, setToast] = useState(null);
   const showToast = (msg, type = 'ok') => {
@@ -92,6 +95,10 @@ export default function OrdenChecklist() {
       setGenLoading(false);
     }
   };
+
+  // Paginación
+  const totalPages  = Math.max(1, Math.ceil(ordenes.length / PAGE_SIZE));
+  const ordenesPag  = ordenes.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Estadísticas
   const total      = ordenes.length;
@@ -218,7 +225,7 @@ export default function OrdenChecklist() {
           </div>
         ) : (
           <div className="oc-grid">
-            {ordenes.map(o => {
+            {ordenesPag.map(o => {
               const esAnulado = o.estado === 'usado' && o.checklist_estado === 'anulado';
               return (
                 <div
@@ -237,6 +244,41 @@ export default function OrdenChecklist() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── Paginación ── */}
+        {!loading && ordenes.length > PAGE_SIZE && (
+          <div className="std-pg">
+            <span className="std-pg-info">
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, ordenes.length)} de <strong>{ordenes.length}</strong>
+            </span>
+            <div className="std-pg-controls">
+              <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+              <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+              {(() => {
+                const maxBtns = 7;
+                let start = Math.max(1, page - Math.floor(maxBtns / 2));
+                let end   = Math.min(totalPages, start + maxBtns - 1);
+                if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                const pages = [];
+                if (start > 1) {
+                  pages.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPage(1)}>1</button>);
+                  if (start > 2) pages.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                }
+                for (let p = start; p <= end; p++) {
+                  pages.push(<button key={p} className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`} onClick={() => setPage(p)}>{p}</button>);
+                }
+                if (end < totalPages) {
+                  if (end < totalPages - 1) pages.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                  pages.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
+                }
+                return pages;
+              })()}
+              <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+              <button className="std-pg-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
+            </div>
+            <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
           </div>
         )}
 
