@@ -5,7 +5,7 @@ const checkRole   = require('../middleware/role');
 const audit       = require('../middleware/audit');
 const ctrl        = require('../controllers/presupuesto.controller');
 
-const onlyAdmins = checkRole(['SUPER_ADMIN', 'ADMIN']);
+const onlyAdmins = checkRole(['SUPER_ADMIN', 'ADMIN', 'ASISTENTE']);
 
 // Resumen general del año — cualquier usuario autenticado
 router.get('/resumen', verifyToken, ctrl.getResumen);
