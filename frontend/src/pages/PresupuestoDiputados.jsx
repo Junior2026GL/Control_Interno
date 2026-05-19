@@ -56,7 +56,7 @@ function estadoLiquidacion(ayuda) {
 
 export default function PresupuestoDiputados() {
   const { user: me } = useContext(AuthContext);
-  const canEdit = me?.rol === 'SUPER_ADMIN' || me?.rol === 'ADMIN';
+  const canEdit = me?.rol === 'SUPER_ADMIN' || me?.rol === 'ADMIN' || me?.rol === 'ASISTENTE';
 
   /* ── deputies list ─────────────────────────────────────── */
   const [datos, setDatos]         = useState([]);
