@@ -1340,6 +1340,130 @@ export default function PresupuestoDiputados() {
       y += CHART_TOTAL_H + 8;
     }
 
+    // ── H: Estado de liquidación de ayudas (4 tarjetas) ──────
+    const liqItems = [
+      { key: 'sin_liquidar',  label: 'SIN LIQUIDAR',  color: [107, 114, 128], monto: 0, count: 0 },
+      { key: 'en_proceso',    label: 'EN PROCESO',    color: [29,  78,  216], monto: 0, count: 0 },
+      { key: 'plazo_vencido', label: 'PLAZO VENCIDO', color: [185, 28,  28],  monto: 0, count: 0 },
+      { key: 'liquido',       label: 'LÍQUIDO',       color: [21,  128, 61],  monto: 0, count: 0 },
+    ];
+    sortedAyudas.forEach(a => {
+      const est  = estadoLiquidacion(a);
+      const item = liqItems.find(d => d.key === est);
+      if (item) { item.monto += +(a.monto || 0); item.count++; }
+    });
+
+    if (y + 7 + 17 > doc.internal.pageSize.getHeight() - BM - P - 14) { doc.addPage(); y = BM + P + 6; }
+
+    doc.setFillColor(...C_AZUL);
+    doc.rect(x0, y, CW, 7, 'F');
+    doc.setTextColor(...C_BLANCO);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    doc.text('ESTADO DE LIQUIDACIÓN DE AYUDAS', x0 + 4, y + 4.9);
+    y += 7;
+
+    const NC_L = 4; const CWL = CW / NC_L;
+    const SHH_L = 6.5; const SVH_L = 11;
+    liqItems.forEach(({ label, color, monto, count }, i) => {
+      const bx  = x0 + i * CWL;
+      // Header coloreado
+      doc.setFillColor(...color);
+      doc.rect(bx, y, CWL, SHH_L, 'F');
+      doc.setTextColor(...C_BLANCO);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5);
+      doc.text(label, bx + CWL / 2, y + 4.6, { align: 'center' });
+      // Cuerpo
+      doc.setFillColor(248, 250, 255);
+      doc.rect(bx, y + SHH_L, CWL, SVH_L, 'F');
+      doc.setDrawColor(...color); doc.setLineWidth(0.3);
+      doc.rect(bx, y, CWL, SHH_L + SVH_L);
+      // Monto
+      const amtStr = monto >= 1000000
+        ? `L ${(monto / 1000000).toFixed(2)}M`
+        : monto >= 1000
+          ? `L ${(monto / 1000).toFixed(1)}k`
+          : `L ${monto.toFixed(2)}`;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...color);
+      doc.text(amtStr, bx + CWL / 2, y + SHH_L + 5.8, { align: 'center' });
+      // Conteo
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(100, 120, 150);
+      doc.text(
+        `${count} ayuda${count !== 1 ? 's' : ''}`,
+        bx + CWL / 2, y + SHH_L + SVH_L - 1.5, { align: 'center' }
+      );
+    });
+    y += SHH_L + SVH_L + 6;
+
+    // ── F: Tabla de distribución mensual numérica ─────────
+    const activeMesesF = presupuesto.meses
+      .map((m, i) => ({ ...m, idx: i }))
+      .filter(m => m.monto_asignado > 0 || m.ejecutado > 0);
+
+    if (activeMesesF.length > 0) {
+      doc.setFillColor(...C_AZUL);
+      doc.rect(x0, y, CW, 7, 'F');
+      doc.setTextColor(...C_BLANCO);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      doc.text('DETALLE NUMÉRICO POR MES', x0 + 4, y + 4.9);
+      y += 7;
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Mes', 'Cuota Asignada', 'Ejecutado', 'Saldo', '% Avance']],
+        body: activeMesesF.map(m => {
+          const cuota = +(m.monto_asignado || 0);
+          const ejec  = +(m.ejecutado      || 0);
+          const saldo = cuota - ejec;
+          const pctR  = cuota > 0 ? Math.min(999, (ejec / cuota) * 100) : 0;
+          return [
+            MESES_LARGOS[m.idx],
+            cuota.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            ejec.toLocaleString ('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            saldo.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            `${pctR.toFixed(1)}%`,
+          ];
+        }),
+        margin:     { left: x0, right: BM + P },
+        tableWidth: CW,
+        headStyles: {
+          fillColor:   C_AZUL,
+          textColor:   C_BLANCO,
+          fontStyle:   'bold',
+          halign:      'center',
+          fontSize:    7.5,
+          cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
+        },
+        bodyStyles: {
+          fontSize:    8,
+          textColor:   C_NEGRO,
+          lineColor:   [210, 220, 235],
+          lineWidth:   0.2,
+          cellPadding: { top: 2.8, bottom: 2.8, left: 2.5, right: 2.5 },
+        },
+        alternateRowStyles: { fillColor: [244, 247, 255] },
+        columnStyles: {
+          0: { fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'center', fontStyle: 'bold' },
+        },
+        didParseCell: ({ row, cell, column }) => {
+          if (row.section !== 'body' || column.index !== 4) return;
+          const v = parseFloat(cell.raw);
+          cell.styles.textColor = v >= 100 ? [185, 28, 28]
+            : v >= 80  ? [21, 128, 61]
+            : v > 0    ? [161, 98,  7]
+            : [107, 114, 128];
+        },
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    }
+
+    // ── SALTO A PÁGINA 2 — Detalle de ayudas ──────────────
+    doc.addPage();
+    y = BM + P + 6;
+
     // ── Banner detalle ─────────────────────────────────────
     doc.setFillColor(...C_AZUL);
     doc.rect(x0, y, CW, 7, 'F');
