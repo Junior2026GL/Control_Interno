@@ -92,6 +92,7 @@ export default function PresupuestoDiputados() {
   const [formErr, setFormErr]     = useState('');
   const [saving, setSaving]       = useState(false);
   const [confirm, setConfirm]     = useState(null); // ayuda to delete
+  const [montoFocused, setMontoFocused] = useState(false);
 
   /* ── liquidar modal ─────────────────────────────────────── */
   const [liqModal,  setLiqModal]  = useState(null);
@@ -1663,12 +1664,23 @@ export default function PresupuestoDiputados() {
                   <div className="ps-form-group">
                     <label>Monto Anual (L) *</label>
                     <input
-                      type="number"
-                      min="1"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
+                      className="ps-monto-grande"
                       placeholder="0.00"
-                      value={presForm.monto_asignado}
-                      onChange={e => setPresForm({ ...presForm, monto_asignado: e.target.value })}
+                      value={
+                        montoFocused
+                          ? presForm.monto_asignado
+                          : presForm.monto_asignado
+                            ? Number(presForm.monto_asignado).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            : ''
+                      }
+                      onFocus={() => setMontoFocused(true)}
+                      onBlur={() => setMontoFocused(false)}
+                      onChange={e => {
+                        const raw = e.target.value.replace(/[^0-9.]/g, '');
+                        setPresForm({ ...presForm, monto_asignado: raw });
+                      }}
                       required
                       autoFocus
                     />

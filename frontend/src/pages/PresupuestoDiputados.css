@@ -955,6 +955,15 @@
   font-weight: 500;
 }
 
+.ps-monto-grande {
+  font-size: 1.55rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  color: #1e40af !important;
+  text-align: right;
+}
+
+
 .ps-form-error {
   background: #fff1f2;
   color: #e11d48;
