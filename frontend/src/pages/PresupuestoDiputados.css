@@ -1335,3 +1335,127 @@
   height: 12px;
   border-radius: 3px;
 }
+
+/* ── Horizontal progress bar chart ─────────────────────────── */
+.ps-progbars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+.ps-pb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ps-pb-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4a5568;
+  min-width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.ps-pb-track {
+  flex: 1;
+  height: 14px;
+  background: #e9eef8;
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+}
+.ps-pb-fill {
+  height: 100%;
+  background: #ea580c;
+  border-radius: 7px;
+  transition: width .4s ease;
+  min-width: 0;
+}
+.ps-pb-fill--over {
+  background: #be123c;
+}
+.ps-pb-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  min-width: 130px;
+  flex-shrink: 0;
+}
+.ps-pb-cuota {
+  font-size: 11px;
+  color: #274C8D;
+  font-weight: 600;
+}
+.ps-pb-exec {
+  font-size: 11px;
+  color: #ea580c;
+  font-weight: 700;
+}
+.ps-pb-exec.over { color: #be123c; }
+.ps-pb-pct {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #22c55e;
+  background: #f0fdf4;
+  border-radius: 5px;
+  padding: 0 5px;
+  line-height: 1.5;
+}
+.ps-pb-pct.warn { color: #92400e; background: #fffbeb; }
+.ps-pb-pct.over { color: #991b1b; background: #fff1f2; }
+
+/* ── Export dropdown ─────────────────────────────────────── */
+.ps-export-wrap {
+  position: relative;
+  display: inline-block;
+}
+.ps-export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 200;
+  background: #fff;
+  border: 1.5px solid #d1daf2;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(39, 76, 141, .16);
+  min-width: 200px;
+  overflow: hidden;
+  animation: psMenuIn .15s ease;
+}
+@keyframes psMenuIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ps-export-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  transition: background .15s;
+}
+.ps-export-menu-item:hover { background: #eef2ff; color: #274C8D; }
+.ps-export-menu-item--mes {
+  font-size: 12.5px;
+  padding-left: 28px;
+  color: #374151;
+}
+.ps-export-menu-item--mes:hover { background: #f0f4ff; color: #274C8D; }
+.ps-export-menu-sep {
+  padding: 7px 16px 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  background: #f8faff;
+  border-top: 1px solid #e8edf8;
+  border-bottom: 1px solid #e8edf8;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}

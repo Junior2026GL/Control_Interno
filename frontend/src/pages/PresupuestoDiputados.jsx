@@ -74,7 +74,8 @@ export default function PresupuestoDiputados() {
   const [dipSearch, setDipSearch]     = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedDip, setSelectedDip] = useState(null);
-  const searchRef = useRef(null);
+  const searchRef    = useRef(null);
+  const exportMenuRef = useRef(null);
 
   /* ── year ──────────────────────────────────────────────── */
   const [anio, setAnio] = useState(CURRENT_YEAR);
@@ -113,6 +114,7 @@ export default function PresupuestoDiputados() {
   /* ── ui ────────────────────────────────────────────────── */
   const [toast, setToast]             = useState(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -127,11 +129,13 @@ export default function PresupuestoDiputados() {
       .finally(() => setLoadingDips(false));
   }, []);
 
-  /* ── close dropdown on outside click ───────────────────── */
+  /* ── close dropdowns on outside click ──────────────────── */
   useEffect(() => {
     const handler = e => {
       if (searchRef.current && !searchRef.current.contains(e.target))
         setShowDropdown(false);
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target))
+        setExportMenuOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -541,6 +545,443 @@ export default function PresupuestoDiputados() {
     } finally {
       setLiqSaving(false);
     }
+  };
+
+  /* ── PDF export ─────────────────────────────────────────── */
+
+  /* ─── shared PDF helpers ──────────────────────────────────
+   *  Returns { doc, x0, CW, BM, P, fechaGen, horaGen, generadoPor }
+   *  and draws the full header (logo + institution + info panel
+   *  + title bar + diputado rows).
+   *  Caller must pass `titleText` for the dark-blue title bar.
+   * ─────────────────────────────────────────────────────── */
+  const buildPDFBase = async (titleText) => {
+    const C_AZUL_OSC = [22,  51, 110];
+    const C_AZUL     = [39,  76, 141];
+    const C_GRIS     = [235, 242, 255];
+    const C_NEGRO    = [25,  25,  25];
+    const C_BLANCO   = [255, 255, 255];
+
+    const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+    const W   = doc.internal.pageSize.getWidth();
+    const BM  = 5;
+    const P   = 5;
+    const x0  = BM + P;
+    const CW  = W - 2 * (BM + P);
+    let   y   = BM + P;
+
+    // Logo
+    const logoData = await new Promise(resolve => {
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve(c.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(null);
+      img.src = '/logo-congreso.png.png';
+    });
+
+    const LOGO_W = 50;
+    const INFO_W = 62;
+    const CENT_W = CW - LOGO_W - INFO_W;
+    const HDR_H  = 42;
+
+    doc.setFillColor(...C_BLANCO);
+    doc.setDrawColor(...C_AZUL);
+    doc.setLineWidth(0.5);
+    doc.rect(x0, y, CW, HDR_H, 'FD');
+
+    if (logoData) {
+      const lSize = HDR_H - 6;
+      doc.addImage(logoData, 'PNG', x0 + (LOGO_W - lSize) / 2, y + 3, lSize, lSize);
+    }
+
+    doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
+    doc.line(x0 + LOGO_W, y + 4, x0 + LOGO_W, y + HDR_H - 4);
+
+    const instCX = x0 + LOGO_W + CENT_W / 2;
+    doc.setTextColor(...C_AZUL);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+    doc.text('REPÚBLICA DE HONDURAS', instCX, y + 11, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text('CONGRESO NACIONAL', instCX, y + 18, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+    doc.text('PAGADURÍA ESPECIAL', instCX, y + 28, { align: 'center' });
+
+    doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
+    doc.line(x0 + LOGO_W + CENT_W, y + 4, x0 + LOGO_W + CENT_W, y + HDR_H - 4);
+
+    const infoX   = x0 + LOGO_W + CENT_W;
+    const infoMid = infoX + INFO_W / 2;
+    const fechaGen = new Date().toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const horaGen  = new Date().toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const generadoPor = (me?.nombre || 'Sistema').toUpperCase();
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(100, 120, 160);
+    doc.text('AÑO', infoMid, y + 7, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C_AZUL);
+    doc.text(String(anio), infoMid, y + 14, { align: 'center' });
+    doc.setDrawColor(210, 220, 235); doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 16, infoX + INFO_W - 3, y + 16);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(100, 120, 160);
+    doc.text('GENERADO', infoX + 5, y + 21);
+    doc.text('HORA', infoX + INFO_W / 2 + 2, y + 21);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...C_NEGRO);
+    doc.text(fechaGen, infoX + 5, y + 26.5);
+    doc.text(horaGen,  infoX + INFO_W / 2 + 2, y + 26.5);
+    doc.setDrawColor(210, 220, 235); doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 29, infoX + INFO_W - 3, y + 29);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(100, 120, 160);
+    doc.text('GENERADO POR', infoMid, y + 33.5, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...C_AZUL);
+    doc.text(generadoPor, infoMid, y + 39, { align: 'center' });
+    y += HDR_H;
+
+    // Title bar
+    const TITLE_H  = 9;
+    const BADGE_W  = 24;
+    doc.setFillColor(...C_AZUL);
+    doc.rect(x0, y, CW, TITLE_H, 'F');
+    doc.setTextColor(...C_BLANCO);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+    doc.text(titleText, x0 + 4, y + 6.2);
+    doc.setFillColor(...C_BLANCO);
+    doc.rect(x0 + CW - BADGE_W - 2, y + 1, BADGE_W, TITLE_H - 2, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(...C_AZUL_OSC);
+    doc.text('Año', x0 + CW - BADGE_W / 2 - 2, y + 3.8, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+    doc.text(String(anio), x0 + CW - BADGE_W / 2 - 2, y + 7.5, { align: 'center' });
+    y += TITLE_H;
+
+    // Diputado rows
+    const LBL_W = 40;
+    const ROW_H = 6.2;
+    [
+      ['DIPUTADO:',     selectedDip.nombre.toUpperCase()],
+      ['DEPARTAMENTO:', selectedDip.departamento || '—'],
+      ['TIPO:',         selectedDip.tipo === 'PROPIETARIO' ? 'PROPIETARIO' : 'SUPLENTE'],
+      ['PARTIDO:',      (selectedDip.partido || '—').toUpperCase()],
+      ['IDENTIDAD:',    selectedDip.identidad || '—'],
+    ].forEach(([lbl, val]) => {
+      doc.setFillColor(...C_GRIS);
+      doc.rect(x0, y, LBL_W, ROW_H, 'F');
+      doc.setDrawColor(...C_AZUL); doc.setLineWidth(0.3);
+      doc.rect(x0, y, LBL_W, ROW_H);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...C_AZUL);
+      doc.text(lbl, x0 + 2.5, y + ROW_H * 0.7);
+      doc.setDrawColor(...C_AZUL);
+      doc.rect(x0 + LBL_W, y, CW - LBL_W, ROW_H);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...C_NEGRO);
+      const shown = doc.splitTextToSize(val, CW - LBL_W - 4)[0] || '';
+      doc.text(shown, x0 + LBL_W + 3, y + ROW_H * 0.7);
+      y += ROW_H;
+    });
+    y += 4;
+
+    return { doc, x0, CW, BM, P, y, fechaGen, horaGen,
+             C_AZUL_OSC, C_AZUL, C_GRIS, C_NEGRO, C_BLANCO };
+  };
+
+  /* ─── addPageFooters: draws border + footer on every page ─ */
+  const addPageFooters = (doc, x0, CW, BM, fechaGen, horaGen, C_AZUL, C_BLANCO) => {
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      const PH = doc.internal.pageSize.getHeight();
+      doc.setDrawColor(...C_AZUL); doc.setLineWidth(1.2);
+      doc.rect(x0 - 4, 5, CW + 8, PH - 10, 'S');
+      const FH = 9;
+      const FY = PH - 5 - FH;
+      doc.setFillColor(...C_AZUL);
+      doc.rect(x0 - 4, FY, CW + 8, FH, 'F');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...C_BLANCO);
+      doc.text('Congreso Nacional - Pagaduría Especial', x0 - 1, FY + 5.8);
+      doc.text('Página ' + p + ' de ' + pageCount, x0 + CW / 2, FY + 5.8, { align: 'center' });
+      doc.text('Generado: ' + fechaGen + '  ' + horaGen, x0 + CW + 1, FY + 5.8, { align: 'right' });
+    }
+  };
+
+  /* ─── exportPDFMensual: monthly report ─────────────────── */
+  const exportPDFMensual = async (mesNum) => {
+    const mesDatos  = presupuesto.meses.find(m => m.mes === mesNum) || presupuesto.meses[mesNum - 1] || {};
+    const cuotaMes  = +(mesDatos.monto_asignado || 0);
+    const ejecMes   = +(mesDatos.ejecutado       || 0);
+    const saldoMes  = cuotaMes - ejecMes;
+    const pctMes    = cuotaMes > 0 ? Math.min(100, (ejecMes / cuotaMes) * 100) : 0;
+    const mesNombre = MESES_LARGOS[mesNum - 1];
+    const mesStr    = String(mesNum).padStart(2, '0');
+
+    // Only ayudas whose fecha month matches
+    const ayudasMes = sortedAyudas.filter(a => {
+      const s = typeof a.fecha === 'string' ? a.fecha : String(a.fecha);
+      return s.slice(5, 7) === mesStr;
+    });
+
+    const base = await buildPDFBase(
+      `REPORTE DE EJECUCIÓN MENSUAL — ${mesNombre.toUpperCase()} ${anio}`
+    );
+    const { doc, x0, CW, BM, P, fechaGen, horaGen,
+            C_AZUL_OSC, C_AZUL, C_GRIS, C_NEGRO, C_BLANCO } = base;
+    let y = base.y;
+
+    // ── 3-col monthly summary ─────────────────────────────
+    const NC3   = 4;
+    const CWC3  = CW / NC3;
+    const SHH3  = 6.5;
+    const SVH3  = 10;
+    [
+      ['CUOTA DEL MES',  formatHNL(cuotaMes)],
+      ['EJECUTADO',      formatHNL(ejecMes)],
+      ['SALDO',          formatHNL(saldoMes)],
+      ['% AVANCE',       `${pctMes.toFixed(1)}%`],
+    ].forEach(([lbl, val], i) => {
+      const bx  = x0 + i * CWC3;
+      const isSaldo = i === 2;
+      const isPct   = i === 3;
+      const accentFill = isSaldo && saldoMes < 0
+        ? [185, 28, 28]
+        : isPct && pctMes >= 100
+          ? [185, 28, 28]
+          : isPct && pctMes >= 80
+            ? [161, 98, 7]
+            : C_AZUL;
+      doc.setFillColor(...accentFill);
+      doc.rect(bx, y, CWC3, SHH3, 'F');
+      doc.setTextColor(...C_BLANCO);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+      doc.text(lbl, bx + CWC3 / 2, y + 4.6, { align: 'center' });
+      doc.setFillColor(...C_GRIS);
+      doc.rect(bx, y + SHH3, CWC3, SVH3, 'F');
+      doc.setDrawColor(...C_AZUL); doc.setLineWidth(0.3);
+      doc.rect(bx, y, CWC3, SHH3 + SVH3);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...C_AZUL_OSC);
+      doc.text(val, bx + CWC3 / 2, y + SHH3 + SVH3 * 0.68, { align: 'center' });
+    });
+    y += SHH3 + SVH3 + 4;
+
+    // ── Progress bar visual ───────────────────────────────
+    if (cuotaMes > 0) {
+      const PB_H     = 8;
+      const PB_Y     = y;
+      const fillPct  = pctMes / 100;
+      const isOver   = ejecMes > cuotaMes;
+      // track
+      doc.setFillColor(230, 236, 250);
+      doc.setDrawColor(...C_AZUL); doc.setLineWidth(0.3);
+      doc.roundedRect(x0, PB_Y, CW, PB_H, 2, 2, 'FD');
+      // fill
+      const fillW = Math.min(CW, CW * fillPct);
+      doc.setFillColor(isOver ? 185 : 39, isOver ? 28 : 76, isOver ? 28 : 141);
+      doc.setDrawColor(0, 0, 0, 0);
+      doc.roundedRect(x0, PB_Y, fillW, PB_H, 2, 2, 'F');
+      // label inside bar
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...C_BLANCO);
+      if (fillW > 12) {
+        doc.text(`${pctMes.toFixed(0)}%`, x0 + fillW / 2, PB_Y + PB_H * 0.67, { align: 'center' });
+      }
+      y += PB_H + 8;
+    }
+
+    // ── Annual context: mini table 12 months ─────────────
+    doc.setFillColor(...C_AZUL);
+    doc.rect(x0, y, CW, 7, 'F');
+    doc.setTextColor(...C_BLANCO);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    doc.text('CONTEXTO ANUAL — DISTRIBUCIÓN MENSUAL', x0 + 4, y + 4.9);
+    y += 7;
+
+    const ctxActiveMeses = (presupuesto.meses || [])
+      .map((m, i) => ({ ...m, idx: i, mesNum: i + 1 }))
+      .filter(m => m.monto_asignado > 0 || m.ejecutado > 0);
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Mes', 'Cuota Asignada', 'Ejecutado', 'Saldo', '% Avance']],
+      body: ctxActiveMeses.map(m => {
+        const cuota = +(m.monto_asignado || 0);
+        const ejec  = +(m.ejecutado       || 0);
+        const sal   = cuota - ejec;
+        const pctR  = cuota > 0 ? Math.min(100, (ejec / cuota) * 100) : 0;
+        return [
+          MESES_LARGOS[m.idx],
+          cuota.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          ejec.toLocaleString ('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          sal.toLocaleString  ('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          `${pctR.toFixed(1)}%`,
+        ];
+      }),
+      margin: { left: x0, right: BM + P },
+      tableWidth: CW,
+      headStyles: {
+        fillColor: C_AZUL, textColor: C_BLANCO,
+        fontStyle: 'bold', halign: 'center', fontSize: 7.5,
+        cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
+      },
+      bodyStyles: {
+        fontSize: 8, textColor: C_NEGRO,
+        lineColor: [210, 220, 235], lineWidth: 0.2,
+        cellPadding: { top: 2.2, bottom: 2.2, left: 2.5, right: 2.5 },
+      },
+      alternateRowStyles: { fillColor: [244, 247, 255] },
+      columnStyles: {
+        0: { fontStyle: 'bold' },
+        1: { halign: 'right' },
+        2: { halign: 'right' },
+        3: { halign: 'right' },
+        4: { halign: 'center', fontStyle: 'bold' },
+      },
+      willDrawCell: ({ row, column, cell }) => {
+        if (row.section === 'body' && column.index === 0) {
+          const rowMesNum = ctxActiveMeses[row.index]?.mesNum;
+          if (rowMesNum === mesNum) {
+            cell.styles.fillColor  = [39, 76, 141];
+            cell.styles.textColor  = [255, 255, 255];
+          }
+        }
+      },
+      didParseCell: ({ row, cell }) => {
+        if (row.section !== 'body') return;
+        const rowMesNum = ctxActiveMeses[row.index]?.mesNum;
+        if (rowMesNum === mesNum) {
+          cell.styles.fillColor  = [39, 76, 141];
+          cell.styles.textColor  = [255, 255, 255];
+          cell.styles.fontStyle  = 'bold';
+        }
+      },
+    });
+    y = doc.lastAutoTable.finalY + 8;
+
+    // ── Ayudas del mes ────────────────────────────────────
+    doc.setFillColor(...C_AZUL);
+    doc.rect(x0, y, CW, 7, 'F');
+    doc.setTextColor(...C_BLANCO);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    doc.text(`AYUDAS SOCIALES — ${mesNombre.toUpperCase()} ${anio}`, x0 + 4, y + 4.9);
+    y += 7;
+
+    if (ayudasMes.length === 0) {
+      doc.setFillColor(248, 250, 255);
+      doc.rect(x0, y, CW, 14, 'F');
+      doc.setDrawColor(220, 228, 242); doc.setLineWidth(0.3);
+      doc.rect(x0, y, CW, 14);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(120, 140, 180);
+      doc.text(`No se registraron ayudas en ${mesNombre} ${anio}.`, x0 + CW / 2, y + 9, { align: 'center' });
+      y += 14;
+    } else {
+      const fmtLiq2 = ts => {
+        const d   = new Date(ts);
+        const pad = n => n.toString().padStart(2, '0');
+        return {
+          fecha: `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`,
+          hora:  d.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        };
+      };
+      const liqMap2 = new Map();
+      const W0m = 6, W1m = 20, W3m = 28, W4m = 30, W5m = 25, W6m = 28;
+      const W2m = CW - W0m - W1m - W3m - W4m - W5m - W6m;
+
+      autoTable(doc, {
+        startY: y,
+        head: [['#', 'FECHA', 'CONCEPTO / OBSERVACIONES', 'BENEFICIARIO', 'ESTADO', 'REGISTRADO POR', 'MONTO (L)']],
+        body: ayudasMes.map((a, idx) => {
+          const est       = estadoLiquidacion(a);
+          const estadoLbl = LIQUIDACION_META[est]?.label || '—';
+          if (a.fecha_liquidacion && est === 'liquido') liqMap2.set(idx, fmtLiq2(a.fecha_liquidacion));
+          return [
+            String(idx + 1),
+            formatFecha(a.fecha),
+            a.concepto + (a.observaciones ? `\n${a.observaciones}` : ''),
+            a.beneficiario || '—',
+            estadoLbl,
+            a.creado_por_nombre || '—',
+            (+(a.monto || 0)).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          ];
+        }),
+        margin: { left: x0, right: BM + P },
+        tableWidth: CW,
+        headStyles: {
+          fillColor: C_AZUL, textColor: C_BLANCO, fontStyle: 'bold',
+          halign: 'center', fontSize: 7.5,
+          cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+        },
+        bodyStyles: {
+          fontSize: 7.8, textColor: C_NEGRO,
+          lineColor: [210, 220, 235], lineWidth: 0.2,
+          cellPadding: { top: 2.8, bottom: 2.8, left: 2.5, right: 2.5 },
+          minCellHeight: 16,
+        },
+        alternateRowStyles: { fillColor: [244, 247, 255] },
+        columnStyles: {
+          0: { cellWidth: W0m, halign: 'center', fontStyle: 'bold' },
+          1: { cellWidth: W1m, halign: 'center' },
+          2: { cellWidth: W2m },
+          3: { cellWidth: W3m },
+          4: { cellWidth: W4m, halign: 'center', fontStyle: 'bold' },
+          5: { cellWidth: W5m, fontSize: 7 },
+          6: { cellWidth: W6m, halign: 'right', fontStyle: 'bold', textColor: C_AZUL_OSC },
+        },
+        didParseCell: ({ row, cell, column }) => {
+          if (row.section !== 'body') return;
+          if (column.index === 4) {
+            const label = cell.raw?.toString() || '';
+            if      (label === 'Líquido')      cell.styles.textColor = [21, 128, 61];
+            else if (label === 'En proceso')    cell.styles.textColor = [29,  78, 216];
+            else if (label === 'Plazo vencido') cell.styles.textColor = [185, 28,  28];
+            if (liqMap2.has(row.index)) cell.text = [];
+          }
+          if (column.index === 6) cell.text = ['L ' + cell.text[0]];
+        },
+        didDrawCell: ({ row, cell, column, doc: d }) => {
+          if (row.section !== 'body' || column.index !== 4) return;
+          const info = liqMap2.get(row.index);
+          if (!info) return;
+          const bg = row.index % 2 === 0 ? [244, 247, 255] : [255, 255, 255];
+          d.setFillColor(...bg); d.rect(cell.x + 0.15, cell.y + 0.15, cell.width - 0.3, cell.height - 0.3, 'F');
+          const cx  = cell.x + cell.width / 2;
+          const mid = cell.y + cell.height / 2;
+          d.setFontSize(7.8); d.setFont('helvetica', 'bold'); d.setTextColor(21, 128, 61);
+          d.text('Líquido', cx, mid - 3.5, { align: 'center' });
+          d.setFontSize(7.5); d.setFont('helvetica', 'normal'); d.setTextColor(...C_NEGRO);
+          d.text(info.fecha, cx, mid + 0.8, { align: 'center' });
+          d.text(info.hora,  cx, mid + 4.8, { align: 'center' });
+        },
+      });
+      y = doc.lastAutoTable.finalY + 6;
+
+      // Total row
+      const totalMes     = ayudasMes.reduce((s, a) => s + +(a.monto || 0), 0);
+      const TOTAL_ROW_H  = 12;
+      if (y + TOTAL_ROW_H + 6 > doc.internal.pageSize.getHeight() - BM - P) {
+        doc.addPage(); y = BM + P + 6;
+      }
+      const LBL_TOT_W = 50;
+      const LPS_W     = 18;
+      const VAL_TOT_W = CW - LBL_TOT_W;
+      doc.setFillColor(...C_AZUL);
+      doc.rect(x0, y, LBL_TOT_W, TOTAL_ROW_H, 'F');
+      doc.setDrawColor(...C_AZUL); doc.setLineWidth(0.4);
+      doc.rect(x0, y, LBL_TOT_W, TOTAL_ROW_H);
+      doc.setTextColor(...C_BLANCO); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      doc.text('TOTAL EJECUTADO MES:', x0 + LBL_TOT_W / 2, y + TOTAL_ROW_H * 0.67, { align: 'center' });
+      doc.setFillColor(...C_AZUL);
+      doc.rect(x0 + LBL_TOT_W, y, LPS_W, TOTAL_ROW_H, 'F');
+      doc.rect(x0 + LBL_TOT_W, y, LPS_W, TOTAL_ROW_H);
+      doc.setTextColor(...C_BLANCO); doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.text('L', x0 + LBL_TOT_W + LPS_W / 2, y + TOTAL_ROW_H * 0.67, { align: 'center' });
+      doc.setFillColor(252, 253, 255);
+      doc.rect(x0 + LBL_TOT_W + LPS_W, y, VAL_TOT_W - LPS_W, TOTAL_ROW_H, 'F');
+      doc.rect(x0 + LBL_TOT_W + LPS_W, y, VAL_TOT_W - LPS_W, TOTAL_ROW_H);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C_AZUL_OSC);
+      doc.text(
+        totalMes.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        x0 + CW - 4, y + TOTAL_ROW_H * 0.67, { align: 'right' }
+      );
+    }
+
+    addPageFooters(doc, x0, CW, BM, fechaGen, horaGen, C_AZUL, C_BLANCO);
+    doc.save(`reporte_mensual_${mesNombre}_${anio}_${selectedDip.nombre.replace(/\s+/g, '_')}.pdf`);
   };
 
   /* ── PDF export ─────────────────────────────────────────── */
@@ -1352,8 +1793,8 @@ export default function PresupuestoDiputados() {
               </div>
             )}
 
-            {/* ── Monthly distribution chart (inline) ── */}
-            {presupuesto?.meses?.some(m => m.monto_asignado > 0) && (
+            {/* ── Monthly distribution chart (horizontal progress bars) ── */}
+            {presupuesto?.meses?.some(m => m.monto_asignado > 0) && monthlyChartData?.length > 0 && (
               <div className="ps-monthly-chart-card">
                 <div className="ps-monthly-chart-header">
                   <span className="ps-monthly-chart-title">Distribución mensual {anio}</span>
@@ -1368,37 +1809,36 @@ export default function PresupuestoDiputados() {
                     </span>
                   </div>
                 </div>
-                <ResponsiveContainer width="100%" height={160}>
-                  <BarChart
-                    data={monthlyChartData}
-                    margin={{ top: 6, right: 12, left: 0, bottom: 0 }}
-                    barCategoryGap="20%"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f4fa" vertical={false} />
-                    <XAxis
-                      dataKey="mes"
-                      tick={{ fontSize: 11, fill: '#8a99aa' }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
-                      tick={{ fontSize: 10, fill: '#8a99aa' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={40}
-                    />
-                    <Tooltip
-                      formatter={(v, name) => [formatHNL(v), name === 'cuota' ? 'Cuota asignada' : 'Ejecutado']}
-                      labelFormatter={(_, payload) =>
-                        payload?.length ? `${payload[0].payload.mesLargo} ${anio}` : ''
-                      }
-                      contentStyle={{ borderRadius: 10, border: '1px solid #e0e7ff', fontSize: 12 }}
-                    />
-                    <Bar dataKey="cuota"     fill="#274C8D" radius={[4, 4, 0, 0]} name="cuota" />
-                    <Bar dataKey="ejecutado" fill="#ea580c" radius={[4, 4, 0, 0]} name="ejecutado" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="ps-progbars">
+                  {monthlyChartData.map(d => {
+                    const pct    = d.cuota > 0 ? Math.min(100, (d.ejecutado / d.cuota) * 100) : 0;
+                    const isOver = d.ejecutado > d.cuota && d.cuota > 0;
+                    return (
+                      <div key={d.mes} className="ps-pb-row">
+                        <span className="ps-pb-label">{d.mes}</span>
+                        <div className="ps-pb-track">
+                          <div
+                            className={`ps-pb-fill${isOver ? ' ps-pb-fill--over' : ''}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <div className="ps-pb-right">
+                          <span className="ps-pb-cuota">{formatHNL(d.cuota)}</span>
+                          {d.ejecutado > 0 && (
+                            <span className={`ps-pb-exec${isOver ? ' over' : ''}`}>
+                              {formatHNL(d.ejecutado)}
+                            </span>
+                          )}
+                          {d.cuota > 0 && (
+                            <span className={`ps-pb-pct${isOver ? ' over' : pct >= 80 ? ' warn' : ''}`}>
+                              {pct.toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -1409,9 +1849,38 @@ export default function PresupuestoDiputados() {
                   <h3 className="ps-section-title">Ayudas Sociales Registradas</h3>
                   <div className="ps-section-actions">
                     {ayudas.length > 0 && (
-                      <button className="ps-export-btn" onClick={exportPDF}>
-                        <FiDownload size={14} /> Exportar PDF
-                      </button>
+                      <div className="ps-export-wrap" ref={exportMenuRef}>
+                        <button
+                          className="ps-export-btn"
+                          onClick={() => setExportMenuOpen(v => !v)}
+                        >
+                          <FiDownload size={14} /> Exportar PDF
+                        </button>
+                        {exportMenuOpen && (
+                          <div className="ps-export-menu">
+                            <button
+                              className="ps-export-menu-item"
+                              onClick={() => { exportPDF(); setExportMenuOpen(false); }}
+                            >
+                              📄 Reporte Anual
+                            </button>
+                            {monthlyChartData?.length > 0 && (
+                              <>
+                                <div className="ps-export-menu-sep">📅 Reporte por Mes</div>
+                                {monthlyChartData.map(d => (
+                                  <button
+                                    key={d.mesNum}
+                                    className="ps-export-menu-item ps-export-menu-item--mes"
+                                    onClick={() => { exportPDFMensual(d.mesNum); setExportMenuOpen(false); }}
+                                  >
+                                    {d.mesLargo}
+                                  </button>
+                                ))}
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     )}
                     {canEdit && (
                       <button
