@@ -206,12 +206,14 @@ export default function PresupuestoDiputados() {
   /* ── monthly quota+execution chart data ─────────────────── */
   const monthlyChartData = useMemo(() => {
     if (!presupuesto?.meses?.length) return null;
-    return presupuesto.meses.map((m, i) => ({
-      mes:      MESES_CORTOS[i],
-      mesLargo: MESES_LARGOS[i],
-      cuota:    m.monto_asignado,
-      ejecutado: m.ejecutado,
-    }));
+    return presupuesto.meses
+      .map((m, i) => ({
+        mes:      MESES_CORTOS[i],
+        mesLargo: MESES_LARGOS[i],
+        cuota:    m.monto_asignado,
+        ejecutado: m.ejecutado,
+      }))
+      .filter(d => d.cuota > 0 || d.ejecutado > 0);
   }, [presupuesto]);
 
   /* ── budget form handlers ───────────────────────────────── */
@@ -762,26 +764,27 @@ export default function PresupuestoDiputados() {
       const BAR_SLOT = chartW / 12;
       const BAR_W    = BAR_SLOT * 0.27;
       const BAR_GAP  = 1.0;
-      presupuesto.meses.forEach((m, i) => {
-        const midX   = chartX + i * BAR_SLOT + BAR_SLOT / 2;
+      const activeMeses = presupuesto.meses
+        .map((m, i) => ({ ...m, idx: i }))
+        .filter(m => m.monto_asignado > 0 || m.ejecutado > 0);
+      const activeSlot = chartW / Math.max(activeMeses.length, 1);
+      const activeBarW = activeSlot * 0.28;
+      activeMeses.forEach((m, pos) => {
+        const midX   = chartX + pos * activeSlot + activeSlot / 2;
         const cuotaH = niceMax > 0 ? (m.monto_asignado / niceMax) * chartH : 0;
         const ejecH  = niceMax > 0 ? (m.ejecutado      / niceMax) * chartH : 0;
         if (cuotaH > 0.3) {
           doc.setFillColor(...C_AZUL);
-          doc.rect(midX - BAR_W - BAR_GAP / 2, chartY + chartH - cuotaH, BAR_W, cuotaH, 'F');
+          doc.rect(midX - activeBarW - BAR_GAP / 2, chartY + chartH - cuotaH, activeBarW, cuotaH, 'F');
         }
         if (ejecH > 0.3) {
           doc.setFillColor(234, 88, 12);
-          doc.rect(midX + BAR_GAP / 2, chartY + chartH - ejecH, BAR_W, ejecH, 'F');
-        }
-        if (cuotaH <= 0.3 && ejecH <= 0.3) {
-          doc.setFillColor(210, 220, 235);
-          doc.rect(midX - BAR_W / 2, chartY + chartH - 1, BAR_W, 1, 'F');
+          doc.rect(midX + BAR_GAP / 2, chartY + chartH - ejecH, activeBarW, ejecH, 'F');
         }
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(5.8);
         doc.setTextColor(80, 100, 130);
-        doc.text(MESES_CORTOS[i], midX, chartY + chartH + 5, { align: 'center' });
+        doc.text(MESES_CORTOS[m.idx], midX, chartY + chartH + 5, { align: 'center' });
         if (cuotaH > 4) {
           const lbl = m.monto_asignado >= 1000
             ? `${(m.monto_asignado / 1000).toFixed(0)}k`
@@ -789,7 +792,7 @@ export default function PresupuestoDiputados() {
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(5);
           doc.setTextColor(...C_AZUL);
-          doc.text(lbl, midX - BAR_W / 2 - BAR_GAP / 2, chartY + chartH - cuotaH - 1, { align: 'center' });
+          doc.text(lbl, midX - activeBarW / 2 - BAR_GAP / 2, chartY + chartH - cuotaH - 1, { align: 'center' });
         }
       });
       const legendY = y + CHART_TOTAL_H - 6;
