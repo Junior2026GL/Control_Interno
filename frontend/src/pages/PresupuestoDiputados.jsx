@@ -1331,7 +1331,7 @@ export default function PresupuestoDiputados() {
       // bien ejecutado
       doc.setFillColor(21, 128, 61);
       doc.rect(legendCX + 32, legendY - 3.5, 7, 3.5, 'F');
-      doc.text('≥ 80%', legendCX + 41, legendY);
+      doc.text('>= 80%', legendCX + 41, legendY);
       // sobrepasado
       doc.setFillColor(185, 28, 28);
       doc.rect(legendCX + 58, legendY - 3.5, 7, 3.5, 'F');
@@ -1393,72 +1393,6 @@ export default function PresupuestoDiputados() {
       );
     });
     y += SHH_L + SVH_L + 6;
-
-    // ── F: Tabla de distribución mensual numérica ─────────
-    const activeMesesF = presupuesto.meses
-      .map((m, i) => ({ ...m, idx: i }))
-      .filter(m => m.monto_asignado > 0 || m.ejecutado > 0);
-
-    if (activeMesesF.length > 0) {
-      doc.setFillColor(...C_AZUL);
-      doc.rect(x0, y, CW, 7, 'F');
-      doc.setTextColor(...C_BLANCO);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-      doc.text('DETALLE NUMÉRICO POR MES', x0 + 4, y + 4.9);
-      y += 7;
-
-      autoTable(doc, {
-        startY: y,
-        head: [['Mes', 'Cuota Asignada', 'Ejecutado', 'Saldo', '% Avance']],
-        body: activeMesesF.map(m => {
-          const cuota = +(m.monto_asignado || 0);
-          const ejec  = +(m.ejecutado      || 0);
-          const saldo = cuota - ejec;
-          const pctR  = cuota > 0 ? Math.min(999, (ejec / cuota) * 100) : 0;
-          return [
-            MESES_LARGOS[m.idx],
-            cuota.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-            ejec.toLocaleString ('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-            saldo.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-            `${pctR.toFixed(1)}%`,
-          ];
-        }),
-        margin:     { left: x0, right: BM + P },
-        tableWidth: CW,
-        headStyles: {
-          fillColor:   C_AZUL,
-          textColor:   C_BLANCO,
-          fontStyle:   'bold',
-          halign:      'center',
-          fontSize:    7.5,
-          cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
-        },
-        bodyStyles: {
-          fontSize:    8,
-          textColor:   C_NEGRO,
-          lineColor:   [210, 220, 235],
-          lineWidth:   0.2,
-          cellPadding: { top: 2.8, bottom: 2.8, left: 2.5, right: 2.5 },
-        },
-        alternateRowStyles: { fillColor: [244, 247, 255] },
-        columnStyles: {
-          0: { fontStyle: 'bold' },
-          1: { halign: 'right' },
-          2: { halign: 'right' },
-          3: { halign: 'right' },
-          4: { halign: 'center', fontStyle: 'bold' },
-        },
-        didParseCell: ({ row, cell, column }) => {
-          if (row.section !== 'body' || column.index !== 4) return;
-          const v = parseFloat(cell.raw);
-          cell.styles.textColor = v >= 100 ? [185, 28, 28]
-            : v >= 80  ? [21, 128, 61]
-            : v > 0    ? [161, 98,  7]
-            : [107, 114, 128];
-        },
-      });
-      y = doc.lastAutoTable.finalY + 6;
-    }
 
     // ── SALTO A PÁGINA 2 — Detalle de ayudas ──────────────
     doc.addPage();
