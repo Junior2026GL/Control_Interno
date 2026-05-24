@@ -222,11 +222,18 @@ export default function PresupuestoDiputados() {
   const distribuirMeses = () => {
     const total = parseFloat(presForm.monto_asignado) || 0;
     if (!total) return;
-    const base      = Math.floor((total / 12) * 100) / 100;
-    const remainder = +(total - base * 11).toFixed(2);
+    const mesInicio = presForm.mes_inicio || (new Date().getMonth() + 1);
+    const numMeses  = Math.max(1, 13 - mesInicio);          // meses de mesInicio a Diciembre
+    const base      = Math.floor((total / numMeses) * 100) / 100;
+    const remainder = +(total - base * (numMeses - 1)).toFixed(2);
     setPresForm(f => ({
       ...f,
-      meses: f.meses.map((m, i) => ({ ...m, monto_asignado: (i === 11 ? remainder : base).toString() })),
+      meses: f.meses.map((m, i) => {
+        const mesNum = i + 1;
+        if (mesNum < mesInicio) return { ...m, monto_asignado: '0' };
+        const isLast = mesNum === 12;                         // Dic siempre lleva el residuo
+        return { ...m, monto_asignado: (isLast ? remainder : base).toString() };
+      }),
     }));
   };
 
