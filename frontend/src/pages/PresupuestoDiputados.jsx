@@ -721,7 +721,7 @@ export default function PresupuestoDiputados() {
     const SHH = 6.5;   // alto encabezado columna
     const SVH = 10;    // alto valor columna
     [
-      ['ASIGNADO',    formatHNL(presupuesto.monto_asignado)],
+      ['ANUAL',       formatHNL(presupuesto.monto_asignado)],
       ['EJECUTADO',   formatHNL(presupuesto.ejecutado)],
       ['DISPONIBLE',  formatHNL(presupuesto.disponible)],
       ['% EJECUTADO', `${pct.toFixed(1)}%`],
