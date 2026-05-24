@@ -1378,11 +1378,7 @@ export default function PresupuestoDiputados() {
       doc.setDrawColor(...color); doc.setLineWidth(0.3);
       doc.rect(bx, y, CWL, SHH_L + SVH_L);
       // Monto
-      const amtStr = monto >= 1000000
-        ? `L ${(monto / 1000000).toFixed(2)}M`
-        : monto >= 1000
-          ? `L ${(monto / 1000).toFixed(1)}k`
-          : `L ${monto.toFixed(2)}`;
+      const amtStr = `L ${monto.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...color);
       doc.text(amtStr, bx + CWL / 2, y + SHH_L + 5.8, { align: 'center' });
       // Conteo
