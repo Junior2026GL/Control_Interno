@@ -206,14 +206,16 @@ export default function PresupuestoDiputados() {
   /* ── monthly quota+execution chart data ─────────────────── */
   const monthlyChartData = useMemo(() => {
     if (!presupuesto?.meses?.length) return null;
+    const mesInicio = presupuesto.mes_inicio || 1;
     return presupuesto.meses
       .map((m, i) => ({
         mes:      MESES_CORTOS[i],
         mesLargo: MESES_LARGOS[i],
         cuota:    m.monto_asignado,
         ejecutado: m.ejecutado,
+        mesNum:   i + 1,
       }))
-      .filter(d => d.cuota > 0 || d.ejecutado > 0);
+      .filter(d => d.mesNum >= mesInicio || d.ejecutado > 0);
   }, [presupuesto]);
 
   /* ── budget form handlers ───────────────────────────────── */
@@ -766,7 +768,7 @@ export default function PresupuestoDiputados() {
       const BAR_GAP  = 1.0;
       const activeMeses = presupuesto.meses
         .map((m, i) => ({ ...m, idx: i }))
-        .filter(m => m.monto_asignado > 0 || m.ejecutado > 0);
+        .filter(m => (m.idx + 1) >= (presupuesto.mes_inicio || 1) || m.ejecutado > 0);
       const activeSlot = chartW / Math.max(activeMeses.length, 1);
       const activeBarW = activeSlot * 0.28;
       activeMeses.forEach((m, pos) => {
@@ -1266,7 +1268,7 @@ export default function PresupuestoDiputados() {
 
                 <div className="ps-budget-stats">
                   <div className="ps-bstat">
-                    <span className="ps-bstat-lbl">Asignado</span>
+                    <span className="ps-bstat-lbl">Asignado anual</span>
                     <span className="ps-bstat-val ps-bstat--total">
                       {formatHNL(presupuesto.monto_asignado)}
                     </span>

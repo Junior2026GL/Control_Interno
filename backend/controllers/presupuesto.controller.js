@@ -64,6 +64,18 @@ exports.getByDiputado = async (req, res) => {
       return { mes: mesNum, monto_asignado: cuotaMonto, ejecutado: ejecutadoMes, saldo: cuotaMonto - ejecutadoMes };
     });
 
+    // Mes de inicio: para distribución automática usamos el mes de creación del presupuesto.
+    // Para personalizada/cuota usamos el primer mes con monto_asignado > 0.
+    let mes_inicio = 1;
+    const tipoDistrib = pres.tipo_distribucion || 'auto';
+    if (tipoDistrib === 'auto') {
+      const createdDate = pres.created_at instanceof Date ? pres.created_at : new Date(pres.created_at);
+      mes_inicio = createdDate.getMonth() + 1;
+    } else {
+      const firstActive = mesesRows.find(r => parseFloat(r.monto_asignado) > 0);
+      mes_inicio = firstActive ? firstActive.mes : 1;
+    }
+
     res.json({
       diputado: dipRows[0],
       presupuesto: {
@@ -71,9 +83,10 @@ exports.getByDiputado = async (req, res) => {
         diputado_id:       pres.diputado_id,
         anio:              pres.anio,
         monto_asignado:    asignado,
-        tipo_distribucion: pres.tipo_distribucion || 'auto',
+        tipo_distribucion: tipoDistrib,
         observaciones:     pres.observaciones,
         created_at:        pres.created_at,
+        mes_inicio,
         ejecutado,
         disponible,
         meses,
