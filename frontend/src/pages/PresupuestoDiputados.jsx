@@ -1187,99 +1187,156 @@ export default function PresupuestoDiputados() {
     });
     y += SHH + SVH + 4;
 
-    // ── Distribución mensual (gráfica de barras) ─────────
+    // ── Distribución mensual — gráfico overlay profesional ──
     if (presupuesto.meses && presupuesto.meses.length === 12) {
-      const CHART_TOTAL_H = 76;
+      const CHART_TOTAL_H = 92;
       if (y + 7 + CHART_TOTAL_H + 10 > doc.internal.pageSize.getHeight() - BM - P - 14) {
         doc.addPage(); y = BM + P + 6;
       }
-      // Título de sección
+
+      // Título sección
       doc.setFillColor(...C_AZUL);
       doc.rect(x0, y, CW, 7, 'F');
       doc.setTextColor(...C_BLANCO);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
       doc.text('DISTRIBUCIÓN MENSUAL', x0 + 4, y + 4.9);
       y += 7;
-      // Fondo del área de gráfica
+
+      // Fondo
       doc.setFillColor(248, 250, 255);
-      doc.rect(x0, y, CW, CHART_TOTAL_H, 'F');
-      doc.setDrawColor(220, 228, 242);
-      doc.setLineWidth(0.3);
-      doc.rect(x0, y, CW, CHART_TOTAL_H);
-      const CPAD_L = 24, CPAD_R = 6, CPAD_T = 8, CPAD_B = 20;
+      doc.setDrawColor(220, 228, 242); doc.setLineWidth(0.3);
+      doc.rect(x0, y, CW, CHART_TOTAL_H, 'FD');
+
+      const CPAD_L = 26, CPAD_R = 6, CPAD_T = 10, CPAD_B = 28;
       const chartX = x0 + CPAD_L;
       const chartY = y + CPAD_T;
       const chartW = CW - CPAD_L - CPAD_R;
       const chartH = CHART_TOTAL_H - CPAD_T - CPAD_B;
-      const allVals = presupuesto.meses.flatMap(m => [m.monto_asignado, m.ejecutado]);
+
+      // Escala
+      const activeMeses = presupuesto.meses
+        .map((m, i) => ({ ...m, idx: i }))
+        .filter(m => m.monto_asignado > 0 || m.ejecutado > 0);
+      const allVals = activeMeses.flatMap(m => [m.monto_asignado, m.ejecutado]);
       const maxVal  = Math.max(...allVals, 1);
       const mag     = Math.pow(10, Math.floor(Math.log10(maxVal)));
       const niceMax = Math.ceil(maxVal / mag) * mag;
+
+      // Grid lines + Y labels
       for (let g = 0; g <= 4; g++) {
         const gY   = chartY + chartH - (g / 4) * chartH;
         const gVal = (g / 4) * niceMax;
-        doc.setDrawColor(220, 228, 242);
-        doc.setLineWidth(0.2);
+        doc.setDrawColor(220, 228, 242); doc.setLineWidth(0.2);
         doc.line(chartX, gY, chartX + chartW, gY);
         const gLabel = gVal >= 1000000
           ? `L ${(gVal / 1000000).toFixed(1)}M`
           : gVal >= 1000
             ? `L ${(gVal / 1000).toFixed(0)}k`
             : `L ${gVal.toFixed(0)}`;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(5.5);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5);
         doc.setTextColor(140, 155, 185);
         doc.text(gLabel, chartX - 2, gY + 1.5, { align: 'right' });
       }
-      doc.setDrawColor(...C_AZUL);
-      doc.setLineWidth(0.4);
+      // Eje X
+      doc.setDrawColor(190, 205, 230); doc.setLineWidth(0.5);
       doc.line(chartX, chartY + chartH, chartX + chartW, chartY + chartH);
-      const BAR_SLOT = chartW / 12;
-      const BAR_W    = BAR_SLOT * 0.27;
-      const BAR_GAP  = 1.0;
-      const activeMeses = presupuesto.meses
-        .map((m, i) => ({ ...m, idx: i }))
-        .filter(m => m.monto_asignado > 0 || m.ejecutado > 0);
+
+      // Barras overlay
       const activeSlot = chartW / Math.max(activeMeses.length, 1);
-      const activeBarW = activeSlot * 0.28;
+      const cuotaBarW  = activeSlot * 0.64;   // ancha, fondo
+      const ejecBarW   = activeSlot * 0.44;   // angosta, superpuesta
+
       activeMeses.forEach((m, pos) => {
         const midX   = chartX + pos * activeSlot + activeSlot / 2;
         const cuotaH = niceMax > 0 ? (m.monto_asignado / niceMax) * chartH : 0;
         const ejecH  = niceMax > 0 ? (m.ejecutado      / niceMax) * chartH : 0;
+        const pctM   = m.monto_asignado > 0
+          ? Math.min(999, (m.ejecutado / m.monto_asignado) * 100) : 0;
+
+        // ── Barra cuota (fondo, azul claro) ──
         if (cuotaH > 0.3) {
-          doc.setFillColor(...C_AZUL);
-          doc.rect(midX - activeBarW - BAR_GAP / 2, chartY + chartH - cuotaH, activeBarW, cuotaH, 'F');
+          // sombra sutil
+          doc.setFillColor(190, 205, 232);
+          doc.rect(midX - cuotaBarW / 2 + 0.8, chartY + chartH - cuotaH + 0.8, cuotaBarW, cuotaH, 'F');
+          // barra principal
+          doc.setFillColor(200, 218, 248);
+          doc.rect(midX - cuotaBarW / 2, chartY + chartH - cuotaH, cuotaBarW, cuotaH, 'F');
+          // borde top
+          doc.setDrawColor(150, 175, 220); doc.setLineWidth(0.4);
+          doc.line(midX - cuotaBarW / 2, chartY + chartH - cuotaH,
+                   midX + cuotaBarW / 2, chartY + chartH - cuotaH);
+          // label cuota encima
+          const cuotaLbl = m.monto_asignado >= 1000000
+            ? `L ${(m.monto_asignado / 1000000).toFixed(1)}M`
+            : m.monto_asignado >= 1000
+              ? `L ${(m.monto_asignado / 1000).toFixed(0)}k`
+              : `L ${m.monto_asignado}`;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(4.8);
+          doc.setTextColor(100, 130, 175);
+          doc.text(cuotaLbl, midX, chartY + chartH - cuotaH - 1.5, { align: 'center' });
         }
+
+        // ── Barra ejecutado (superpuesta, color dinámico) ──
         if (ejecH > 0.3) {
-          doc.setFillColor(234, 88, 12);
-          doc.rect(midX + BAR_GAP / 2, chartY + chartH - ejecH, activeBarW, ejecH, 'F');
+          const ejecColor = pctM >= 100 ? [185, 28, 28]   // rojo: sobrepasado
+            : pctM >= 80  ? [21, 128, 61]                  // verde: bien ejecutado
+            : [234, 88, 12];                               // naranja: en progreso
+          doc.setFillColor(...ejecColor);
+          doc.rect(midX - ejecBarW / 2, chartY + chartH - ejecH, ejecBarW, ejecH, 'F');
+          // label monto dentro de la barra (si cabe)
+          if (ejecH > 9) {
+            const ejecLbl = m.ejecutado >= 1000000
+              ? `${(m.ejecutado / 1000000).toFixed(1)}M`
+              : m.ejecutado >= 1000
+                ? `${(m.ejecutado / 1000).toFixed(0)}k`
+                : `${m.ejecutado}`;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(4.8);
+            doc.setTextColor(255, 255, 255);
+            doc.text(ejecLbl, midX, chartY + chartH - ejecH / 2 + 1.5, { align: 'center' });
+          }
         }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(5.8);
-        doc.setTextColor(80, 100, 130);
-        doc.text(MESES_CORTOS[m.idx], midX, chartY + chartH + 5, { align: 'center' });
-        if (cuotaH > 4) {
-          const lbl = m.monto_asignado >= 1000
-            ? `${(m.monto_asignado / 1000).toFixed(0)}k`
-            : m.monto_asignado.toFixed(0);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(5);
-          doc.setTextColor(...C_AZUL);
-          doc.text(lbl, midX - activeBarW / 2 - BAR_GAP / 2, chartY + chartH - cuotaH - 1, { align: 'center' });
-        }
+
+        // ── Mes + % debajo del eje ──
+        const baseY = chartY + chartH;
+        // Mes
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6);
+        doc.setTextColor(55, 75, 115);
+        doc.text(MESES_CORTOS[m.idx], midX, baseY + 5.5, { align: 'center' });
+        // %
+        const pctLabel = `${pctM.toFixed(0)}%`;
+        const pctColor = pctM >= 100 ? [185, 28, 28]
+          : pctM >= 80  ? [21, 128, 61]
+          : pctM > 0    ? [180, 90, 20]
+          : [170, 180, 200];
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5);
+        doc.setTextColor(...pctColor);
+        doc.text(pctLabel, midX, baseY + 11.5, { align: 'center' });
       });
-      const legendY = y + CHART_TOTAL_H - 6;
+
+      // ── Leyenda ──
+      const legendY  = y + CHART_TOTAL_H - 7;
       const legendCX = x0 + CW / 2;
-      doc.setFillColor(...C_AZUL);
-      doc.rect(legendCX - 34, legendY - 3.5, 6, 3.5, 'F');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
+      // cuota
+      doc.setFillColor(200, 218, 248);
+      doc.setDrawColor(150, 175, 220); doc.setLineWidth(0.3);
+      doc.rect(legendCX - 42, legendY - 3.5, 7, 3.5, 'FD');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5);
       doc.setTextColor(60, 80, 110);
-      doc.text('Cuota asignada', legendCX - 26, legendY);
+      doc.text('Cuota asignada', legendCX - 33, legendY);
+      // ejecutado (en progreso)
       doc.setFillColor(234, 88, 12);
-      doc.rect(legendCX + 12, legendY - 3.5, 6, 3.5, 'F');
-      doc.text('Ejecutado', legendCX + 20, legendY);
+      doc.setDrawColor(0, 0, 0, 0);
+      doc.rect(legendCX - 2, legendY - 3.5, 7, 3.5, 'F');
+      doc.text('Ejecutado', legendCX + 7, legendY);
+      // bien ejecutado
+      doc.setFillColor(21, 128, 61);
+      doc.rect(legendCX + 32, legendY - 3.5, 7, 3.5, 'F');
+      doc.text('≥ 80%', legendCX + 41, legendY);
+      // sobrepasado
+      doc.setFillColor(185, 28, 28);
+      doc.rect(legendCX + 58, legendY - 3.5, 7, 3.5, 'F');
+      doc.text('Sobrepasado', legendCX + 67, legendY);
+
       y += CHART_TOTAL_H + 8;
     }
 
