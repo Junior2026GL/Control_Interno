@@ -30,7 +30,12 @@ function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem('token')}` };
 }
 
-const EMPTY_PRES  = { monto_asignado: '', observaciones: '' };
+const EMPTY_PRES  = {
+  monto_asignado:    '',
+  observaciones:     '',
+  tipo_distribucion: 'auto',
+  meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, monto_asignado: '' })),
+};
 const EMPTY_AYUDA = {
   fecha: new Date().toISOString().slice(0, 10),
   concepto: '', beneficiario: '', monto: '', observaciones: '',
@@ -196,18 +201,56 @@ export default function PresupuestoDiputados() {
   [ayudas]);
 
   /* ── budget form handlers ───────────────────────────────── */
+  const distribuirMeses = () => {
+    const total = parseFloat(presForm.monto_asignado) || 0;
+    if (!total) return;
+    const base      = Math.floor((total / 12) * 100) / 100;
+    const remainder = +(total - base * 11).toFixed(2);
+    setPresForm(f => ({
+      ...f,
+      meses: f.meses.map((m, i) => ({ ...m, monto_asignado: (i === 11 ? remainder : base).toString() })),
+    }));
+  };
+
+  const handleDistribChange = tipo => {
+    if (tipo === 'personalizada') {
+      const total     = parseFloat(presForm.monto_asignado) || 0;
+      const base      = total > 0 ? Math.floor((total / 12) * 100) / 100 : 0;
+      const remainder = total > 0 ? +(total - base * 11).toFixed(2) : 0;
+      setPresForm(f => ({
+        ...f,
+        tipo_distribucion: 'personalizada',
+        meses: f.meses.map((m, i) => ({
+          ...m,
+          monto_asignado: total > 0 ? (i === 11 ? remainder : base).toString() : '',
+        })),
+      }));
+    } else {
+      setPresForm(f => ({ ...f, tipo_distribucion: 'auto' }));
+    }
+  };
+
   const handleAsignarPres = async e => {
     e.preventDefault();
     setFormErr('');
     const monto = parseFloat(presForm.monto_asignado);
     if (!monto || monto <= 0) { setFormErr('El monto debe ser mayor a 0.'); return; }
+    if (presForm.tipo_distribucion === 'personalizada') {
+      const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
+      if (Math.abs(suma - monto) > 0.02) {
+        setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
+        return;
+      }
+    }
     setSaving(true);
     try {
       await api.post('/presupuesto', {
-        diputado_id:    selectedDip.id,
+        diputado_id:       selectedDip.id,
         anio,
-        monto_asignado: monto,
-        observaciones:  presForm.observaciones,
+        monto_asignado:    monto,
+        observaciones:     presForm.observaciones,
+        tipo_distribucion: presForm.tipo_distribucion,
+        meses:             presForm.tipo_distribucion === 'personalizada' ? presForm.meses : [],
       }, { headers: authHeaders() });
       showToast('Presupuesto asignado correctamente.', 'ok');
       setModal(null);
@@ -225,11 +268,20 @@ export default function PresupuestoDiputados() {
     setFormErr('');
     const monto = parseFloat(presForm.monto_asignado);
     if (!monto || monto <= 0) { setFormErr('El monto debe ser mayor a 0.'); return; }
+    if (presForm.tipo_distribucion === 'personalizada') {
+      const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
+      if (Math.abs(suma - monto) > 0.02) {
+        setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
+        return;
+      }
+    }
     setSaving(true);
     try {
       await api.put(`/presupuesto/${presupuesto.id}`, {
-        monto_asignado: monto,
-        observaciones:  presForm.observaciones,
+        monto_asignado:    monto,
+        observaciones:     presForm.observaciones,
+        tipo_distribucion: presForm.tipo_distribucion,
+        meses:             presForm.tipo_distribucion === 'personalizada' ? presForm.meses : [],
       }, { headers: authHeaders() });
       showToast('Presupuesto actualizado correctamente.', 'ok');
       setModal(null);
@@ -244,8 +296,12 @@ export default function PresupuestoDiputados() {
 
   const openEditPres = () => {
     setPresForm({
-      monto_asignado: presupuesto.monto_asignado.toString(),
-      observaciones:  presupuesto.observaciones || '',
+      monto_asignado:    presupuesto.monto_asignado.toString(),
+      observaciones:     presupuesto.observaciones || '',
+      tipo_distribucion: presupuesto.tipo_distribucion || 'auto',
+      meses: presupuesto.meses?.length === 12
+        ? presupuesto.meses.map(m => ({ mes: m.mes, monto_asignado: m.monto_asignado.toString() }))
+        : EMPTY_PRES.meses,
     });
     setFormErr('');
     setModal('editPres');
@@ -764,7 +820,88 @@ export default function PresupuestoDiputados() {
     doc.setTextColor(...C_AZUL_OSC);
     doc.text(totalStr, x0 + CW - 4, y + TOTAL_ROW_H * 0.67, { align: 'right' });
 
-    y += TOTAL_ROW_H + 14;
+    y += TOTAL_ROW_H + 8;
+
+    // ── Estado de cuenta mensual ───────────────────────────
+    if (presupuesto.meses && presupuesto.meses.length === 12) {
+      if (y + 14 > doc.internal.pageSize.getHeight() - BM - P - 12) {
+        doc.addPage(); y = BM + P + 6;
+      }
+
+      doc.setFillColor(...C_AZUL);
+      doc.rect(x0, y, CW, 7, 'F');
+      doc.setTextColor(...C_BLANCO);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text('ESTADO DE CUENTA MENSUAL', x0 + 4, y + 4.9);
+      y += 7;
+
+      const fmtL = v => v.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      let acum = 0;
+      const ecRows = presupuesto.meses.map((m, i) => {
+        acum += m.saldo;
+        const cuota = m.monto_asignado;
+        const ejec  = m.ejecutado;
+        const saldo = m.saldo;
+        return {
+          cells: [
+            MESES_LARGOS[i],
+            cuota > 0 ? fmtL(cuota) : '—',
+            ejec  > 0 ? fmtL(ejec)  : '—',
+            cuota > 0 || ejec > 0
+              ? (saldo >= 0 ? `+L ${fmtL(saldo)}` : `-L ${fmtL(Math.abs(saldo))}`)
+              : '—',
+            acum >= 0 ? `+L ${fmtL(acum)}` : `-L ${fmtL(Math.abs(acum))}`,
+          ],
+          sobreEjecucion: cuota > 0 && ejec > cuota,
+          sinActividad:   ejec === 0,
+          saldoNeg:       saldo < 0,
+          acumNeg:        acum < 0,
+        };
+      });
+
+      autoTable(doc, {
+        startY: y,
+        head: [['MES', 'CUOTA ASIGNADA (L)', 'EJECUTADO (L)', 'SALDO MES', 'SALDO ACUMULADO']],
+        body: ecRows.map(r => r.cells),
+        margin: { left: x0, right: BM + P },
+        tableWidth: CW,
+        headStyles: {
+          fillColor:   C_AZUL,
+          textColor:   C_BLANCO,
+          fontStyle:   'bold',
+          halign:      'center',
+          fontSize:    7.5,
+          cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
+        },
+        bodyStyles: {
+          fontSize:    8,
+          textColor:   C_NEGRO,
+          lineColor:   [210, 220, 235],
+          lineWidth:   0.2,
+          cellPadding: { top: 2.5, bottom: 2.5, left: 2.5, right: 2.5 },
+        },
+        alternateRowStyles: { fillColor: [244, 247, 255] },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 30 },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right', fontStyle: 'bold' },
+          4: { halign: 'right', fontStyle: 'bold' },
+        },
+        didParseCell: ({ row, cell, column }) => {
+          if (row.section !== 'body') return;
+          const rd = ecRows[row.index];
+          if (!rd) return;
+          if (column.index === 2 && rd.sobreEjecucion) cell.styles.textColor = [185, 28, 28];
+          if (column.index === 3 && rd.cells[3] !== '—')
+            cell.styles.textColor = rd.saldoNeg ? [185, 28, 28] : [21, 128, 61];
+          if (column.index === 4 && rd.cells[4] !== '—')
+            cell.styles.textColor = rd.acumNeg ? [185, 28, 28] : [21, 128, 61];
+        },
+      });
+      y = doc.lastAutoTable.finalY + 10;
+    }
 
     // ── Borde exterior + footer azul en TODAS las páginas ────
     const pageCount = doc.internal.getNumberOfPages();
@@ -1349,7 +1486,10 @@ export default function PresupuestoDiputados() {
       {/* ── Assign / Edit Budget Modal ── */}
       {(modal === 'asignar' || modal === 'editPres') && (
         <div className="ps-overlay" onClick={() => setModal(null)}>
-          <div className="ps-modal" onClick={e => e.stopPropagation()}>
+          <div
+            className={`ps-modal ${presForm.tipo_distribucion === 'personalizada' ? 'ps-modal-lg' : ''}`}
+            onClick={e => e.stopPropagation()}
+          >
             <div className="ps-modal-header">
               <h2>{modal === 'asignar' ? `Asignar Presupuesto ${anio}` : `Editar Presupuesto ${anio}`}</h2>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
@@ -1367,7 +1507,7 @@ export default function PresupuestoDiputados() {
                   <div className="ps-form-readonly">{anio}</div>
                 </div>
                 <div className="ps-form-group">
-                  <label>Monto Asignado (L) *</label>
+                  <label>Monto Anual (L) *</label>
                   <input
                     type="number"
                     min="1"
@@ -1380,6 +1520,94 @@ export default function PresupuestoDiputados() {
                   />
                 </div>
               </div>
+
+              {/* ── Distribución mensual ── */}
+              <div className="ps-form-group">
+                <label>Distribución mensual</label>
+                <div className="ps-distrib-toggle">
+                  <label className={`ps-distrib-opt${presForm.tipo_distribucion === 'auto' ? ' active' : ''}`}>
+                    <input
+                      type="radio"
+                      name="tipo_distribucion"
+                      value="auto"
+                      checked={presForm.tipo_distribucion === 'auto'}
+                      onChange={() => handleDistribChange('auto')}
+                    />
+                    <span>Automática</span>
+                    <small>Anual ÷ 12</small>
+                  </label>
+                  <label className={`ps-distrib-opt${presForm.tipo_distribucion === 'personalizada' ? ' active' : ''}`}>
+                    <input
+                      type="radio"
+                      name="tipo_distribucion"
+                      value="personalizada"
+                      checked={presForm.tipo_distribucion === 'personalizada'}
+                      onChange={() => handleDistribChange('personalizada')}
+                    />
+                    <span>Personalizada</span>
+                    <small>Por mes</small>
+                  </label>
+                </div>
+                {presForm.tipo_distribucion === 'auto' && presForm.monto_asignado && (
+                  <div className="ps-distrib-info">
+                    Cuota mensual estimada: <strong>{formatHNL(parseFloat(presForm.monto_asignado) / 12)}</strong> / mes
+                  </div>
+                )}
+              </div>
+
+              {/* ── Mes a mes (personalizada) ── */}
+              {presForm.tipo_distribucion === 'personalizada' && (() => {
+                const total = parseFloat(presForm.monto_asignado) || 0;
+                const suma  = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
+                const diff  = +(suma - total).toFixed(2);
+                const ok    = Math.abs(diff) <= 0.02;
+                return (
+                  <div className="ps-form-group">
+                    <div className="ps-meses-header">
+                      <label>Distribución por mes</label>
+                      <button
+                        type="button"
+                        className="ps-btn-distrib"
+                        onClick={distribuirMeses}
+                        disabled={!presForm.monto_asignado}
+                      >
+                        Distribuir equitativamente
+                      </button>
+                    </div>
+                    <div className="ps-meses-grid">
+                      {presForm.meses.map((m, i) => (
+                        <div key={m.mes} className="ps-mes-input-group">
+                          <label>{MESES_LARGOS[i]}</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={m.monto_asignado}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setPresForm(f => ({
+                                ...f,
+                                meses: f.meses.map((mm, ii) => ii === i ? { ...mm, monto_asignado: val } : mm),
+                              }));
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className={`ps-meses-sum${ok ? ' ok' : ' err'}`}>
+                      <span>Total distribuido: <strong>{formatHNL(suma)}</strong></span>
+                      {ok
+                        ? <span className="ps-meses-check">✓ Correcto</span>
+                        : <span className="ps-meses-diff">
+                            {diff > 0 ? `+${formatHNL(diff)} de más` : `${formatHNL(Math.abs(diff))} faltante`}
+                          </span>
+                      }
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="ps-form-group">
                 <label>Observaciones</label>
                 <textarea

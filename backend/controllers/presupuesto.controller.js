@@ -45,17 +45,38 @@ exports.getByDiputado = async (req, res) => {
     const asignado   = parseFloat(pres.monto_asignado);
     const disponible = asignado - ejecutado;
 
+    // ── Cuotas mensuales + ejecución por mes ──────────────
+    const [mesesRows] = await db.promise().query(
+      'SELECT mes, monto_asignado FROM presupuesto_mensual WHERE presupuesto_id = ? ORDER BY mes',
+      [pres.id]
+    );
+    const monthlyExecMap = {};
+    ayudas.forEach(a => {
+      const fechaStr = typeof a.fecha === 'string' ? a.fecha.slice(0, 10) : a.fecha.toISOString().slice(0, 10);
+      const m = parseInt(fechaStr.slice(5, 7), 10);
+      monthlyExecMap[m] = (monthlyExecMap[m] || 0) + parseFloat(a.monto);
+    });
+    const meses = Array.from({ length: 12 }, (_, i) => {
+      const mesNum     = i + 1;
+      const cuotaRow   = mesesRows.find(r => r.mes === mesNum);
+      const cuotaMonto = cuotaRow ? parseFloat(cuotaRow.monto_asignado) : 0;
+      const ejecutadoMes = monthlyExecMap[mesNum] || 0;
+      return { mes: mesNum, monto_asignado: cuotaMonto, ejecutado: ejecutadoMes, saldo: cuotaMonto - ejecutadoMes };
+    });
+
     res.json({
       diputado: dipRows[0],
       presupuesto: {
-        id:             pres.id,
-        diputado_id:    pres.diputado_id,
-        anio:           pres.anio,
-        monto_asignado: asignado,
-        observaciones:  pres.observaciones,
-        created_at:     pres.created_at,
+        id:                pres.id,
+        diputado_id:       pres.diputado_id,
+        anio:              pres.anio,
+        monto_asignado:    asignado,
+        tipo_distribucion: pres.tipo_distribucion || 'auto',
+        observaciones:     pres.observaciones,
+        created_at:        pres.created_at,
         ejecutado,
         disponible,
+        meses,
       },
       ayudas: ayudas.map(a => ({
         ...a,
@@ -79,10 +100,13 @@ exports.getByDiputado = async (req, res) => {
 // POST /api/presupuesto   — crear presupuesto anual
 // ──────────────────────────────────────────────────────────────
 exports.createPresupuesto = async (req, res) => {
-  const diputadoId   = parseInt(req.body.diputado_id, 10);
-  const anio         = parseInt(req.body.anio, 10);
-  const monto        = parseFloat(req.body.monto_asignado);
+  const diputadoId    = parseInt(req.body.diputado_id, 10);
+  const anio          = parseInt(req.body.anio, 10);
+  const monto         = parseFloat(req.body.monto_asignado);
   const observaciones = sanitize(req.body.observaciones) || null;
+  const tipoDist      = ['auto', 'personalizada'].includes(req.body.tipo_distribucion)
+    ? req.body.tipo_distribucion : 'auto';
+  const mesesInput    = Array.isArray(req.body.meses) ? req.body.meses : [];
 
   if (isNaN(diputadoId)) return res.status(400).json({ message: 'Diputado inválido.' });
   if (isNaN(anio) || anio < 2000 || anio > 2100)
@@ -92,19 +116,58 @@ exports.createPresupuesto = async (req, res) => {
   if (monto > 999999999.99)
     return res.status(400).json({ message: 'Monto excede el límite permitido.' });
 
+  if (tipoDist === 'personalizada') {
+    if (mesesInput.length !== 12)
+      return res.status(400).json({ message: 'Se requieren los 12 meses para distribución personalizada.' });
+    const sumaMeses = mesesInput.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
+    if (Math.abs(sumaMeses - monto) > 0.02)
+      return res.status(400).json({
+        message: `La suma de los meses (L ${sumaMeses.toFixed(2)}) debe ser igual al monto anual (L ${monto.toFixed(2)}).`,
+      });
+    for (const m of mesesInput) {
+      const mes = parseInt(m.mes, 10);
+      const montoM = parseFloat(m.monto_asignado);
+      if (isNaN(mes) || mes < 1 || mes > 12) return res.status(400).json({ message: 'Número de mes inválido.' });
+      if (isNaN(montoM) || montoM < 0) return res.status(400).json({ message: 'Monto mensual inválido.' });
+    }
+  }
+
+  const conn = await db.promise().getConnection();
   try {
-    const [result] = await db.promise().query(
+    await conn.beginTransaction();
+
+    const [result] = await conn.query(
       `INSERT INTO presupuesto_diputados
-         (diputado_id, anio, monto_asignado, observaciones, created_by)
-       VALUES (?, ?, ?, ?, ?)`,
-      [diputadoId, anio, monto, observaciones, req.user?.id || null]
+         (diputado_id, anio, monto_asignado, tipo_distribucion, observaciones, created_by)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [diputadoId, anio, monto, tipoDist, observaciones, req.user?.id || null]
     );
-    res.status(201).json({ message: 'Presupuesto asignado correctamente.', id: result.insertId });
+    const presId = result.insertId;
+
+    // Generar filas mensuales
+    let monthlyRows;
+    if (tipoDist === 'auto') {
+      const base      = Math.floor((monto / 12) * 100) / 100;
+      const remainder = +(monto - base * 11).toFixed(2);
+      monthlyRows = Array.from({ length: 12 }, (_, i) => [presId, i + 1, i === 11 ? remainder : base]);
+    } else {
+      monthlyRows = mesesInput.map(m => [presId, parseInt(m.mes, 10), parseFloat(m.monto_asignado)]);
+    }
+    await conn.query(
+      'INSERT INTO presupuesto_mensual (presupuesto_id, mes, monto_asignado) VALUES ?',
+      [monthlyRows]
+    );
+
+    await conn.commit();
+    res.status(201).json({ message: 'Presupuesto asignado correctamente.', id: presId });
   } catch (err) {
+    await conn.rollback().catch(() => {});
     if (err.code === 'ER_DUP_ENTRY')
       return res.status(409).json({ message: 'Ya existe un presupuesto para ese diputado y año.' });
     console.error('[presupuesto] Error en createPresupuesto:', err);
     res.status(500).json({ message: 'Error al asignar presupuesto.' });
+  } finally {
+    conn.release();
   }
 };
 
@@ -115,6 +178,9 @@ exports.updatePresupuesto = async (req, res) => {
   const id            = parseInt(req.params.id, 10);
   const monto         = parseFloat(req.body.monto_asignado);
   const observaciones = sanitize(req.body.observaciones) || null;
+  const tipoDist      = ['auto', 'personalizada'].includes(req.body.tipo_distribucion)
+    ? req.body.tipo_distribucion : 'auto';
+  const mesesInput    = Array.isArray(req.body.meses) ? req.body.meses : [];
 
   if (isNaN(id))             return res.status(400).json({ message: 'ID inválido.' });
   if (isNaN(monto) || monto <= 0)
@@ -122,27 +188,95 @@ exports.updatePresupuesto = async (req, res) => {
   if (monto > 999999999.99)
     return res.status(400).json({ message: 'Monto excede el límite permitido.' });
 
+  if (tipoDist === 'personalizada') {
+    if (mesesInput.length !== 12)
+      return res.status(400).json({ message: 'Se requieren los 12 meses para distribución personalizada.' });
+    const sumaMeses = mesesInput.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
+    if (Math.abs(sumaMeses - monto) > 0.02)
+      return res.status(400).json({
+        message: `La suma de los meses (L ${sumaMeses.toFixed(2)}) debe ser igual al monto anual (L ${monto.toFixed(2)}).`,
+      });
+    for (const m of mesesInput) {
+      const mes = parseInt(m.mes, 10);
+      const montoM = parseFloat(m.monto_asignado);
+      if (isNaN(mes) || mes < 1 || mes > 12) return res.status(400).json({ message: 'Número de mes inválido.' });
+      if (isNaN(montoM) || montoM < 0) return res.status(400).json({ message: 'Monto mensual inválido.' });
+    }
+  }
+
+  const MESES_NOMBRES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                         'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const conn = await db.promise().getConnection();
   try {
-    // Verify monto is not less than already executed
-    const [sumRows] = await db.promise().query(
+    await conn.beginTransaction();
+
+    // Verificar que el monto no sea menor al ya ejecutado
+    const [[{ total }]] = await conn.query(
       'SELECT COALESCE(SUM(monto), 0) AS total FROM ayudas_sociales WHERE presupuesto_id = ?',
       [id]
     );
-    const ejecutado = parseFloat(sumRows[0].total);
-    if (monto < ejecutado)
+    const ejecutado = parseFloat(total);
+    if (monto < ejecutado) {
+      await conn.rollback();
       return res.status(400).json({
         message: `El monto no puede ser menor al ya ejecutado (L ${ejecutado.toLocaleString('es-HN', { minimumFractionDigits: 2 })}).`,
       });
+    }
 
-    const [result] = await db.promise().query(
-      'UPDATE presupuesto_diputados SET monto_asignado = ?, observaciones = ? WHERE id = ?',
-      [monto, observaciones, id]
+    // Si personalizada: validar que cada mes >= lo ejecutado en ese mes
+    if (tipoDist === 'personalizada') {
+      const [execMes] = await conn.query(
+        `SELECT MONTH(fecha) AS mes, COALESCE(SUM(monto), 0) AS ejecutado
+         FROM ayudas_sociales WHERE presupuesto_id = ?
+         GROUP BY MONTH(fecha)`,
+        [id]
+      );
+      for (const m of mesesInput) {
+        const mesNum  = parseInt(m.mes, 10);
+        const montoM  = parseFloat(m.monto_asignado);
+        const execRow = execMes.find(r => r.mes === mesNum);
+        if (execRow && montoM < parseFloat(execRow.ejecutado)) {
+          await conn.rollback();
+          return res.status(400).json({
+            message: `El monto de ${MESES_NOMBRES[mesNum - 1]} no puede ser menor al ya ejecutado (L ${parseFloat(execRow.ejecutado).toLocaleString('es-HN', { minimumFractionDigits: 2 })}).`,
+          });
+        }
+      }
+    }
+
+    const [result] = await conn.query(
+      'UPDATE presupuesto_diputados SET monto_asignado = ?, tipo_distribucion = ?, observaciones = ? WHERE id = ?',
+      [monto, tipoDist, observaciones, id]
     );
-    if (!result.affectedRows) return res.status(404).json({ message: 'Presupuesto no encontrado.' });
+    if (!result.affectedRows) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Presupuesto no encontrado.' });
+    }
+
+    // Regenerar filas mensuales
+    let monthlyRows;
+    if (tipoDist === 'auto') {
+      const base      = Math.floor((monto / 12) * 100) / 100;
+      const remainder = +(monto - base * 11).toFixed(2);
+      monthlyRows = Array.from({ length: 12 }, (_, i) => [id, i + 1, i === 11 ? remainder : base]);
+    } else {
+      monthlyRows = mesesInput.map(m => [id, parseInt(m.mes, 10), parseFloat(m.monto_asignado)]);
+    }
+    await conn.query('DELETE FROM presupuesto_mensual WHERE presupuesto_id = ?', [id]);
+    await conn.query(
+      'INSERT INTO presupuesto_mensual (presupuesto_id, mes, monto_asignado) VALUES ?',
+      [monthlyRows]
+    );
+
+    await conn.commit();
     res.json({ message: 'Presupuesto actualizado correctamente.' });
   } catch (err) {
+    await conn.rollback().catch(() => {});
     console.error('[presupuesto] Error en updatePresupuesto:', err);
     res.status(500).json({ message: 'Error al actualizar presupuesto.' });
+  } finally {
+    conn.release();
   }
 };
 

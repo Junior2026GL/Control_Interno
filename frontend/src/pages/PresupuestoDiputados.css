@@ -1145,3 +1145,105 @@
   min-width: 120px;
   text-align: center;
 }
+
+/* ── Distribución mensual (modal presupuesto) ─────────────── */
+.ps-modal-lg { max-width: 640px; }
+
+.ps-distrib-toggle {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.ps-distrib-opt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 12px;
+  border: 2px solid #e0e7f0;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #f9fafc;
+  transition: border-color .18s, background .18s;
+  user-select: none;
+}
+.ps-distrib-opt input { display: none; }
+.ps-distrib-opt span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #374151;
+}
+.ps-distrib-opt small {
+  font-size: 11px;
+  color: #8a99aa;
+  margin-top: 2px;
+}
+.ps-distrib-opt.active {
+  border-color: #274C8D;
+  background: #eff4ff;
+}
+.ps-distrib-opt.active span { color: #274C8D; }
+
+.ps-distrib-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #eff4ff;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.ps-meses-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ps-btn-distrib {
+  font-size: 12px;
+  padding: 4px 12px;
+  border: 1.5px solid #274C8D;
+  border-radius: 7px;
+  background: white;
+  color: #274C8D;
+  cursor: pointer;
+  transition: background .15s;
+}
+.ps-btn-distrib:hover:not(:disabled) { background: #eff4ff; }
+.ps-btn-distrib:disabled { opacity: .4; cursor: not-allowed; }
+
+.ps-meses-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.ps-mes-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ps-mes-input-group label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7a99;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ps-meses-sum {
+  margin-top: 8px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ps-meses-sum.ok  { background: #dcfce7; color: #15803d; }
+.ps-meses-sum.err { background: #fef2f2; color: #b91c1c; }
+.ps-meses-check { font-weight: 700; }
+.ps-meses-diff  { font-weight: 600; }
