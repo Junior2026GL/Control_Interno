@@ -34,6 +34,9 @@ const EMPTY_PRES  = {
   monto_asignado:    '',
   observaciones:     '',
   tipo_distribucion: 'auto',
+  cuota_mensual:     '',
+  num_meses:         8,
+  mes_inicio:        new Date().getMonth() + 1,
   meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, monto_asignado: '' })),
 };
 const EMPTY_AYUDA = {
@@ -200,6 +203,17 @@ export default function PresupuestoDiputados() {
     }),
   [ayudas]);
 
+  /* ── monthly quota+execution chart data ─────────────────── */
+  const monthlyChartData = useMemo(() => {
+    if (!presupuesto?.meses?.length) return null;
+    return presupuesto.meses.map((m, i) => ({
+      mes:      MESES_CORTOS[i],
+      mesLargo: MESES_LARGOS[i],
+      cuota:    m.monto_asignado,
+      ejecutado: m.ejecutado,
+    }));
+  }, [presupuesto]);
+
   /* ── budget form handlers ───────────────────────────────── */
   const distribuirMeses = () => {
     const total = parseFloat(presForm.monto_asignado) || 0;
@@ -210,6 +224,15 @@ export default function PresupuestoDiputados() {
       ...f,
       meses: f.meses.map((m, i) => ({ ...m, monto_asignado: (i === 11 ? remainder : base).toString() })),
     }));
+  };
+
+  const computeCuotaMeses = (cuota, numMeses, mesInicio) => {
+    const arr = Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, monto_asignado: '0' }));
+    for (let i = 0; i < numMeses; i++) {
+      const mesIdx = (mesInicio - 1 + i) % 12;
+      arr[mesIdx].monto_asignado = cuota.toString();
+    }
+    return arr;
   };
 
   const handleDistribChange = tipo => {
@@ -225,6 +248,8 @@ export default function PresupuestoDiputados() {
           monto_asignado: total > 0 ? (i === 11 ? remainder : base).toString() : '',
         })),
       }));
+    } else if (tipo === 'cuota') {
+      setPresForm(f => ({ ...f, tipo_distribucion: 'cuota' }));
     } else {
       setPresForm(f => ({ ...f, tipo_distribucion: 'auto' }));
     }
@@ -233,24 +258,38 @@ export default function PresupuestoDiputados() {
   const handleAsignarPres = async e => {
     e.preventDefault();
     setFormErr('');
-    const monto = parseFloat(presForm.monto_asignado);
-    if (!monto || monto <= 0) { setFormErr('El monto debe ser mayor a 0.'); return; }
-    if (presForm.tipo_distribucion === 'personalizada') {
-      const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
-      if (Math.abs(suma - monto) > 0.02) {
-        setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
-        return;
+    let montoFinal, tipoFinal, mesesFinal;
+    if (presForm.tipo_distribucion === 'cuota') {
+      const cuota = parseFloat(presForm.cuota_mensual);
+      const nMes  = parseInt(presForm.num_meses);
+      if (!cuota || cuota <= 0)        { setFormErr('La cuota mensual debe ser mayor a 0.'); return; }
+      if (!nMes || nMes < 1 || nMes > 12) { setFormErr('El número de meses debe ser entre 1 y 12.'); return; }
+      montoFinal = +(cuota * nMes).toFixed(2);
+      tipoFinal  = 'personalizada';
+      mesesFinal = computeCuotaMeses(cuota, nMes, presForm.mes_inicio);
+    } else {
+      const monto = parseFloat(presForm.monto_asignado);
+      if (!monto || monto <= 0) { setFormErr('El monto debe ser mayor a 0.'); return; }
+      if (presForm.tipo_distribucion === 'personalizada') {
+        const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
+        if (Math.abs(suma - monto) > 0.02) {
+          setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
+          return;
+        }
       }
+      montoFinal = monto;
+      tipoFinal  = presForm.tipo_distribucion;
+      mesesFinal = presForm.tipo_distribucion === 'personalizada' ? presForm.meses : [];
     }
     setSaving(true);
     try {
       await api.post('/presupuesto', {
         diputado_id:       selectedDip.id,
         anio,
-        monto_asignado:    monto,
+        monto_asignado:    montoFinal,
         observaciones:     presForm.observaciones,
-        tipo_distribucion: presForm.tipo_distribucion,
-        meses:             presForm.tipo_distribucion === 'personalizada' ? presForm.meses : [],
+        tipo_distribucion: tipoFinal,
+        meses:             mesesFinal,
       }, { headers: authHeaders() });
       showToast('Presupuesto asignado correctamente.', 'ok');
       setModal(null);
@@ -266,22 +305,36 @@ export default function PresupuestoDiputados() {
   const handleEditPres = async e => {
     e.preventDefault();
     setFormErr('');
-    const monto = parseFloat(presForm.monto_asignado);
-    if (!monto || monto <= 0) { setFormErr('El monto debe ser mayor a 0.'); return; }
-    if (presForm.tipo_distribucion === 'personalizada') {
-      const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
-      if (Math.abs(suma - monto) > 0.02) {
-        setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
-        return;
+    let montoFinal, tipoFinal, mesesFinal;
+    if (presForm.tipo_distribucion === 'cuota') {
+      const cuota = parseFloat(presForm.cuota_mensual);
+      const nMes  = parseInt(presForm.num_meses);
+      if (!cuota || cuota <= 0)           { setFormErr('La cuota mensual debe ser mayor a 0.'); return; }
+      if (!nMes || nMes < 1 || nMes > 12) { setFormErr('El número de meses debe ser entre 1 y 12.'); return; }
+      montoFinal = +(cuota * nMes).toFixed(2);
+      tipoFinal  = 'personalizada';
+      mesesFinal = computeCuotaMeses(cuota, nMes, presForm.mes_inicio);
+    } else {
+      const monto = parseFloat(presForm.monto_asignado);
+      if (!monto || monto <= 0) { setFormErr('El monto debe ser mayor a 0.'); return; }
+      if (presForm.tipo_distribucion === 'personalizada') {
+        const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
+        if (Math.abs(suma - monto) > 0.02) {
+          setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
+          return;
+        }
       }
+      montoFinal = monto;
+      tipoFinal  = presForm.tipo_distribucion;
+      mesesFinal = presForm.tipo_distribucion === 'personalizada' ? presForm.meses : [];
     }
     setSaving(true);
     try {
       await api.put(`/presupuesto/${presupuesto.id}`, {
-        monto_asignado:    monto,
+        monto_asignado:    montoFinal,
         observaciones:     presForm.observaciones,
-        tipo_distribucion: presForm.tipo_distribucion,
-        meses:             presForm.tipo_distribucion === 'personalizada' ? presForm.meses : [],
+        tipo_distribucion: tipoFinal,
+        meses:             mesesFinal,
       }, { headers: authHeaders() });
       showToast('Presupuesto actualizado correctamente.', 'ok');
       setModal(null);
@@ -822,85 +875,123 @@ export default function PresupuestoDiputados() {
 
     y += TOTAL_ROW_H + 8;
 
-    // ── Estado de cuenta mensual ───────────────────────────
+    // ── Distribución mensual (gráfica de barras) ─────────
     if (presupuesto.meses && presupuesto.meses.length === 12) {
-      if (y + 14 > doc.internal.pageSize.getHeight() - BM - P - 12) {
+      const CHART_TOTAL_H = 76;
+      if (y + 7 + CHART_TOTAL_H + 10 > doc.internal.pageSize.getHeight() - BM - P - 14) {
         doc.addPage(); y = BM + P + 6;
       }
 
+      // Título de sección
       doc.setFillColor(...C_AZUL);
       doc.rect(x0, y, CW, 7, 'F');
       doc.setTextColor(...C_BLANCO);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
-      doc.text('ESTADO DE CUENTA MENSUAL', x0 + 4, y + 4.9);
+      doc.text('DISTRIBUCIÓN MENSUAL', x0 + 4, y + 4.9);
       y += 7;
 
-      const fmtL = v => v.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      let acum = 0;
-      const ecRows = presupuesto.meses.map((m, i) => {
-        acum += m.saldo;
-        const cuota = m.monto_asignado;
-        const ejec  = m.ejecutado;
-        const saldo = m.saldo;
-        return {
-          cells: [
-            MESES_LARGOS[i],
-            cuota > 0 ? fmtL(cuota) : '—',
-            ejec  > 0 ? fmtL(ejec)  : '—',
-            cuota > 0 || ejec > 0
-              ? (saldo >= 0 ? `+L ${fmtL(saldo)}` : `-L ${fmtL(Math.abs(saldo))}`)
-              : '—',
-            acum >= 0 ? `+L ${fmtL(acum)}` : `-L ${fmtL(Math.abs(acum))}`,
-          ],
-          sobreEjecucion: cuota > 0 && ejec > cuota,
-          sinActividad:   ejec === 0,
-          saldoNeg:       saldo < 0,
-          acumNeg:        acum < 0,
-        };
+      // Fondo del área de gráfica
+      doc.setFillColor(248, 250, 255);
+      doc.rect(x0, y, CW, CHART_TOTAL_H, 'F');
+      doc.setDrawColor(220, 228, 242);
+      doc.setLineWidth(0.3);
+      doc.rect(x0, y, CW, CHART_TOTAL_H);
+
+      const CPAD_L = 24, CPAD_R = 6, CPAD_T = 8, CPAD_B = 20;
+      const chartX = x0 + CPAD_L;
+      const chartY = y + CPAD_T;
+      const chartW = CW - CPAD_L - CPAD_R;
+      const chartH = CHART_TOTAL_H - CPAD_T - CPAD_B;
+
+      // Valor máximo y escala
+      const allVals = presupuesto.meses.flatMap(m => [m.monto_asignado, m.ejecutado]);
+      const maxVal  = Math.max(...allVals, 1);
+      const mag     = Math.pow(10, Math.floor(Math.log10(maxVal)));
+      const niceMax = Math.ceil(maxVal / mag) * mag;
+
+      // Líneas de cuadrícula Y (4 líneas)
+      for (let g = 0; g <= 4; g++) {
+        const gY   = chartY + chartH - (g / 4) * chartH;
+        const gVal = (g / 4) * niceMax;
+        doc.setDrawColor(220, 228, 242);
+        doc.setLineWidth(0.2);
+        doc.line(chartX, gY, chartX + chartW, gY);
+        const gLabel = gVal >= 1000000
+          ? `L ${(gVal / 1000000).toFixed(1)}M`
+          : gVal >= 1000
+            ? `L ${(gVal / 1000).toFixed(0)}k`
+            : `L ${gVal.toFixed(0)}`;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(140, 155, 185);
+        doc.text(gLabel, chartX - 2, gY + 1.5, { align: 'right' });
+      }
+
+      // Línea base del eje X
+      doc.setDrawColor(...C_AZUL);
+      doc.setLineWidth(0.4);
+      doc.line(chartX, chartY + chartH, chartX + chartW, chartY + chartH);
+
+      // Barras
+      const BAR_SLOT = chartW / 12;
+      const BAR_W    = BAR_SLOT * 0.27;
+      const BAR_GAP  = 1.0;
+
+      presupuesto.meses.forEach((m, i) => {
+        const midX   = chartX + i * BAR_SLOT + BAR_SLOT / 2;
+        const cuotaH = niceMax > 0 ? (m.monto_asignado / niceMax) * chartH : 0;
+        const ejecH  = niceMax > 0 ? (m.ejecutado      / niceMax) * chartH : 0;
+
+        // Barra cuota (azul)
+        if (cuotaH > 0.3) {
+          doc.setFillColor(...C_AZUL);
+          doc.rect(midX - BAR_W - BAR_GAP / 2, chartY + chartH - cuotaH, BAR_W, cuotaH, 'F');
+        }
+        // Barra ejecutado (naranja)
+        if (ejecH > 0.3) {
+          doc.setFillColor(234, 88, 12);
+          doc.rect(midX + BAR_GAP / 2, chartY + chartH - ejecH, BAR_W, ejecH, 'F');
+        }
+        // Raya gris si mes sin datos
+        if (cuotaH <= 0.3 && ejecH <= 0.3) {
+          doc.setFillColor(210, 220, 235);
+          doc.rect(midX - BAR_W / 2, chartY + chartH - 1, BAR_W, 1, 'F');
+        }
+
+        // Etiqueta mes
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5.8);
+        doc.setTextColor(80, 100, 130);
+        doc.text(MESES_CORTOS[i], midX, chartY + chartH + 5, { align: 'center' });
+
+        // Monto cuota encima de barra (si tiene valor)
+        if (cuotaH > 4) {
+          const lbl = m.monto_asignado >= 1000
+            ? `${(m.monto_asignado / 1000).toFixed(0)}k`
+            : m.monto_asignado.toFixed(0);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(5);
+          doc.setTextColor(...C_AZUL);
+          doc.text(lbl, midX - BAR_W / 2 - BAR_GAP / 2, chartY + chartH - cuotaH - 1, { align: 'center' });
+        }
       });
 
-      autoTable(doc, {
-        startY: y,
-        head: [['MES', 'CUOTA ASIGNADA (L)', 'EJECUTADO (L)', 'SALDO MES', 'SALDO ACUMULADO']],
-        body: ecRows.map(r => r.cells),
-        margin: { left: x0, right: BM + P },
-        tableWidth: CW,
-        headStyles: {
-          fillColor:   C_AZUL,
-          textColor:   C_BLANCO,
-          fontStyle:   'bold',
-          halign:      'center',
-          fontSize:    7.5,
-          cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
-        },
-        bodyStyles: {
-          fontSize:    8,
-          textColor:   C_NEGRO,
-          lineColor:   [210, 220, 235],
-          lineWidth:   0.2,
-          cellPadding: { top: 2.5, bottom: 2.5, left: 2.5, right: 2.5 },
-        },
-        alternateRowStyles: { fillColor: [244, 247, 255] },
-        columnStyles: {
-          0: { fontStyle: 'bold', cellWidth: 30 },
-          1: { halign: 'right' },
-          2: { halign: 'right' },
-          3: { halign: 'right', fontStyle: 'bold' },
-          4: { halign: 'right', fontStyle: 'bold' },
-        },
-        didParseCell: ({ row, cell, column }) => {
-          if (row.section !== 'body') return;
-          const rd = ecRows[row.index];
-          if (!rd) return;
-          if (column.index === 2 && rd.sobreEjecucion) cell.styles.textColor = [185, 28, 28];
-          if (column.index === 3 && rd.cells[3] !== '—')
-            cell.styles.textColor = rd.saldoNeg ? [185, 28, 28] : [21, 128, 61];
-          if (column.index === 4 && rd.cells[4] !== '—')
-            cell.styles.textColor = rd.acumNeg ? [185, 28, 28] : [21, 128, 61];
-        },
-      });
-      y = doc.lastAutoTable.finalY + 10;
+      // Leyenda
+      const legendY = y + CHART_TOTAL_H - 6;
+      const legendCX = x0 + CW / 2;
+      doc.setFillColor(...C_AZUL);
+      doc.rect(legendCX - 34, legendY - 3.5, 6, 3.5, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(60, 80, 110);
+      doc.text('Cuota asignada', legendCX - 26, legendY);
+
+      doc.setFillColor(234, 88, 12);
+      doc.rect(legendCX + 12, legendY - 3.5, 6, 3.5, 'F');
+      doc.text('Ejecutado', legendCX + 20, legendY);
+
+      y += CHART_TOTAL_H + 8;
     }
 
     // ── Borde exterior + footer azul en TODAS las páginas ────
@@ -1428,12 +1519,13 @@ export default function PresupuestoDiputados() {
                         </div>
                       </div>
 
-                      {chartData.some(d => d.monto > 0) ? (
+                      {(monthlyChartData?.some(d => d.cuota > 0 || d.ejecutado > 0) ||
+                        chartData.some(d => d.monto > 0)) ? (
                         <div className="ps-chart-wrap">
-                          <p className="ps-chart-title">Ejecución mensual — {anio}</p>
+                          <p className="ps-chart-title">Cuota vs Ejecución mensual — {anio}</p>
                           <ResponsiveContainer width="100%" height={230}>
                             <BarChart
-                              data={chartData}
+                              data={monthlyChartData || chartData.map(d => ({ ...d, cuota: 0, ejecutado: d.monto }))}
                               margin={{ top: 10, right: 24, left: 10, bottom: 5 }}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="#f0f4fa" vertical={false} />
@@ -1450,7 +1542,7 @@ export default function PresupuestoDiputados() {
                                 tickLine={false}
                               />
                               <Tooltip
-                                formatter={v => [formatHNL(v), 'Monto']}
+                                formatter={(v, name) => [formatHNL(v), name === 'cuota' ? 'Cuota asignada' : 'Ejecutado']}
                                 labelFormatter={(_, payload) =>
                                   payload?.length ? `${payload[0].payload.mesLargo} ${anio}` : ''
                                 }
@@ -1460,14 +1552,14 @@ export default function PresupuestoDiputados() {
                                   fontSize: 13,
                                 }}
                               />
-                              <Bar
-                                dataKey="monto"
-                                fill="#274C8D"
-                                radius={[5, 5, 0, 0]}
-                                name="Monto"
-                              />
+                              <Bar dataKey="cuota"     fill="#274C8D" radius={[4,4,0,0]} name="cuota" />
+                              <Bar dataKey="ejecutado" fill="#ea580c" radius={[4,4,0,0]} name="ejecutado" />
                             </BarChart>
                           </ResponsiveContainer>
+                          <div className="ps-chart-legend">
+                            <span className="ps-legend-item"><span className="ps-legend-dot" style={{ background: '#274C8D' }} />Cuota asignada</span>
+                            <span className="ps-legend-item"><span className="ps-legend-dot" style={{ background: '#ea580c' }} />Ejecutado</span>
+                          </div>
                         </div>
                       ) : (
                         <div className="ps-chart-empty">
@@ -1487,7 +1579,7 @@ export default function PresupuestoDiputados() {
       {(modal === 'asignar' || modal === 'editPres') && (
         <div className="ps-overlay" onClick={() => setModal(null)}>
           <div
-            className={`ps-modal ${presForm.tipo_distribucion === 'personalizada' ? 'ps-modal-lg' : ''}`}
+            className={`ps-modal ${(presForm.tipo_distribucion === 'personalizada' || presForm.tipo_distribucion === 'cuota') ? 'ps-modal-lg' : ''}`}
             onClick={e => e.stopPropagation()}
           >
             <div className="ps-modal-header">
@@ -1506,20 +1598,83 @@ export default function PresupuestoDiputados() {
                   <label>Año</label>
                   <div className="ps-form-readonly">{anio}</div>
                 </div>
-                <div className="ps-form-group">
-                  <label>Monto Anual (L) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={presForm.monto_asignado}
-                    onChange={e => setPresForm({ ...presForm, monto_asignado: e.target.value })}
-                    required
-                    autoFocus
-                  />
-                </div>
+                {presForm.tipo_distribucion !== 'cuota' ? (
+                  <div className="ps-form-group">
+                    <label>Monto Anual (L) *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={presForm.monto_asignado}
+                      onChange={e => setPresForm({ ...presForm, monto_asignado: e.target.value })}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <div className="ps-form-group">
+                    <label>Total calculado</label>
+                    <div className="ps-form-readonly ps-form-total">
+                      {presForm.cuota_mensual && presForm.num_meses
+                        ? formatHNL(parseFloat(presForm.cuota_mensual || 0) * parseInt(presForm.num_meses || 0))
+                        : '—'}
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* ── Modo cuota: campos cuota × meses × inicio ── */}
+              {presForm.tipo_distribucion === 'cuota' && (
+                <div className="ps-form-row ps-form-row-3">
+                  <div className="ps-form-group">
+                    <label>Cuota mensual (L) *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={presForm.cuota_mensual}
+                      onChange={e => setPresForm({ ...presForm, cuota_mensual: e.target.value })}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div className="ps-form-group">
+                    <label>Número de meses *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      step="1"
+                      value={presForm.num_meses}
+                      onChange={e => setPresForm({ ...presForm, num_meses: Math.min(12, Math.max(1, parseInt(e.target.value) || 1)) })}
+                    />
+                  </div>
+                  <div className="ps-form-group">
+                    <label>Mes de inicio</label>
+                    <select
+                      value={presForm.mes_inicio}
+                      onChange={e => setPresForm({ ...presForm, mes_inicio: parseInt(e.target.value) })}
+                    >
+                      {MESES_LARGOS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Preview de meses asignados (modo cuota) */}
+              {presForm.tipo_distribucion === 'cuota' && presForm.cuota_mensual && parseInt(presForm.num_meses) > 0 && (
+                <div className="ps-cuota-preview">
+                  <span className="ps-cuota-preview-lbl">Meses financiados:</span>
+                  {Array.from({ length: parseInt(presForm.num_meses) || 0 }, (_, i) => {
+                    const mesIdx = (presForm.mes_inicio - 1 + i) % 12;
+                    return (
+                      <span key={i} className="ps-cuota-mes-chip">{MESES_CORTOS[mesIdx]}</span>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* ── Distribución mensual ── */}
               <div className="ps-form-group">
@@ -1535,6 +1690,17 @@ export default function PresupuestoDiputados() {
                     />
                     <span>Automática</span>
                     <small>Anual ÷ 12</small>
+                  </label>
+                  <label className={`ps-distrib-opt${presForm.tipo_distribucion === 'cuota' ? ' active' : ''}`}>
+                    <input
+                      type="radio"
+                      name="tipo_distribucion"
+                      value="cuota"
+                      checked={presForm.tipo_distribucion === 'cuota'}
+                      onChange={() => handleDistribChange('cuota')}
+                    />
+                    <span>Por cuota</span>
+                    <small>Cuota × meses</small>
                   </label>
                   <label className={`ps-distrib-opt${presForm.tipo_distribucion === 'personalizada' ? ' active' : ''}`}>
                     <input

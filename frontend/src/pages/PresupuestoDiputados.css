@@ -1247,3 +1247,62 @@
 .ps-meses-sum.err { background: #fef2f2; color: #b91c1c; }
 .ps-meses-check { font-weight: 700; }
 .ps-meses-diff  { font-weight: 600; }
+
+/* ── Modo Por cuota ────────────────────────────────────────── */
+.ps-form-row-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.ps-form-total {
+  font-size: 15px;
+  font-weight: 700;
+  color: #274C8D;
+  background: #eff4ff;
+  border-color: #c7d8f8;
+}
+.ps-cuota-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.ps-cuota-preview-lbl {
+  font-weight: 700;
+  color: #166534;
+  margin-right: 4px;
+}
+.ps-cuota-mes-chip {
+  padding: 2px 8px;
+  background: #274C8D;
+  color: white;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ── Chart legend ──────────────────────────────────────────── */
+.ps-chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 6px;
+}
+.ps-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4a5568;
+}
+.ps-legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
