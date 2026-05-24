@@ -215,7 +215,7 @@ export default function PresupuestoDiputados() {
         ejecutado: m.ejecutado,
         mesNum:   i + 1,
       }))
-      .filter(d => d.mesNum >= mesInicio || d.ejecutado > 0);
+      .filter(d => d.cuota > 0 || d.ejecutado > 0);
   }, [presupuesto]);
 
   /* ── budget form handlers ───────────────────────────────── */
@@ -281,16 +281,26 @@ export default function PresupuestoDiputados() {
     } else {
       const monto = parseFloat(presForm.monto_asignado);
       if (!monto || monto <= 0) { setFormErr('El monto debe ser mayor a 0.'); return; }
+      montoFinal = monto;
+      tipoFinal  = presForm.tipo_distribucion;
       if (presForm.tipo_distribucion === 'personalizada') {
         const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
         if (Math.abs(suma - monto) > 0.02) {
           setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
           return;
         }
+        mesesFinal = presForm.meses;
+      } else {
+        // auto: calcular distribución usando mes_inicio
+        const mesInicio = presForm.mes_inicio || (new Date().getMonth() + 1);
+        const numMeses  = Math.max(1, 13 - mesInicio);
+        const base      = Math.floor((monto / numMeses) * 100) / 100;
+        const remainder = +(monto - base * (numMeses - 1)).toFixed(2);
+        mesesFinal = Array.from({ length: 12 }, (_, i) => {
+          const mesNum = i + 1;
+          return { mes: mesNum, monto_asignado: mesNum < mesInicio ? '0' : (mesNum === 12 ? remainder.toString() : base.toString()) };
+        });
       }
-      montoFinal = monto;
-      tipoFinal  = presForm.tipo_distribucion;
-      mesesFinal = presForm.tipo_distribucion === 'personalizada' ? presForm.meses : [];
     }
     setSaving(true);
     try {
@@ -328,16 +338,26 @@ export default function PresupuestoDiputados() {
     } else {
       const monto = parseFloat(presForm.monto_asignado);
       if (!monto || monto <= 0) { setFormErr('El monto debe ser mayor a 0.'); return; }
+      montoFinal = monto;
+      tipoFinal  = presForm.tipo_distribucion;
       if (presForm.tipo_distribucion === 'personalizada') {
         const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
         if (Math.abs(suma - monto) > 0.02) {
           setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
           return;
         }
+        mesesFinal = presForm.meses;
+      } else {
+        // auto: calcular distribución usando mes_inicio
+        const mesInicio = presForm.mes_inicio || (new Date().getMonth() + 1);
+        const numMeses  = Math.max(1, 13 - mesInicio);
+        const base      = Math.floor((monto / numMeses) * 100) / 100;
+        const remainder = +(monto - base * (numMeses - 1)).toFixed(2);
+        mesesFinal = Array.from({ length: 12 }, (_, i) => {
+          const mesNum = i + 1;
+          return { mes: mesNum, monto_asignado: mesNum < mesInicio ? '0' : (mesNum === 12 ? remainder.toString() : base.toString()) };
+        });
       }
-      montoFinal = monto;
-      tipoFinal  = presForm.tipo_distribucion;
-      mesesFinal = presForm.tipo_distribucion === 'personalizada' ? presForm.meses : [];
     }
     setSaving(true);
     try {
@@ -363,6 +383,9 @@ export default function PresupuestoDiputados() {
       monto_asignado:    presupuesto.monto_asignado.toString(),
       observaciones:     presupuesto.observaciones || '',
       tipo_distribucion: presupuesto.tipo_distribucion || 'auto',
+      mes_inicio:        presupuesto.mes_inicio || 1,
+      cuota_mensual:     '',
+      num_meses:         8,
       meses: presupuesto.meses?.length === 12
         ? presupuesto.meses.map(m => ({ mes: m.mes, monto_asignado: m.monto_asignado.toString() }))
         : EMPTY_PRES.meses,
@@ -775,7 +798,7 @@ export default function PresupuestoDiputados() {
       const BAR_GAP  = 1.0;
       const activeMeses = presupuesto.meses
         .map((m, i) => ({ ...m, idx: i }))
-        .filter(m => (m.idx + 1) >= (presupuesto.mes_inicio || 1) || m.ejecutado > 0);
+        .filter(m => m.monto_asignado > 0 || m.ejecutado > 0);
       const activeSlot = chartW / Math.max(activeMeses.length, 1);
       const activeBarW = activeSlot * 0.28;
       activeMeses.forEach((m, pos) => {
@@ -1752,9 +1775,30 @@ export default function PresupuestoDiputados() {
                     <small>Por mes</small>
                   </label>
                 </div>
-                {presForm.tipo_distribucion === 'auto' && presForm.monto_asignado && (
+                {presForm.tipo_distribucion === 'auto' && (
                   <div className="ps-distrib-info">
-                    Cuota mensual estimada: <strong>{formatHNL(parseFloat(presForm.monto_asignado) / 12)}</strong> / mes
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                      <div className="ps-form-group" style={{ flex: '0 0 auto', minWidth: '150px', marginBottom: 0 }}>
+                        <label>Mes de inicio</label>
+                        <select
+                          value={presForm.mes_inicio}
+                          onChange={e => setPresForm(f => ({ ...f, mes_inicio: parseInt(e.target.value) }))}
+                        >
+                          {MESES_LARGOS.map((n, i) => (
+                            <option key={i + 1} value={i + 1}>{n}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {presForm.monto_asignado && (
+                        <div style={{ paddingBottom: '4px' }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Cuota mensual: </span>
+                          <strong>{formatHNL(parseFloat(presForm.monto_asignado) / Math.max(1, 13 - presForm.mes_inicio))}</strong>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                            {' '}/ mes &nbsp;({Math.max(1, 13 - presForm.mes_inicio)} meses: {MESES_LARGOS[(presForm.mes_inicio || 1) - 1]} – Dic)
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

@@ -64,17 +64,9 @@ exports.getByDiputado = async (req, res) => {
       return { mes: mesNum, monto_asignado: cuotaMonto, ejecutado: ejecutadoMes, saldo: cuotaMonto - ejecutadoMes };
     });
 
-    // Mes de inicio: para distribución automática usamos el mes de creación del presupuesto.
-    // Para personalizada/cuota usamos el primer mes con monto_asignado > 0.
-    let mes_inicio = 1;
     const tipoDistrib = pres.tipo_distribucion || 'auto';
-    if (tipoDistrib === 'auto') {
-      const createdDate = pres.created_at instanceof Date ? pres.created_at : new Date(pres.created_at);
-      mes_inicio = createdDate.getMonth() + 1;
-    } else {
-      const firstActive = mesesRows.find(r => parseFloat(r.monto_asignado) > 0);
-      mes_inicio = firstActive ? firstActive.mes : 1;
-    }
+    const firstActive = mesesRows.find(r => parseFloat(r.monto_asignado) > 0);
+    const mes_inicio  = firstActive ? firstActive.mes : 1;
 
     res.json({
       diputado: dipRows[0],
@@ -129,9 +121,7 @@ exports.createPresupuesto = async (req, res) => {
   if (monto > 999999999.99)
     return res.status(400).json({ message: 'Monto excede el límite permitido.' });
 
-  if (tipoDist === 'personalizada') {
-    if (mesesInput.length !== 12)
-      return res.status(400).json({ message: 'Se requieren los 12 meses para distribución personalizada.' });
+  if (mesesInput.length === 12) {
     const sumaMeses = mesesInput.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
     if (Math.abs(sumaMeses - monto) > 0.02)
       return res.status(400).json({
@@ -143,6 +133,8 @@ exports.createPresupuesto = async (req, res) => {
       if (isNaN(mes) || mes < 1 || mes > 12) return res.status(400).json({ message: 'Número de mes inválido.' });
       if (isNaN(montoM) || montoM < 0) return res.status(400).json({ message: 'Monto mensual inválido.' });
     }
+  } else if (tipoDist === 'personalizada') {
+    return res.status(400).json({ message: 'Se requieren los 12 meses para distribución personalizada.' });
   }
 
   const conn = await db.promise().getConnection();
@@ -159,12 +151,18 @@ exports.createPresupuesto = async (req, res) => {
 
     // Generar filas mensuales
     let monthlyRows;
-    if (tipoDist === 'auto') {
-      const base      = Math.floor((monto / 12) * 100) / 100;
-      const remainder = +(monto - base * 11).toFixed(2);
-      monthlyRows = Array.from({ length: 12 }, (_, i) => [presId, i + 1, i === 11 ? remainder : base]);
-    } else {
+    if (mesesInput.length === 12) {
       monthlyRows = mesesInput.map(m => [presId, parseInt(m.mes, 10), parseFloat(m.monto_asignado)]);
+    } else {
+      // auto sin meses: distribuir desde el mes actual hasta diciembre
+      const mesInicio = new Date().getMonth() + 1;
+      const numMeses  = Math.max(1, 13 - mesInicio);
+      const base      = Math.floor((monto / numMeses) * 100) / 100;
+      const remainder = +(monto - base * (numMeses - 1)).toFixed(2);
+      monthlyRows = Array.from({ length: 12 }, (_, i) => {
+        const mesNum = i + 1;
+        return [presId, mesNum, mesNum < mesInicio ? 0 : (mesNum === 12 ? remainder : base)];
+      });
     }
     await conn.query(
       'INSERT INTO presupuesto_mensual (presupuesto_id, mes, monto_asignado) VALUES ?',
@@ -269,12 +267,18 @@ exports.updatePresupuesto = async (req, res) => {
 
     // Regenerar filas mensuales
     let monthlyRows;
-    if (tipoDist === 'auto') {
-      const base      = Math.floor((monto / 12) * 100) / 100;
-      const remainder = +(monto - base * 11).toFixed(2);
-      monthlyRows = Array.from({ length: 12 }, (_, i) => [id, i + 1, i === 11 ? remainder : base]);
-    } else {
+    if (mesesInput.length === 12) {
       monthlyRows = mesesInput.map(m => [id, parseInt(m.mes, 10), parseFloat(m.monto_asignado)]);
+    } else {
+      // auto sin meses: distribuir desde el mes actual hasta diciembre
+      const mesInicio = new Date().getMonth() + 1;
+      const numMeses  = Math.max(1, 13 - mesInicio);
+      const base      = Math.floor((monto / numMeses) * 100) / 100;
+      const remainder = +(monto - base * (numMeses - 1)).toFixed(2);
+      monthlyRows = Array.from({ length: 12 }, (_, i) => {
+        const mesNum = i + 1;
+        return [id, mesNum, mesNum < mesInicio ? 0 : (mesNum === 12 ? remainder : base)];
+      });
     }
     await conn.query('DELETE FROM presupuesto_mensual WHERE presupuesto_id = ?', [id]);
     await conn.query(
