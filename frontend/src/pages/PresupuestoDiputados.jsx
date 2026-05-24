@@ -711,6 +711,101 @@ export default function PresupuestoDiputados() {
     });
     y += SHH + SVH + 4;
 
+    // ── Distribución mensual (gráfica de barras) ─────────
+    if (presupuesto.meses && presupuesto.meses.length === 12) {
+      const CHART_TOTAL_H = 76;
+      if (y + 7 + CHART_TOTAL_H + 10 > doc.internal.pageSize.getHeight() - BM - P - 14) {
+        doc.addPage(); y = BM + P + 6;
+      }
+      // Título de sección
+      doc.setFillColor(...C_AZUL);
+      doc.rect(x0, y, CW, 7, 'F');
+      doc.setTextColor(...C_BLANCO);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text('DISTRIBUCIÓN MENSUAL', x0 + 4, y + 4.9);
+      y += 7;
+      // Fondo del área de gráfica
+      doc.setFillColor(248, 250, 255);
+      doc.rect(x0, y, CW, CHART_TOTAL_H, 'F');
+      doc.setDrawColor(220, 228, 242);
+      doc.setLineWidth(0.3);
+      doc.rect(x0, y, CW, CHART_TOTAL_H);
+      const CPAD_L = 24, CPAD_R = 6, CPAD_T = 8, CPAD_B = 20;
+      const chartX = x0 + CPAD_L;
+      const chartY = y + CPAD_T;
+      const chartW = CW - CPAD_L - CPAD_R;
+      const chartH = CHART_TOTAL_H - CPAD_T - CPAD_B;
+      const allVals = presupuesto.meses.flatMap(m => [m.monto_asignado, m.ejecutado]);
+      const maxVal  = Math.max(...allVals, 1);
+      const mag     = Math.pow(10, Math.floor(Math.log10(maxVal)));
+      const niceMax = Math.ceil(maxVal / mag) * mag;
+      for (let g = 0; g <= 4; g++) {
+        const gY   = chartY + chartH - (g / 4) * chartH;
+        const gVal = (g / 4) * niceMax;
+        doc.setDrawColor(220, 228, 242);
+        doc.setLineWidth(0.2);
+        doc.line(chartX, gY, chartX + chartW, gY);
+        const gLabel = gVal >= 1000000
+          ? `L ${(gVal / 1000000).toFixed(1)}M`
+          : gVal >= 1000
+            ? `L ${(gVal / 1000).toFixed(0)}k`
+            : `L ${gVal.toFixed(0)}`;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(140, 155, 185);
+        doc.text(gLabel, chartX - 2, gY + 1.5, { align: 'right' });
+      }
+      doc.setDrawColor(...C_AZUL);
+      doc.setLineWidth(0.4);
+      doc.line(chartX, chartY + chartH, chartX + chartW, chartY + chartH);
+      const BAR_SLOT = chartW / 12;
+      const BAR_W    = BAR_SLOT * 0.27;
+      const BAR_GAP  = 1.0;
+      presupuesto.meses.forEach((m, i) => {
+        const midX   = chartX + i * BAR_SLOT + BAR_SLOT / 2;
+        const cuotaH = niceMax > 0 ? (m.monto_asignado / niceMax) * chartH : 0;
+        const ejecH  = niceMax > 0 ? (m.ejecutado      / niceMax) * chartH : 0;
+        if (cuotaH > 0.3) {
+          doc.setFillColor(...C_AZUL);
+          doc.rect(midX - BAR_W - BAR_GAP / 2, chartY + chartH - cuotaH, BAR_W, cuotaH, 'F');
+        }
+        if (ejecH > 0.3) {
+          doc.setFillColor(234, 88, 12);
+          doc.rect(midX + BAR_GAP / 2, chartY + chartH - ejecH, BAR_W, ejecH, 'F');
+        }
+        if (cuotaH <= 0.3 && ejecH <= 0.3) {
+          doc.setFillColor(210, 220, 235);
+          doc.rect(midX - BAR_W / 2, chartY + chartH - 1, BAR_W, 1, 'F');
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5.8);
+        doc.setTextColor(80, 100, 130);
+        doc.text(MESES_CORTOS[i], midX, chartY + chartH + 5, { align: 'center' });
+        if (cuotaH > 4) {
+          const lbl = m.monto_asignado >= 1000
+            ? `${(m.monto_asignado / 1000).toFixed(0)}k`
+            : m.monto_asignado.toFixed(0);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(5);
+          doc.setTextColor(...C_AZUL);
+          doc.text(lbl, midX - BAR_W / 2 - BAR_GAP / 2, chartY + chartH - cuotaH - 1, { align: 'center' });
+        }
+      });
+      const legendY = y + CHART_TOTAL_H - 6;
+      const legendCX = x0 + CW / 2;
+      doc.setFillColor(...C_AZUL);
+      doc.rect(legendCX - 34, legendY - 3.5, 6, 3.5, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(60, 80, 110);
+      doc.text('Cuota asignada', legendCX - 26, legendY);
+      doc.setFillColor(234, 88, 12);
+      doc.rect(legendCX + 12, legendY - 3.5, 6, 3.5, 'F');
+      doc.text('Ejecutado', legendCX + 20, legendY);
+      y += CHART_TOTAL_H + 8;
+    }
+
     // ── Banner detalle ─────────────────────────────────────
     doc.setFillColor(...C_AZUL);
     doc.rect(x0, y, CW, 7, 'F');
@@ -874,125 +969,6 @@ export default function PresupuestoDiputados() {
     doc.text(totalStr, x0 + CW - 4, y + TOTAL_ROW_H * 0.67, { align: 'right' });
 
     y += TOTAL_ROW_H + 8;
-
-    // ── Distribución mensual (gráfica de barras) ─────────
-    if (presupuesto.meses && presupuesto.meses.length === 12) {
-      const CHART_TOTAL_H = 76;
-      if (y + 7 + CHART_TOTAL_H + 10 > doc.internal.pageSize.getHeight() - BM - P - 14) {
-        doc.addPage(); y = BM + P + 6;
-      }
-
-      // Título de sección
-      doc.setFillColor(...C_AZUL);
-      doc.rect(x0, y, CW, 7, 'F');
-      doc.setTextColor(...C_BLANCO);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.text('DISTRIBUCIÓN MENSUAL', x0 + 4, y + 4.9);
-      y += 7;
-
-      // Fondo del área de gráfica
-      doc.setFillColor(248, 250, 255);
-      doc.rect(x0, y, CW, CHART_TOTAL_H, 'F');
-      doc.setDrawColor(220, 228, 242);
-      doc.setLineWidth(0.3);
-      doc.rect(x0, y, CW, CHART_TOTAL_H);
-
-      const CPAD_L = 24, CPAD_R = 6, CPAD_T = 8, CPAD_B = 20;
-      const chartX = x0 + CPAD_L;
-      const chartY = y + CPAD_T;
-      const chartW = CW - CPAD_L - CPAD_R;
-      const chartH = CHART_TOTAL_H - CPAD_T - CPAD_B;
-
-      // Valor máximo y escala
-      const allVals = presupuesto.meses.flatMap(m => [m.monto_asignado, m.ejecutado]);
-      const maxVal  = Math.max(...allVals, 1);
-      const mag     = Math.pow(10, Math.floor(Math.log10(maxVal)));
-      const niceMax = Math.ceil(maxVal / mag) * mag;
-
-      // Líneas de cuadrícula Y (4 líneas)
-      for (let g = 0; g <= 4; g++) {
-        const gY   = chartY + chartH - (g / 4) * chartH;
-        const gVal = (g / 4) * niceMax;
-        doc.setDrawColor(220, 228, 242);
-        doc.setLineWidth(0.2);
-        doc.line(chartX, gY, chartX + chartW, gY);
-        const gLabel = gVal >= 1000000
-          ? `L ${(gVal / 1000000).toFixed(1)}M`
-          : gVal >= 1000
-            ? `L ${(gVal / 1000).toFixed(0)}k`
-            : `L ${gVal.toFixed(0)}`;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(5.5);
-        doc.setTextColor(140, 155, 185);
-        doc.text(gLabel, chartX - 2, gY + 1.5, { align: 'right' });
-      }
-
-      // Línea base del eje X
-      doc.setDrawColor(...C_AZUL);
-      doc.setLineWidth(0.4);
-      doc.line(chartX, chartY + chartH, chartX + chartW, chartY + chartH);
-
-      // Barras
-      const BAR_SLOT = chartW / 12;
-      const BAR_W    = BAR_SLOT * 0.27;
-      const BAR_GAP  = 1.0;
-
-      presupuesto.meses.forEach((m, i) => {
-        const midX   = chartX + i * BAR_SLOT + BAR_SLOT / 2;
-        const cuotaH = niceMax > 0 ? (m.monto_asignado / niceMax) * chartH : 0;
-        const ejecH  = niceMax > 0 ? (m.ejecutado      / niceMax) * chartH : 0;
-
-        // Barra cuota (azul)
-        if (cuotaH > 0.3) {
-          doc.setFillColor(...C_AZUL);
-          doc.rect(midX - BAR_W - BAR_GAP / 2, chartY + chartH - cuotaH, BAR_W, cuotaH, 'F');
-        }
-        // Barra ejecutado (naranja)
-        if (ejecH > 0.3) {
-          doc.setFillColor(234, 88, 12);
-          doc.rect(midX + BAR_GAP / 2, chartY + chartH - ejecH, BAR_W, ejecH, 'F');
-        }
-        // Raya gris si mes sin datos
-        if (cuotaH <= 0.3 && ejecH <= 0.3) {
-          doc.setFillColor(210, 220, 235);
-          doc.rect(midX - BAR_W / 2, chartY + chartH - 1, BAR_W, 1, 'F');
-        }
-
-        // Etiqueta mes
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(5.8);
-        doc.setTextColor(80, 100, 130);
-        doc.text(MESES_CORTOS[i], midX, chartY + chartH + 5, { align: 'center' });
-
-        // Monto cuota encima de barra (si tiene valor)
-        if (cuotaH > 4) {
-          const lbl = m.monto_asignado >= 1000
-            ? `${(m.monto_asignado / 1000).toFixed(0)}k`
-            : m.monto_asignado.toFixed(0);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(5);
-          doc.setTextColor(...C_AZUL);
-          doc.text(lbl, midX - BAR_W / 2 - BAR_GAP / 2, chartY + chartH - cuotaH - 1, { align: 'center' });
-        }
-      });
-
-      // Leyenda
-      const legendY = y + CHART_TOTAL_H - 6;
-      const legendCX = x0 + CW / 2;
-      doc.setFillColor(...C_AZUL);
-      doc.rect(legendCX - 34, legendY - 3.5, 6, 3.5, 'F');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(60, 80, 110);
-      doc.text('Cuota asignada', legendCX - 26, legendY);
-
-      doc.setFillColor(234, 88, 12);
-      doc.rect(legendCX + 12, legendY - 3.5, 6, 3.5, 'F');
-      doc.text('Ejecutado', legendCX + 20, legendY);
-
-      y += CHART_TOTAL_H + 8;
-    }
 
     // ── Borde exterior + footer azul en TODAS las páginas ────
     const pageCount = doc.internal.getNumberOfPages();
@@ -1337,6 +1313,56 @@ export default function PresupuestoDiputados() {
               <div className="ps-exhausted-banner">
                 <FiAlertCircle size={16} />
                 Presupuesto agotado para {anio} — no es posible registrar nuevas ayudas.
+              </div>
+            )}
+
+            {/* ── Monthly distribution chart (inline) ── */}
+            {presupuesto?.meses?.some(m => m.monto_asignado > 0) && (
+              <div className="ps-monthly-chart-card">
+                <div className="ps-monthly-chart-header">
+                  <span className="ps-monthly-chart-title">Distribución mensual {anio}</span>
+                  <div className="ps-chart-legend">
+                    <span className="ps-legend-item">
+                      <span className="ps-legend-dot" style={{ background: '#274C8D' }} />
+                      Cuota asignada
+                    </span>
+                    <span className="ps-legend-item">
+                      <span className="ps-legend-dot" style={{ background: '#ea580c' }} />
+                      Ejecutado
+                    </span>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart
+                    data={monthlyChartData}
+                    margin={{ top: 6, right: 12, left: 0, bottom: 0 }}
+                    barCategoryGap="20%"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f4fa" vertical={false} />
+                    <XAxis
+                      dataKey="mes"
+                      tick={{ fontSize: 11, fill: '#8a99aa' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
+                      tick={{ fontSize: 10, fill: '#8a99aa' }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={40}
+                    />
+                    <Tooltip
+                      formatter={(v, name) => [formatHNL(v), name === 'cuota' ? 'Cuota asignada' : 'Ejecutado']}
+                      labelFormatter={(_, payload) =>
+                        payload?.length ? `${payload[0].payload.mesLargo} ${anio}` : ''
+                      }
+                      contentStyle={{ borderRadius: 10, border: '1px solid #e0e7ff', fontSize: 12 }}
+                    />
+                    <Bar dataKey="cuota"     fill="#274C8D" radius={[4, 4, 0, 0]} name="cuota" />
+                    <Bar dataKey="ejecutado" fill="#ea580c" radius={[4, 4, 0, 0]} name="ejecutado" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
 

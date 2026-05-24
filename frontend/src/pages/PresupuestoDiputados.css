@@ -1286,6 +1286,26 @@
   font-weight: 600;
 }
 
+/* ── Inline monthly distribution chart card ─────────────────── */
+.ps-monthly-chart-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 20px 10px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+}
+.ps-monthly-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ps-monthly-chart-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #274C8D;
+}
+
 /* ── Chart legend ──────────────────────────────────────────── */
 .ps-chart-legend {
   display: flex;
