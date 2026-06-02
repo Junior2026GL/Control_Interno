@@ -2219,7 +2219,7 @@ export default function PresupuestoDiputados() {
 
       {/* ── Assign / Edit Budget Modal ── */}
       {(modal === 'asignar' || modal === 'editPres') && (
-        <div className="ps-overlay" onClick={() => setModal(null)}>
+        <div className="ps-overlay">
           <div
             className={`ps-modal ${(presForm.tipo_distribucion === 'personalizada' || presForm.tipo_distribucion === 'cuota') ? 'ps-modal-lg' : ''}`}
             onClick={e => e.stopPropagation()}
@@ -2473,7 +2473,7 @@ export default function PresupuestoDiputados() {
 
       {/* ── Register Aid Modal ── */}
       {modal === 'ayuda' && (
-        <div className="ps-overlay" onClick={() => setModal(null)}>
+        <div className="ps-overlay">
           <div className="ps-modal" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
               <h2>Registrar Ayuda Social</h2>
@@ -2560,7 +2560,7 @@ export default function PresupuestoDiputados() {
 
       {/* ── Edit Aid Modal ── */}
       {modal === 'editAyuda' && editingAyuda && (
-        <div className="ps-overlay" onClick={() => setModal(null)}>
+        <div className="ps-overlay">
           <div className="ps-modal" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
               <h2>Editar Ayuda Social</h2>
@@ -2651,7 +2651,7 @@ export default function PresupuestoDiputados() {
         limite.setDate(limite.getDate() + 30);
         const vencido = liqModal.estado_liquidacion === 'sin_liquidar' && Date.now() > limite.getTime();
         return (
-          <div className="ps-overlay" onClick={() => setLiqModal(null)}>
+          <div className="ps-overlay">
             <div className="ps-modal ps-modal-liq" onClick={e => e.stopPropagation()}>
               <div className="ps-modal-header">
                 <div className="ps-liq-modal-title">
