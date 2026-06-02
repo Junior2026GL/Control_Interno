@@ -1,6 +1,7 @@
 import { useEffect, useState, useContext, useMemo, useRef, Fragment } from 'react';
 import {
   FiBarChart2, FiList, FiSearch, FiX, FiDownload, FiChevronDown, FiAward,
+  FiCalendar, FiDollarSign, FiTrendingUp, FiUsers, FiActivity,
 } from 'react-icons/fi';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -677,18 +678,23 @@ export default function ReportesPresupuesto() {
           ) : stats ? (
             <>
               <div className="rp-stat rp-stat--anual">
+                <div className="rp-stat-icon rp-stat-icon--blue"><FiDollarSign size={20} /></div>
                 <span className="rp-stat-lbl">Total Asignado Anual</span>
                 <span className="rp-stat-val rp-val--blue">{formatHNL(stats.totalAsignado)}</span>
               </div>
               <div className="rp-stat rp-stat--mensual">
-                <span className="rp-stat-lbl">Mensual Est. <small className="rp-stat-lbl-sub">(÷ 8 meses)</small></span>
+                <div className="rp-stat-icon rp-stat-icon--purple"><FiCalendar size={20} /></div>
+                <span className="rp-stat-lbl">Mensual Est.</span>
+                <span className="rp-stat-lbl-sub rp-stat-lbl-sub--block">÷ 8 meses</span>
                 <span className="rp-stat-val rp-val--purple">{formatHNL(stats.totalAsignado / 8)}</span>
               </div>
               <div className="rp-stat rp-stat--exec-card">
+                <div className="rp-stat-icon rp-stat-icon--amber"><FiTrendingUp size={20} /></div>
                 <span className="rp-stat-lbl">Total Ejecutado</span>
                 <span className="rp-stat-val rp-val--exec">{formatHNL(stats.totalEjecutado)}</span>
               </div>
               <div className="rp-stat rp-stat--cobertura">
+                <div className="rp-stat-icon rp-stat-icon--cyan"><FiUsers size={20} /></div>
                 <span className="rp-stat-lbl">Cobertura</span>
                 <div className="rp-cobertura-row">
                   <div className="rp-cobertura-item">
@@ -713,8 +719,11 @@ export default function ReportesPresupuesto() {
                 const valCls = pct > 90 ? 'rp-val--warn' : pct > 70 ? 'rp-val--exec' : 'rp-val--green';
                 const barBg  = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
                 const topClr = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
+                const iconClr = pct > 90 ? '#fca5a5' : pct > 70 ? '#fde68a' : '#bbf7d0';
+                const iconTxt = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
                 return (
                   <div className="rp-stat rp-stat--ejec-card" style={{ borderTopColor: topClr }}>
+                    <div className="rp-stat-icon" style={{ background: iconClr, color: iconTxt }}><FiActivity size={20} /></div>
                     <span className="rp-stat-lbl">% Ejecución Global</span>
                     <span className={`rp-stat-val ${valCls}`}>{pct.toFixed(1)}%</span>
                     <div className="rp-stat-bar-bg">
