@@ -1585,6 +1585,3 @@ export default function ReportesPresupuesto() {
     </div>
   );
 }
-    </div>
-  );
-}
