@@ -167,7 +167,7 @@
 .rp-cobertura-total {
   font-size: 15px;
   font-weight: 800;
-  font-family: 'Georgia', serif;
+  font-family: 'Times New Roman', Times, serif;
   color: #0e7490;
   background: #e0f2fe;
   border-radius: 20px;
@@ -175,7 +175,8 @@
   margin-top: 4px;
   text-align: center;
   align-self: center;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .rp-stat-lbl {
