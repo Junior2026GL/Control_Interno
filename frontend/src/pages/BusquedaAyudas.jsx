@@ -1,7 +1,8 @@
 import { useState, useContext, useRef, useMemo, useEffect } from 'react';
 import {
-  FiSearch, FiX, FiFilter, FiDownload, FiChevronDown, FiChevronUp,
-  FiUser, FiCalendar, FiHash, FiAlertCircle, FiFileText, FiBarChart2,
+  FiSearch, FiX, FiDownload, FiChevronDown, FiChevronUp,
+  FiUser, FiHash, FiAlertCircle, FiFileText, FiBarChart2, FiEye,
+  FiCalendar, FiTag, FiMapPin, FiDollarSign, FiInfo,
 } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -55,23 +56,20 @@ export default function BusquedaAyudas() {
   const [loading,   setLoading]   = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // filtros
-  const [anio,        setAnio]        = useState(CURRENT_YEAR);
-  const [anioLibre,   setAnioLibre]   = useState(false);
+  // filtros (solo 3)
   const [q,           setQ]           = useState('');
   const [qInput,      setQInput]      = useState('');
   const [numeroOrden, setNumeroOrden] = useState('');
   const [noInput,     setNoInput]     = useState('');
-  const [estado,      setEstado]      = useState('');
-  const [partido,     setPartido]     = useState('');
-  const [fechaDesde,  setFechaDesde]  = useState('');
-  const [fechaHasta,  setFechaHasta]  = useState('');
   const [selDip,      setSelDip]      = useState(null);
   const [dipSearch,   setDipSearch]   = useState('');
   const [showDipDrop, setShowDipDrop] = useState(false);
-  const dipRef = useRef(null);
-  const qTimer = useRef(null);
+  const dipRef  = useRef(null);
+  const qTimer  = useRef(null);
   const noTimer = useRef(null);
+
+  // modal detalle
+  const [detalle, setDetalle] = useState(null);
 
   /* ── Tab Mensual ─────────────────────────────── */
   const [mesAnio,    setMesAnio]    = useState(CURRENT_YEAR);
@@ -109,21 +107,15 @@ export default function BusquedaAyudas() {
     return [...set].sort();
   }, [diputados]);
 
-  /* ── Buscar ──────────────────────────────────── */
+  /* ── Buscar — siempre en todos los años ─────── */
   const buscar = async (pg = 1) => {
     setLoading(true);
     setHasSearched(true);
     try {
-      const params = new URLSearchParams({ page: pg, limit: PAGE_SIZE });
-      if (!anioLibre) params.append('anio', anio);
-      else params.append('anio_libre', '1');
+      const params = new URLSearchParams({ page: pg, limit: PAGE_SIZE, anio_libre: '1' });
       if (q)           params.append('q', q);
       if (numeroOrden) params.append('numero_orden', numeroOrden);
-      if (estado)      params.append('estado', estado);
-      if (partido)     params.append('partido', partido);
       if (selDip)      params.append('diputado_id', selDip.id);
-      if (fechaDesde)  params.append('fecha_desde', fechaDesde);
-      if (fechaHasta)  params.append('fecha_hasta', fechaHasta);
       const r = await api.get(`/presupuesto/reportes/ayudas?${params}`, { headers: authHeaders() });
       setResults(r.data.data);
       setTotal(r.data.total);
@@ -134,9 +126,8 @@ export default function BusquedaAyudas() {
 
   const limpiar = () => {
     setQ(''); setQInput(''); setNumeroOrden(''); setNoInput('');
-    setEstado(''); setPartido(''); setSelDip(null); setDipSearch('');
-    setFechaDesde(''); setFechaHasta(''); setAnioLibre(false);
-    setAnio(CURRENT_YEAR); setResults([]); setTotal(0); setHasSearched(false);
+    setSelDip(null); setDipSearch('');
+    setResults([]); setTotal(0); setHasSearched(false);
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -344,9 +335,10 @@ export default function BusquedaAyudas() {
         {tab === 'busqueda' && (
           <div className="ba-search-panel">
 
-            {/* Fila 1: texto + número de orden */}
-            <div className="ba-filters-grid">
-              <div className="ba-fg ba-fg--wide">
+            {/* 3 filtros en fila */}
+            <div className="ba-filters-row">
+              {/* Texto libre */}
+              <div className="ba-fg ba-fg--flex2">
                 <label className="ba-label"><FiSearch size={11} /> Buscar (beneficiario, concepto, N° orden)</label>
                 <div className="ba-input-wrap">
                   <input
@@ -356,25 +348,28 @@ export default function BusquedaAyudas() {
                     onChange={e => {
                       setQInput(e.target.value);
                       clearTimeout(qTimer.current);
-                      qTimer.current = setTimeout(() => setQ(e.target.value), 500);
+                      qTimer.current = setTimeout(() => setQ(e.target.value), 400);
                     }}
+                    onKeyDown={e => e.key === 'Enter' && buscar(1)}
                   />
                   {qInput && <button className="ba-input-clear" onClick={() => { setQInput(''); setQ(''); }}><FiX size={11} /></button>}
                 </div>
               </div>
 
+              {/* N° Orden */}
               <div className="ba-fg">
                 <label className="ba-label"><FiHash size={11} /> Número de Orden exacto</label>
                 <div className="ba-input-wrap">
                   <input
                     className="ba-input"
-                    placeholder="Ej: 2025-001"
+                    placeholder="Ej: AS202610"
                     value={noInput}
                     onChange={e => {
                       setNoInput(e.target.value);
                       clearTimeout(noTimer.current);
-                      noTimer.current = setTimeout(() => setNumeroOrden(e.target.value), 500);
+                      noTimer.current = setTimeout(() => setNumeroOrden(e.target.value), 400);
                     }}
+                    onKeyDown={e => e.key === 'Enter' && buscar(1)}
                   />
                   {noInput && <button className="ba-input-clear" onClick={() => { setNoInput(''); setNumeroOrden(''); }}><FiX size={11} /></button>}
                 </div>
@@ -397,7 +392,7 @@ export default function BusquedaAyudas() {
                       onChange={e => { setDipSearch(e.target.value); setShowDipDrop(true); }}
                       onFocus={() => setShowDipDrop(true)}
                     />
-                    {showDipDrop && (
+                    {showDipDrop && dipResults.length > 0 && (
                       <div className="ba-dip-drop">
                         {dipResults.map(d => (
                           <div key={d.id} className="ba-dip-opt"
@@ -411,53 +406,9 @@ export default function BusquedaAyudas() {
                   </div>
                 )}
               </div>
-
-              {/* Partido */}
-              <div className="ba-fg">
-                <label className="ba-label">Partido</label>
-                <select className="ba-select" value={partido} onChange={e => setPartido(e.target.value)}>
-                  <option value="">Todos</option>
-                  {partidos.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
-
-              {/* Estado */}
-              <div className="ba-fg">
-                <label className="ba-label">Estado liquidación</label>
-                <select className="ba-select" value={estado} onChange={e => setEstado(e.target.value)}>
-                  <option value="">Todos</option>
-                  <option value="sin_liquidar">Sin liquidar</option>
-                  <option value="en_proceso">En proceso</option>
-                  <option value="liquido">Líquido</option>
-                </select>
-              </div>
-
-              {/* Año o libre */}
-              <div className="ba-fg">
-                <label className="ba-label"><FiCalendar size={11} /> Año</label>
-                <div className="ba-year-wrap">
-                  <select className="ba-select" value={anio} onChange={e => setAnio(+e.target.value)} disabled={anioLibre}>
-                    {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                  <label className="ba-check-lbl">
-                    <input type="checkbox" checked={anioLibre} onChange={e => setAnioLibre(e.target.checked)} />
-                    Todos los años
-                  </label>
-                </div>
-              </div>
-
-              {/* Fecha desde/hasta */}
-              <div className="ba-fg">
-                <label className="ba-label"><FiCalendar size={11} /> Fecha desde</label>
-                <input type="date" className="ba-input" value={fechaDesde} onChange={e => setFechaDesde(e.target.value)} />
-              </div>
-              <div className="ba-fg">
-                <label className="ba-label"><FiCalendar size={11} /> Fecha hasta</label>
-                <input type="date" className="ba-input" value={fechaHasta} onChange={e => setFechaHasta(e.target.value)} />
-              </div>
             </div>
 
-            {/* Botones buscar/limpiar */}
+            {/* Botones */}
             <div className="ba-filter-actions">
               <button className="ba-btn-secondary" onClick={limpiar}>
                 <FiX size={13} /> Limpiar
@@ -486,25 +437,23 @@ export default function BusquedaAyudas() {
                   <>
                     <div className="ba-results-header">
                       <span className="ba-results-count">
-                        {total} resultado{total !== 1 ? 's' : ''} —{' '}
-                        Total: <strong>{formatHNL(results.reduce((s, r) => s + r.monto, 0))}</strong>
-                        {total > PAGE_SIZE && <span className="ba-results-pag"> (página {page} de {totalPages})</span>}
+                        {total} resultado{total !== 1 ? 's' : ''}
+                        {total > PAGE_SIZE && <span className="ba-results-pag"> — pág. {page} de {totalPages}</span>}
+                      </span>
+                      <span className="ba-results-total">
+                        {formatHNL(results.reduce((s, r) => s + r.monto, 0))}
                       </span>
                     </div>
                     <div className="ba-table-wrap">
                       <table className="ba-table">
                         <thead>
                           <tr>
-                            <th>#</th>
+                            <th style={{ width: 36 }}>#</th>
                             <th>Fecha</th>
                             <th>Diputado</th>
-                            <th>Partido</th>
-                            <th>Tipo</th>
-                            <th>Concepto</th>
-                            <th>Beneficiario</th>
                             <th>N° Orden</th>
                             <th className="ba-th-r">Monto</th>
-                            <th>Estado</th>
+                            <th style={{ width: 50, textAlign: 'center' }}>Detalle</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -512,25 +461,23 @@ export default function BusquedaAyudas() {
                             <tr key={r.id}>
                               <td className="ba-td-num">{(page - 1) * PAGE_SIZE + i + 1}</td>
                               <td className="ba-td-fecha">{formatFecha(r.fecha)}</td>
-                              <td className="ba-td-dip">
-                                <span className="ba-dip-nombre-t">{r.diputado}</span>
-                                <span className="ba-dip-dept">{r.departamento}</span>
-                              </td>
-                              <td><span className="ba-partido-tag">{r.partido || '—'}</span></td>
                               <td>
-                                <span className={`ba-tipo-tag ba-tipo-tag--${r.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
-                                  {r.tipo === 'PROPIETARIO' ? 'Prop.' : 'Sup.'}
-                                </span>
+                                <div className="ba-td-dip">
+                                  <span className="ba-dip-nombre-t">{r.diputado}</span>
+                                  <span className="ba-dip-dept">{r.departamento}</span>
+                                </div>
                               </td>
-                              <td className="ba-td-concepto" title={r.concepto}>{r.concepto}</td>
-                              <td className="ba-td-benef">{r.beneficiario || <span className="ba-vacio">—</span>}</td>
                               <td>
                                 {r.numero_orden
                                   ? <span className="ba-orden-badge">{r.numero_orden}</span>
                                   : <span className="ba-vacio">—</span>}
                               </td>
                               <td className="ba-td-monto">{formatHNL(r.monto)}</td>
-                              <td>{estadoBadge(r.estado_liquidacion)}</td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button className="ba-btn-detalle" title="Ver detalle" onClick={() => setDetalle(r)}>
+                                  <FiEye size={15} />
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -695,6 +642,110 @@ export default function BusquedaAyudas() {
         )}
 
       </div>
+
+      {/* ══════════════════ MODAL DETALLE ══════════════════ */}
+      {detalle && (
+        <div className="ba-modal-overlay">
+          <div className="ba-modal-box">
+            <div className="ba-modal-header">
+              <h2><FiInfo size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />Detalle de Ayuda Social</h2>
+              <button className="ba-modal-close" onClick={() => setDetalle(null)}><FiX size={18} /></button>
+            </div>
+            <div className="ba-modal-body">
+
+              {/* Diputado */}
+              <div className="ba-detail-section">
+                <h3 className="ba-detail-section-title"><FiUser size={13} /> Diputado</h3>
+                <div className="ba-detail-grid">
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Nombre</span>
+                    <span className="ba-detail-val ba-detail-val--bold">{detalle.diputado}</span>
+                  </div>
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Departamento</span>
+                    <span className="ba-detail-val">{detalle.departamento}</span>
+                  </div>
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Partido</span>
+                    <span className="ba-detail-val">
+                      <span className="ba-partido-tag">{detalle.partido || '—'}</span>
+                    </span>
+                  </div>
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Tipo</span>
+                    <span className="ba-detail-val">
+                      <span className={`ba-tipo-tag ba-tipo-tag--${detalle.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
+                        {detalle.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Datos de la ayuda */}
+              <div className="ba-detail-section">
+                <h3 className="ba-detail-section-title"><FiFileText size={13} /> Información de la Ayuda</h3>
+                <div className="ba-detail-grid">
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Fecha</span>
+                    <span className="ba-detail-val">{formatFecha(detalle.fecha)}</span>
+                  </div>
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Año presupuesto</span>
+                    <span className="ba-detail-val">{detalle.anio}</span>
+                  </div>
+                  <div className="ba-detail-field ba-detail-field--wide">
+                    <span className="ba-detail-label">Concepto</span>
+                    <span className="ba-detail-val">{detalle.concepto}</span>
+                  </div>
+                  <div className="ba-detail-field ba-detail-field--wide">
+                    <span className="ba-detail-label">Beneficiario</span>
+                    <span className="ba-detail-val ba-detail-val--bold">{detalle.beneficiario || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Monto y orden */}
+              <div className="ba-detail-section">
+                <h3 className="ba-detail-section-title"><FiDollarSign size={13} /> Monto y Control</h3>
+                <div className="ba-detail-grid">
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Monto</span>
+                    <span className="ba-detail-val ba-detail-val--monto">{formatHNL(detalle.monto)}</span>
+                  </div>
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">N° de Orden</span>
+                    <span className="ba-detail-val">
+                      {detalle.numero_orden
+                        ? <span className="ba-orden-badge">{detalle.numero_orden}</span>
+                        : <span className="ba-vacio">Sin asignar</span>}
+                    </span>
+                  </div>
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Estado liquidación</span>
+                    <span className="ba-detail-val">{estadoBadge(detalle.estado_liquidacion)}</span>
+                  </div>
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Registrado</span>
+                    <span className="ba-detail-val">{formatFecha(detalle.created_at)}</span>
+                  </div>
+                  {detalle.observaciones && (
+                    <div className="ba-detail-field ba-detail-field--wide">
+                      <span className="ba-detail-label">Observaciones</span>
+                      <span className="ba-detail-val ba-detail-val--obs">{detalle.observaciones}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+            <div className="ba-modal-footer">
+              <button className="ba-btn-secondary" onClick={() => setDetalle(null)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
