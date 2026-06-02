@@ -771,6 +771,10 @@ export default function ReportesPresupuesto() {
                       <div className="rp-partido-header-right">
                         <span className="rp-partido-total-lbl">Total asignado anual</span>
                         <span className="rp-partido-total">{formatHNL(totalAsig)}</span>
+                        <span className="rp-partido-mensual">
+                          <FiCalendar size={10} style={{ marginRight: 3, verticalAlign: 'middle' }} />
+                          {formatHNL(totalAsig / 8)}<span className="rp-partido-mensual-tag">/mes</span>
+                        </span>
                       </div>
                     </div>
 

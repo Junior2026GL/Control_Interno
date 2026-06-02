@@ -845,7 +845,7 @@
 .rp-partido-name {
   font-size: 16px;
   font-weight: 800;
-  color: #1e3a5f;
+  color: #0f172a;
   line-height: 1.25;
   letter-spacing: 0.3px;
 }
@@ -856,17 +856,38 @@
   gap: 2px;
 }
 .rp-partido-total-lbl {
-  font-size: 9.5px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #94a3b8;
+  letter-spacing: 0.6px;
+  color: #475569;
 }
 .rp-partido-total {
   font-size: 15px;
-  font-weight: 700;
-  color: #d97706;
+  font-weight: 800;
+  color: #1d4ed8;
   white-space: nowrap;
+}
+.rp-partido-mensual {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6d28d9;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #ede9fe;
+  border-radius: 8px;
+  padding: 2px 7px;
+  margin-top: 2px;
+}
+.rp-partido-mensual-tag {
+  font-size: 9px;
+  font-weight: 700;
+  color: #7c3aed;
+  margin-left: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 /* Divider */
@@ -897,7 +918,7 @@
 .rp-partido-row-monto {
   font-size: 17px;
   font-weight: 800;
-  color: #1e3a5f;
+  color: #1e293b;
   line-height: 1;
 }
 .rp-partido-row-body {
@@ -917,11 +938,11 @@
   gap: 3px;
 }
 .rp-partido-num-lbl {
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #94a3b8;
+  color: #475569;
   white-space: nowrap;
 }
 
@@ -1000,9 +1021,9 @@
 .rp-pct--red    { color: #dc2626; }
 
 .rp-partido-ejec-lbl {
-  font-size: 11px;
-  font-weight: 500;
-  color: #94a3b8;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
 }
 
 /* Card inactivos */
