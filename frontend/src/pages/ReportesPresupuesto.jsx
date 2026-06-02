@@ -332,13 +332,13 @@ export default function ReportesPresupuesto() {
     ];
   }, [stats]);
 
-  /* mapa de logos de partido — coloca las imágenes en /public con estos nombres */
+  /* mapa de logos de partido */
   const PARTIDO_LOGO = {
-    'NACIONAL': '/partido-nacional.png',
-    'LIBERAL':  '/partido-liberal.png',
-    'LIBRE':    '/partido-libre.png',
-    'PINU':     '/partido-pinu.png',
-    'DC':       '/partido-dc.png',
+    'NACIONAL': '/nacional.jpg',
+    'LIBERAL':  '/liberal.jpg',
+    'LIBRE':    '/libre.jpg',
+    'PINU':     '/pinu.jpg',
+    'DC':       '/dc.jpg',
   };
 
   /* stats por partido */
