@@ -666,44 +666,61 @@ export default function BusquedaAyudas() {
       {detalle && (
         <div className="ba-modal-overlay">
           <div className="ba-modal-box">
-            <div className="ba-modal-header">
-              <h2><FiInfo size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />Detalle de Ayuda Social</h2>
-              <button className="ba-modal-close" onClick={() => setDetalle(null)}><FiX size={18} /></button>
+
+            {/* Header con banda azul */}
+            <div className="ba-modal-header-pro">
+              <div className="ba-modal-header-left">
+                <div className="ba-modal-icon-wrap"><FiFileText size={18} /></div>
+                <div>
+                  <p className="ba-modal-header-supra">Ayuda Social</p>
+                  <h2 className="ba-modal-header-title">Detalle del Registro</h2>
+                </div>
+              </div>
+              <button className="ba-modal-close-pro" onClick={() => setDetalle(null)}><FiX size={17} /></button>
             </div>
+
+            {/* Tarjeta diputado destacada */}
+            <div className="ba-modal-dip-card">
+              <div className="ba-modal-dip-avatar"><FiUser size={20} /></div>
+              <div className="ba-modal-dip-info">
+                <span className="ba-modal-dip-nombre">{detalle.diputado}</span>
+                <span className="ba-modal-dip-sub">
+                  <FiMapPin size={11} /> {detalle.departamento}
+                </span>
+              </div>
+              <div className="ba-modal-dip-badges">
+                <span className="ba-partido-tag">{detalle.partido || '—'}</span>
+                <span className={`ba-tipo-tag ba-tipo-tag--${detalle.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
+                  {detalle.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                </span>
+              </div>
+            </div>
+
             <div className="ba-modal-body">
 
-              {/* Diputado */}
-              <div className="ba-detail-section">
-                <h3 className="ba-detail-section-title"><FiUser size={13} /> Diputado</h3>
-                <div className="ba-detail-grid">
-                  <div className="ba-detail-field">
-                    <span className="ba-detail-label">Nombre</span>
-                    <span className="ba-detail-val ba-detail-val--bold">{detalle.diputado}</span>
-                  </div>
-                  <div className="ba-detail-field">
-                    <span className="ba-detail-label">Departamento</span>
-                    <span className="ba-detail-val">{detalle.departamento}</span>
-                  </div>
-                  <div className="ba-detail-field">
-                    <span className="ba-detail-label">Partido</span>
-                    <span className="ba-detail-val">
-                      <span className="ba-partido-tag">{detalle.partido || '—'}</span>
-                    </span>
-                  </div>
-                  <div className="ba-detail-field">
-                    <span className="ba-detail-label">Tipo</span>
-                    <span className="ba-detail-val">
-                      <span className={`ba-tipo-tag ba-tipo-tag--${detalle.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
-                        {detalle.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
-                      </span>
-                    </span>
-                  </div>
+              {/* Fila: Monto destacado + Estado + N° Orden */}
+              <div className="ba-modal-kpis">
+                <div className="ba-modal-kpi ba-modal-kpi--monto">
+                  <span className="ba-modal-kpi-lbl">Monto</span>
+                  <span className="ba-modal-kpi-val">{formatHNL(detalle.monto)}</span>
+                </div>
+                <div className="ba-modal-kpi">
+                  <span className="ba-modal-kpi-lbl">Estado liquidación</span>
+                  <span className="ba-modal-kpi-val">{estadoBadge(detalle.estado_liquidacion)}</span>
+                </div>
+                <div className="ba-modal-kpi">
+                  <span className="ba-modal-kpi-lbl">N° de Orden</span>
+                  <span className="ba-modal-kpi-val">
+                    {detalle.numero_orden
+                      ? <span className="ba-orden-badge">{detalle.numero_orden}</span>
+                      : <span className="ba-vacio-sm">Sin asignar</span>}
+                  </span>
                 </div>
               </div>
 
-              {/* Datos de la ayuda */}
+              {/* Información de la ayuda */}
               <div className="ba-detail-section">
-                <h3 className="ba-detail-section-title"><FiFileText size={13} /> Información de la Ayuda</h3>
+                <h3 className="ba-detail-section-title"><FiFileText size={12} /> Información de la Ayuda</h3>
                 <div className="ba-detail-grid">
                   <div className="ba-detail-field">
                     <span className="ba-detail-label">Fecha</span>
@@ -721,43 +738,23 @@ export default function BusquedaAyudas() {
                     <span className="ba-detail-label">Beneficiario</span>
                     <span className="ba-detail-val ba-detail-val--bold">{detalle.beneficiario || '—'}</span>
                   </div>
-                </div>
-              </div>
-
-              {/* Monto y orden */}
-              <div className="ba-detail-section">
-                <h3 className="ba-detail-section-title"><FiDollarSign size={13} /> Monto y Control</h3>
-                <div className="ba-detail-grid">
-                  <div className="ba-detail-field">
-                    <span className="ba-detail-label">Monto</span>
-                    <span className="ba-detail-val ba-detail-val--monto">{formatHNL(detalle.monto)}</span>
-                  </div>
-                  <div className="ba-detail-field">
-                    <span className="ba-detail-label">N° de Orden</span>
-                    <span className="ba-detail-val">
-                      {detalle.numero_orden
-                        ? <span className="ba-orden-badge">{detalle.numero_orden}</span>
-                        : <span className="ba-vacio">Sin asignar</span>}
-                    </span>
-                  </div>
-                  <div className="ba-detail-field">
-                    <span className="ba-detail-label">Estado liquidación</span>
-                    <span className="ba-detail-val">{estadoBadge(detalle.estado_liquidacion)}</span>
-                  </div>
                   <div className="ba-detail-field">
                     <span className="ba-detail-label">Registrado</span>
                     <span className="ba-detail-val">{formatFecha(detalle.created_at)}</span>
                   </div>
-                  {detalle.observaciones && (
-                    <div className="ba-detail-field ba-detail-field--wide">
-                      <span className="ba-detail-label">Observaciones</span>
-                      <span className="ba-detail-val ba-detail-val--obs">{detalle.observaciones}</span>
-                    </div>
-                  )}
                 </div>
               </div>
 
+              {/* Observaciones */}
+              {detalle.observaciones && (
+                <div className="ba-detail-section">
+                  <h3 className="ba-detail-section-title"><FiInfo size={12} /> Observaciones</h3>
+                  <p className="ba-detail-obs-text">{detalle.observaciones}</p>
+                </div>
+              )}
+
             </div>
+
             <div className="ba-modal-footer">
               <button className="ba-btn-secondary" onClick={() => setDetalle(null)}>Cerrar</button>
             </div>

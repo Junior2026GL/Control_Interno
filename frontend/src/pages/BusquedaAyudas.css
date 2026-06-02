@@ -624,49 +624,167 @@
 .ba-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(15, 23, 42, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  backdrop-filter: blur(2px);
 }
 .ba-modal-box {
   background: #fff;
-  border-radius: 14px;
+  border-radius: 16px;
   width: 100%;
-  max-width: 620px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  max-width: 580px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.28);
   display: flex;
   flex-direction: column;
   max-height: 90vh;
   overflow: hidden;
 }
-.ba-modal-header {
+
+/* Header banda azul */
+.ba-modal-header-pro {
+  background: linear-gradient(135deg, #1e3a6e 0%, #274c8d 100%);
+  padding: 18px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 22px 14px;
-  border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
 }
-.ba-modal-header h2 {
+.ba-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ba-modal-icon-wrap {
+  background: rgba(255,255,255,.15);
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.ba-modal-header-supra {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.65);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin: 0 0 2px;
+}
+.ba-modal-header-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #1e3a5f;
+  color: #fff;
   margin: 0;
 }
-.ba-modal-close {
-  background: none;
+.ba-modal-close-pro {
+  background: rgba(255,255,255,.12);
   border: none;
-  color: #94a3b8;
+  border-radius: 8px;
+  color: rgba(255,255,255,.8);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
+  padding: 6px;
   line-height: 1;
   transition: all 0.15s;
 }
-.ba-modal-close:hover { background: #fee2e2; color: #ef4444; }
+.ba-modal-close-pro:hover { background: rgba(255,255,255,.25); color: #fff; }
+
+/* Tarjeta diputado */
+.ba-modal-dip-card {
+  background: #f0f7ff;
+  border-bottom: 1px solid #dbeafe;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.ba-modal-dip-avatar {
+  background: #274c8d;
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ba-modal-dip-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.ba-modal-dip-nombre {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ba-modal-dip-sub {
+  font-size: 0.76rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ba-modal-dip-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* KPIs fila */
+.ba-modal-kpis {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.ba-modal-kpi {
+  flex: 1;
+  min-width: 120px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ba-modal-kpi--monto {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-color: #bfdbfe;
+}
+.ba-modal-kpi-lbl {
+  font-size: 0.69rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #94a3b8;
+}
+.ba-modal-kpi--monto .ba-modal-kpi-lbl { color: #1e40af; }
+.ba-modal-kpi-val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1e3a5f;
+  display: flex;
+  align-items: center;
+}
+.ba-modal-kpi--monto .ba-modal-kpi-val { color: #274c8d; font-size: 1.15rem; }
+
+.ba-vacio-sm { font-size: 0.8rem; color: #cbd5e1; font-weight: 500; }
 
 .ba-modal-body {
   padding: 20px 22px;
@@ -674,14 +792,27 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 .ba-modal-footer {
-  padding: 14px 22px;
+  padding: 12px 22px;
   border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
   flex-shrink: 0;
+  background: #f8fafc;
+}
+
+/* Observaciones como párrafo */
+.ba-detail-obs-text {
+  margin: 0;
+  background: #f8fafc;
+  border-left: 3px solid #274c8d;
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.55;
 }
 
 /* ── Detail sections ──────────────────────────────────────────── */
