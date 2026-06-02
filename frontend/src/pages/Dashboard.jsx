@@ -74,6 +74,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
   },
   {
+    path: '/viaticos-diputados',
+    label: 'Viáticos Diputados',
+    clave: 'viaticos-diputados',
+    description: 'Registro y control de viáticos de diputados propietarios y suplentes',
+    icon: LuFileSpreadsheet,
+    gradient: 'linear-gradient(135deg, #0891b2 0%, #0284c7 100%)',
+  },
+  {
     path: '/constancia-transferencia',
     label: 'Constancia Transferencia',
     clave: 'constancia-transferencia',
