@@ -346,13 +346,22 @@ export default function ReportesPresupuesto() {
     const map = {};
     resumen.forEach(r => {
       const p = (r.partido || 'Sin Partido').trim();
-      if (!map[p]) map[p] = { partido: p, propietarios: 0, suplentes: 0, asignadoProp: 0, asignadoSup: 0, ejecutadoProp: 0, ejecutadoSup: 0 };
+      if (!map[p]) map[p] = {
+        partido: p,
+        propietarios: 0, propConPres: 0,
+        suplentes: 0,    supConPres: 0,
+        asignadoProp: 0, asignadoSup: 0,
+        ejecutadoProp: 0, ejecutadoSup: 0,
+      };
+      const conPres = r.monto_asignado != null;
       if (r.tipo === 'PROPIETARIO') {
         map[p].propietarios++;
+        if (conPres) map[p].propConPres++;
         map[p].asignadoProp  += r.monto_asignado || 0;
         map[p].ejecutadoProp += r.ejecutado      || 0;
       } else {
         map[p].suplentes++;
+        if (conPres) map[p].supConPres++;
         map[p].asignadoSup  += r.monto_asignado || 0;
         map[p].ejecutadoSup += r.ejecutado      || 0;
       }
@@ -751,17 +760,23 @@ export default function ReportesPresupuesto() {
                     <div className="rp-partido-table">
                       <div className="rp-partido-col-head">
                         <span />
-                        <span>Diputados</span>
+                        <span>Total</span>
+                        <span>Con pres.</span>
+                        <span>Sin pres.</span>
                         <span>Asignado</span>
                       </div>
                       <div className="rp-partido-table-row rp-partido-table-row--prop">
                         <span className="rp-partido-tipo rp-partido-tipo--prop">Propietarios</span>
                         <span className="rp-partido-count">{pt.propietarios}</span>
+                        <span className="rp-partido-sub rp-partido-sub--con">{pt.propConPres}</span>
+                        <span className="rp-partido-sub rp-partido-sub--sin">{pt.propietarios - pt.propConPres}</span>
                         <span className="rp-partido-monto">{formatHNL(pt.asignadoProp)}</span>
                       </div>
                       <div className="rp-partido-table-row rp-partido-table-row--sup">
                         <span className="rp-partido-tipo rp-partido-tipo--sup">Suplentes</span>
                         <span className="rp-partido-count">{pt.suplentes}</span>
+                        <span className="rp-partido-sub rp-partido-sub--con">{pt.supConPres}</span>
+                        <span className="rp-partido-sub rp-partido-sub--sin">{pt.suplentes - pt.supConPres}</span>
                         <span className="rp-partido-monto">{formatHNL(pt.asignadoSup)}</span>
                       </div>
                     </div>
