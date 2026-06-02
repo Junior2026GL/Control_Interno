@@ -682,36 +682,58 @@ export default function ReportesPresupuesto() {
         {!loadingResumen && partidoStats.length > 0 && (
           <div className="rp-partido-section">
             <p className="rp-partido-title">
-              <FiAward size={14} /> Presupuesto por Partido Político — {anio}
+              <FiAward size={15} /> Presupuesto por Partido Político — {anio}
             </p>
             <div className="rp-partido-grid">
               {partidoStats.map(pt => {
                 const totalAsig = pt.asignadoProp + pt.asignadoSup;
                 const totalEjec = pt.ejecutadoProp + pt.ejecutadoSup;
                 const pct = totalAsig > 0 ? Math.min(100, (totalEjec / totalAsig) * 100) : 0;
-                const barBg = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
+                const barBg  = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
+                const pctCls = pct > 90 ? 'rp-pct--red' : pct > 70 ? 'rp-pct--yellow' : 'rp-pct--green';
                 return (
                   <div key={pt.partido} className="rp-partido-card">
+
+                    {/* Cabecera: nombre + total */}
                     <div className="rp-partido-card-header">
                       <span className="rp-partido-name">{pt.partido}</span>
-                      <span className="rp-partido-total">{formatHNL(totalAsig)}</span>
+                      <div className="rp-partido-header-right">
+                        <span className="rp-partido-total-lbl">Total asignado</span>
+                        <span className="rp-partido-total">{formatHNL(totalAsig)}</span>
+                      </div>
                     </div>
-                    <div className="rp-partido-rows">
-                      <div className="rp-partido-row">
+
+                    <div className="rp-partido-divider" />
+
+                    {/* Columnas: etiqueta | # | monto */}
+                    <div className="rp-partido-table">
+                      <div className="rp-partido-col-head">
+                        <span />
+                        <span>Diputados</span>
+                        <span>Asignado</span>
+                      </div>
+                      <div className="rp-partido-table-row rp-partido-table-row--prop">
                         <span className="rp-partido-tipo rp-partido-tipo--prop">Propietarios</span>
                         <span className="rp-partido-count">{pt.propietarios}</span>
                         <span className="rp-partido-monto">{formatHNL(pt.asignadoProp)}</span>
                       </div>
-                      <div className="rp-partido-row">
+                      <div className="rp-partido-table-row rp-partido-table-row--sup">
                         <span className="rp-partido-tipo rp-partido-tipo--sup">Suplentes</span>
                         <span className="rp-partido-count">{pt.suplentes}</span>
                         <span className="rp-partido-monto">{formatHNL(pt.asignadoSup)}</span>
                       </div>
                     </div>
+
+                    {/* Barra de ejecución */}
                     {totalAsig > 0 && (
-                      <div className="rp-partido-bar-bg">
-                        <div className="rp-partido-bar-fill" style={{ width: `${pct}%`, background: barBg }} />
-                        <span className="rp-partido-bar-pct">{pct.toFixed(1)}% ejec.</span>
+                      <div className="rp-partido-footer">
+                        <div className="rp-partido-bar-wrap">
+                          <div className="rp-partido-bar-bg">
+                            <div className="rp-partido-bar-fill" style={{ width: `${pct}%`, background: barBg }} />
+                          </div>
+                          <span className={`rp-partido-pct ${pctCls}`}>{pct.toFixed(1)}%</span>
+                        </div>
+                        <span className="rp-partido-ejec-lbl">Ejecución: {formatHNL(totalEjec)}</span>
                       </div>
                     )}
                   </div>
