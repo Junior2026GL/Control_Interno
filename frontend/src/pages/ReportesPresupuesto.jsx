@@ -758,27 +758,27 @@ export default function ReportesPresupuesto() {
 
                     {/* Columnas: etiqueta | # | monto */}
                     <div className="rp-partido-table">
-                      <div className="rp-partido-col-head">
-                        <span />
-                        <span>Total</span>
-                        <span>Con pres.</span>
-                        <span>Sin pres.</span>
-                        <span>Asignado</span>
-                      </div>
-                      <div className="rp-partido-table-row rp-partido-table-row--prop">
-                        <span className="rp-partido-tipo rp-partido-tipo--prop">Propietarios</span>
-                        <span className="rp-partido-count">{pt.propietarios}</span>
-                        <span className="rp-partido-sub rp-partido-sub--con">{pt.propConPres}</span>
-                        <span className="rp-partido-sub rp-partido-sub--sin">{pt.propietarios - pt.propConPres}</span>
-                        <span className="rp-partido-monto">{formatHNL(pt.asignadoProp)}</span>
-                      </div>
-                      <div className="rp-partido-table-row rp-partido-table-row--sup">
-                        <span className="rp-partido-tipo rp-partido-tipo--sup">Suplentes</span>
-                        <span className="rp-partido-count">{pt.suplentes}</span>
-                        <span className="rp-partido-sub rp-partido-sub--con">{pt.supConPres}</span>
-                        <span className="rp-partido-sub rp-partido-sub--sin">{pt.suplentes - pt.supConPres}</span>
-                        <span className="rp-partido-monto">{formatHNL(pt.asignadoSup)}</span>
-                      </div>
+                      {[
+                        { label: 'Propietarios', cls: 'prop', total: pt.propietarios, con: pt.propConPres, sin: pt.propietarios - pt.propConPres, monto: pt.asignadoProp },
+                        { label: 'Suplentes',    cls: 'sup',  total: pt.suplentes,    con: pt.supConPres,  sin: pt.suplentes    - pt.supConPres,  monto: pt.asignadoSup  },
+                      ].map(row => (
+                        <div key={row.cls} className={`rp-partido-table-row rp-partido-table-row--${row.cls}`}>
+                          <span className={`rp-partido-tipo rp-partido-tipo--${row.cls}`}>{row.label}</span>
+                          <div>
+                            <div className="rp-partido-row-right-labels">
+                              <span>Total</span>
+                              <span>Con pres.</span>
+                              <span>Sin pres.</span>
+                            </div>
+                            <div className="rp-partido-row-right">
+                              <span className="rp-partido-count">{row.total}</span>
+                              <span className="rp-partido-sub rp-partido-sub--con">{row.con}</span>
+                              <span className="rp-partido-sub rp-partido-sub--sin">{row.sin}</span>
+                            </div>
+                          </div>
+                          <span className="rp-partido-monto rp-partido-monto--full">{formatHNL(row.monto)}</span>
+                        </div>
+                      ))}
                     </div>
 
                     {/* Barra de ejecución */}

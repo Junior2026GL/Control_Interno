@@ -649,25 +649,26 @@
 }
 .rp-partido-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
 }
 
 /* Card */
 .rp-partido-card {
   border: 1.5px solid #e2e8f0;
-  border-top: 4px solid #274C8D;
-  border-radius: 12px;
-  padding: 16px 18px 14px;
+  border-top: 5px solid #274C8D;
+  border-radius: 14px;
+  padding: 20px 22px 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0,0,0,.05);
-  transition: box-shadow .2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  transition: box-shadow .2s, transform .2s;
 }
 .rp-partido-card:hover {
-  box-shadow: 0 4px 16px rgba(39,76,141,.10);
+  box-shadow: 0 6px 20px rgba(39,76,141,.13);
+  transform: translateY(-2px);
 }
 
 /* Header */
@@ -720,11 +721,11 @@
   font-size: 18px;
 }
 .rp-partido-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   color: #1e3a5f;
   line-height: 1.25;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
 }
 .rp-partido-header-right {
   display: flex;
@@ -740,7 +741,7 @@
   color: #94a3b8;
 }
 .rp-partido-total {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #d97706;
   white-space: nowrap;
@@ -757,41 +758,27 @@
 .rp-partido-table {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 8px;
 }
-.rp-partido-col-head {
-  display: grid;
-  grid-template-columns: 1fr 36px 44px 44px 1fr;
-  align-items: center;
-  font-size: 9.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #94a3b8;
-  padding: 0 2px 6px;
-}
-.rp-partido-col-head span:nth-child(2),
-.rp-partido-col-head span:nth-child(3),
-.rp-partido-col-head span:nth-child(4) { text-align: center; }
-.rp-partido-col-head span:nth-child(5) { text-align: right; }
+.rp-partido-col-head { display: none; }
 
 .rp-partido-table-row {
   display: grid;
-  grid-template-columns: 1fr 36px 44px 44px 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  padding: 7px 4px;
-  border-radius: 8px;
-  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  gap: 6px 16px;
 }
-.rp-partido-table-row--prop { background: #eff6ff; margin-bottom: 4px; }
-.rp-partido-table-row--sup  { background: #f0fdf4; }
+.rp-partido-table-row--prop { background: #eff6ff; border: 1px solid #bfdbfe; }
+.rp-partido-table-row--sup  { background: #f0fdf4; border: 1px solid #bbf7d0; }
 
 .rp-partido-tipo {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  padding: 3px 9px;
+  padding: 6px 14px;
   border-radius: 99px;
   white-space: nowrap;
   display: inline-block;
@@ -799,25 +786,58 @@
 .rp-partido-tipo--prop { background: #dbeafe; color: #1d4ed8; }
 .rp-partido-tipo--sup  { background: #bbf7d0; color: #15803d; }
 
+.rp-partido-row-right {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  align-items: end;
+}
+.rp-partido-row-right-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+.rp-partido-row-right-labels span {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #94a3b8;
+  text-align: center;
+}
+.rp-partido-row-right-labels span:last-child { text-align: right; }
+
 .rp-partido-count {
-  font-size: 17px;
+  font-size: 22px;
   font-weight: 800;
   color: #1e293b;
   text-align: center;
+  line-height: 1;
 }
 .rp-partido-sub {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   text-align: center;
-  border-radius: 99px;
-  padding: 1px 4px;
+  border-radius: 8px;
+  padding: 3px 6px;
+  line-height: 1;
 }
 .rp-partido-sub--con { color: #15803d; background: #dcfce7; }
 .rp-partido-sub--sin { color: #b45309; background: #fef3c7; }
 .rp-partido-monto {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   color: #334155;
+  text-align: right;
+  white-space: nowrap;
+}
+.rp-partido-monto--full {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e3a5f;
+  text-align: right;
+}
   text-align: right;
   white-space: nowrap;
 }
