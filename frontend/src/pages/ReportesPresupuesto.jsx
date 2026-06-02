@@ -173,6 +173,7 @@ export default function ReportesPresupuesto() {
   const [dipSearch,     setDipSearch]     = useState('');
   const [showDipDrop,   setShowDipDrop]   = useState(false);
   const [todosDips,     setTodosDips]     = useState([]);
+  const [todosDipsAll,  setTodosDipsAll]  = useState([]);
   const [aSearch,       setASearch]       = useState('');
   const [aSearchInput,  setASearchInput]  = useState('');
   const dipDropRef = useRef(null);
@@ -218,7 +219,10 @@ export default function ReportesPresupuesto() {
   /* load diputados once */
   useEffect(() => {
     api.get('/diputados', { headers: authHeaders() })
-      .then(r => setTodosDips(r.data.filter(d => d.activo)))
+      .then(r => {
+        setTodosDips(r.data.filter(d => d.activo));
+        setTodosDipsAll(r.data);
+      })
       .catch(() => {});
   }, []);
 
@@ -328,6 +332,15 @@ export default function ReportesPresupuesto() {
     ];
   }, [stats]);
 
+  /* mapa de logos de partido — coloca las imágenes en /public con estos nombres */
+  const PARTIDO_LOGO = {
+    'NACIONAL': '/partido-nacional.png',
+    'LIBERAL':  '/partido-liberal.png',
+    'LIBRE':    '/partido-libre.png',
+    'PINU':     '/partido-pinu.png',
+    'DC':       '/partido-dc.png',
+  };
+
   /* stats por partido */
   const partidoStats = useMemo(() => {
     const map = {};
@@ -348,6 +361,22 @@ export default function ReportesPresupuesto() {
       (b.asignadoProp + b.asignadoSup) - (a.asignadoProp + a.asignadoSup)
     );
   }, [resumen]);
+
+  /* diputados inactivos agrupados por partido y tipo */
+  const inactivosStats = useMemo(() => {
+    const inactivos = todosDipsAll.filter(d => !d.activo);
+    if (!inactivos.length) return [];
+    const map = {};
+    inactivos.forEach(d => {
+      const p = (d.partido || 'Sin Partido').trim();
+      if (!map[p]) map[p] = { partido: p, propietarios: [], suplentes: [] };
+      if (d.tipo === 'PROPIETARIO') map[p].propietarios.push(d.nombre);
+      else                          map[p].suplentes.push(d.nombre);
+    });
+    return Object.values(map).sort((a, b) =>
+      (b.propietarios.length + b.suplentes.length) - (a.propietarios.length + a.suplentes.length)
+    );
+  }, [todosDipsAll]);
 
   /* filtered + sorted resumen */
   const resumenFiltered = useMemo(() => {
@@ -694,9 +723,22 @@ export default function ReportesPresupuesto() {
                 return (
                   <div key={pt.partido} className="rp-partido-card">
 
-                    {/* Cabecera: nombre + total */}
+                    {/* Cabecera: logo + nombre + total */}
                     <div className="rp-partido-card-header">
-                      <span className="rp-partido-name">{pt.partido}</span>
+                      <div className="rp-partido-header-left">
+                        <div className="rp-partido-logo-wrap">
+                          <img
+                            src={PARTIDO_LOGO[pt.partido] || ''}
+                            alt={pt.partido}
+                            className="rp-partido-logo"
+                            onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                          />
+                          <span className="rp-partido-logo-fallback" style={{ display: 'none' }}>
+                            {pt.partido.slice(0, 2)}
+                          </span>
+                        </div>
+                        <span className="rp-partido-name">{pt.partido}</span>
+                      </div>
                       <div className="rp-partido-header-right">
                         <span className="rp-partido-total-lbl">Total asignado</span>
                         <span className="rp-partido-total">{formatHNL(totalAsig)}</span>
@@ -739,6 +781,52 @@ export default function ReportesPresupuesto() {
                   </div>
                 );
               })}
+
+              {/* Card diputados inactivos */}
+              {inactivosStats.length > 0 && (
+                <div className="rp-partido-card rp-partido-card--inactivos">
+                  <div className="rp-partido-card-header">
+                    <div className="rp-partido-header-left">
+                      <div className="rp-partido-logo-wrap rp-partido-logo-wrap--inact">
+                        <span className="rp-partido-logo-fallback rp-partido-logo-fallback--inact" style={{ display: 'flex' }}>🚫</span>
+                      </div>
+                      <span className="rp-partido-name rp-partido-name--inact">Inactivos</span>
+                    </div>
+                    <div className="rp-partido-header-right">
+                      <span className="rp-partido-total-lbl">Total</span>
+                      <span className="rp-partido-total rp-partido-total--inact">
+                        {inactivosStats.reduce((s, p) => s + p.propietarios.length + p.suplentes.length, 0)} diputados
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rp-partido-divider" />
+
+                  <div className="rp-inactivos-list">
+                    {inactivosStats.map(ip => (
+                      <div key={ip.partido} className="rp-inactivos-partido">
+                        <span className="rp-inactivos-partido-name">{ip.partido}</span>
+                        {ip.propietarios.length > 0 && (
+                          <div className="rp-inactivos-group">
+                            <span className="rp-partido-tipo rp-partido-tipo--prop">Propietarios</span>
+                            <ul className="rp-inactivos-nombres">
+                              {ip.propietarios.map(n => <li key={n}>{n}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                        {ip.suplentes.length > 0 && (
+                          <div className="rp-inactivos-group">
+                            <span className="rp-partido-tipo rp-partido-tipo--sup">Suplentes</span>
+                            <ul className="rp-inactivos-nombres">
+                              {ip.suplentes.map(n => <li key={n}>{n}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
