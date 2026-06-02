@@ -688,17 +688,23 @@ export default function ReportesPresupuesto() {
                 <span className="rp-stat-lbl">Total Ejecutado</span>
                 <span className="rp-stat-val rp-val--exec">{formatHNL(stats.totalEjecutado)}</span>
               </div>
-              <div className="rp-stat rp-stat--con-card">
-                <span className="rp-stat-lbl">Con Presupuesto</span>
-                <span className="rp-stat-val rp-val--green">
-                  {stats.conPresupuesto} <small>de {stats.total}</small>
-                </span>
-              </div>
-              <div className={`rp-stat rp-stat--sin-card ${stats.sinPresupuesto > 0 ? 'rp-stat--warn-card' : ''}`}>
-                <span className="rp-stat-lbl">Sin Presupuesto</span>
-                <span className={`rp-stat-val ${stats.sinPresupuesto > 0 ? 'rp-val--warn' : 'rp-val--green'}`}>
-                  {stats.sinPresupuesto}
-                </span>
+              <div className="rp-stat rp-stat--cobertura">
+                <span className="rp-stat-lbl">Cobertura</span>
+                <div className="rp-cobertura-row">
+                  <div className="rp-cobertura-item">
+                    <span className="rp-cobertura-num rp-val--green">{stats.conPresupuesto}</span>
+                    <span className="rp-cobertura-sub">Con presupuesto</span>
+                  </div>
+                  <div className="rp-cobertura-divider" />
+                  <div className="rp-cobertura-item">
+                    <span className={`rp-cobertura-num ${stats.sinPresupuesto > 0 ? 'rp-val--warn' : 'rp-val--green'}`}>{stats.sinPresupuesto}</span>
+                    <span className="rp-cobertura-sub">Sin presupuesto</span>
+                  </div>
+                </div>
+                <div className="rp-cobertura-bar-bg">
+                  <div className="rp-cobertura-bar-fill" style={{ width: `${stats.total > 0 ? (stats.conPresupuesto / stats.total) * 100 : 0}%` }} />
+                </div>
+                <span className="rp-cobertura-total">{stats.total} diputados en total</span>
               </div>
               {(() => {
                 const pct = stats.totalAsignado > 0

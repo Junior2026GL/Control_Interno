@@ -75,11 +75,11 @@
 /* ── Stat cards grid ────────────────────────────────────────── */
 .rp-stats-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
   margin-bottom: 20px;
 }
-@media (max-width: 1200px) { .rp-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1100px) { .rp-stats-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 700px)  { .rp-stats-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px)  { .rp-stats-grid { grid-template-columns: 1fr; } }
 
@@ -111,10 +111,65 @@
 .rp-stat--anual     { border-top-color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
 .rp-stat--mensual   { border-top-color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
 .rp-stat--exec-card { border-top-color: #d97706; background: #fffbeb; border-color: #fde68a; }
-.rp-stat--con-card  { border-top-color: #16a34a; background: #f0fdf4; border-color: #bbf7d0; }
-.rp-stat--sin-card  { border-top-color: #94a3b8; background: #f8fafc; }
+.rp-stat--cobertura { border-top-color: #0891b2; background: #f0f9ff; border-color: #bae6fd; }
 .rp-stat--warn-card { border-top-color: #dc2626 !important; background: #fef2f2 !important; border-color: #fecaca !important; }
 .rp-stat--ejec-card { background: #f8fafc; }
+
+/* Cobertura card internals */
+.rp-cobertura-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 2px;
+}
+.rp-cobertura-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 2px;
+}
+.rp-cobertura-num {
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.rp-cobertura-sub {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-align: center;
+}
+.rp-cobertura-divider {
+  width: 1px;
+  height: 40px;
+  background: #bae6fd;
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+.rp-cobertura-bar-bg {
+  height: 5px;
+  background: #e0f2fe;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.rp-cobertura-bar-fill {
+  height: 100%;
+  background: #0891b2;
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+.rp-cobertura-total {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-top: 2px;
+  text-align: center;
+}
 
 .rp-stat-lbl {
   font-size: 11px;
