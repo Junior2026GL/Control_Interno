@@ -568,7 +568,7 @@ export default function ViaticosDiputados() {
 
       {/* ── Modal Nuevo/Editar ──────────────────────────────────── */}
       {modal && (
-        <div className="vd-overlay" onClick={() => setModal(null)}>
+        <div className="vd-overlay">
           <div className="vd-modal" onClick={e => e.stopPropagation()}>
             <div className="vd-modal-header">
               <h3>{modal === 'nuevo' ? 'Registrar Viático' : 'Editar Viático'}</h3>
