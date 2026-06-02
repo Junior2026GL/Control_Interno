@@ -545,7 +545,7 @@ exports.getResumen = async (req, res) => {
   try {
     const [rows] = await db.promise().query(
       `SELECT
-         d.id, d.nombre, d.departamento, d.tipo,
+         d.id, d.nombre, d.departamento, d.tipo, d.partido,
          p.id           AS presupuesto_id,
          p.monto_asignado,
          COALESCE(SUM(a.monto), 0) AS ejecutado

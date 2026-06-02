@@ -629,6 +629,125 @@
   transition: width .4s ease;
 }
 
+/* ── Partido Section ─────────────────────────────────────────── */
+.rp-partido-section {
+  background: white;
+  border: 1.5px solid #e8ecf4;
+  border-radius: 14px;
+  padding: 18px 22px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.rp-partido-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a3a52;
+  margin: 0 0 16px;
+}
+.rp-partido-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.rp-partido-card {
+  border: 1.5px solid #e8ecf4;
+  border-radius: 11px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f9fafc;
+}
+.rp-partido-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.rp-partido-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #274C8D;
+  line-height: 1.3;
+}
+.rp-partido-total {
+  font-size: 12px;
+  font-weight: 600;
+  color: #d97706;
+  white-space: nowrap;
+}
+.rp-partido-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rp-partido-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rp-partido-tipo {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.rp-partido-tipo--prop {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.rp-partido-tipo--sup {
+  background: #d1fae5;
+  color: #065f46;
+}
+.rp-partido-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  min-width: 22px;
+  text-align: center;
+}
+.rp-partido-monto {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.rp-partido-bar-bg {
+  position: relative;
+  height: 7px;
+  background: #e8ecf4;
+  border-radius: 99px;
+  overflow: visible;
+  margin-top: 2px;
+}
+.rp-partido-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+.rp-partido-bar-pct {
+  position: absolute;
+  right: 0;
+  top: -16px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+@media (max-width: 700px) {
+  .rp-partido-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .rp-partido-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Sortable table headers ─────────────────────────────────── */
 .rp-th-sort {
   cursor: pointer;

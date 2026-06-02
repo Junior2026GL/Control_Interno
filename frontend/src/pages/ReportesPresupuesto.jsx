@@ -328,6 +328,27 @@ export default function ReportesPresupuesto() {
     ];
   }, [stats]);
 
+  /* stats por partido */
+  const partidoStats = useMemo(() => {
+    const map = {};
+    resumen.forEach(r => {
+      const p = (r.partido || 'Sin Partido').trim();
+      if (!map[p]) map[p] = { partido: p, propietarios: 0, suplentes: 0, asignadoProp: 0, asignadoSup: 0, ejecutadoProp: 0, ejecutadoSup: 0 };
+      if (r.tipo === 'PROPIETARIO') {
+        map[p].propietarios++;
+        map[p].asignadoProp  += r.monto_asignado || 0;
+        map[p].ejecutadoProp += r.ejecutado      || 0;
+      } else {
+        map[p].suplentes++;
+        map[p].asignadoSup  += r.monto_asignado || 0;
+        map[p].ejecutadoSup += r.ejecutado      || 0;
+      }
+    });
+    return Object.values(map).sort((a, b) =>
+      (b.asignadoProp + b.asignadoSup) - (a.asignadoProp + a.asignadoSup)
+    );
+  }, [resumen]);
+
   /* filtered + sorted resumen */
   const resumenFiltered = useMemo(() => {
     let arr = resumen;
@@ -656,6 +677,49 @@ export default function ReportesPresupuesto() {
             </>
           ) : null}
         </div>
+
+        {/* ── Cards por Partido ── */}
+        {!loadingResumen && partidoStats.length > 0 && (
+          <div className="rp-partido-section">
+            <p className="rp-partido-title">
+              <FiAward size={14} /> Presupuesto por Partido Político — {anio}
+            </p>
+            <div className="rp-partido-grid">
+              {partidoStats.map(pt => {
+                const totalAsig = pt.asignadoProp + pt.asignadoSup;
+                const totalEjec = pt.ejecutadoProp + pt.ejecutadoSup;
+                const pct = totalAsig > 0 ? Math.min(100, (totalEjec / totalAsig) * 100) : 0;
+                const barBg = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
+                return (
+                  <div key={pt.partido} className="rp-partido-card">
+                    <div className="rp-partido-card-header">
+                      <span className="rp-partido-name">{pt.partido}</span>
+                      <span className="rp-partido-total">{formatHNL(totalAsig)}</span>
+                    </div>
+                    <div className="rp-partido-rows">
+                      <div className="rp-partido-row">
+                        <span className="rp-partido-tipo rp-partido-tipo--prop">Propietarios</span>
+                        <span className="rp-partido-count">{pt.propietarios}</span>
+                        <span className="rp-partido-monto">{formatHNL(pt.asignadoProp)}</span>
+                      </div>
+                      <div className="rp-partido-row">
+                        <span className="rp-partido-tipo rp-partido-tipo--sup">Suplentes</span>
+                        <span className="rp-partido-count">{pt.suplentes}</span>
+                        <span className="rp-partido-monto">{formatHNL(pt.asignadoSup)}</span>
+                      </div>
+                    </div>
+                    {totalAsig > 0 && (
+                      <div className="rp-partido-bar-bg">
+                        <div className="rp-partido-bar-fill" style={{ width: `${pct}%`, background: barBg }} />
+                        <span className="rp-partido-bar-pct">{pct.toFixed(1)}% ejec.</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Chart ── */}
         {!loadingResumen && (stats || chartData.length > 0) && (
