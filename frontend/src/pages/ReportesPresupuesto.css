@@ -786,7 +786,6 @@
 .rp-partido-row-nums {
   display: flex;
   gap: 10px;
-  margin-left: auto;
 }
 .rp-partido-num-col {
   display: flex;
