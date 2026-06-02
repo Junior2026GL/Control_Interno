@@ -763,20 +763,24 @@ export default function ReportesPresupuesto() {
                         { label: 'Suplentes',    cls: 'sup',  total: pt.suplentes,    con: pt.supConPres,  sin: pt.suplentes    - pt.supConPres,  monto: pt.asignadoSup  },
                       ].map(row => (
                         <div key={row.cls} className={`rp-partido-table-row rp-partido-table-row--${row.cls}`}>
-                          <span className={`rp-partido-tipo rp-partido-tipo--${row.cls}`}>{row.label}</span>
-                          <div>
-                            <div className="rp-partido-row-right-labels">
-                              <span>Total</span>
-                              <span>Con pres.</span>
-                              <span>Sin pres.</span>
-                            </div>
-                            <div className="rp-partido-row-right">
-                              <span className="rp-partido-count">{row.total}</span>
-                              <span className="rp-partido-sub rp-partido-sub--con">{row.con}</span>
-                              <span className="rp-partido-sub rp-partido-sub--sin">{row.sin}</span>
+                          <div className="rp-partido-row-monto">{formatHNL(row.monto)}</div>
+                          <div className="rp-partido-row-body">
+                            <span className={`rp-partido-tipo rp-partido-tipo--${row.cls}`}>{row.label}</span>
+                            <div className="rp-partido-row-nums">
+                              <div className="rp-partido-num-col">
+                                <span className="rp-partido-num-lbl">Total</span>
+                                <span className="rp-partido-count">{row.total}</span>
+                              </div>
+                              <div className="rp-partido-num-col">
+                                <span className="rp-partido-num-lbl">Con pres.</span>
+                                <span className="rp-partido-sub rp-partido-sub--con">{row.con}</span>
+                              </div>
+                              <div className="rp-partido-num-col">
+                                <span className="rp-partido-num-lbl">Sin pres.</span>
+                                <span className="rp-partido-sub rp-partido-sub--sin">{row.sin}</span>
+                              </div>
                             </div>
                           </div>
-                          <span className="rp-partido-monto rp-partido-monto--full">{formatHNL(row.monto)}</span>
                         </div>
                       ))}
                     </div>
