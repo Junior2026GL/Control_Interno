@@ -82,6 +82,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #0891b2 0%, #0284c7 100%)',
   },
   {
+    path: '/busqueda-ayudas',
+    label: 'Consulta de Ayudas',
+    clave: 'busqueda-ayudas',
+    description: 'Búsqueda global y reporte mensual de ayudas sociales por diputado',
+    icon: LuFileSpreadsheet,
+    gradient: 'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)',
+  },
+  {
     path: '/constancia-transferencia',
     label: 'Constancia Transferencia',
     clave: 'constancia-transferencia',

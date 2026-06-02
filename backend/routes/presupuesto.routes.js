@@ -19,6 +19,9 @@ router.get('/reportes/mensual', verifyToken, ctrl.getReportesMensual);
 // Top ayudas por monto
 router.get('/reportes/top', verifyToken, ctrl.getReportesTop);
 
+// Reporte mensual detallado por diputado
+router.get('/reportes/mensual-detalle', verifyToken, ctrl.getReporteMensualDetalle);
+
 // Datos de un diputado para el año — cualquier usuario autenticado
 router.get('/diputado/:diputado_id', verifyToken, ctrl.getByDiputado);
 

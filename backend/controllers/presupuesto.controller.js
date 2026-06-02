@@ -605,45 +605,69 @@ exports.getResumen = async (req, res) => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// GET /api/presupuesto/reportes/ayudas?anio=&diputado_id=&page=&limit=
+// GET /api/presupuesto/reportes/ayudas?anio=&diputado_id=&partido=&estado=&q=&numero_orden=&fecha_desde=&fecha_hasta=&page=&limit=&sort=
 // ──────────────────────────────────────────────────────────────
 exports.getReportesAyudas = async (req, res) => {
-  const anio       = parseInt(req.query.anio || new Date().getFullYear(), 10);
-  const diputadoId = req.query.diputado_id ? parseInt(req.query.diputado_id, 10) : null;
-  const page       = Math.max(1, parseInt(req.query.page  || 1,  10));
-  const limit      = Math.min(500, Math.max(1, parseInt(req.query.limit || 50, 10)));
-  const offset     = (page - 1) * limit;
-  const estado     = req.query.estado || null;
-  const q          = req.query.q ? req.query.q.toString().trim().slice(0, 100) : null;
-  const sort       = req.query.sort === 'monto_desc' ? 'monto_desc' : 'fecha_desc';
+  const anio         = parseInt(req.query.anio || new Date().getFullYear(), 10);
+  const diputadoId   = req.query.diputado_id ? parseInt(req.query.diputado_id, 10) : null;
+  const partido      = req.query.partido ? req.query.partido.toString().trim().slice(0, 50) : null;
+  const page         = Math.max(1, parseInt(req.query.page  || 1,  10));
+  const limit        = Math.min(500, Math.max(1, parseInt(req.query.limit || 50, 10)));
+  const offset       = (page - 1) * limit;
+  const estado       = req.query.estado || null;
+  const q            = req.query.q            ? req.query.q.toString().trim().slice(0, 100) : null;
+  const numero_orden = req.query.numero_orden ? req.query.numero_orden.toString().trim().slice(0, 50) : null;
+  const fecha_desde  = req.query.fecha_desde  ? req.query.fecha_desde.toString().slice(0, 10)  : null;
+  const fecha_hasta  = req.query.fecha_hasta  ? req.query.fecha_hasta.toString().slice(0, 10)  : null;
+  const sort         = req.query.sort === 'monto_desc' ? 'monto_desc' : 'fecha_desc';
+  const anio_libre   = req.query.anio_libre === '1'; // si true, busca en todos los años
 
-  if (isNaN(anio) || anio < 2000 || anio > 2100)
+  if (!anio_libre && (isNaN(anio) || anio < 2000 || anio > 2100))
     return res.status(400).json({ message: 'Año inválido.' });
 
   const ESTADOS_VALIDOS = ['sin_liquidar', 'en_proceso', 'liquido'];
   if (estado && !ESTADOS_VALIDOS.includes(estado))
     return res.status(400).json({ message: 'Estado de liquidación inválido.' });
 
+  // validar fechas
+  const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (fecha_desde && !ISO_RE.test(fecha_desde))
+    return res.status(400).json({ message: 'fecha_desde inválida.' });
+  if (fecha_hasta && !ISO_RE.test(fecha_hasta))
+    return res.status(400).json({ message: 'fecha_hasta inválida.' });
+
   try {
-    const baseParams = [anio];
-    const dipFilter    = diputadoId ? 'AND d.id = ?' : '';
-    const estadoFilter = estado     ? 'AND a.estado_liquidacion = ?' : '';
-    const searchFilter = q          ? 'AND (a.concepto LIKE ? OR a.beneficiario LIKE ?)' : '';
-    if (diputadoId) baseParams.push(diputadoId);
-    if (estado)     baseParams.push(estado);
-    if (q)          baseParams.push(`%${q}%`, `%${q}%`);
+    const baseParams = [];
+    const anioFilter    = anio_libre ? '' : 'AND p.anio = ?';
+    if (!anio_libre) baseParams.push(anio);
+
+    const dipFilter     = diputadoId   ? 'AND d.id = ?'                     : '';
+    const partidoFilter = partido      ? 'AND d.partido = ?'                 : '';
+    const estadoFilter  = estado       ? 'AND a.estado_liquidacion = ?'      : '';
+    const ordenFilter   = numero_orden ? 'AND a.numero_orden = ?'            : '';
+    const desdeFilter   = fecha_desde  ? 'AND a.fecha >= ?'                  : '';
+    const hastaFilter   = fecha_hasta  ? 'AND a.fecha <= ?'                  : '';
+    const searchFilter  = q ? 'AND (a.concepto LIKE ? OR a.beneficiario LIKE ? OR a.numero_orden LIKE ?)' : '';
+
+    if (diputadoId)   baseParams.push(diputadoId);
+    if (partido)      baseParams.push(partido);
+    if (estado)       baseParams.push(estado);
+    if (numero_orden) baseParams.push(numero_orden);
+    if (fecha_desde)  baseParams.push(fecha_desde);
+    if (fecha_hasta)  baseParams.push(fecha_hasta);
+    if (q)            baseParams.push(`%${q}%`, `%${q}%`, `%${q}%`);
 
     const orderBy = sort === 'monto_desc' ? 'a.monto DESC, a.id DESC' : 'a.fecha DESC, a.id DESC';
 
     const [rows] = await db.promise().query(
       `SELECT
-         a.id, a.fecha, a.concepto, a.beneficiario, a.monto, a.observaciones,
-         a.estado_liquidacion, a.created_at,
-         d.nombre AS diputado, d.departamento
+         a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.monto, a.observaciones,
+         a.estado_liquidacion, a.created_at, p.anio,
+         d.id AS diputado_id, d.nombre AS diputado, d.departamento, d.tipo, d.partido
        FROM ayudas_sociales a
-       JOIN presupuesto_diputados p ON p.id = a.presupuesto_id AND p.anio = ?
+       JOIN presupuesto_diputados p ON p.id = a.presupuesto_id
        JOIN diputados d ON d.id = p.diputado_id
-       WHERE 1=1 ${dipFilter} ${estadoFilter} ${searchFilter}
+       WHERE 1=1 ${anioFilter} ${dipFilter} ${partidoFilter} ${estadoFilter} ${ordenFilter} ${desdeFilter} ${hastaFilter} ${searchFilter}
        ORDER BY ${orderBy}
        LIMIT ? OFFSET ?`,
       [...baseParams, limit, offset]
@@ -652,9 +676,9 @@ exports.getReportesAyudas = async (req, res) => {
     const [[{ total }]] = await db.promise().query(
       `SELECT COUNT(*) AS total
        FROM ayudas_sociales a
-       JOIN presupuesto_diputados p ON p.id = a.presupuesto_id AND p.anio = ?
+       JOIN presupuesto_diputados p ON p.id = a.presupuesto_id
        JOIN diputados d ON d.id = p.diputado_id
-       WHERE 1=1 ${dipFilter} ${estadoFilter} ${searchFilter}`,
+       WHERE 1=1 ${anioFilter} ${dipFilter} ${partidoFilter} ${estadoFilter} ${ordenFilter} ${desdeFilter} ${hastaFilter} ${searchFilter}`,
       baseParams
     );
 
@@ -747,5 +771,88 @@ exports.getReportesTop = async (req, res) => {
   } catch (err) {
     console.error('[presupuesto] Error en getReportesTop:', err);
     res.status(500).json({ message: 'Error al obtener el top de ayudas.' });
+  }
+};
+
+// ──────────────────────────────────────────────────────────────
+// GET /api/presupuesto/reportes/mensual-detalle?anio=YYYY&mes=MM
+// Detalle de ayudas del mes, agrupadas por diputado
+// ──────────────────────────────────────────────────────────────
+exports.getReporteMensualDetalle = async (req, res) => {
+  const anio = parseInt(req.query.anio || new Date().getFullYear(), 10);
+  const mes  = parseInt(req.query.mes  || new Date().getMonth() + 1, 10);
+
+  if (isNaN(anio) || anio < 2000 || anio > 2100)
+    return res.status(400).json({ message: 'Año inválido.' });
+  if (isNaN(mes) || mes < 1 || mes > 12)
+    return res.status(400).json({ message: 'Mes inválido.' });
+
+  try {
+    // Traer todas las ayudas del mes con datos de diputado
+    const [rows] = await db.promise().query(
+      `SELECT
+         a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden,
+         a.monto, a.observaciones, a.estado_liquidacion, a.fecha_liquidacion,
+         d.id AS diputado_id, d.nombre AS diputado_nombre,
+         d.departamento, d.tipo, d.partido
+       FROM ayudas_sociales a
+       JOIN presupuesto_diputados p ON p.id = a.presupuesto_id AND p.anio = ?
+       JOIN diputados d ON d.id = p.diputado_id
+       WHERE MONTH(a.fecha) = ?
+       ORDER BY d.nombre ASC, a.fecha ASC`,
+      [anio, mes]
+    );
+
+    // Agrupar por diputado en JS
+    const mapaDisp = {};
+    for (const r of rows) {
+      if (!mapaDisp[r.diputado_id]) {
+        mapaDisp[r.diputado_id] = {
+          diputado_id:    r.diputado_id,
+          diputado_nombre: r.diputado_nombre,
+          departamento:   r.departamento,
+          tipo:           r.tipo,
+          partido:        r.partido,
+          cantidad:       0,
+          total:          0,
+          ayudas:         [],
+        };
+      }
+      const dip = mapaDisp[r.diputado_id];
+      const monto = parseFloat(r.monto);
+      dip.cantidad++;
+      dip.total += monto;
+      dip.ayudas.push({
+        id:               r.id,
+        fecha:            typeof r.fecha === 'string' ? r.fecha.slice(0, 10) : r.fecha.toISOString().slice(0, 10),
+        concepto:         r.concepto,
+        beneficiario:     r.beneficiario,
+        numero_orden:     r.numero_orden,
+        monto,
+        observaciones:    r.observaciones,
+        estado_liquidacion: r.estado_liquidacion,
+        fecha_liquidacion: r.fecha_liquidacion,
+      });
+    }
+
+    const diputados = Object.values(mapaDisp).map(d => ({
+      ...d,
+      total: parseFloat(d.total.toFixed(2)),
+    }));
+
+    const gran_total = diputados.reduce((s, d) => s + d.total, 0);
+    const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    res.json({
+      anio,
+      mes,
+      mes_nombre: MESES_ES[mes - 1],
+      diputados,
+      gran_total: parseFloat(gran_total.toFixed(2)),
+      total_ayudas: rows.length,
+    });
+  } catch (err) {
+    console.error('[presupuesto] Error en getReporteMensualDetalle:', err);
+    res.status(500).json({ message: 'Error al generar el reporte mensual.' });
   }
 };
