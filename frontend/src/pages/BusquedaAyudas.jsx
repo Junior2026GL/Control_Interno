@@ -108,7 +108,16 @@ export default function BusquedaAyudas() {
   }, [diputados]);
 
   /* ── Buscar — siempre en todos los años ─────── */
+  const [filterError, setFilterError] = useState('');
+
   const buscar = async (pg = 1) => {
+    // Requiere al menos un filtro activo
+    if (!q.trim() && !numeroOrden.trim() && !selDip) {
+      setFilterError('Ingrese al menos un filtro para realizar la búsqueda.');
+      setResults([]); setTotal(0); setHasSearched(false);
+      return;
+    }
+    setFilterError('');
     setLoading(true);
     setHasSearched(true);
     try {
@@ -127,6 +136,7 @@ export default function BusquedaAyudas() {
   const limpiar = () => {
     setQ(''); setQInput(''); setNumeroOrden(''); setNoInput('');
     setSelDip(null); setDipSearch('');
+    setFilterError('');
     setResults([]); setTotal(0); setHasSearched(false);
   };
 
@@ -408,6 +418,13 @@ export default function BusquedaAyudas() {
               </div>
             </div>
 
+            {/* Error de validación */}
+            {filterError && (
+              <div className="ba-filter-error">
+                <FiAlertCircle size={14} /> {filterError}
+              </div>
+            )}
+
             {/* Botones */}
             <div className="ba-filter-actions">
               <button className="ba-btn-secondary" onClick={limpiar}>
@@ -453,7 +470,7 @@ export default function BusquedaAyudas() {
                             <th>Diputado</th>
                             <th>N° Orden</th>
                             <th>Estado</th>
-                            <th className="ba-th-r" style={{ whiteSpace: 'nowrap' }}>Monto</th>
+                            <th className="ba-th-r" style={{ whiteSpace: 'nowrap', width: 130 }}>Monto</th>
                             <th style={{ width: 50, textAlign: 'center' }}>Detalle</th>
                           </tr>
                         </thead>
