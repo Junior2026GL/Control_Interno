@@ -85,13 +85,19 @@
 
 .rp-stat {
   background: white;
-  border: 1.5px solid #e8ecf4;
+  border: 1.5px solid #e2e8f0;
+  border-top: 5px solid #cbd5e1;
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 18px 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  gap: 6px;
+  box-shadow: 0 3px 14px rgba(0,0,0,.07);
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.rp-stat:hover {
+  box-shadow: 0 7px 24px rgba(0,0,0,.13);
+  transform: translateY(-2px);
 }
 .rp-stat--loading {
   grid-column: 1 / -1;
@@ -100,27 +106,38 @@
   color: #94a3b8;
   padding: 22px;
 }
-.rp-stat--warn-card { border-color: #fde68a; }
+
+/* Card variants */
+.rp-stat--anual     { border-top-color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
+.rp-stat--mensual   { border-top-color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
+.rp-stat--exec-card { border-top-color: #d97706; background: #fffbeb; border-color: #fde68a; }
+.rp-stat--con-card  { border-top-color: #16a34a; background: #f0fdf4; border-color: #bbf7d0; }
+.rp-stat--sin-card  { border-top-color: #94a3b8; background: #f8fafc; }
+.rp-stat--warn-card { border-top-color: #dc2626 !important; background: #fef2f2 !important; border-color: #fecaca !important; }
+.rp-stat--ejec-card { background: #f8fafc; }
+
 .rp-stat-lbl {
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #94a3b8;
+  letter-spacing: 0.7px;
+  color: #64748b;
+  line-height: 1.3;
 }
 .rp-stat-val {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 23px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  letter-spacing: -0.3px;
 }
-.rp-stat-val small { font-size: 13px; font-weight: 500; color: #94a3b8; }
-.rp-val--blue  { color: #274C8D; }
-.rp-val--exec  { color: #d97706; }
-.rp-val--green { color: #15803d; }
-.rp-val--warn  { color: #b45309; }
-.rp-val--purple { color: #7c3aed; }
-.rp-stat--mensual { border-color: #ede9fe; }
-.rp-stat-lbl-sub { font-size: 9px; font-weight: 600; color: #a78bfa; text-transform: none; letter-spacing: 0; }
+.rp-stat-val small { font-size: 14px; font-weight: 600; color: #94a3b8; }
+.rp-val--blue   { color: #1d4ed8; }
+.rp-val--exec   { color: #b45309; }
+.rp-val--green  { color: #15803d; }
+.rp-val--warn   { color: #dc2626; }
+.rp-val--purple { color: #6d28d9; }
+.rp-stat-lbl-sub { font-size: 9.5px; font-weight: 700; color: #8b5cf6; text-transform: none; letter-spacing: 0; }
 
 /* ── Chart ──────────────────────────────────────────────────── */
 .rp-chart-card {

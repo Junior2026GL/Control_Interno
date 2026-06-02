@@ -676,7 +676,7 @@ export default function ReportesPresupuesto() {
             <div className="rp-stat rp-stat--loading">Cargando estadísticas…</div>
           ) : stats ? (
             <>
-              <div className="rp-stat">
+              <div className="rp-stat rp-stat--anual">
                 <span className="rp-stat-lbl">Total Asignado Anual</span>
                 <span className="rp-stat-val rp-val--blue">{formatHNL(stats.totalAsignado)}</span>
               </div>
@@ -684,17 +684,17 @@ export default function ReportesPresupuesto() {
                 <span className="rp-stat-lbl">Mensual Est. <small className="rp-stat-lbl-sub">(÷ 8 meses)</small></span>
                 <span className="rp-stat-val rp-val--purple">{formatHNL(stats.totalAsignado / 8)}</span>
               </div>
-              <div className="rp-stat">
+              <div className="rp-stat rp-stat--exec-card">
                 <span className="rp-stat-lbl">Total Ejecutado</span>
                 <span className="rp-stat-val rp-val--exec">{formatHNL(stats.totalEjecutado)}</span>
               </div>
-              <div className="rp-stat">
+              <div className="rp-stat rp-stat--con-card">
                 <span className="rp-stat-lbl">Con Presupuesto</span>
                 <span className="rp-stat-val rp-val--green">
                   {stats.conPresupuesto} <small>de {stats.total}</small>
                 </span>
               </div>
-              <div className={`rp-stat ${stats.sinPresupuesto > 0 ? 'rp-stat--warn-card' : ''}`}>
+              <div className={`rp-stat rp-stat--sin-card ${stats.sinPresupuesto > 0 ? 'rp-stat--warn-card' : ''}`}>
                 <span className="rp-stat-lbl">Sin Presupuesto</span>
                 <span className={`rp-stat-val ${stats.sinPresupuesto > 0 ? 'rp-val--warn' : 'rp-val--green'}`}>
                   {stats.sinPresupuesto}
@@ -706,8 +706,9 @@ export default function ReportesPresupuesto() {
                   : 0;
                 const valCls = pct > 90 ? 'rp-val--warn' : pct > 70 ? 'rp-val--exec' : 'rp-val--green';
                 const barBg  = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
+                const topClr = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
                 return (
-                  <div className="rp-stat">
+                  <div className="rp-stat rp-stat--ejec-card" style={{ borderTopColor: topClr }}>
                     <span className="rp-stat-lbl">% Ejecución Global</span>
                     <span className={`rp-stat-val ${valCls}`}>{pct.toFixed(1)}%</span>
                     <div className="rp-stat-bar-bg">
