@@ -41,7 +41,7 @@ const EMPTY_PRES  = {
 };
 const EMPTY_AYUDA = {
   fecha: new Date().toISOString().slice(0, 10),
-  concepto: '', beneficiario: '', monto: '', observaciones: '',
+  concepto: '', beneficiario: '', numero_orden: '', monto: '', observaciones: '',
   estado_liquidacion: 'sin_liquidar',
 };
 
@@ -100,6 +100,12 @@ export default function PresupuestoDiputados() {
   const [liqForm,   setLiqForm]   = useState({ estado_liquidacion: 'sin_liquidar', fecha_liquidacion: '' });
   const [liqErr,    setLiqErr]    = useState('');
   const [liqSaving, setLiqSaving] = useState(false);
+
+  /* ── mini-modal número de orden ──────────────────────────── */
+  const [ordenModal, setOrdenModal] = useState(null); // ayuda obj
+  const [ordenVal,   setOrdenVal]   = useState('');
+  const [ordenSaving, setOrdenSaving] = useState(false);
+  const [ordenErr,    setOrdenErr]   = useState('');
 
   /* ── table sort ─────────────────────────────────────────── */
   const [sortField, setSortField] = useState('fecha');
@@ -470,6 +476,7 @@ export default function PresupuestoDiputados() {
       fecha:         a.fecha.slice(0, 10),
       concepto:      a.concepto,
       beneficiario:  a.beneficiario || '',
+      numero_orden:  a.numero_orden  || '',
       monto:         a.monto.toString(),
       observaciones: a.observaciones || '',
     });
@@ -500,6 +507,27 @@ export default function PresupuestoDiputados() {
       setFormErr(err.response?.data?.message || 'Error al actualizar.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  /* ── handler número de orden ────────────────────────────── */
+  const handleOrden = async () => {
+    if (!ordenModal) return;
+    setOrdenSaving(true);
+    setOrdenErr('');
+    try {
+      await api.patch(
+        `/presupuesto/${presupuesto.id}/ayudas/${ordenModal.id}/orden`,
+        { numero_orden: ordenVal.trim() },
+        { headers: authHeaders() }
+      );
+      showToast('Número de orden asignado.', 'ok');
+      setOrdenModal(null);
+      loadBudget();
+    } catch (err) {
+      setOrdenErr(err.response?.data?.message || 'Error al guardar.');
+    } finally {
+      setOrdenSaving(false);
     }
   };
 
@@ -2029,6 +2057,7 @@ export default function PresupuestoDiputados() {
                           </th>
                           <th>Concepto</th>
                           <th>Beneficiario</th>
+                          <th>N° Orden</th>
                           <th>Estado</th>
                           <th className="ps-th-monto ps-th-sort" onClick={() => toggleSort('monto')}>
                             Monto {sortField === 'monto' ? (sortDir === 'asc' ? <FiArrowUp size={12}/> : <FiArrowDown size={12}/>) : <span className="ps-sort-idle">↕</span>}
@@ -2061,6 +2090,14 @@ export default function PresupuestoDiputados() {
                               )}
                             </td>
                             <td className="ps-td-benef">{a.beneficiario || '—'}</td>
+                            <td className="ps-td-orden">
+                              {a.numero_orden
+                                ? <span className="ps-orden-badge">{a.numero_orden}</span>
+                                : canEdit
+                                  ? <button className="ps-orden-asignar" onClick={() => { setOrdenModal(a); setOrdenVal(''); setOrdenErr(''); }} title="Asignar número de orden">+ Orden</button>
+                                  : <span className="ps-td-vacio">—</span>
+                              }
+                            </td>
                             <td>
                               {(() => {
                                 const est = estadoLiquidacion(a);
@@ -2535,6 +2572,16 @@ export default function PresupuestoDiputados() {
                 />
               </div>
               <div className="ps-form-group">
+                <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  placeholder="Ej: 2025-001"
+                  value={ayudaForm.numero_orden}
+                  onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
+                />
+              </div>
+              <div className="ps-form-group">
                 <label>Observaciones</label>
                 <textarea
                   rows={2}
@@ -2617,6 +2664,16 @@ export default function PresupuestoDiputados() {
                   placeholder="Nombre del beneficiario (opcional)"
                   value={ayudaForm.beneficiario}
                   onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
+                />
+              </div>
+              <div className="ps-form-group">
+                <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  placeholder="Ej: 2025-001"
+                  value={ayudaForm.numero_orden}
+                  onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
                 />
               </div>
               <div className="ps-form-group">
@@ -2789,6 +2846,42 @@ export default function PresupuestoDiputados() {
                   disabled={confirm.estado_liquidacion === 'liquido'}
                 >
                   <FiTrash2 size={14} /> Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mini-modal: Asignar Número de Orden ── */}
+      {ordenModal && (
+        <div className="ps-overlay">
+          <div className="ps-modal ps-modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="ps-modal-header">
+              <h2>Asignar Número de Orden</h2>
+              <button className="ps-modal-close" onClick={() => setOrdenModal(null)}><FiX size={18} /></button>
+            </div>
+            <div className="ps-modal-form">
+              <p style={{ fontSize: '0.83rem', color: '#475569', marginBottom: 12 }}>
+                <strong>{ordenModal.concepto}</strong>
+              </p>
+              <div className="ps-form-group">
+                <label>Número de Orden</label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  placeholder="Ej: 2025-001"
+                  value={ordenVal}
+                  onChange={e => setOrdenVal(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleOrden()}
+                  autoFocus
+                />
+              </div>
+              {ordenErr && <div className="ps-form-error">{ordenErr}</div>}
+              <div className="ps-modal-footer">
+                <button type="button" className="ps-btn-secondary" onClick={() => setOrdenModal(null)}>Cancelar</button>
+                <button type="button" className="ps-btn-primary" onClick={handleOrden} disabled={ordenSaving || !ordenVal.trim()}>
+                  {ordenSaving ? 'Guardando…' : 'Guardar Orden'}
                 </button>
               </div>
             </div>

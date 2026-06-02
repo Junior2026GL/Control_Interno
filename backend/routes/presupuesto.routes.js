@@ -37,6 +37,9 @@ router.put('/:id/ayudas/:aid_id', verifyToken, onlyAdmins, audit, ctrl.updateAyu
 // Actualizar estado de liquidación — admin
 router.patch('/:id/ayudas/:aid_id/liquidacion', verifyToken, onlyAdmins, audit, ctrl.patchLiquidacion);
 
+// Asignar número de orden — admin
+router.patch('/:id/ayudas/:aid_id/orden', verifyToken, onlyAdmins, audit, ctrl.patchOrden);
+
 // Eliminar ayuda — admin
 router.delete('/:id/ayudas/:aid_id', verifyToken, onlyAdmins, audit, ctrl.deleteAyuda);
 
