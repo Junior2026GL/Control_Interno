@@ -334,11 +334,11 @@ export default function ReportesPresupuesto() {
 
   /* mapa de logos de partido */
   const PARTIDO_LOGO = {
-    'NACIONAL': '/nacional.jpg',
-    'LIBERAL':  '/liberal.jpg',
-    'LIBRE':    '/libre.jpg',
-    'PINU':     '/pinu.jpg',
-    'DC':       '/dc.jpg',
+    'NACIONAL': '/nacional.JPG',
+    'LIBERAL':  '/liberal.JPG',
+    'LIBRE':    '/libre.JPG',
+    'PINU':     '/pinu.JPG',
+    'DC':       '/dc.JPG',
   };
 
   /* stats por partido */
