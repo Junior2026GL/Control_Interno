@@ -649,8 +649,8 @@
 }
 .rp-partido-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
 }
 
 /* Card */
@@ -658,10 +658,10 @@
   border: 1.5px solid #e2e8f0;
   border-top: 5px solid #274C8D;
   border-radius: 14px;
-  padding: 20px 22px 18px;
+  padding: 14px 16px 13px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 11px;
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
   transition: box-shadow .2s, transform .2s;
@@ -765,9 +765,9 @@
 .rp-partido-table-row {
   display: flex;
   flex-direction: column;
-  padding: 12px 14px;
+  padding: 9px 11px;
   border-radius: 10px;
-  gap: 8px;
+  gap: 6px;
 }
 .rp-partido-table-row--prop { background: #eff6ff; border: 1px solid #bfdbfe; }
 .rp-partido-table-row--sup  { background: #f0fdf4; border: 1px solid #bbf7d0; }
@@ -786,6 +786,7 @@
 .rp-partido-row-nums {
   display: flex;
   gap: 10px;
+  margin-left: auto;
 }
 .rp-partido-num-col {
   display: flex;
