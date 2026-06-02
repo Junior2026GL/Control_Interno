@@ -452,7 +452,8 @@ export default function BusquedaAyudas() {
                             <th>Fecha</th>
                             <th>Diputado</th>
                             <th>N° Orden</th>
-                            <th className="ba-th-r">Monto</th>
+                            <th>Estado</th>
+                            <th className="ba-th-r" style={{ whiteSpace: 'nowrap' }}>Monto</th>
                             <th style={{ width: 50, textAlign: 'center' }}>Detalle</th>
                           </tr>
                         </thead>
@@ -472,6 +473,7 @@ export default function BusquedaAyudas() {
                                   ? <span className="ba-orden-badge">{r.numero_orden}</span>
                                   : <span className="ba-vacio">—</span>}
                               </td>
+                              <td>{estadoBadge(r.estado_liquidacion)}</td>
                               <td className="ba-td-monto">{formatHNL(r.monto)}</td>
                               <td style={{ textAlign: 'center' }}>
                                 <button className="ba-btn-detalle" title="Ver detalle" onClick={() => setDetalle(r)}>
