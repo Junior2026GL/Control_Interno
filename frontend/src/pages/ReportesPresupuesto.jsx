@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext, useMemo, useRef, Fragment } from 'react';
 import {
   FiBarChart2, FiList, FiSearch, FiX, FiDownload, FiChevronDown, FiAward,
-  FiCalendar, FiDollarSign, FiTrendingUp, FiUsers, FiActivity,
+  FiCalendar, FiBriefcase, FiTrendingUp, FiUsers, FiActivity,
 } from 'react-icons/fi';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -678,7 +678,7 @@ export default function ReportesPresupuesto() {
           ) : stats ? (
             <>
               <div className="rp-stat rp-stat--anual">
-                <div className="rp-stat-icon rp-stat-icon--blue"><FiDollarSign size={20} /></div>
+                <div className="rp-stat-icon rp-stat-icon--blue"><FiBriefcase size={20} /></div>
                 <span className="rp-stat-lbl">Total Asignado Anual</span>
                 <span className="rp-stat-val rp-val--blue">{formatHNL(stats.totalAsignado)}</span>
               </div>
@@ -769,7 +769,7 @@ export default function ReportesPresupuesto() {
                         <span className="rp-partido-name">{pt.partido}</span>
                       </div>
                       <div className="rp-partido-header-right">
-                        <span className="rp-partido-total-lbl">Total asignado</span>
+                        <span className="rp-partido-total-lbl">Total asignado anual</span>
                         <span className="rp-partido-total">{formatHNL(totalAsig)}</span>
                       </div>
                     </div>
