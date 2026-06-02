@@ -25,6 +25,7 @@ import Proveedores from './pages/Proveedores';
 import CheckList from './pages/CheckList';
 import OrdenChecklist from './pages/OrdenChecklist';
 import Bodegas from './pages/Bodegas';
+import ViaticosDiputados from './pages/ViaticosDiputados';
 import PrivateRoute from './components/PrivateRoute';
 import RoleRoute from './components/RoleRoute';
 import ModuleRoute from './components/ModuleRoute';
@@ -60,6 +61,7 @@ export default function App() {
             <Route path="/checklist" element={<ModuleRoute modulo="checklist"><CheckList /></ModuleRoute>} />
             <Route path="/orden-checklist" element={<ModuleRoute modulo="orden-checklist"><OrdenChecklist /></ModuleRoute>} />
             <Route path="/bodegas" element={<ModuleRoute modulo="bodegas"><Bodegas /></ModuleRoute>} />
+            <Route path="/viaticos-diputados" element={<ModuleRoute modulo="viaticos-diputados"><ViaticosDiputados /></ModuleRoute>} />
           </Routes>
         </SocketProvider>
         </BrowserRouter>

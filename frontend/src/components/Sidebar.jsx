@@ -21,6 +21,7 @@ export default function Sidebar() {
     { path: '/presupuesto-social',      label: 'Presupuesto Social',        icon: FiBriefcase,     clave: 'presupuesto-social',        soloSuperAdmin: false },
     { path: '/reportes-presupuesto',    label: 'Reportes Presupuesto',      icon: FiEye,           clave: 'reportes-presupuesto',      soloSuperAdmin: false },
     { path: '/viaticos',                label: 'Viáticos',                  icon: FiDollarSign,    clave: 'viaticos',                  soloSuperAdmin: false },
+    { path: '/viaticos-diputados',      label: 'Viáticos Diputados',        icon: FiMapPin,        clave: 'viaticos-diputados',        soloSuperAdmin: false },
     { path: '/constancia-transferencia',label: 'Constancia Transferencia',  icon: FiRepeat,        clave: 'constancia-transferencia',  soloSuperAdmin: false },
     { path: '/ayudas',                  label: 'Ayudas',                    icon: FiGift,          clave: 'ayudas',                    soloSuperAdmin: false },
     { path: '/ayudas-alcaldias',         label: 'Ayudas Alcaldías',          icon: FiMapPin,        clave: 'ayudas_alcaldias',          soloSuperAdmin: false },
