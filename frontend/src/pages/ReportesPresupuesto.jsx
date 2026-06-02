@@ -192,6 +192,7 @@ export default function ReportesPresupuesto() {
 
   const [toast, setToast] = useState(null);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [partidoModal, setPartidoModal] = useState(null); // partido card modal
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -750,7 +751,10 @@ export default function ReportesPresupuesto() {
                 const barBg  = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
                 const pctCls = pct > 90 ? 'rp-pct--red' : pct > 70 ? 'rp-pct--yellow' : 'rp-pct--green';
                 return (
-                  <div key={pt.partido} className="rp-partido-card">
+                  <div key={pt.partido} className="rp-partido-card rp-partido-card--clickable"
+                    onClick={() => setPartidoModal(pt.partido)}
+                    role="button" tabIndex={0}
+                    onKeyDown={e => e.key === 'Enter' && setPartidoModal(pt.partido)}>
 
                     {/* Cabecera: logo + nombre + total */}
                     <div className="rp-partido-card-header">
@@ -1403,6 +1407,108 @@ export default function ReportesPresupuesto() {
           </div>
         )}
       </div>
+
+      {/* ── Modal: Diputados por Partido ── */}
+      {partidoModal && (() => {
+        const dipsPart = resumen.filter(r => (r.partido || 'Sin Partido').trim() === partidoModal);
+        const props    = dipsPart.filter(r => r.tipo === 'PROPIETARIO');
+        const sups     = dipsPart.filter(r => r.tipo !== 'PROPIETARIO');
+        const pt       = partidoStats.find(p => p.partido === partidoModal);
+        const logo     = PARTIDO_LOGO[partidoModal] || '';
+
+        const renderDip = r => {
+          const pct      = r.monto_asignado != null
+            ? Math.min(100, (r.ejecutado / r.monto_asignado) * 100) : 0;
+          const barColor = pct > 90 ? '#dc2626' : pct > 70 ? '#d97706' : '#16a34a';
+          return (
+            <div key={r.id} className={`rpm-dip-row ${r.monto_asignado == null ? 'rpm-dip-row--sin' : ''}`}>
+              <div className="rpm-dip-info">
+                <span className="rpm-dip-nombre">{r.nombre}</span>
+                <span className="rpm-dip-dept">{r.departamento}</span>
+              </div>
+              {r.monto_asignado != null ? (
+                <div className="rpm-dip-budget">
+                  <div className="rpm-dip-amounts">
+                    <span className="rpm-dip-asig">{formatHNL(r.monto_asignado)}</span>
+                    <span className="rpm-dip-ejec">{formatHNL(r.ejecutado)} ejec.</span>
+                  </div>
+                  <div className="rpm-dip-bar-bg">
+                    <div className="rpm-dip-bar-fill" style={{ width: `${pct}%`, background: barColor }} />
+                  </div>
+                  <span className="rpm-dip-pct" style={{ color: barColor }}>{pct.toFixed(1)}%</span>
+                </div>
+              ) : (
+                <span className="rpm-dip-nopres">Sin asignar</span>
+              )}
+            </div>
+          );
+        };
+
+        return (
+          <div className="rpm-overlay" onClick={() => setPartidoModal(null)}>
+            <div className="rpm-modal" onClick={e => e.stopPropagation()}>
+
+              {/* Header */}
+              <div className="rpm-modal-header">
+                <div className="rpm-modal-title-wrap">
+                  <div className="rpm-modal-logo-wrap">
+                    <img src={logo} alt={partidoModal} className="rpm-modal-logo"
+                      onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }} />
+                    <span className="rpm-modal-logo-fb" style={{ display: 'none' }}>{partidoModal.slice(0, 2)}</span>
+                  </div>
+                  <div>
+                    <h3 className="rpm-modal-partido">{partidoModal}</h3>
+                    <p className="rpm-modal-sub">Diputados con asignación — {anio}</p>
+                  </div>
+                </div>
+                <button className="rpm-modal-close" onClick={() => setPartidoModal(null)}>×</button>
+              </div>
+
+              {/* Summary chips */}
+              {pt && (
+                <div className="rpm-modal-summary">
+                  {[
+                    { lbl: 'Total asignado',  val: formatHNL(pt.asignadoProp + pt.asignadoSup),   cls: 'blue'  },
+                    { lbl: 'Ejecutado',        val: formatHNL(pt.ejecutadoProp + pt.ejecutadoSup),  cls: 'amber' },
+                    { lbl: 'Con presupuesto',  val: pt.propConPres + pt.supConPres,                 cls: 'green' },
+                    { lbl: 'Sin presupuesto',  val: (pt.propietarios - pt.propConPres) + (pt.suplentes - pt.supConPres), cls: 'warn' },
+                  ].map(({ lbl, val, cls }) => (
+                    <div key={lbl} className="rpm-sum-chip">
+                      <span className="rpm-sum-lbl">{lbl}</span>
+                      <span className={`rpm-sum-val rpm-sum-val--${cls}`}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Body */}
+              <div className="rpm-modal-body">
+                {props.length > 0 && (
+                  <div className="rpm-section">
+                    <div className="rpm-section-header">
+                      <span className="rp-partido-tipo rp-partido-tipo--prop">Propietarios</span>
+                      <span className="rpm-section-count">{props.length} diputados</span>
+                    </div>
+                    <div className="rpm-dip-list">{props.map(renderDip)}</div>
+                  </div>
+                )}
+                {sups.length > 0 && (
+                  <div className="rpm-section">
+                    <div className="rpm-section-header">
+                      <span className="rp-partido-tipo rp-partido-tipo--sup">Suplentes</span>
+                      <span className="rpm-section-count">{sups.length} diputados</span>
+                    </div>
+                    <div className="rpm-dip-list">{sups.map(renderDip)}</div>
+                  </div>
+                )}
+                {dipsPart.length === 0 && (
+                  <div className="rpm-empty-msg">No hay diputados registrados para {partidoModal}.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
