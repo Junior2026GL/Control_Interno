@@ -75,11 +75,11 @@
 /* ── Stat cards grid ────────────────────────────────────────── */
 .rp-stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 14px;
   margin-bottom: 20px;
 }
-@media (max-width: 1050px) { .rp-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1200px) { .rp-stats-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 700px)  { .rp-stats-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px)  { .rp-stats-grid { grid-template-columns: 1fr; } }
 
@@ -118,6 +118,9 @@
 .rp-val--exec  { color: #d97706; }
 .rp-val--green { color: #15803d; }
 .rp-val--warn  { color: #b45309; }
+.rp-val--purple { color: #7c3aed; }
+.rp-stat--mensual { border-color: #ede9fe; }
+.rp-stat-lbl-sub { font-size: 9px; font-weight: 600; color: #a78bfa; text-transform: none; letter-spacing: 0; }
 
 /* ── Chart ──────────────────────────────────────────────────── */
 .rp-chart-card {

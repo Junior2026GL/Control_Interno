@@ -677,8 +677,12 @@ export default function ReportesPresupuesto() {
           ) : stats ? (
             <>
               <div className="rp-stat">
-                <span className="rp-stat-lbl">Total Asignado</span>
+                <span className="rp-stat-lbl">Total Asignado Anual</span>
                 <span className="rp-stat-val rp-val--blue">{formatHNL(stats.totalAsignado)}</span>
+              </div>
+              <div className="rp-stat rp-stat--mensual">
+                <span className="rp-stat-lbl">Mensual Est. <small className="rp-stat-lbl-sub">(÷ 8 meses)</small></span>
+                <span className="rp-stat-val rp-val--purple">{formatHNL(stats.totalAsignado / 8)}</span>
               </div>
               <div className="rp-stat">
                 <span className="rp-stat-lbl">Total Ejecutado</span>
