@@ -994,21 +994,22 @@ exports.getMesPartidoDetalle = async (req, res) => {
       [anio, mes, partido]
     );
 
-    // Diputados que NO ejecutaron ese mes (tienen presupuesto asignado pero sin ayudas en ese mes)
+    // Diputados que NO ejecutaron ese mes: TODOS los activos del partido que no tienen ayudas ese mes
     const [noEjecutaron] = await db.promise().query(
       `SELECT
          d.id AS diputado_id, d.nombre, d.departamento, d.tipo, d.partido,
          p.monto_asignado
-       FROM presupuesto_diputados p
-       JOIN diputados d ON d.id = p.diputado_id AND d.activo = 1
-       WHERE p.anio = ?
+       FROM diputados d
+       LEFT JOIN presupuesto_diputados p ON p.diputado_id = d.id AND p.anio = ?
+       WHERE d.activo = 1
          AND COALESCE(d.partido, 'Sin Partido') = ?
          AND NOT EXISTS (
            SELECT 1 FROM ayudas_sociales a
-           WHERE a.presupuesto_id = p.id AND MONTH(a.fecha) = ?
+           JOIN presupuesto_diputados p2 ON p2.id = a.presupuesto_id AND p2.anio = ?
+           WHERE p2.diputado_id = d.id AND MONTH(a.fecha) = ?
          )
        ORDER BY d.nombre ASC`,
-      [anio, partido, mes]
+      [anio, partido, anio, mes]
     );
 
     res.json({

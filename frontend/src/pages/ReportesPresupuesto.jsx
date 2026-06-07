@@ -1709,7 +1709,7 @@ export default function ReportesPresupuesto() {
                 </div>
                 <div>
                   <h3 className="rpm-modal-partido">{mesPartidoModal.partido} — {mesPartidoModal.mes_nombre}</h3>
-                  <p className="rpm-modal-sub">Total ejecutado: {formatHNL(mesPartidoModal.ejecutado)}</p>
+                  <p className="rpm-modal-total-exec">Total ejecutado: <span>{formatHNL(mesPartidoModal.ejecutado)}</span></p>
                 </div>
               </div>
               <button className="rpm-modal-close" onClick={() => setMesPartidoModal(null)}>×</button>
