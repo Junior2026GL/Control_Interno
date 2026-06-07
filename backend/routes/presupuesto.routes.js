@@ -13,6 +13,12 @@ router.get('/resumen', verifyToken, ctrl.getResumen);
 // Resumen de ejecución mensual con desglose por partido
 router.get('/resumen-por-mes', verifyToken, ctrl.getResumenMensualPartido);
 
+// Resumen agrupado por partido con pills de meses
+router.get('/resumen-partido-mes', verifyToken, ctrl.getResumenPartidoMes);
+
+// Detalle ejecutaron / no ejecutaron por partido y mes
+router.get('/mes-partido-detalle', verifyToken, ctrl.getMesPartidoDetalle);
+
 // Listado de ayudas con filtros — reportes
 router.get('/reportes/ayudas', verifyToken, ctrl.getReportesAyudas);
 

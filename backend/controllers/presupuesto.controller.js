@@ -911,3 +911,119 @@ exports.getResumenMensualPartido = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener el resumen mensual por partido.' });
   }
 };
+
+// ──────────────────────────────────────────────────────────────
+// GET /api/presupuesto/resumen-partido-mes?anio=YYYY
+// Datos agrupados por PARTIDO con desglose de meses activos
+// ──────────────────────────────────────────────────────────────
+exports.getResumenPartidoMes = async (req, res) => {
+  const anio = parseInt(req.query.anio || new Date().getFullYear(), 10);
+  if (isNaN(anio) || anio < 2000 || anio > 2100)
+    return res.status(400).json({ message: 'Año inválido.' });
+
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT
+         COALESCE(d.partido, 'Sin Partido') AS partido,
+         MONTH(a.fecha)  AS mes,
+         SUM(a.monto)    AS ejecutado,
+         COUNT(*)        AS cantidad
+       FROM ayudas_sociales a
+       JOIN presupuesto_diputados p ON p.id = a.presupuesto_id AND p.anio = ?
+       JOIN diputados d ON d.id = p.diputado_id
+       GROUP BY COALESCE(d.partido, 'Sin Partido'), MONTH(a.fecha)
+       ORDER BY COALESCE(d.partido, 'Sin Partido'), MONTH(a.fecha)`,
+      [anio]
+    );
+
+    const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    const map = {};
+    for (const r of rows) {
+      const p = r.partido;
+      if (!map[p]) map[p] = { partido: p, total_ejecutado: 0, meses: [] };
+      const ejecutado = parseFloat(r.ejecutado);
+      map[p].total_ejecutado += ejecutado;
+      map[p].meses.push({ mes: r.mes, mes_nombre: MESES_ES[r.mes - 1], ejecutado, cantidad: r.cantidad });
+    }
+
+    const resultado = Object.values(map)
+      .sort((a, b) => b.total_ejecutado - a.total_ejecutado)
+      .map(p => ({ ...p, total_ejecutado: parseFloat(p.total_ejecutado.toFixed(2)) }));
+
+    res.json(resultado);
+  } catch (err) {
+    console.error('[presupuesto] Error en getResumenPartidoMes:', err);
+    res.status(500).json({ message: 'Error al obtener el resumen por partido y mes.' });
+  }
+};
+
+// ──────────────────────────────────────────────────────────────
+// GET /api/presupuesto/mes-partido-detalle?anio=YYYY&mes=MM&partido=X
+// Diputados que ejecutaron y que NO ejecutaron en un mes/partido
+// ──────────────────────────────────────────────────────────────
+exports.getMesPartidoDetalle = async (req, res) => {
+  const anio   = parseInt(req.query.anio || new Date().getFullYear(), 10);
+  const mes    = parseInt(req.query.mes, 10);
+  const partido = (req.query.partido || '').toString().trim().slice(0, 50);
+
+  if (isNaN(anio) || anio < 2000 || anio > 2100)
+    return res.status(400).json({ message: 'Año inválido.' });
+  if (isNaN(mes) || mes < 1 || mes > 12)
+    return res.status(400).json({ message: 'Mes inválido.' });
+  if (!partido)
+    return res.status(400).json({ message: 'Partido requerido.' });
+
+  try {
+    const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    // Diputados que SÍ ejecutaron en ese mes
+    const [ejecutaron] = await db.promise().query(
+      `SELECT
+         d.id AS diputado_id, d.nombre, d.departamento, d.tipo, d.partido,
+         COALESCE(SUM(a.monto), 0) AS ejecutado,
+         COUNT(*) AS cantidad
+       FROM ayudas_sociales a
+       JOIN presupuesto_diputados p ON p.id = a.presupuesto_id AND p.anio = ?
+       JOIN diputados d ON d.id = p.diputado_id
+       WHERE MONTH(a.fecha) = ? AND COALESCE(d.partido, 'Sin Partido') = ?
+       GROUP BY d.id, d.nombre, d.departamento, d.tipo, d.partido
+       ORDER BY SUM(a.monto) DESC`,
+      [anio, mes, partido]
+    );
+
+    // Diputados que NO ejecutaron ese mes (tienen presupuesto asignado pero sin ayudas en ese mes)
+    const [noEjecutaron] = await db.promise().query(
+      `SELECT
+         d.id AS diputado_id, d.nombre, d.departamento, d.tipo, d.partido,
+         p.monto_asignado
+       FROM presupuesto_diputados p
+       JOIN diputados d ON d.id = p.diputado_id AND d.activo = 1
+       WHERE p.anio = ?
+         AND COALESCE(d.partido, 'Sin Partido') = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM ayudas_sociales a
+           WHERE a.presupuesto_id = p.id AND MONTH(a.fecha) = ?
+         )
+       ORDER BY d.nombre ASC`,
+      [anio, partido, mes]
+    );
+
+    res.json({
+      anio,
+      mes,
+      mes_nombre: MESES_ES[mes - 1],
+      partido,
+      ejecutaron: ejecutaron.map(r => ({ ...r, ejecutado: parseFloat(r.ejecutado) })),
+      no_ejecutaron: noEjecutaron.map(r => ({
+        ...r,
+        monto_asignado: r.monto_asignado != null ? parseFloat(r.monto_asignado) : null,
+      })),
+    });
+  } catch (err) {
+    console.error('[presupuesto] Error en getMesPartidoDetalle:', err);
+    res.status(500).json({ message: 'Error al obtener el detalle del mes por partido.' });
+  }
+};

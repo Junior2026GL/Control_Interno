@@ -357,12 +357,14 @@ export default function ReportesPresupuesto() {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [partidoModal, setPartidoModal] = useState(null); // partido card modal
 
-  /* monthly-by-party section */
-  const [mesPorPartido,        setMesPorPartido]        = useState([]);
-  const [loadingMesPorPartido, setLoadingMesPorPartido] = useState(false);
-  const [mesModal,             setMesModal]             = useState(null); // { mes, mes_nombre, ejecutado }
-  const [mesDetalle,           setMesDetalle]           = useState(null);
-  const [loadingMesDetalle,    setLoadingMesDetalle]    = useState(false);
+  /* partido-month cards section */
+  const [partidoMesData,    setPartidoMesData]    = useState([]);
+  const [loadingPartidoMes, setLoadingPartidoMes] = useState(false);
+  const [mesPartidoModal,   setMesPartidoModal]   = useState(null);
+  const [mesPartidoDetalle, setMesPartidoDetalle] = useState(null);
+  const [loadingMesPartido, setLoadingMesPartido] = useState(false);
+  const [mesModalTab,       setMesModalTab]       = useState('ejecutaron');
+  const [mesModalSearch,    setMesModalSearch]    = useState('');
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -401,7 +403,7 @@ export default function ReportesPresupuesto() {
   /* load resumen on year change */
   useEffect(() => {
     loadResumen();
-    loadMesPorPartido();
+    loadResumenPartidoMes();
     setRPage(1); setRFiltro('todos'); setRSearch('');
     setAPage(1); setExpandedRow(null); setExpandedData({});
   }, [anio]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -453,32 +455,32 @@ export default function ReportesPresupuesto() {
     }
   };
 
-  const loadMesPorPartido = async () => {
-    setLoadingMesPorPartido(true);
+  const loadResumenPartidoMes = async () => {
+    setLoadingPartidoMes(true);
     try {
-      const r = await api.get(`/presupuesto/resumen-por-mes?anio=${anio}`, { headers: authHeaders() });
-      setMesPorPartido(r.data);
+      const r = await api.get(`/presupuesto/resumen-partido-mes?anio=${anio}`, { headers: authHeaders() });
+      setPartidoMesData(r.data);
     } catch {
       showToast('Error al cargar el resumen mensual.');
     } finally {
-      setLoadingMesPorPartido(false);
+      setLoadingPartidoMes(false);
     }
   };
 
-  const openMesModal = async (mesItem) => {
-    setMesModal(mesItem);
-    setMesDetalle(null);
-    setLoadingMesDetalle(true);
+  const openMesPartidoModal = async (partido, mesItem) => {
+    setMesPartidoModal({ partido, ...mesItem });
+    setMesPartidoDetalle(null);
+    setMesModalTab('ejecutaron');
+    setMesModalSearch('');
+    setLoadingMesPartido(true);
     try {
-      const r = await api.get(
-        `/presupuesto/reportes/mensual-detalle?anio=${anio}&mes=${mesItem.mes}`,
-        { headers: authHeaders() }
-      );
-      setMesDetalle(r.data);
+      const params = new URLSearchParams({ anio, mes: mesItem.mes, partido });
+      const r = await api.get(`/presupuesto/mes-partido-detalle?${params}`, { headers: authHeaders() });
+      setMesPartidoDetalle(r.data);
     } catch {
       showToast('Error al cargar el detalle del mes.');
     } finally {
-      setLoadingMesDetalle(false);
+      setLoadingMesPartido(false);
     }
   };
 
@@ -1078,68 +1080,64 @@ export default function ReportesPresupuesto() {
           </div>
         )}
 
-        {/* ── Ejecución Mensual por Partido ── */}
-        {!loadingMesPorPartido && mesPorPartido.length > 0 && (
+        {/* ── Ejecución por Partido — Meses ── */}
+        {!loadingPartidoMes && partidoMesData.length > 0 && (
           <div className="rp-partido-section">
             <p className="rp-partido-title">
-              <FiCalendar size={15} /> Ejecución Mensual por Partido — {anio}
+              <FiCalendar size={15} /> Ejecución por Partido y Mes — {anio}
             </p>
-            <div className="rp-mes-grid">
-              {mesPorPartido.map(m => {
-                const topPartido = m.por_partido[0];
-                const logo = PARTIDO_LOGO[topPartido?.partido] || null;
-                const pct = m.por_partido.length;
+            <div className="rp-partido-grid">
+              {partidoMesData.map(pt => {
+                const logo = PARTIDO_LOGO[pt.partido] || null;
                 return (
-                  <div
-                    key={m.mes}
-                    className="rp-mes-card rp-mes-card--clickable"
-                    onClick={() => openMesModal(m)}
-                    role="button" tabIndex={0}
-                    onKeyDown={e => e.key === 'Enter' && openMesModal(m)}
-                  >
-                    {/* Mes header */}
-                    <div className="rp-mes-header">
-                      <span className="rp-mes-nombre">{m.mes_nombre}</span>
-                      <div className="rp-mes-logos">
-                        {m.por_partido.slice(0, 3).map(pp => {
-                          const pLogo = PARTIDO_LOGO[pp.partido];
-                          return pLogo ? (
-                            <img
-                              key={pp.partido}
-                              src={pLogo}
-                              alt={pp.partido}
-                              className="rp-mes-logo"
-                              onError={e => { e.currentTarget.style.display = 'none'; }}
-                              title={pp.partido}
-                            />
-                          ) : (
-                            <span key={pp.partido} className="rp-mes-logo-fb" title={pp.partido}>
-                              {pp.partido.slice(0, 2)}
-                            </span>
-                          );
-                        })}
-                        {m.por_partido.length > 3 && (
-                          <span className="rp-mes-logo-more">+{m.por_partido.length - 3}</span>
-                        )}
+                  <div key={pt.partido} className="rp-partido-card">
+                    {/* Header: logo + nombre + total ejecutado */}
+                    <div className="rp-partido-card-header">
+                      <div className="rp-partido-header-left">
+                        <div className="rp-partido-logo-wrap">
+                          <img
+                            src={logo || ''}
+                            alt={pt.partido}
+                            className="rp-partido-logo"
+                            onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                          />
+                          <span className="rp-partido-logo-fallback" style={{ display: logo ? 'none' : 'flex' }}>
+                            {pt.partido.slice(0, 2)}
+                          </span>
+                        </div>
+                        <span className="rp-partido-name">{pt.partido}</span>
+                      </div>
+                      <div className="rp-partido-header-right">
+                        <span className="rp-partido-total-lbl">Total Ejecutado</span>
+                        <span className="rp-partido-total" style={{ color: '#b45309' }}>
+                          {formatHNL(pt.total_ejecutado)}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="rp-mes-total-lbl">Total Gastado</div>
-                    <div className="rp-mes-total">{formatHNL(m.ejecutado)}</div>
+                    <div className="rp-partido-divider" />
 
-                    {/* Party breakdown pills */}
-                    <div className="rp-mes-partidos">
-                      {m.por_partido.map(pp => (
-                        <div key={pp.partido} className="rp-mes-partido-row">
-                          <span className="rp-mes-partido-name">{pp.partido}</span>
-                          <span className="rp-mes-partido-monto">{formatHNL(pp.ejecutado)}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="rp-mes-footer">
-                      <span className="rp-mes-meta">{m.cantidad} ayudas</span>
-                      <span className="rp-mes-cta">Ver detalle →</span>
+                    {/* Pills de meses */}
+                    <div className="rp-partido-meses-wrap">
+                      <span className="rp-partido-meses-lbl">Meses</span>
+                      <div className="rp-partido-meses">
+                        {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m, i) => {
+                          const mesNum  = i + 1;
+                          const mesData = pt.meses.find(md => md.mes === mesNum);
+                          return mesData ? (
+                            <button
+                              key={mesNum}
+                              className="rp-mes-pill rp-mes-pill--active"
+                              onClick={() => openMesPartidoModal(pt.partido, mesData)}
+                              title={`${mesData.mes_nombre}: ${formatHNL(mesData.ejecutado)} · ${mesData.cantidad} ayudas`}
+                            >
+                              {m}
+                            </button>
+                          ) : (
+                            <span key={mesNum} className="rp-mes-pill rp-mes-pill--inactive">{m}</span>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1690,88 +1688,112 @@ export default function ReportesPresupuesto() {
         />
       )}
 
-      {/* ── Modal: Detalle Mensual ── */}
-      {mesModal && (
-        <div className="rpm-overlay" onClick={() => setMesModal(null)}>
+      {/* ── Modal: Mes por Partido ── */}
+      {mesPartidoModal && (
+        <div className="rpm-overlay" onClick={() => setMesPartidoModal(null)}>
           <div className="rpm-modal rpm-mes-modal" onClick={e => e.stopPropagation()}>
+
             {/* Header */}
             <div className="rpm-modal-header">
               <div className="rpm-modal-title-wrap">
-                <div className="rp-mes-modal-icon">
-                  <FiCalendar size={20} />
+                <div className="rpm-modal-logo-wrap">
+                  <img
+                    src={PARTIDO_LOGO[mesPartidoModal.partido] || ''}
+                    alt={mesPartidoModal.partido}
+                    className="rpm-modal-logo"
+                    onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                  />
+                  <span className="rpm-modal-logo-fb" style={{ display: 'none' }}>
+                    {mesPartidoModal.partido.slice(0, 2)}
+                  </span>
                 </div>
                 <div>
-                  <h3 className="rpm-modal-partido">{mesModal.mes_nombre} — {anio}</h3>
-                  <p className="rpm-modal-sub">Diputados que realizaron gastos este mes</p>
+                  <h3 className="rpm-modal-partido">{mesPartidoModal.partido} — {mesPartidoModal.mes_nombre}</h3>
+                  <p className="rpm-modal-sub">Total ejecutado: {formatHNL(mesPartidoModal.ejecutado)}</p>
                 </div>
               </div>
-              <button className="rpm-modal-close" onClick={() => setMesModal(null)}>×</button>
+              <button className="rpm-modal-close" onClick={() => setMesPartidoModal(null)}>×</button>
             </div>
 
-            {/* Summary */}
-            <div className="rpm-modal-summary">
-              <div className="rpm-sum-chip">
-                <span className="rpm-sum-lbl">Total Gastado</span>
-                <span className="rpm-sum-val rpm-sum-val--amber">{formatHNL(mesModal.ejecutado)}</span>
-              </div>
-              {mesModal.por_partido.map(pp => {
-                const pLogo = PARTIDO_LOGO[pp.partido];
-                return (
-                  <div key={pp.partido} className="rpm-sum-chip">
-                    <span className="rpm-sum-lbl">
-                      {pLogo && <img src={pLogo} alt={pp.partido} className="rpm-sum-party-logo" onError={e => { e.currentTarget.style.display = 'none'; }} />}
-                      {pp.partido}
-                    </span>
-                    <span className="rpm-sum-val rpm-sum-val--blue">{formatHNL(pp.ejecutado)}</span>
-                  </div>
-                );
-              })}
+            {/* Tabs */}
+            <div className="rpm-mes-tabs">
+              <button
+                className={`rpm-mes-tab ${mesModalTab === 'ejecutaron' ? 'rpm-mes-tab--active' : ''}`}
+                onClick={() => { setMesModalTab('ejecutaron'); setMesModalSearch(''); }}
+              >
+                Ejecutaron{mesPartidoDetalle ? ` (${mesPartidoDetalle.ejecutaron.length})` : ''}
+              </button>
+              <button
+                className={`rpm-mes-tab ${mesModalTab === 'no_ejecutaron' ? 'rpm-mes-tab--active' : ''}`}
+                onClick={() => { setMesModalTab('no_ejecutaron'); setMesModalSearch(''); }}
+              >
+                No Ejecutaron{mesPartidoDetalle ? ` (${mesPartidoDetalle.no_ejecutaron.length})` : ''}
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="rpm-modal-search-wrap">
+              <FiSearch size={13} className="rpm-modal-search-icon" />
+              <input
+                className="rpm-modal-search"
+                placeholder="Buscar por nombre o departamento…"
+                value={mesModalSearch}
+                onChange={e => setMesModalSearch(e.target.value)}
+              />
+              {mesModalSearch && (
+                <button className="rpm-modal-search-clear" onClick={() => setMesModalSearch('')}>
+                  <FiX size={11} />
+                </button>
+              )}
             </div>
 
             {/* Body */}
             <div className="rpm-modal-body">
-              {loadingMesDetalle ? (
+              {loadingMesPartido ? (
                 <div className="rpm-mes-loading">
                   <div className="rp-spinner" />
-                  <span>Cargando detalle...</span>
+                  <span>Cargando...</span>
                 </div>
-              ) : mesDetalle?.diputados?.length ? (
-                mesDetalle.diputados.map(dip => {
-                  const barColor = '#f59e0b';
-                  const pLogo = PARTIDO_LOGO[dip.partido];
-                  return (
-                    <div key={dip.diputado_id} className="rpm-mes-dip-block">
-                      <div className="rpm-mes-dip-header">
-                        <div className="rpm-mes-dip-info">
-                          {pLogo && (
-                            <img src={pLogo} alt={dip.partido} className="rpm-mes-dip-logo"
-                              onError={e => { e.currentTarget.style.display = 'none'; }} />
-                          )}
-                          <div>
-                            <span className="rpm-dip-nombre">{dip.diputado_nombre}</span>
-                            <span className="rpm-dip-dept">{dip.departamento} · {dip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'} · {dip.partido || '—'}</span>
-                          </div>
+              ) : mesPartidoDetalle ? (() => {
+                const lista = mesModalTab === 'ejecutaron'
+                  ? mesPartidoDetalle.ejecutaron
+                  : mesPartidoDetalle.no_ejecutaron;
+                const filtered = mesModalSearch.trim()
+                  ? lista.filter(d =>
+                      d.nombre.toLowerCase().includes(mesModalSearch.toLowerCase()) ||
+                      (d.departamento || '').toLowerCase().includes(mesModalSearch.toLowerCase())
+                    )
+                  : lista;
+                if (!filtered.length) return (
+                  <div className="rpm-empty-msg">
+                    {mesModalSearch ? 'No hay coincidencias.' : 'No hay diputados en esta categoría.'}
+                  </div>
+                );
+                return (
+                  <div className="rpm-dip-list">
+                    {filtered.map(d => (
+                      <div key={d.diputado_id} className="rpm-dip-row">
+                        <div className="rpm-dip-info">
+                          <span className="rpm-dip-nombre">{d.nombre}</span>
+                          <span className="rpm-dip-dept">
+                            {d.departamento} · {d.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                          </span>
                         </div>
-                        <div className="rpm-mes-dip-total">
-                          <span className="rpm-mes-dip-total-lbl">{dip.cantidad} ayuda{dip.cantidad !== 1 ? 's' : ''}</span>
-                          <span className="rpm-mes-dip-total-val">{formatHNL(dip.total)}</span>
-                        </div>
-                      </div>
-                      <div className="rpm-mes-ayudas">
-                        {dip.ayudas.map(a => (
-                          <div key={a.id} className="rpm-mes-ayuda-row">
-                            <span className="rpm-mes-ayuda-fecha">{a.fecha}</span>
-                            <span className="rpm-mes-ayuda-concepto">{a.concepto}</span>
-                            <span className="rpm-mes-ayuda-monto">{formatHNL(a.monto)}</span>
+                        {mesModalTab === 'ejecutaron' ? (
+                          <div className="rpm-dip-budget">
+                            <div className="rpm-dip-amounts">
+                              <span className="rpm-dip-asig">{formatHNL(d.ejecutado)}</span>
+                              <span className="rpm-dip-ejec">{d.cantidad} ayuda{d.cantidad !== 1 ? 's' : ''}</span>
+                            </div>
                           </div>
-                        ))}
+                        ) : (
+                          <span className="rpm-dip-nopres">Sin ejecución</span>
+                        )}
                       </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="rpm-empty-msg">No hay datos para este mes.</div>
-              )}
+                    ))}
+                  </div>
+                );
+              })() : null}
             </div>
           </div>
         </div>

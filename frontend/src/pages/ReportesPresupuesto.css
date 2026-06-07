@@ -1602,8 +1602,117 @@
   .rpm-dip-asig { font-size: 12px; }
 }
 
-/* ── Mes Cards Grid ──────────────────────────────────────────── */
-.rp-mes-grid {
+/* ── Mes Pills inside Partido Card ──────────────────────────── */
+.rp-partido-meses-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rp-partido-meses-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+}
+.rp-partido-meses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.rp-mes-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 9px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border: 1.5px solid transparent;
+  line-height: 1;
+  font-family: inherit;
+  transition: all .15s;
+}
+.rp-mes-pill--active {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fcd34d;
+  cursor: pointer;
+}
+.rp-mes-pill--active:hover {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
+  box-shadow: 0 2px 6px rgba(245,158,11,.3);
+  transform: translateY(-1px);
+}
+.rp-mes-pill--active:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+.rp-mes-pill--inactive {
+  background: #f8fafc;
+  color: #cbd5e1;
+  border-color: #e2e8f0;
+  cursor: default;
+}
+
+/* ── Tabs inside mes-partido modal ──────────────────────────── */
+.rpm-mes-tabs {
+  display: flex;
+  border-bottom: 2px solid #e8ecf4;
+  padding: 0 20px;
+  flex-shrink: 0;
+  background: #f8faff;
+}
+.rpm-mes-tab {
+  padding: 11px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.rpm-mes-tab:hover { color: #274C8D; }
+.rpm-mes-tab--active {
+  color: #274C8D;
+  border-bottom-color: #274C8D;
+}
+
+/* ── Mes-Partido modal width ─────────────────────────────────── */
+.rpm-mes-modal {
+  max-width: 660px;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────── */
+.rpm-mes-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  color: #64748b;
+  font-size: 14px;
+}
+.rp-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #274C8D;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
