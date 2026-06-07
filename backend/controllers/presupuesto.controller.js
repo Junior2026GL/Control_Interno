@@ -856,3 +856,58 @@ exports.getReporteMensualDetalle = async (req, res) => {
     res.status(500).json({ message: 'Error al generar el reporte mensual.' });
   }
 };
+
+// ──────────────────────────────────────────────────────────────
+// GET /api/presupuesto/resumen-por-mes?anio=YYYY
+// Resumen de ejecución mensual con desglose por partido
+// ──────────────────────────────────────────────────────────────
+exports.getResumenMensualPartido = async (req, res) => {
+  const anio = parseInt(req.query.anio || new Date().getFullYear(), 10);
+  if (isNaN(anio) || anio < 2000 || anio > 2100)
+    return res.status(400).json({ message: 'Año inválido.' });
+
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT
+         MONTH(a.fecha)          AS mes,
+         COALESCE(d.partido, 'Sin Partido') AS partido,
+         SUM(a.monto)            AS ejecutado,
+         COUNT(*)                AS cantidad,
+         COUNT(DISTINCT d.id)   AS diputados_count
+       FROM ayudas_sociales a
+       JOIN presupuesto_diputados p ON p.id = a.presupuesto_id AND p.anio = ?
+       JOIN diputados d ON d.id = p.diputado_id
+       GROUP BY MONTH(a.fecha), COALESCE(d.partido, 'Sin Partido')
+       ORDER BY MONTH(a.fecha), SUM(a.monto) DESC`,
+      [anio]
+    );
+
+    const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    const resultado = Array.from({ length: 12 }, (_, i) => {
+      const mesNum = i + 1;
+      const mesRows = rows.filter(r => r.mes === mesNum);
+      if (!mesRows.length) return null;
+      const porPartido = mesRows.map(r => ({
+        partido:         r.partido,
+        ejecutado:       parseFloat(r.ejecutado),
+        cantidad:        r.cantidad,
+        diputados_count: r.diputados_count,
+      }));
+      return {
+        mes:             mesNum,
+        mes_nombre:      MESES_ES[i],
+        ejecutado:       porPartido.reduce((s, r) => s + r.ejecutado, 0),
+        cantidad:        porPartido.reduce((s, r) => s + r.cantidad, 0),
+        diputados_count: new Set(mesRows.map(r => r.partido)).size,
+        por_partido:     porPartido,
+      };
+    }).filter(Boolean);
+
+    res.json(resultado);
+  } catch (err) {
+    console.error('[presupuesto] Error en getResumenMensualPartido:', err);
+    res.status(500).json({ message: 'Error al obtener el resumen mensual por partido.' });
+  }
+};

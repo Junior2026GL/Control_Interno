@@ -10,6 +10,9 @@ const onlyAdmins = checkRole(['SUPER_ADMIN', 'ADMIN', 'ASISTENTE']);
 // Resumen general del año — cualquier usuario autenticado
 router.get('/resumen', verifyToken, ctrl.getResumen);
 
+// Resumen de ejecución mensual con desglose por partido
+router.get('/resumen-por-mes', verifyToken, ctrl.getResumenMensualPartido);
+
 // Listado de ayudas con filtros — reportes
 router.get('/reportes/ayudas', verifyToken, ctrl.getReportesAyudas);
 

@@ -357,6 +357,13 @@ export default function ReportesPresupuesto() {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [partidoModal, setPartidoModal] = useState(null); // partido card modal
 
+  /* monthly-by-party section */
+  const [mesPorPartido,        setMesPorPartido]        = useState([]);
+  const [loadingMesPorPartido, setLoadingMesPorPartido] = useState(false);
+  const [mesModal,             setMesModal]             = useState(null); // { mes, mes_nombre, ejecutado }
+  const [mesDetalle,           setMesDetalle]           = useState(null);
+  const [loadingMesDetalle,    setLoadingMesDetalle]    = useState(false);
+
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4500);
@@ -394,6 +401,7 @@ export default function ReportesPresupuesto() {
   /* load resumen on year change */
   useEffect(() => {
     loadResumen();
+    loadMesPorPartido();
     setRPage(1); setRFiltro('todos'); setRSearch('');
     setAPage(1); setExpandedRow(null); setExpandedData({});
   }, [anio]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -442,6 +450,35 @@ export default function ReportesPresupuesto() {
       showToast('Error al cargar el top de ayudas.');
     } finally {
       setLoadingTop(false);
+    }
+  };
+
+  const loadMesPorPartido = async () => {
+    setLoadingMesPorPartido(true);
+    try {
+      const r = await api.get(`/presupuesto/resumen-por-mes?anio=${anio}`, { headers: authHeaders() });
+      setMesPorPartido(r.data);
+    } catch {
+      showToast('Error al cargar el resumen mensual.');
+    } finally {
+      setLoadingMesPorPartido(false);
+    }
+  };
+
+  const openMesModal = async (mesItem) => {
+    setMesModal(mesItem);
+    setMesDetalle(null);
+    setLoadingMesDetalle(true);
+    try {
+      const r = await api.get(
+        `/presupuesto/reportes/mensual-detalle?anio=${anio}&mes=${mesItem.mes}`,
+        { headers: authHeaders() }
+      );
+      setMesDetalle(r.data);
+    } catch {
+      showToast('Error al cargar el detalle del mes.');
+    } finally {
+      setLoadingMesDetalle(false);
     }
   };
 
@@ -1041,6 +1078,76 @@ export default function ReportesPresupuesto() {
           </div>
         )}
 
+        {/* ── Ejecución Mensual por Partido ── */}
+        {!loadingMesPorPartido && mesPorPartido.length > 0 && (
+          <div className="rp-partido-section">
+            <p className="rp-partido-title">
+              <FiCalendar size={15} /> Ejecución Mensual por Partido — {anio}
+            </p>
+            <div className="rp-mes-grid">
+              {mesPorPartido.map(m => {
+                const topPartido = m.por_partido[0];
+                const logo = PARTIDO_LOGO[topPartido?.partido] || null;
+                const pct = m.por_partido.length;
+                return (
+                  <div
+                    key={m.mes}
+                    className="rp-mes-card rp-mes-card--clickable"
+                    onClick={() => openMesModal(m)}
+                    role="button" tabIndex={0}
+                    onKeyDown={e => e.key === 'Enter' && openMesModal(m)}
+                  >
+                    {/* Mes header */}
+                    <div className="rp-mes-header">
+                      <span className="rp-mes-nombre">{m.mes_nombre}</span>
+                      <div className="rp-mes-logos">
+                        {m.por_partido.slice(0, 3).map(pp => {
+                          const pLogo = PARTIDO_LOGO[pp.partido];
+                          return pLogo ? (
+                            <img
+                              key={pp.partido}
+                              src={pLogo}
+                              alt={pp.partido}
+                              className="rp-mes-logo"
+                              onError={e => { e.currentTarget.style.display = 'none'; }}
+                              title={pp.partido}
+                            />
+                          ) : (
+                            <span key={pp.partido} className="rp-mes-logo-fb" title={pp.partido}>
+                              {pp.partido.slice(0, 2)}
+                            </span>
+                          );
+                        })}
+                        {m.por_partido.length > 3 && (
+                          <span className="rp-mes-logo-more">+{m.por_partido.length - 3}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="rp-mes-total-lbl">Total Gastado</div>
+                    <div className="rp-mes-total">{formatHNL(m.ejecutado)}</div>
+
+                    {/* Party breakdown pills */}
+                    <div className="rp-mes-partidos">
+                      {m.por_partido.map(pp => (
+                        <div key={pp.partido} className="rp-mes-partido-row">
+                          <span className="rp-mes-partido-name">{pp.partido}</span>
+                          <span className="rp-mes-partido-monto">{formatHNL(pp.ejecutado)}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rp-mes-footer">
+                      <span className="rp-mes-meta">{m.cantidad} ayudas</span>
+                      <span className="rp-mes-cta">Ver detalle →</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Chart ── */}
         {!loadingResumen && (stats || chartData.length > 0) && (
           <div className="rp-chart-card">
@@ -1581,6 +1688,93 @@ export default function ReportesPresupuesto() {
           PARTIDO_LOGO={PARTIDO_LOGO}
           onClose={() => setPartidoModal(null)}
         />
+      )}
+
+      {/* ── Modal: Detalle Mensual ── */}
+      {mesModal && (
+        <div className="rpm-overlay" onClick={() => setMesModal(null)}>
+          <div className="rpm-modal rpm-mes-modal" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="rpm-modal-header">
+              <div className="rpm-modal-title-wrap">
+                <div className="rp-mes-modal-icon">
+                  <FiCalendar size={20} />
+                </div>
+                <div>
+                  <h3 className="rpm-modal-partido">{mesModal.mes_nombre} — {anio}</h3>
+                  <p className="rpm-modal-sub">Diputados que realizaron gastos este mes</p>
+                </div>
+              </div>
+              <button className="rpm-modal-close" onClick={() => setMesModal(null)}>×</button>
+            </div>
+
+            {/* Summary */}
+            <div className="rpm-modal-summary">
+              <div className="rpm-sum-chip">
+                <span className="rpm-sum-lbl">Total Gastado</span>
+                <span className="rpm-sum-val rpm-sum-val--amber">{formatHNL(mesModal.ejecutado)}</span>
+              </div>
+              {mesModal.por_partido.map(pp => {
+                const pLogo = PARTIDO_LOGO[pp.partido];
+                return (
+                  <div key={pp.partido} className="rpm-sum-chip">
+                    <span className="rpm-sum-lbl">
+                      {pLogo && <img src={pLogo} alt={pp.partido} className="rpm-sum-party-logo" onError={e => { e.currentTarget.style.display = 'none'; }} />}
+                      {pp.partido}
+                    </span>
+                    <span className="rpm-sum-val rpm-sum-val--blue">{formatHNL(pp.ejecutado)}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Body */}
+            <div className="rpm-modal-body">
+              {loadingMesDetalle ? (
+                <div className="rpm-mes-loading">
+                  <div className="rp-spinner" />
+                  <span>Cargando detalle...</span>
+                </div>
+              ) : mesDetalle?.diputados?.length ? (
+                mesDetalle.diputados.map(dip => {
+                  const barColor = '#f59e0b';
+                  const pLogo = PARTIDO_LOGO[dip.partido];
+                  return (
+                    <div key={dip.diputado_id} className="rpm-mes-dip-block">
+                      <div className="rpm-mes-dip-header">
+                        <div className="rpm-mes-dip-info">
+                          {pLogo && (
+                            <img src={pLogo} alt={dip.partido} className="rpm-mes-dip-logo"
+                              onError={e => { e.currentTarget.style.display = 'none'; }} />
+                          )}
+                          <div>
+                            <span className="rpm-dip-nombre">{dip.diputado_nombre}</span>
+                            <span className="rpm-dip-dept">{dip.departamento} · {dip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'} · {dip.partido || '—'}</span>
+                          </div>
+                        </div>
+                        <div className="rpm-mes-dip-total">
+                          <span className="rpm-mes-dip-total-lbl">{dip.cantidad} ayuda{dip.cantidad !== 1 ? 's' : ''}</span>
+                          <span className="rpm-mes-dip-total-val">{formatHNL(dip.total)}</span>
+                        </div>
+                      </div>
+                      <div className="rpm-mes-ayudas">
+                        {dip.ayudas.map(a => (
+                          <div key={a.id} className="rpm-mes-ayuda-row">
+                            <span className="rpm-mes-ayuda-fecha">{a.fecha}</span>
+                            <span className="rpm-mes-ayuda-concepto">{a.concepto}</span>
+                            <span className="rpm-mes-ayuda-monto">{formatHNL(a.monto)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="rpm-empty-msg">No hay datos para este mes.</div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
