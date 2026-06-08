@@ -466,8 +466,10 @@ export default function CheckList() {
     doc.setTextColor(...NEGRO);
     doc.text('Número de Folios Expediente:', L, y);
     doc.setFont('Roboto', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...NEGRO);
     const val1 = sa(cl.numero_folios || '');
-    doc.text(val1, VALX, y);
+    if (val1) doc.text(val1, VALX, y);
     const lw1 = (val1 ? doc.getTextWidth(val1) : 0) + 4;
     doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.4);
