@@ -22,8 +22,7 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await api.post('/auth/login', { username, password });
-      login(res.data.user);
-      localStorage.setItem('token', res.data.token);
+      login(res.data.user, res.data.token, res.data.refreshToken);
       navigate('/dashboard');
     } catch (err) {
       const isBloqueado = err.response?.status === 423 || err.response?.data?.bloqueado;

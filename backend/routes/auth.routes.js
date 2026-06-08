@@ -96,10 +96,24 @@ router.post('/login', loginLimiter, (req, res) => {
     // ── Login exitoso → resetear intentos ─────────────────────
     db.query('UPDATE usuarios SET login_intentos=0, login_bloqueado_hasta=NULL WHERE id=?', [user.id], () => {});
 
-    const token = jwt.sign(
+    // Access token: 15 min
+    const accessToken = jwt.sign(
       { id: user.id, rol: user.rol, nombre: user.nombre },
       process.env.JWT_SECRET,
-      { expiresIn: '8h' }
+      { expiresIn: '15m' }
+    );
+
+    // Refresh token: 7 días (token opaco almacenado en BD)
+    const crypto = require('crypto');
+    const refreshToken = crypto.randomBytes(64).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // Revocar refresh tokens anteriores de este usuario (un token activo por sesión)
+    db.query('UPDATE refresh_tokens SET revoked=1 WHERE usuario_id=? AND revoked=0', [user.id]);
+    db.query(
+      'INSERT INTO refresh_tokens (usuario_id, token, expires_at) VALUES (?, ?, ?)',
+      [user.id, refreshToken, expiresAt],
+      (rtErr) => { if (rtErr) console.error('[auth] Error guardando refresh token:', rtErr); }
     );
 
     logEvent({ usuario_id: user.id, usuario_nombre: user.nombre, accion: 'LOGIN_OK', modulo: 'auth', ip, resultado: 'EXITO' });
@@ -110,7 +124,8 @@ router.post('/login', loginLimiter, (req, res) => {
       (err2, modResults) => {
         const modulos = err2 ? [] : modResults.map(r => r.clave);
         res.json({
-          token,
+          token: accessToken,
+          refreshToken,
           user: {
             id: user.id,
             nombre: user.nombre,
@@ -121,6 +136,57 @@ router.post('/login', loginLimiter, (req, res) => {
       }
     );
   });
+});
+
+// ── Refresh token: emite nuevo access token si el refresh es válido ──────────
+router.post('/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    return res.status(400).json({ message: 'Refresh token requerido' });
+  }
+
+  db.query(
+    `SELECT rt.*, u.rol, u.nombre, u.activo
+     FROM refresh_tokens rt
+     JOIN usuarios u ON u.id = rt.usuario_id
+     WHERE rt.token = ? AND rt.revoked = 0`,
+    [refreshToken],
+    (err, rows) => {
+      if (err) return res.status(500).json({ message: 'Error en el servidor' });
+      if (rows.length === 0) {
+        return res.status(401).json({ message: 'Refresh token inválido o revocado' });
+      }
+
+      const rt = rows[0];
+
+      if (!rt.activo) {
+        return res.status(403).json({ message: 'Usuario desactivado' });
+      }
+
+      if (new Date() > new Date(rt.expires_at)) {
+        db.query('UPDATE refresh_tokens SET revoked=1 WHERE id=?', [rt.id]);
+        return res.status(401).json({ message: 'Refresh token expirado. Inicie sesión nuevamente.' });
+      }
+
+      // Emitir nuevo access token
+      const newAccessToken = jwt.sign(
+        { id: rt.usuario_id, rol: rt.rol, nombre: rt.nombre },
+        process.env.JWT_SECRET,
+        { expiresIn: '15m' }
+      );
+
+      res.json({ token: newAccessToken });
+    }
+  );
+});
+
+// ── Logout: revocar refresh token ────────────────────────────────────────────
+router.post('/logout', (req, res) => {
+  const { refreshToken } = req.body;
+  if (refreshToken) {
+    db.query('UPDATE refresh_tokens SET revoked=1 WHERE token=?', [refreshToken]);
+  }
+  res.json({ message: 'Sesión cerrada' });
 });
 
 // ── Forgot password: verify username + email, send reset link by email ────────

@@ -49,6 +49,7 @@ app.use(cors({
 app.use(ipWhitelist);
 app.use(express.json({ limit: '1mb' }));
 app.use(auditMiddleware);
+app.use(generalLimiter);
 
 app.use('/api/auth',            loginLimiter, require('./routes/auth.routes'));
 app.use('/api/users',           require('./routes/users.routes'));

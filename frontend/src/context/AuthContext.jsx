@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
+import api from '../api/axios';
 
 export const AuthContext = createContext();
 
@@ -19,15 +20,24 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
+  const login = (userData, token, refreshToken) => {
     const normalized = { ...userData, modulos: userData.modulos || [] };
     setUser(normalized);
     localStorage.setItem('user', JSON.stringify(normalized));
+    if (token)        localStorage.setItem('token', token);
+    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
   };
 
   const logout = () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    // Revocar el refresh token en el servidor (best-effort, no bloqueante)
+    if (refreshToken) {
+      api.post('/auth/logout', { refreshToken }).catch(() => {});
+    }
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
   };
 
   return (
