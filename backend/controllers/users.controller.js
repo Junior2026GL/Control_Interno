@@ -247,4 +247,35 @@ exports.unlockUser = (req, res) => {
   );
 };
 
+// ── Sesiones activas ──────────────────────────────────────────
+exports.getSesionesActivas = (req, res) => {
+  db.query(
+    `SELECT rt.id AS token_id, rt.usuario_id, rt.created_at, rt.expires_at,
+            u.nombre, u.username, u.rol
+     FROM refresh_tokens rt
+     JOIN usuarios u ON u.id = rt.usuario_id
+     WHERE rt.revoked = 0 AND rt.expires_at > NOW()
+     ORDER BY rt.created_at DESC`,
+    (err, rows) => {
+      if (err) { console.error('[users] Error en getSesionesActivas:', err); return res.status(500).json({ message: 'Error interno.' }); }
+      res.json(rows);
+    }
+  );
+};
 
+// ── Cerrar sesión de un usuario (revocar su refresh token) ────
+exports.cerrarSesion = (req, res) => {
+  const tokenId = parseInt(req.params.tokenId, 10);
+  if (isNaN(tokenId)) return res.status(400).json({ message: 'ID inválido.' });
+
+  db.query(
+    'UPDATE refresh_tokens SET revoked=1 WHERE id=?',
+    [tokenId],
+    (err, result) => {
+      if (err) { console.error('[users] Error en cerrarSesion:', err); return res.status(500).json({ message: 'Error interno.' }); }
+      if (result.affectedRows === 0) return res.status(404).json({ message: 'Sesión no encontrada.' });
+      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre, accion: 'CERRAR_SESION_REMOTA', modulo: 'usuarios', detalle: `Token ID ${tokenId} revocado por admin`, resultado: 'EXITO' });
+      res.json({ message: 'Sesión cerrada correctamente.' });
+    }
+  );
+};

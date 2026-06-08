@@ -3,6 +3,7 @@ import {
   FiPlus, FiSearch, FiEdit2, FiUserX, FiUserCheck,
   FiX, FiUser, FiMail, FiLock, FiUnlock, FiShield, FiAtSign, FiKey, FiCheck,
   FiEye, FiEyeOff, FiUsers, FiFilter, FiBriefcase, FiMapPin, FiUserPlus, FiPhone,
+  FiActivity, FiLogOut,
 } from 'react-icons/fi';
 
 // ── Password strength ─────────────────────────────────────────
@@ -111,6 +112,9 @@ export default function Usuarios() {
   const [filterRol, setFilterRol]     = useState('ALL');
   const [filterActivo, setFilterActivo] = useState('ALL');
   const [unlockTarget, setUnlockTarget] = useState(null);
+  const [activeTab, setActiveTab]       = useState('usuarios'); // 'usuarios' | 'sesiones'
+  const [sesiones, setSesiones]         = useState([]);
+  const [loadingSesiones, setLoadingSesiones] = useState(false);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -273,6 +277,30 @@ export default function Usuarios() {
     }
   };
 
+  // ── sesiones activas ─────────────────────────────────────
+  const fetchSesiones = async () => {
+    setLoadingSesiones(true);
+    try {
+      const res = await api.get('/users/sesiones-activas', { headers: authHeaders() });
+      setSesiones(res.data);
+    } catch {
+      showToast('Error al cargar sesiones activas.');
+    } finally {
+      setLoadingSesiones(false);
+    }
+  };
+
+  const handleCerrarSesion = async (tokenId, nombre) => {
+    if (!window.confirm(`¿Cerrar la sesión de ${nombre}?`)) return;
+    try {
+      await api.delete(`/users/sesiones-activas/${tokenId}`, { headers: authHeaders() });
+      showToast(`Sesión de ${nombre} cerrada.`, 'ok');
+      fetchSesiones();
+    } catch {
+      showToast('Error al cerrar la sesión.');
+    }
+  };
+
   // ── render ────────────────────────────────────────────────
   return (
     <div className="page-shell">
@@ -293,7 +321,27 @@ export default function Usuarios() {
           </button>
         </div>
 
-        {/* ── Stats ── */}
+        {/* ── Tabs ── */}
+        {me?.rol === 'SUPER_ADMIN' && (
+          <div className="usr-tabs">
+            <button
+              className={`usr-tab${activeTab === 'usuarios' ? ' usr-tab--active' : ''}`}
+              onClick={() => setActiveTab('usuarios')}
+            >
+              <FiUsers size={15} /> Usuarios
+            </button>
+            <button
+              className={`usr-tab${activeTab === 'sesiones' ? ' usr-tab--active' : ''}`}
+              onClick={() => { setActiveTab('sesiones'); fetchSesiones(); }}
+            >
+              <FiActivity size={15} /> Sesiones Activas
+              {sesiones.length > 0 && <span className="usr-tab-badge">{sesiones.length}</span>}
+            </button>
+          </div>
+        )}
+
+        {/* ── Stats + Toolbar + Table (solo pestaña usuarios) ── */}
+        {activeTab === 'usuarios' && (<>
         <div className="usr-stats">
           <div className="usr-stat-card">
             <span className="usr-stat-value">{stats.total}</span>
@@ -448,6 +496,87 @@ export default function Usuarios() {
             </table>
           )}
         </div>
+        </>)}
+
+        {/* ── Sesiones Activas ── */}
+        {activeTab === 'sesiones' && (
+          <div className="usr-sesiones-wrap">
+            <div className="usr-sesiones-header">
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>
+                  Sesiones activas ahora mismo
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                  Puedes cerrar la sesión de cualquier usuario remotamente
+                </p>
+              </div>
+              <button className="btn-secondary" onClick={fetchSesiones} style={{ fontSize: '0.8rem', padding: '6px 14px' }}>
+                Actualizar
+              </button>
+            </div>
+
+            {loadingSesiones ? (
+              <div className="usr-empty">Cargando sesiones…</div>
+            ) : sesiones.length === 0 ? (
+              <div className="usr-empty" style={{ padding: '40px 0' }}>
+                <FiActivity size={32} style={{ color: '#cbd5e1', marginBottom: 8 }} />
+                <p>No hay sesiones activas en este momento.</p>
+              </div>
+            ) : (
+              <table className="usr-table">
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Inicio de sesión</th>
+                    <th>Expira</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sesiones.map(s => {
+                    const meta = ROL_META[s.rol] || ROL_META.ASISTENTE;
+                    return (
+                      <tr key={s.token_id}>
+                        <td>
+                          <div className="usr-name-cell">
+                            <div className="usr-avatar" style={{ background: meta.bg, color: meta.color }}>
+                              {s.nombre.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="usr-name-cell-info">
+                              <span className="usr-name-cell-name">{s.nombre}</span>
+                              <span className="usr-name-cell-email">@{s.username}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="usr-role-badge" style={{ color: meta.color, background: meta.bg }}>
+                            {meta.label}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '0.82rem', color: '#475569' }}>
+                          {new Date(s.created_at).toLocaleString('es-HN', { dateStyle: 'short', timeStyle: 'short' })}
+                        </td>
+                        <td style={{ fontSize: '0.82rem', color: '#475569' }}>
+                          {new Date(s.expires_at).toLocaleString('es-HN', { dateStyle: 'short', timeStyle: 'short' })}
+                        </td>
+                        <td>
+                          <button
+                            className="action-btn deactivate"
+                            title="Cerrar sesión"
+                            onClick={() => handleCerrarSesion(s.token_id, s.nombre)}
+                          >
+                            <FiLogOut size={15} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Create / Edit Modal ── */}

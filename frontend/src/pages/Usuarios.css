@@ -470,6 +470,66 @@
 .action-btn.unlock       { color: #d97706; border-color: #fde68a; }
 .action-btn.unlock:hover { background: #d97706; color: white; border-color: #d97706; }
 
+/* ── Tabs (Usuarios / Sesiones Activas) ─────────────────── */
+.usr-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e8ecf4;
+  padding-bottom: 0;
+}
+
+.usr-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8a99aa;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  border-radius: 6px 6px 0 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+.usr-tab:hover { color: #274C8D; }
+.usr-tab--active { color: #274C8D; border-bottom-color: #274C8D; background: #f0f5ff; }
+
+.usr-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 20px;
+}
+
+/* ── Sesiones activas ───────────────────────────────────── */
+.usr-sesiones-wrap {
+  background: #fff;
+  border: 1px solid #e8ecf4;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.usr-sesiones-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e8ecf4;
+  gap: 12px;
+}
+
 /* ── Modal overlay ──────────────────────────────────────── */
 .modal-overlay {
   position: fixed;

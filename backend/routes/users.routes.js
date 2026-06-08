@@ -53,4 +53,21 @@ router.post(
   usersController.unlockUser
 );
 
+// Sesiones activas — solo SUPER_ADMIN
+router.get(
+  '/sesiones-activas',
+  verifyToken,
+  checkRole(['SUPER_ADMIN']),
+  usersController.getSesionesActivas
+);
+
+// Cerrar sesión remota — solo SUPER_ADMIN
+router.delete(
+  '/sesiones-activas/:tokenId',
+  verifyToken,
+  checkRole(['SUPER_ADMIN']),
+  audit,
+  usersController.cerrarSesion
+);
+
 module.exports = router;
