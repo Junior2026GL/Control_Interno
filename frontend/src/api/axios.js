@@ -35,7 +35,7 @@ api.interceptors.response.use(
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        window.location.href = '/login?expired=1';
         return Promise.reject(error);
       }
 
@@ -53,7 +53,7 @@ api.interceptors.response.use(
               localStorage.removeItem('token');
               localStorage.removeItem('refreshToken');
               localStorage.removeItem('user');
-              window.location.href = '/login';
+              window.location.href = '/login?expired=1';
               throw err;
             })
             .finally(() => { _refreshing = null; });

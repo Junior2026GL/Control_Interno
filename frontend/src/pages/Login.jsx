@@ -10,7 +10,8 @@ export default function Login() {
   const [password, setPassword]   = useState('');
   const [showPass, setShowPass]   = useState(false);
   const [loading,  setLoading]    = useState(false);
-  const [error,    setError]      = useState('');
+  const sessionExpired = new URLSearchParams(window.location.search).get('expired') === '1';
+  const [error,    setError]      = useState(sessionExpired ? 'Tu sesión ha expirado. Inicia sesión nuevamente.' : '');
   const [bloqueado, setBloqueado] = useState(false);
   const { login }    = useContext(AuthContext);
   const navigate     = useNavigate();
