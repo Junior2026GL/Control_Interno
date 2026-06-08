@@ -74,6 +74,11 @@ export default function Navbar() {
               )}
             </div>
 
+            <button className="logout-btn" onClick={handleLogout} title="Cerrar sesión">
+              <FiLogOut size={16} />
+              <span>Salir</span>
+            </button>
+
             <button className="theme-toggle-btn" onClick={toggleTheme} title={isDark ? 'Modo claro' : 'Modo oscuro'}>
               {isDark ? <LuSun size={18} /> : <LuMoon size={18} />}
             </button>
