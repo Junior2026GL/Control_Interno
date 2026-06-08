@@ -367,7 +367,7 @@ export default function BusquedaAyudas() {
                 <div className="ba-input-wrap">
                   <input
                     className="ba-input"
-                    placeholder="Ej: AS202610"
+                    placeholder="311/AS/2026"
                     value={noInput}
                     onChange={e => {
                       setNoInput(e.target.value);

@@ -20,7 +20,7 @@ router.get('/resumen-partido-mes', verifyToken, ctrl.getResumenPartidoMes);
 router.get('/mes-partido-detalle', verifyToken, ctrl.getMesPartidoDetalle);
 
 // Listado de ayudas con filtros — reportes
-router.get('/reportes/ayudas', verifyToken, ctrl.getReportesAyudas);
+router.get('/reportes/ayudas', verifyToken, audit, ctrl.getReportesAyudas);
 
 // Ejecución mensual por año
 router.get('/reportes/mensual', verifyToken, ctrl.getReportesMensual);
