@@ -985,9 +985,6 @@
   text-align: right;
   white-space: nowrap;
 }
-  text-align: right;
-  white-space: nowrap;
-}
 
 /* Footer con barra */
 .rp-partido-footer {
@@ -1919,6 +1916,7 @@
   to { transform: rotate(360deg); }
 }
 
+.rp-mes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
