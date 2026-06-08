@@ -336,9 +336,6 @@ export default function BusquedaAyudas() {
           <button className={`ba-tab ${tab === 'busqueda' ? 'ba-tab--active' : ''}`} onClick={() => setTab('busqueda')}>
             <FiSearch size={14} /> Búsqueda Global
           </button>
-          <button className={`ba-tab ${tab === 'mensual' ? 'ba-tab--active' : ''}`} onClick={() => setTab('mensual')}>
-            <FiBarChart2 size={14} /> Reporte Mensual
-          </button>
         </div>
 
         {/* ══════════════════ TAB: BÚSQUEDA ══════════════════ */}
@@ -433,11 +430,7 @@ export default function BusquedaAyudas() {
               <button className="ba-btn-primary" onClick={() => buscar(1)} disabled={loading}>
                 <FiSearch size={13} /> {loading ? 'Buscando…' : 'Buscar'}
               </button>
-              {results.length > 0 && (
-                <button className="ba-btn-export" onClick={exportBusquedaPDF}>
-                  <FiDownload size={13} /> Exportar PDF
-                </button>
-              )}
+
             </div>
 
             {/* Resultados */}
