@@ -106,7 +106,7 @@ router.post('/login', loginLimiter, (req, res) => {
     // Refresh token: 7 días (token opaco almacenado en BD)
     const crypto = require('crypto');
     const refreshToken = crypto.randomBytes(64).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000);
 
     // Revocar refresh tokens anteriores de este usuario (un token activo por sesión)
     db.query('UPDATE refresh_tokens SET revoked=1 WHERE usuario_id=? AND revoked=0', [user.id]);
