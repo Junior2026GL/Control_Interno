@@ -111,8 +111,8 @@ router.post('/login', loginLimiter, (req, res) => {
     // Revocar refresh tokens anteriores de este usuario (un token activo por sesión)
     db.query('UPDATE refresh_tokens SET revoked=1 WHERE usuario_id=? AND revoked=0', [user.id]);
     db.query(
-      'INSERT INTO refresh_tokens (usuario_id, token, expires_at) VALUES (?, ?, ?)',
-      [user.id, refreshToken, expiresAt],
+      'INSERT INTO refresh_tokens (usuario_id, token, expires_at, ip) VALUES (?, ?, ?, ?)',
+      [user.id, refreshToken, expiresAt, ip],
       (rtErr) => { if (rtErr) console.error('[auth] Error guardando refresh token:', rtErr); }
     );
 

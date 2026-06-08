@@ -535,6 +535,7 @@ export default function Usuarios() {
                   <tr>
                     <th>Usuario</th>
                     <th>Rol</th>
+                    <th>IP</th>
                     <th>Inicio de sesión</th>
                     <th>Expira</th>
                     <th>Acción</th>
@@ -560,6 +561,9 @@ export default function Usuarios() {
                           <span className="usr-role-badge" style={{ color: meta.color, background: meta.bg }}>
                             {meta.label}
                           </span>
+                        </td>
+                        <td style={{ fontSize: '0.82rem', color: '#475569', fontFamily: 'monospace' }}>
+                          {s.ip || <span style={{ color: '#cbd5e1' }}>—</span>}
                         </td>
                         <td style={{ fontSize: '0.82rem', color: '#475569' }}>
                           {new Date(s.created_at).toLocaleString('es-HN', { dateStyle: 'short', timeStyle: 'short' })}

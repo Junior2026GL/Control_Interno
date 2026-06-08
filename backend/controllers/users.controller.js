@@ -250,7 +250,7 @@ exports.unlockUser = (req, res) => {
 // ── Sesiones activas ──────────────────────────────────────────
 exports.getSesionesActivas = (req, res) => {
   db.query(
-    `SELECT rt.id AS token_id, rt.usuario_id, rt.created_at, rt.expires_at,
+    `SELECT rt.id AS token_id, rt.usuario_id, rt.created_at, rt.expires_at, rt.ip,
             u.nombre, u.username, u.rol
      FROM refresh_tokens rt
      JOIN usuarios u ON u.id = rt.usuario_id
