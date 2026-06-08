@@ -5,10 +5,26 @@ import api from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import './ChangePasswordModal.css';
 
+function calcPassStrength(pass) {
+  if (!pass) return { score: 0, label: '', color: '' };
+  let score = 0;
+  if (pass.length >= 8)  score++;
+  if (pass.length >= 12) score++;
+  if (/[A-Z]/.test(pass)) score++;
+  if (/[0-9]/.test(pass)) score++;
+  if (/[^A-Za-z0-9]/.test(pass)) score++;
+  if (score <= 1) return { score, label: 'Muy débil',  color: '#ef4444' };
+  if (score === 2) return { score, label: 'Débil',      color: '#f97316' };
+  if (score === 3) return { score, label: 'Regular',    color: '#eab308' };
+  if (score === 4) return { score, label: 'Fuerte',     color: '#22c55e' };
+  return             { score, label: 'Muy fuerte',  color: '#10b981' };
+}
+
 export default function ChangePasswordModal({ onClose }) {
   const { logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [form, setForm] = useState({ actual: '', nueva: '', confirmar: '' });
+  const passStrength = calcPassStrength(form.nueva);
   const [showActual, setShowActual]     = useState(false);
   const [showNueva, setShowNueva]       = useState(false);
   const [showConfirmar, setShowConfirmar] = useState(false);
@@ -102,6 +118,22 @@ export default function ChangePasswordModal({ onClose }) {
                   {showNueva ? <FiEyeOff size={14} /> : <FiEye size={14} />}
                 </button>
               </div>
+              {form.nueva && (
+                <div className="cp-strength">
+                  <div className="cp-strength-bar">
+                    {[1,2,3,4,5].map(i => (
+                      <div
+                        key={i}
+                        className="cp-strength-seg"
+                        style={{ background: i <= passStrength.score ? passStrength.color : '#e5e7eb' }}
+                      />
+                    ))}
+                  </div>
+                  <span className="cp-strength-label" style={{ color: passStrength.color }}>
+                    {passStrength.label}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="cp-field">
