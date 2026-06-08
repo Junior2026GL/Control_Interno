@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { FiX, FiLock, FiEye, FiEyeOff, FiCheck } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import { AuthContext } from '../context/AuthContext';
 import './ChangePasswordModal.css';
 
 export default function ChangePasswordModal({ onClose }) {
+  const { logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [form, setForm] = useState({ actual: '', nueva: '', confirmar: '' });
   const [showActual, setShowActual]     = useState(false);
   const [showNueva, setShowNueva]       = useState(false);
@@ -34,7 +38,11 @@ export default function ChangePasswordModal({ onClose }) {
         passwordNueva: form.nueva,
       });
       setSuccess(true);
-      setTimeout(onClose, 1800);
+      // Forzar re-login tras 2 segundos
+      setTimeout(() => {
+        logout();
+        navigate('/login');
+      }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Error al cambiar la contraseña.');
     } finally {
@@ -59,6 +67,7 @@ export default function ChangePasswordModal({ onClose }) {
           <div className="cp-success">
             <FiCheck size={32} />
             <p>¡Contraseña actualizada correctamente!</p>
+            <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Redirigiendo al login…</span>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="cp-body">
