@@ -115,6 +115,7 @@ export default function Usuarios() {
   const [activeTab, setActiveTab]       = useState('usuarios'); // 'usuarios' | 'sesiones'
   const [sesiones, setSesiones]         = useState([]);
   const [loadingSesiones, setLoadingSesiones] = useState(false);
+  const [sesionConfirm, setSesionConfirm] = useState(null); // { tokenId, nombre }
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -291,7 +292,13 @@ export default function Usuarios() {
   };
 
   const handleCerrarSesion = async (tokenId, nombre) => {
-    if (!window.confirm(`¿Cerrar la sesión de ${nombre}?`)) return;
+    setSesionConfirm({ tokenId, nombre });
+  };
+
+  const confirmarCerrarSesion = async () => {
+    if (!sesionConfirm) return;
+    const { tokenId, nombre } = sesionConfirm;
+    setSesionConfirm(null);
     try {
       await api.delete(`/users/sesiones-activas/${tokenId}`, { headers: authHeaders() });
       showToast(`Sesión de ${nombre} cerrada.`, 'ok');
@@ -860,6 +867,28 @@ export default function Usuarios() {
         <div className={`usr-toast usr-toast--${toast.type}`} role="alert">
           <span className="usr-toast-msg">{toast.msg}</span>
           <button className="usr-toast-close" onClick={() => setToast(null)} aria-label="Cerrar">×</button>
+        </div>
+      )}
+
+      {/* ── Confirmar cerrar sesión remota ── */}
+      {sesionConfirm && (
+        <div className="modal-overlay" onClick={() => setSesionConfirm(null)}>
+          <div className="modal-box modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Cerrar Sesión Remota</h2>
+              <button className="modal-close" onClick={() => setSesionConfirm(null)}><FiX size={18} /></button>
+            </div>
+            <div className="confirm-body">
+              ¿Deseas cerrar la sesión activa de <strong>{sesionConfirm.nombre}</strong>?
+              El usuario será desconectado en los próximos minutos.
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setSesionConfirm(null)}>Cancelar</button>
+              <button className="btn-danger" onClick={confirmarCerrarSesion}>
+                <FiLogOut size={14} /> Cerrar Sesión
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
