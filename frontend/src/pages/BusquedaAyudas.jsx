@@ -441,21 +441,50 @@ export default function BusquedaAyudas() {
             </div>
 
             {/* Resultados */}
-            {hasSearched && (
-              <div className="ba-results-card">
-                {loading ? (
-                  <div className="ba-empty">Buscando…</div>
-                ) : results.length === 0 ? (
-                  <div className="ba-empty">
-                    <FiAlertCircle size={28} />
-                    <p>No se encontraron ayudas con los filtros aplicados.</p>
+            {hasSearched && !loading && results.length > 0 && (() => {
+              const from  = (page - 1) * PAGE_SIZE + 1;
+              const to    = Math.min(page * PAGE_SIZE, total);
+              const pageNums = [];
+              if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) pageNums.push(i);
+              } else {
+                pageNums.push(1);
+                if (page > 3) pageNums.push('...');
+                for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pageNums.push(i);
+                if (page < totalPages - 2) pageNums.push('...');
+                pageNums.push(totalPages);
+              }
+              const PagBar = () => (
+                <div className="ba-pagination">
+                  <span className="ba-pag-range">{from}–{to} de {total}</span>
+                  <div className="ba-pag-btns">
+                    <button className="ba-pag-nav" disabled={page === 1} onClick={() => buscar(1)} title="Primera">«</button>
+                    <button className="ba-pag-nav" disabled={page === 1} onClick={() => buscar(page - 1)} title="Anterior">‹</button>
+                    {pageNums.map((p, i) =>
+                      p === '...' ? (
+                        <span key={`e${i}`} className="ba-pag-ellipsis">…</span>
+                      ) : (
+                        <button
+                          key={p}
+                          className={`ba-pag-num${p === page ? ' ba-pag-num--active' : ''}`}
+                          onClick={() => p !== page && buscar(p)}
+                        >{p}</button>
+                      )
+                    )}
+                    <button className="ba-pag-nav" disabled={page === totalPages} onClick={() => buscar(page + 1)} title="Siguiente">›</button>
+                    <button className="ba-pag-nav" disabled={page === totalPages} onClick={() => buscar(totalPages)} title="Última">»</button>
                   </div>
-                ) : (
-                  <>
+                  <span className="ba-pag-label">Pág. {page} / {totalPages}</span>
+                </div>
+              );
+              return (
+                <>
+                  {totalPages > 1 && <PagBar />}
+                  <div className="ba-results-card">
                     <div className="ba-results-header">
                       <span className="ba-results-count">
                         {total} resultado{total !== 1 ? 's' : ''}
-                        {total > PAGE_SIZE && <span className="ba-results-pag"> — pág. {page} de {totalPages}</span>}
+                        {totalPages > 1 && <span className="ba-results-pag"> — pág. {page} de {totalPages}</span>}
                       </span>
                       <span className="ba-results-total">
                         {formatHNL(results.reduce((s, r) => s + r.monto, 0))}
@@ -502,47 +531,24 @@ export default function BusquedaAyudas() {
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                  {totalPages > 1 && <PagBar />}
+                </>
+              );
+            })()}
 
-                    {totalPages > 1 && (() => {
-                      const from = (page - 1) * PAGE_SIZE + 1;
-                      const to   = Math.min(page * PAGE_SIZE, total);
-                      // build page numbers with ellipsis
-                      const pages = [];
-                      if (totalPages <= 7) {
-                        for (let i = 1; i <= totalPages; i++) pages.push(i);
-                      } else {
-                        pages.push(1);
-                        if (page > 3) pages.push('...');
-                        for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
-                        if (page < totalPages - 2) pages.push('...');
-                        pages.push(totalPages);
-                      }
-                      return (
-                        <div className="ba-pagination">
-                          <span className="ba-pag-range">{from}–{to} de {total}</span>
-                          <div className="ba-pag-btns">
-                            <button className="ba-pag-nav" disabled={page === 1} onClick={() => buscar(1)} title="Primera">«</button>
-                            <button className="ba-pag-nav" disabled={page === 1} onClick={() => buscar(page - 1)} title="Anterior">‹</button>
-                            {pages.map((p, i) =>
-                              p === '...' ? (
-                                <span key={`e${i}`} className="ba-pag-ellipsis">…</span>
-                              ) : (
-                                <button
-                                  key={p}
-                                  className={`ba-pag-num${p === page ? ' ba-pag-num--active' : ''}`}
-                                  onClick={() => p !== page && buscar(p)}
-                                >{p}</button>
-                              )
-                            )}
-                            <button className="ba-pag-nav" disabled={page === totalPages} onClick={() => buscar(page + 1)} title="Siguiente">›</button>
-                            <button className="ba-pag-nav" disabled={page === totalPages} onClick={() => buscar(totalPages)} title="Última">»</button>
-                          </div>
-                          <span className="ba-pag-label">Pág. {page} / {totalPages}</span>
-                        </div>
-                      );
-                    })()}
-                  </>
-                )}
+            {hasSearched && !loading && results.length === 0 && (
+              <div className="ba-results-card">
+                <div className="ba-empty">
+                  <FiAlertCircle size={28} />
+                  <p>No se encontraron ayudas con los filtros aplicados.</p>
+                </div>
+              </div>
+            )}
+
+            {hasSearched && loading && (
+              <div className="ba-results-card">
+                <div className="ba-empty">Buscando…</div>
               </div>
             )}
           </div>
