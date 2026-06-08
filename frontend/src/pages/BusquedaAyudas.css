@@ -388,24 +388,86 @@
 .ba-pagination {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px;
-  border-top: 1px solid #f1f5f9;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 20px;
+  border-top: 1.5px solid #e8ecf4;
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+  flex-wrap: wrap;
 }
-.ba-pag-btn {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 5px 14px;
-  font-size: 1rem;
+.ba-pag-range {
+  font-size: 13px;
+  font-weight: 600;
   color: #475569;
-  cursor: pointer;
-  transition: all 0.15s;
+  white-space: nowrap;
 }
-.ba-pag-btn:hover:not(:disabled) { background: #274c8d; color: #fff; border-color: #274c8d; }
-.ba-pag-btn:disabled { opacity: .4; cursor: not-allowed; }
-.ba-pag-info { font-size: 0.83rem; color: #475569; }
+.ba-pag-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ba-pag-nav {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  font-family: inherit;
+}
+.ba-pag-nav:hover:not(:disabled) { background: #274c8d; color: #fff; border-color: #274c8d; }
+.ba-pag-nav:disabled { opacity: .35; cursor: not-allowed; }
+.ba-pag-num {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 4px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  font-family: inherit;
+}
+.ba-pag-num:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+.ba-pag-num--active {
+  background: #274c8d;
+  color: #fff;
+  border-color: #274c8d;
+  font-weight: 800;
+  cursor: default;
+}
+.ba-pag-num--active:hover { background: #274c8d; color: #fff; }
+.ba-pag-ellipsis {
+  min-width: 28px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 13px;
+  pointer-events: none;
+}
+.ba-pag-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
 
 /* ── Empty state ──────────────────────────────────────────────── */
 .ba-empty {
