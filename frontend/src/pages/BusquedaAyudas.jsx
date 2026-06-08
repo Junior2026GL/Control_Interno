@@ -779,6 +779,10 @@ export default function BusquedaAyudas() {
                     <span className="ba-detail-label">Registrado</span>
                     <span className="ba-detail-val">{formatFecha(detalle.created_at)}</span>
                   </div>
+                  <div className="ba-detail-field">
+                    <span className="ba-detail-label">Registrado por</span>
+                    <span className="ba-detail-val ba-detail-val--bold">{detalle.creado_por_nombre || '—'}</span>
+                  </div>
                 </div>
               </div>
 

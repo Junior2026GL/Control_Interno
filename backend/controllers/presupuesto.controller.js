@@ -663,10 +663,12 @@ exports.getReportesAyudas = async (req, res) => {
       `SELECT
          a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.monto, a.observaciones,
          a.estado_liquidacion, a.created_at, p.anio,
-         d.id AS diputado_id, d.nombre AS diputado, d.departamento, d.tipo, d.partido
+         d.id AS diputado_id, d.nombre AS diputado, d.departamento, d.tipo, d.partido,
+         u.nombre AS creado_por_nombre
        FROM ayudas_sociales a
        JOIN presupuesto_diputados p ON p.id = a.presupuesto_id
        JOIN diputados d ON d.id = p.diputado_id
+       LEFT JOIN usuarios u ON u.id = a.created_by
        WHERE 1=1 ${anioFilter} ${dipFilter} ${partidoFilter} ${estadoFilter} ${ordenFilter} ${desdeFilter} ${hastaFilter} ${searchFilter}
        ORDER BY ${orderBy}
        LIMIT ? OFFSET ?`,
