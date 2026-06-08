@@ -325,17 +325,15 @@ export default function BusquedaAyudas() {
 
         {/* ── Header ── */}
         <div className="ba-page-header">
-          <div>
-            <h1><FiFileText size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />Consulta de Ayudas Sociales</h1>
-            <p>Búsqueda global y reporte mensual de ayudas registradas</p>
+          <div className="ba-page-header-left">
+            <div className="ba-page-header-icon">
+              <FiFileText size={22} />
+            </div>
+            <div>
+              <h1 className="ba-page-title">Consulta de Ayudas Sociales</h1>
+              <p className="ba-page-sub">Búsqueda global de ayudas registradas</p>
+            </div>
           </div>
-        </div>
-
-        {/* ── Tabs ── */}
-        <div className="ba-tabs">
-          <button className={`ba-tab ${tab === 'busqueda' ? 'ba-tab--active' : ''}`} onClick={() => setTab('busqueda')}>
-            <FiSearch size={14} /> Búsqueda Global
-          </button>
         </div>
 
         {/* ══════════════════ TAB: BÚSQUEDA ══════════════════ */}

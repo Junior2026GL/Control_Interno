@@ -5,30 +5,44 @@
 /* ── Page header ──────────────────────────────────────────────── */
 .ba-page-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
-.ba-page-header h1 {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #1e3a5f;
-  margin: 0 0 4px;
+.ba-page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
-.ba-page-header p {
-  font-size: 0.83rem;
+.ba-page-header-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #274c8d 0%, #3b6cc7 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(39,76,141,.25);
+}
+.ba-page-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 3px;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+.ba-page-sub {
+  font-size: 0.85rem;
+  font-weight: 500;
   color: #64748b;
   margin: 0;
 }
 
-/* ── Tabs ─────────────────────────────────────────────────────── */
-.ba-tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #e2e8f0;
-  padding-bottom: 0;
-}
+/* ── Tabs (ocultos — solo queda búsqueda global) ──────────────── */
+.ba-tabs { display: none; }
 .ba-tab {
   display: flex;
   align-items: center;
