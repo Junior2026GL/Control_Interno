@@ -1,12 +1,16 @@
 const express       = require('express');
 const cors          = require('cors');
 const helmet        = require('helmet');
+const compression   = require('compression');
 const rateLimit     = require('express-rate-limit');
 const ipWhitelist   = require('./middleware/ip-whitelist');
 const auditMiddleware = require('./middleware/audit');
 require('dotenv').config();
 
 const app = express();
+
+// ── Compresión gzip de respuestas ─────────────────────────────
+app.use(compression());
 
 // ── Seguridad: cabeceras HTTP ─────────────────────────────────
 app.use(helmet());
@@ -24,6 +28,26 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Demasiados intentos de acceso. Intente nuevamente en 15 minutos.' },
+});
+
+// ── Rate Limiting general: 200 req/min por usuario autenticado o IP ──
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const auth = req.headers['authorization'];
+    if (auth) {
+      try {
+        const payload = JSON.parse(Buffer.from(auth.split('.')[1], 'base64').toString());
+        if (payload?.id) return `user_${payload.id}`;
+      } catch { /* usa IP */ }
+    }
+    return req.ip || 'unknown';
+  },
+  message: { message: 'Demasiadas peticiones. Espere un momento e intente nuevamente.' },
+  skip: () => (process.env.NODE_ENV || 'development') === 'development',
 });
 
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
