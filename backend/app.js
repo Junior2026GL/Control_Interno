@@ -1,16 +1,12 @@
 const express       = require('express');
 const cors          = require('cors');
 const helmet        = require('helmet');
-const compression   = require('compression');
 const rateLimit     = require('express-rate-limit');
 const ipWhitelist   = require('./middleware/ip-whitelist');
 const auditMiddleware = require('./middleware/audit');
 require('dotenv').config();
 
 const app = express();
-
-// ── Compresión gzip de respuestas ─────────────────────────────
-app.use(compression());
 
 // ── Seguridad: cabeceras HTTP ─────────────────────────────────
 app.use(helmet());
