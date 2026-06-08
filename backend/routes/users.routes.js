@@ -8,6 +8,9 @@ const usersController = require('../controllers/users.controller');
 // Perfil propio — cualquier usuario autenticado
 router.get('/me', verifyToken, usersController.getMe);
 
+// Cambiar contraseña propia — cualquier usuario autenticado
+router.post('/change-password', verifyToken, usersController.changePassword);
+
 // Listar usuarios — SUPER_ADMIN y ADMIN
 router.get(
   '/',

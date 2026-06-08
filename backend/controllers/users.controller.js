@@ -247,6 +247,34 @@ exports.unlockUser = (req, res) => {
   );
 };
 
+// ── Cambiar contraseña propia ─────────────────────────────────
+exports.changePassword = async (req, res) => {
+  const { passwordActual, passwordNueva } = req.body;
+
+  if (!passwordActual || !passwordNueva)
+    return res.status(400).json({ message: 'Todos los campos son requeridos.' });
+  if (passwordNueva.length < 8)
+    return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 8 caracteres.' });
+  if (!/[A-Z]/.test(passwordNueva))
+    return res.status(400).json({ message: 'La nueva contraseña debe incluir al menos una letra mayúscula.' });
+  if (!/[0-9]/.test(passwordNueva))
+    return res.status(400).json({ message: 'La nueva contraseña debe incluir al menos un número.' });
+
+  db.query('SELECT password FROM usuarios WHERE id = ?', [req.user.id], async (err, rows) => {
+    if (err) return res.status(500).json({ message: 'Error interno.' });
+    if (!rows.length) return res.status(404).json({ message: 'Usuario no encontrado.' });
+
+    const valid = await bcrypt.compare(passwordActual, rows[0].password);
+    if (!valid) return res.status(401).json({ message: 'La contraseña actual es incorrecta.' });
+
+    const hashed = await bcrypt.hash(passwordNueva, 10);
+    db.query('UPDATE usuarios SET password = ? WHERE id = ?', [hashed, req.user.id], (err2) => {
+      if (err2) return res.status(500).json({ message: 'Error al actualizar la contraseña.' });
+      res.json({ message: 'Contraseña actualizada correctamente.' });
+    });
+  });
+};
+
 // ── Sesiones activas ──────────────────────────────────────────
 exports.getSesionesActivas = (req, res) => {
   db.query(
