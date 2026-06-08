@@ -68,6 +68,7 @@ function FormFields({ values, onChange }) {
             onChange={e => onChange('numero_folios', e.target.value)}
             maxLength={100}
             placeholder="Ej. 25"
+            required
           />
         </div>
         <div className="cl-form-group">
@@ -219,6 +220,7 @@ export default function CheckList() {
   const handleCrear = async (e) => {
     e.preventDefault();
     setFormErr('');
+    if (!form.numero_folios.trim()) { setFormErr('El N° de Folios Expediente es obligatorio.'); return; }
     setSaving(true);
     try {
       const res = await api.post('/checklist', { ...form, numero_orden: ordenReservada?.numero }, { headers: authHeaders() });
@@ -253,6 +255,7 @@ export default function CheckList() {
   const handleEditar = async (e) => {
     e.preventDefault();
     setEditErr('');
+    if (!editForm.numero_folios.trim()) { setEditErr('El N° de Folios Expediente es obligatorio.'); return; }
     setEditing(true);
     try {
       await api.put(`/checklist/${editItem.id}`, editForm, { headers: authHeaders() });

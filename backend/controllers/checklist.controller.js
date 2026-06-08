@@ -84,6 +84,9 @@ exports.create = (req, res) => {
   // Si viene numero_orden (de orden_checklist), usarlo en lugar del auto-incremental
   const numero_orden      = req.body.numero_orden ? parseInt(req.body.numero_orden, 10) : null;
 
+  if (!numero_folios)
+    return res.status(400).json({ message: 'El N° de Folios Expediente es obligatorio.' });
+
   if (observaciones && observaciones.length > 2000)
     return res.status(400).json({ message: 'Las observaciones no pueden superar 2000 caracteres.' });
 
@@ -137,6 +140,9 @@ exports.update = (req, res) => {
   const numero_folios     = sanitize(req.body.numero_folios)     || null;
   const numero_expediente = sanitize(req.body.numero_expediente) || null;
   const observaciones     = sanitize(req.body.observaciones)     || null;
+
+  if (!numero_folios)
+    return res.status(400).json({ message: 'El N° de Folios Expediente es obligatorio.' });
 
   if (observaciones && observaciones.length > 2000)
     return res.status(400).json({ message: 'Las observaciones no pueden superar 2000 caracteres.' });
