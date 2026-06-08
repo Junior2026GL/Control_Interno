@@ -25,6 +25,7 @@ export default function OrdenChecklist() {
   const [showGenerar, setShowGenerar] = useState(false);
   const [genAnio,     setGenAnio]     = useState(CURRENT_YEAR);
   const [genCantidad, setGenCantidad] = useState(100);
+  const [genDesde,    setGenDesde]    = useState('');
   const [genLoading,  setGenLoading]  = useState(false);
   const [genMsg,      setGenMsg]      = useState({ text: '', type: '' });
 
@@ -40,8 +41,8 @@ export default function OrdenChecklist() {
     return () => window.removeEventListener('keydown', onKey);
   }, [showGenerar]);
 
-  const closeModal = () => { setShowGenerar(false); setGenMsg({ text: '', type: '' }); };
-  const openModal  = () => { setShowGenerar(true);  setGenAnio(anio); setGenMsg({ text: '', type: '' }); };
+  const closeModal = () => { setShowGenerar(false); setGenMsg({ text: '', type: '' }); setGenDesde(''); };
+  const openModal  = () => { setShowGenerar(true);  setGenAnio(anio); setGenDesde(''); setGenMsg({ text: '', type: '' }); };
 
   const fetchAnios = useCallback(async () => {
     try {
@@ -83,7 +84,9 @@ export default function OrdenChecklist() {
     setGenLoading(true);
     setGenMsg({ text: '', type: '' });
     try {
-      const { data } = await api.post('/orden-checklist/generar', { anio: genAnio, cantidad: genCantidad });
+      const payload = { anio: genAnio, cantidad: genCantidad };
+      if (genDesde !== '' && +genDesde > 0) payload.desde = +genDesde;
+      const { data } = await api.post('/orden-checklist/generar', payload);
       await fetchAnios();
       if (genAnio === anio) await fetchOrdenes(anio);
       else setAnio(genAnio);
@@ -352,6 +355,19 @@ export default function OrdenChecklist() {
                     onChange={e => setGenCantidad(+e.target.value)}
                   />
                   <small>Rango permitido: 1 – 1 000 órdenes por operación.</small>
+                </div>
+                <div className="oc-modal-row">
+                  <label htmlFor="oc-gen-desde">Iniciar desde N° <span style={{fontWeight:'normal',color:'#6b7280'}}>(opcional)</span></label>
+                  <input
+                    id="oc-gen-desde"
+                    type="number"
+                    className="oc-input"
+                    value={genDesde}
+                    min={1}
+                    placeholder="Ej. 708 — déjalo vacío para continuar el correlativo"
+                    onChange={e => setGenDesde(e.target.value)}
+                  />
+                  <small>Úsalo solo para sincronizar con un correlativo existente (ej. Excel).</small>
                 </div>
 
                 {genMsg.text && (

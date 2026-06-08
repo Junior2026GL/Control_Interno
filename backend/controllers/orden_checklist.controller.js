@@ -145,38 +145,45 @@ exports.generar = (req, res) => {
 
   const anio     = parseInt(req.body.anio, 10);
   const cantidad = parseInt(req.body.cantidad, 10);
+  const desdeRaw = req.body.desde !== undefined ? parseInt(req.body.desde, 10) : null;
 
   if (!anio || anio < 2020 || anio > 2100)
     return res.status(400).json({ message: 'Año inválido.' });
   if (!cantidad || cantidad < 1 || cantidad > 1000)
     return res.status(400).json({ message: 'Cantidad debe ser entre 1 y 1000.' });
+  if (desdeRaw !== null && (isNaN(desdeRaw) || desdeRaw < 1))
+    return res.status(400).json({ message: 'El número de inicio debe ser mayor a 0.' });
 
-  // Obtener el último número existente para ese año
-  db.query(
-    `SELECT IFNULL(MAX(numero), 0) AS ultimo FROM orden_checklist WHERE anio = ?`,
-    [anio],
-    (err, rows) => {
-      if (err) { console.error('[orden_checklist] generar query ultimo:', err); return res.status(500).json({ message: 'Error interno.' }); }
+  const doInsert = (desde) => {
+    const hasta  = desde + cantidad - 1;
+    const valores = [];
+    for (let n = desde; n <= hasta; n++) valores.push([n, anio]);
 
-      const desde = rows[0].ultimo + 1;
-      const hasta = desde + cantidad - 1;
-
-      const valores = [];
-      for (let n = desde; n <= hasta; n++) {
-        valores.push([n, anio]);
+    db.query(
+      `INSERT IGNORE INTO orden_checklist (numero, anio) VALUES ?`,
+      [valores],
+      (err2, result) => {
+        if (err2) { console.error('[orden_checklist] generar insert:', err2); return res.status(500).json({ message: 'Error interno.' }); }
+        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'orden-checklist', detalle: `Generó ${result.affectedRows} órdenes para año ${anio} (del ${desde} al ${hasta})`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
+        res.status(201).json({ message: `${result.affectedRows} órdenes generadas (del ${desde} al ${hasta}).`, desde, hasta });
       }
+    );
+  };
 
-      db.query(
-        `INSERT IGNORE INTO orden_checklist (numero, anio) VALUES ?`,
-        [valores],
-        (err2, result) => {
-          if (err2) { console.error('[orden_checklist] generar insert:', err2); return res.status(500).json({ message: 'Error interno.' }); }
-          logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'orden-checklist', detalle: `Generó ${result.affectedRows} órdenes para año ${anio} (del ${desde} al ${hasta})`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
-          res.status(201).json({ message: `${result.affectedRows} órdenes generadas (del ${desde} al ${hasta}).`, desde, hasta });
-        }
-      );
-    }
-  );
+  if (desdeRaw !== null) {
+    // El usuario especificó desde dónde iniciar
+    doInsert(desdeRaw);
+  } else {
+    // Continuar desde el último número existente
+    db.query(
+      `SELECT IFNULL(MAX(numero), 0) AS ultimo FROM orden_checklist WHERE anio = ?`,
+      [anio],
+      (err, rows) => {
+        if (err) { console.error('[orden_checklist] generar query ultimo:', err); return res.status(500).json({ message: 'Error interno.' }); }
+        doInsert(rows[0].ultimo + 1);
+      }
+    );
+  }
 };
 
 // ── GET /api/orden-checklist/anios ───────────────────────────────────────
