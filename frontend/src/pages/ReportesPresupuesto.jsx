@@ -360,6 +360,7 @@ export default function ReportesPresupuesto() {
   /* partido-month cards section */
   const [partidoMesData,    setPartidoMesData]    = useState([]);
   const [loadingPartidoMes, setLoadingPartidoMes] = useState(false);
+  const [mesResumenGlobal,  setMesResumenGlobal]  = useState(new Date().getMonth() + 1); // mes actual
   const [mesPartidoModal,   setMesPartidoModal]   = useState(null);
   const [mesPartidoDetalle, setMesPartidoDetalle] = useState(null);
   const [loadingMesPartido, setLoadingMesPartido] = useState(false);
@@ -1142,6 +1143,95 @@ export default function ReportesPresupuesto() {
                   </div>
                 );
               })}
+
+              {/* ── Card: Total Ejecutado por Mes (todos los partidos) ── */}
+              {(() => {
+                const MESES_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                const totalMes = partidoMesData.reduce((acc, pt) => {
+                  const m = pt.meses.find(md => md.mes === mesResumenGlobal);
+                  return acc + (m ? Number(m.ejecutado) : 0);
+                }, 0);
+                const cantidadMes = partidoMesData.reduce((acc, pt) => {
+                  const m = pt.meses.find(md => md.mes === mesResumenGlobal);
+                  return acc + (m ? Number(m.cantidad) : 0);
+                }, 0);
+                const partidosActivos = partidoMesData.filter(pt =>
+                  pt.meses.some(md => md.mes === mesResumenGlobal)
+                );
+                return (
+                  <div className="rp-partido-card rp-resumen-mes-card">
+                    {/* Header */}
+                    <div className="rp-resumen-mes-header">
+                      <div className="rp-resumen-mes-icon-wrap">
+                        <FiCalendar size={22} color="#fff" />
+                      </div>
+                      <div className="rp-resumen-mes-titles">
+                        <span className="rp-resumen-mes-sup">Resumen Global</span>
+                        <span className="rp-resumen-mes-title">Total por Mes</span>
+                      </div>
+                    </div>
+
+                    <div className="rp-partido-divider" />
+
+                    {/* Selector de mes */}
+                    <div className="rp-resumen-mes-select-wrap">
+                      <label className="rp-resumen-mes-select-lbl">Seleccionar Mes</label>
+                      <select
+                        className="rp-resumen-mes-select"
+                        value={mesResumenGlobal}
+                        onChange={e => setMesResumenGlobal(Number(e.target.value))}
+                      >
+                        {MESES_NAMES.map((nm, i) => (
+                          <option key={i + 1} value={i + 1}>{nm}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Total */}
+                    <div className="rp-resumen-mes-total-wrap">
+                      <span className="rp-resumen-mes-total-lbl">Total Ejecutado</span>
+                      <span className="rp-resumen-mes-total">{formatHNL(totalMes)}</span>
+                    </div>
+
+                    <div className="rp-partido-divider" />
+
+                    {/* Stats row */}
+                    <div className="rp-resumen-mes-stats">
+                      <div className="rp-resumen-mes-stat">
+                        <span className="rp-resumen-mes-stat-val">{cantidadMes}</span>
+                        <span className="rp-resumen-mes-stat-lbl">Ayudas</span>
+                      </div>
+                      <div className="rp-resumen-mes-stat-div" />
+                      <div className="rp-resumen-mes-stat">
+                        <span className="rp-resumen-mes-stat-val">{partidosActivos.length}</span>
+                        <span className="rp-resumen-mes-stat-lbl">Partidos</span>
+                      </div>
+                    </div>
+
+                    {/* Mini breakdown por partido */}
+                    {partidosActivos.length > 0 && (
+                      <div className="rp-resumen-mes-breakdown">
+                        {partidosActivos.map(pt => {
+                          const m = pt.meses.find(md => md.mes === mesResumenGlobal);
+                          const pct = totalMes > 0 ? (Number(m.ejecutado) / totalMes) * 100 : 0;
+                          return (
+                            <div key={pt.partido} className="rp-resumen-mes-row">
+                              <span className="rp-resumen-mes-row-name">{pt.partido}</span>
+                              <div className="rp-resumen-mes-bar-wrap">
+                                <div className="rp-resumen-mes-bar" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="rp-resumen-mes-row-val">{pct.toFixed(1)}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {partidosActivos.length === 0 && (
+                      <div className="rp-resumen-mes-empty">Sin ejecución en {MESES_NAMES[mesResumenGlobal - 1]}</div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
