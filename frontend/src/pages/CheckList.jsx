@@ -837,7 +837,7 @@ export default function CheckList() {
           MODAL CREAR
       ══════════════════════════════════════════════════════════ */}
       {modalCrear && (
-        <div className="cl-backdrop" onClick={e => e.target === e.currentTarget && cancelCrear()}>
+        <div className="cl-backdrop">
           <div className="cl-modal">
             <div className="cl-modal-header">
               <div className="cl-modal-icon"><FiClipboard size={20} color="#274C8D" /></div>
