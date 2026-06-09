@@ -128,10 +128,11 @@ export default function CheckList() {
   const [page,    setPage]    = useState(1);
 
   // modales
-  const [modalCrear, setModalCrear] = useState(false);
-  const [form,       setForm]       = useState(buildEmpty());
-  const [formErr,    setFormErr]    = useState('');
-  const [saving,     setSaving]     = useState(false);
+  const [modalCrear,   setModalCrear]   = useState(false);
+  const [abriendo,     setAbriendo]     = useState(false); // evita doble reserva
+  const [form,         setForm]         = useState(buildEmpty());
+  const [formErr,      setFormErr]      = useState('');
+  const [saving,       setSaving]       = useState(false);
   const [ordenReservada, setOrdenReservada] = useState(null); // { id, numero, anio }
 
   const [editItem,   setEditItem]   = useState(null);
@@ -186,8 +187,18 @@ export default function CheckList() {
   const totalPages    = Math.max(1, Math.ceil(listaMostrada.length / PAGE_SIZE));
   const listaPaginada = listaMostrada.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // ── Escape cierra el modal de crear (liberando la reserva) ────────────────
+  useEffect(() => {
+    if (!modalCrear) return;
+    const onKey = (e) => { if (e.key === 'Escape') cancelCrear(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [modalCrear]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── abrir modal crear: reservar orden automáticamente ────────────────────
   const openCrear = async () => {
+    if (abriendo) return; // previene doble clic
+    setAbriendo(true);
     const anio = new Date().getFullYear();
     const mes  = String(new Date().getMonth() + 1).padStart(2, '0');
     let orden  = null;
@@ -204,6 +215,7 @@ export default function CheckList() {
     setForm(base);
     setFormErr('');
     setModalCrear(true);
+    setAbriendo(false);
   };
 
   // ── cancelar modal crear: liberar orden reservada ──────────────────────
@@ -707,8 +719,9 @@ export default function CheckList() {
               <FiRefreshCw size={15} />
             </button>
             <button className="cl-tool-btn-new"
-              onClick={openCrear}>
-              <FiPlus size={13} /> Nuevo Check List
+              onClick={openCrear}
+              disabled={abriendo}>
+              <FiPlus size={13} /> {abriendo ? 'Cargando…' : 'Nuevo Check List'}
             </button>
           </div>
         </div>
@@ -824,7 +837,7 @@ export default function CheckList() {
           MODAL CREAR
       ══════════════════════════════════════════════════════════ */}
       {modalCrear && (
-        <div className="cl-backdrop">
+        <div className="cl-backdrop" onClick={e => e.target === e.currentTarget && cancelCrear()}>
           <div className="cl-modal">
             <div className="cl-modal-header">
               <div className="cl-modal-icon"><FiClipboard size={20} color="#274C8D" /></div>
