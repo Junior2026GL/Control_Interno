@@ -157,7 +157,7 @@ export default function Auditoria() {
         formatFecha(row.creado_en),
         ACCION_MAP[row.accion] || row.accion || '',
         row.modulo || '',
-        row.usuario_nombre || 'Anonimo',
+        row.usuario_nombre || 'Sin sesión',
         row.ip || '',
         countryName(row.pais) || '',
         row.ciudad || '',
@@ -339,7 +339,7 @@ export default function Auditoria() {
           formatFecha(row.creado_en),
           sa(ACCION_MAP[row.accion] || row.accion || '—'),
           sa(row.modulo || '—'),
-          sa(row.usuario_nombre || 'Anonimo'),
+          sa(row.usuario_nombre || 'Sin sesión'),
           row.ip || '—',
           sa([row.ciudad, countryName(row.pais)].filter(Boolean).join(', ') || '—'),
           sa((row.detalle || '—').substring(0, 60)),
@@ -584,7 +584,7 @@ export default function Auditoria() {
                       <td className="aud-td-fecha">{formatFecha(row.creado_en)}</td>
                       <td><span className={`aud-badge ${accionInfo.color}`}>{accionInfo.label}</span></td>
                       <td><span className="aud-modulo-tag">{row.modulo || '—'}</span></td>
-                      <td>{row.usuario_nombre || <span className="aud-anon">Anónimo</span>}</td>
+                      <td>{row.usuario_nombre || <span className="aud-anon">Sin sesión</span>}</td>
                       <td className="aud-td-ip">{row.ip}</td>
                       <td className="aud-td-ubicacion">
                         {(row.pais || row.ciudad) ? (
@@ -656,7 +656,7 @@ export default function Auditoria() {
                   ['Fecha / Hora', formatFecha(detailRow.creado_en)],
                   ['Acción', (ACCION_LABELS[detailRow.accion]?.label || detailRow.accion)],
                   ['Módulo', detailRow.modulo],
-                  ['Usuario', detailRow.usuario_nombre || 'Anónimo'],
+                  ['Usuario', detailRow.usuario_nombre || 'Sin sesión'],
                   ['IP', detailRow.ip],
                   ['País', [countryFlag(detailRow.pais), countryName(detailRow.pais)].filter(Boolean).join(' ')],
                   ['Ciudad', detailRow.ciudad],
