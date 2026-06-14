@@ -15,8 +15,9 @@ const pool = mysql.createPool({
 // Verify connection on startup
 pool.getConnection((err, conn) => {
   if (err) {
-    console.error('Error conectando a la DB:', err);
-    return;
+    console.error('Error conectando a la DB:', err.message);
+    console.error('Verifique las variables de entorno: DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME');
+    process.exit(1);
   }
   console.log('Base de datos conectada');
   conn.release();

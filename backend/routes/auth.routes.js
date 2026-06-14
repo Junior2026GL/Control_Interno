@@ -168,14 +168,30 @@ router.post('/refresh', (req, res) => {
         return res.status(401).json({ message: 'Refresh token expirado. Inicie sesión nuevamente.' });
       }
 
-      // Emitir nuevo access token
-      const newAccessToken = jwt.sign(
-        { id: rt.usuario_id, rol: rt.rol, nombre: rt.nombre },
-        process.env.JWT_SECRET,
-        { expiresIn: '15m' }
-      );
+      // Rotar refresh token: revocar el actual y emitir uno nuevo
+      const crypto = require('crypto');
+      const newRefreshToken = crypto.randomBytes(64).toString('hex');
+      const newExpiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
 
-      res.json({ token: newAccessToken });
+      db.query('UPDATE refresh_tokens SET revoked=1 WHERE id=?', [rt.id], (e) => {
+        if (e) { console.error('[auth] Error revocando refresh token:', e); return res.status(500).json({ message: 'Error en el servidor' }); }
+
+        db.query(
+          'INSERT INTO refresh_tokens (usuario_id, token, expires_at) VALUES (?, ?, ?)',
+          [rt.usuario_id, newRefreshToken, newExpiresAt],
+          (e2) => {
+            if (e2) { console.error('[auth] Error guardando nuevo refresh token:', e2); return res.status(500).json({ message: 'Error en el servidor' }); }
+
+            const newAccessToken = jwt.sign(
+              { id: rt.usuario_id, rol: rt.rol, nombre: rt.nombre },
+              process.env.JWT_SECRET,
+              { expiresIn: '15m' }
+            );
+
+            res.json({ token: newAccessToken, refreshToken: newRefreshToken });
+          }
+        );
+      });
     }
   );
 });
@@ -184,7 +200,9 @@ router.post('/refresh', (req, res) => {
 router.post('/logout', (req, res) => {
   const { refreshToken } = req.body;
   if (refreshToken) {
-    db.query('UPDATE refresh_tokens SET revoked=1 WHERE token=?', [refreshToken]);
+    db.query('UPDATE refresh_tokens SET revoked=1 WHERE token=?', [refreshToken],
+      (e) => { if (e) console.error('[auth] Error revocando refresh token en logout:', e); }
+    );
   }
   res.json({ message: 'Sesión cerrada' });
 });

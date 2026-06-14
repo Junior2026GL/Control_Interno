@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Ruta absoluta al logo (frontend/public)
-const LOGO_PATH = path.join(__dirname, '../../frontend/public/logo-congreso.png.png');
+const LOGO_PATH = path.join(__dirname, '../../frontend/public/logo-congreso.png');
 const LOGO_EXISTS = fs.existsSync(LOGO_PATH);
 const LOGO_ATTACHMENT = LOGO_EXISTS
   ? [{ filename: 'logo-congreso.png', path: LOGO_PATH, cid: 'logo_congreso' }]

@@ -149,7 +149,7 @@ exports.create = (req, res) => {
           logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'viaticos', detalle: `Creó viático — ${motivo_viaje}, ${lugar}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
           res.status(201).json({ message: 'Viático creado.', id: vId });
         })
-        .catch(() => res.status(500).json({ message: 'Error al guardar detalles.' }));
+        .catch((e) => { console.error('[viaticos] Error al guardar detalles al crear:', e); res.status(500).json({ message: 'Error al guardar detalles.' }); });
     }
   );
 };
@@ -223,7 +223,7 @@ exports.update = (req, res) => {
               logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'viaticos', detalle: `Actualizó viático ID #${id} — ${motivo_viaje}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
               res.json({ message: 'Viático actualizado.' });
             })
-            .catch(() => res.status(500).json({ message: 'Error al guardar detalles.' }));
+            .catch((e) => { console.error('[viaticos] Error al guardar detalles al actualizar:', e); res.status(500).json({ message: 'Error al guardar detalles.' }); });
         });
       });
     }

@@ -46,6 +46,9 @@ api.interceptors.response.use(
             .then(res => {
               const newToken = res.data.token;
               localStorage.setItem('token', newToken);
+              if (res.data.refreshToken) {
+                localStorage.setItem('refreshToken', res.data.refreshToken);
+              }
               return newToken;
             })
             .catch(err => {
