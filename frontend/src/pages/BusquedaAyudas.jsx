@@ -59,14 +59,17 @@ export default function BusquedaAyudas() {
   // filtros (solo 3)
   const [q,           setQ]           = useState('');
   const [qInput,      setQInput]      = useState('');
-  const [numeroOrden, setNumeroOrden] = useState('');
-  const [noInput,     setNoInput]     = useState('');
+  const [numeroOrden,  setNumeroOrden]  = useState('');
+  const [noInput,      setNoInput]      = useState('');
+  const [numeroCheque, setNumeroCheque] = useState('');
+  const [ncInput,      setNcInput]      = useState('');
   const [selDip,      setSelDip]      = useState(null);
   const [dipSearch,   setDipSearch]   = useState('');
   const [showDipDrop, setShowDipDrop] = useState(false);
   const dipRef  = useRef(null);
   const qTimer  = useRef(null);
   const noTimer = useRef(null);
+  const ncTimer = useRef(null);
 
   // modal detalle
   const [detalle, setDetalle] = useState(null);
@@ -112,7 +115,7 @@ export default function BusquedaAyudas() {
 
   const buscar = async (pg = 1) => {
     // Requiere al menos un filtro activo
-    if (!q.trim() && !numeroOrden.trim() && !selDip) {
+    if (!q.trim() && !numeroOrden.trim() && !numeroCheque.trim() && !selDip) {
       setFilterError('Ingrese al menos un filtro para realizar la búsqueda.');
       setResults([]); setTotal(0); setHasSearched(false);
       return;
@@ -123,8 +126,9 @@ export default function BusquedaAyudas() {
     try {
       const params = new URLSearchParams({ page: pg, limit: PAGE_SIZE, anio_libre: '1' });
       if (q)           params.append('q', q);
-      if (numeroOrden) params.append('numero_orden', numeroOrden);
-      if (selDip)      params.append('diputado_id', selDip.id);
+      if (numeroOrden)  params.append('numero_orden',  numeroOrden);
+      if (numeroCheque)  params.append('numero_cheque', numeroCheque);
+      if (selDip)        params.append('diputado_id', selDip.id);
       const r = await api.get(`/presupuesto/reportes/ayudas?${params}`, { headers: authHeaders() });
       setResults(r.data.data);
       setTotal(r.data.total);
@@ -135,6 +139,7 @@ export default function BusquedaAyudas() {
 
   const limpiar = () => {
     setQ(''); setQInput(''); setNumeroOrden(''); setNoInput('');
+    setNumeroCheque(''); setNcInput('');
     setSelDip(null); setDipSearch('');
     setFilterError('');
     setResults([]); setTotal(0); setHasSearched(false);
@@ -380,6 +385,25 @@ export default function BusquedaAyudas() {
                 </div>
               </div>
 
+              {/* N° Cheque */}
+              <div className="ba-fg">
+                <label className="ba-label"><FiHash size={11} /> Número de Cheque exacto</label>
+                <div className="ba-input-wrap">
+                  <input
+                    className="ba-input"
+                    placeholder="166675"
+                    value={ncInput}
+                    onChange={e => {
+                      setNcInput(e.target.value);
+                      clearTimeout(ncTimer.current);
+                      ncTimer.current = setTimeout(() => setNumeroCheque(e.target.value), 400);
+                    }}
+                    onKeyDown={e => e.key === 'Enter' && buscar(1)}
+                  />
+                  {ncInput && <button className="ba-input-clear" onClick={() => { setNcInput(''); setNumeroCheque(''); }}><FiX size={11} /></button>}
+                </div>
+              </div>
+
               {/* Diputado */}
               <div className="ba-fg" ref={dipRef}>
                 <label className="ba-label"><FiUser size={11} /> Diputado</label>
@@ -489,6 +513,7 @@ export default function BusquedaAyudas() {
                             <th>Fecha</th>
                             <th>Diputado</th>
                             <th>N° Orden</th>
+                            <th>N° Cheque</th>
                             <th>Estado</th>
                             <th className="ba-th-r" style={{ whiteSpace: 'nowrap', width: 130 }}>Monto</th>
                             <th style={{ width: 50, textAlign: 'center' }}>Detalle</th>
@@ -508,6 +533,11 @@ export default function BusquedaAyudas() {
                               <td>
                                 {r.numero_orden
                                   ? <span className="ba-orden-badge">{r.numero_orden}</span>
+                                  : <span className="ba-vacio">—</span>}
+                              </td>
+                              <td>
+                                {r.numero_cheque
+                                  ? <span className="ba-orden-badge">{r.numero_cheque}</span>
                                   : <span className="ba-vacio">—</span>}
                               </td>
                               <td>{estadoBadge(r.estado_liquidacion)}</td>
@@ -741,6 +771,14 @@ export default function BusquedaAyudas() {
                   <span className="ba-modal-kpi-val">
                     {detalle.numero_orden
                       ? <span className="ba-orden-badge">{detalle.numero_orden}</span>
+                      : <span className="ba-vacio-sm">Sin asignar</span>}
+                  </span>
+                </div>
+                <div className="ba-modal-kpi">
+                  <span className="ba-modal-kpi-lbl">N° de Cheque</span>
+                  <span className="ba-modal-kpi-val">
+                    {detalle.numero_cheque
+                      ? <span className="ba-orden-badge">{detalle.numero_cheque}</span>
                       : <span className="ba-vacio-sm">Sin asignar</span>}
                   </span>
                 </div>

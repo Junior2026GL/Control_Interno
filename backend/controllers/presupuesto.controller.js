@@ -637,7 +637,7 @@ exports.getResumen = async (req, res) => {
 };
 
 // ──────────────────────────────────────────────────────────────
-// GET /api/presupuesto/reportes/ayudas?anio=&diputado_id=&partido=&estado=&q=&numero_orden=&fecha_desde=&fecha_hasta=&page=&limit=&sort=
+// GET /api/presupuesto/reportes/ayudas?anio=&diputado_id=&partido=&estado=&q=&numero_orden=&numero_cheque=&fecha_desde=&fecha_hasta=&page=&limit=&sort=
 // ──────────────────────────────────────────────────────────────
 exports.getReportesAyudas = async (req, res) => {
   const anio         = parseInt(req.query.anio || new Date().getFullYear(), 10);
@@ -648,7 +648,8 @@ exports.getReportesAyudas = async (req, res) => {
   const offset       = (page - 1) * limit;
   const estado       = req.query.estado || null;
   const q            = req.query.q            ? req.query.q.toString().trim().slice(0, 100) : null;
-  const numero_orden = req.query.numero_orden ? req.query.numero_orden.toString().trim().slice(0, 50) : null;
+  const numero_orden  = req.query.numero_orden  ? req.query.numero_orden.toString().trim().slice(0, 50)  : null;
+  const numero_cheque = req.query.numero_cheque ? req.query.numero_cheque.toString().trim().slice(0, 50) : null;
   const fecha_desde  = req.query.fecha_desde  ? req.query.fecha_desde.toString().slice(0, 10)  : null;
   const fecha_hasta  = req.query.fecha_hasta  ? req.query.fecha_hasta.toString().slice(0, 10)  : null;
   const sort         = req.query.sort === 'monto_desc' ? 'monto_desc' : 'fecha_desc';
@@ -676,18 +677,20 @@ exports.getReportesAyudas = async (req, res) => {
     const dipFilter     = diputadoId   ? 'AND d.id = ?'                     : '';
     const partidoFilter = partido      ? 'AND d.partido = ?'                 : '';
     const estadoFilter  = estado       ? 'AND a.estado_liquidacion = ?'      : '';
-    const ordenFilter   = numero_orden ? 'AND a.numero_orden = ?'            : '';
+    const ordenFilter   = numero_orden  ? 'AND a.numero_orden = ?'             : '';
+    const chequeFilter  = numero_cheque ? 'AND a.numero_cheque = ?'            : '';
     const desdeFilter   = fecha_desde  ? 'AND a.fecha >= ?'                  : '';
     const hastaFilter   = fecha_hasta  ? 'AND a.fecha <= ?'                  : '';
     const searchFilter  = q ? 'AND (a.concepto LIKE ? OR a.beneficiario LIKE ? OR a.numero_orden LIKE ?)' : '';
 
-    if (diputadoId)   baseParams.push(diputadoId);
-    if (partido)      baseParams.push(partido);
-    if (estado)       baseParams.push(estado);
-    if (numero_orden) baseParams.push(numero_orden);
-    if (fecha_desde)  baseParams.push(fecha_desde);
-    if (fecha_hasta)  baseParams.push(fecha_hasta);
-    if (q)            baseParams.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    if (diputadoId)    baseParams.push(diputadoId);
+    if (partido)       baseParams.push(partido);
+    if (estado)        baseParams.push(estado);
+    if (numero_orden)  baseParams.push(numero_orden);
+    if (numero_cheque) baseParams.push(numero_cheque);
+    if (fecha_desde)   baseParams.push(fecha_desde);
+    if (fecha_hasta)   baseParams.push(fecha_hasta);
+    if (q)             baseParams.push(`%${q}%`, `%${q}%`, `%${q}%`);
 
     const orderBy = sort === 'monto_desc' ? 'a.monto DESC, a.id DESC' : 'a.fecha DESC, a.id DESC';
 
@@ -701,7 +704,7 @@ exports.getReportesAyudas = async (req, res) => {
        JOIN presupuesto_diputados p ON p.id = a.presupuesto_id
        JOIN diputados d ON d.id = p.diputado_id
        LEFT JOIN usuarios u ON u.id = a.created_by
-       WHERE 1=1 ${anioFilter} ${dipFilter} ${partidoFilter} ${estadoFilter} ${ordenFilter} ${desdeFilter} ${hastaFilter} ${searchFilter}
+       WHERE 1=1 ${anioFilter} ${dipFilter} ${partidoFilter} ${estadoFilter} ${ordenFilter} ${chequeFilter} ${desdeFilter} ${hastaFilter} ${searchFilter}
        ORDER BY ${orderBy}
        LIMIT ? OFFSET ?`,
       [...baseParams, limit, offset]
@@ -712,7 +715,7 @@ exports.getReportesAyudas = async (req, res) => {
        FROM ayudas_sociales a
        JOIN presupuesto_diputados p ON p.id = a.presupuesto_id
        JOIN diputados d ON d.id = p.diputado_id
-       WHERE 1=1 ${anioFilter} ${dipFilter} ${partidoFilter} ${estadoFilter} ${ordenFilter} ${desdeFilter} ${hastaFilter} ${searchFilter}`,
+       WHERE 1=1 ${anioFilter} ${dipFilter} ${partidoFilter} ${estadoFilter} ${ordenFilter} ${chequeFilter} ${desdeFilter} ${hastaFilter} ${searchFilter}`,
       baseParams
     );
 
