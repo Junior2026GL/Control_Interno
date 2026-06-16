@@ -2083,8 +2083,7 @@ export default function PresupuestoDiputados() {
                           </th>
                           <th>Concepto</th>
                           <th>Beneficiario</th>
-                          <th>N° Orden</th>
-                          <th>N° Cheque</th>
+                          <th>Orden / Cheque</th>
                           <th>Estado</th>
                           <th className="ps-th-monto ps-th-sort" onClick={() => toggleSort('monto')}>
                             Monto {sortField === 'monto' ? (sortDir === 'asc' ? <FiArrowUp size={12}/> : <FiArrowDown size={12}/>) : <span className="ps-sort-idle">↕</span>}
@@ -2118,20 +2117,26 @@ export default function PresupuestoDiputados() {
                             </td>
                             <td className="ps-td-benef">{a.beneficiario || '—'}</td>
                             <td className="ps-td-orden">
-                              {a.numero_orden
-                                ? <span className="ps-orden-badge">{a.numero_orden}</span>
-                                : canEdit
-                                  ? <button className="ps-orden-asignar" onClick={() => { setOrdenModal(a); setOrdenVal(''); setOrdenErr(''); }} title="Asignar número de orden">+ Orden</button>
-                                  : <span className="ps-td-vacio">—</span>
-                              }
-                            </td>
-                            <td className="ps-td-orden">
-                              {a.numero_cheque
-                                ? <span className="ps-orden-badge">{a.numero_cheque}</span>
-                                : canEdit
-                                  ? <button className="ps-orden-asignar" onClick={() => { setChequeModal(a); setChequeVal(''); setChequeErr(''); }} title="Asignar número de cheque">+ Cheque</button>
-                                  : <span className="ps-td-vacio">—</span>
-                              }
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ fontSize: '0.68rem', color: '#94a3b8', minWidth: 14 }}>O:</span>
+                                  {a.numero_orden
+                                    ? <span className="ps-orden-badge">{a.numero_orden}</span>
+                                    : canEdit
+                                      ? <button className="ps-orden-asignar" onClick={() => { setOrdenModal(a); setOrdenVal(''); setOrdenErr(''); }} title="Asignar número de orden">+ Orden</button>
+                                      : <span className="ps-td-vacio">—</span>
+                                  }
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ fontSize: '0.68rem', color: '#94a3b8', minWidth: 14 }}>C:</span>
+                                  {a.numero_cheque
+                                    ? <span className="ps-orden-badge">{a.numero_cheque}</span>
+                                    : canEdit
+                                      ? <button className="ps-orden-asignar" onClick={() => { setChequeModal(a); setChequeVal(''); setChequeErr(''); }} title="Asignar número de cheque">+ Cheque</button>
+                                      : <span className="ps-td-vacio">—</span>
+                                  }
+                                </div>
+                              </div>
                             </td>
                             <td>
                               {(() => {
