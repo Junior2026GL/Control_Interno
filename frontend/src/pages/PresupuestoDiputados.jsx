@@ -2606,25 +2606,27 @@ export default function PresupuestoDiputados() {
                   onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
                 />
               </div>
-              <div className="ps-form-group">
-                <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
-                <input
-                  type="text"
-                  maxLength={50}
-                  placeholder="Ej: 2025-001"
-                  value={ayudaForm.numero_orden}
-                  onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
-                />
-              </div>
-              <div className="ps-form-group">
-                <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
-                <input
-                  type="text"
-                  maxLength={50}
-                  placeholder="Ej: 166675"
-                  value={ayudaForm.numero_cheque}
-                  onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
-                />
+              <div className="ps-form-row">
+                <div className="ps-form-group">
+                  <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    placeholder="Ej: 2025-001"
+                    value={ayudaForm.numero_orden}
+                    onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
+                  />
+                </div>
+                <div className="ps-form-group">
+                  <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    placeholder="Ej: 166675"
+                    value={ayudaForm.numero_cheque}
+                    onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="ps-form-group">
                 <label>Observaciones</label>
@@ -2711,25 +2713,27 @@ export default function PresupuestoDiputados() {
                   onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
                 />
               </div>
-              <div className="ps-form-group">
-                <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
-                <input
-                  type="text"
-                  maxLength={50}
-                  placeholder="Ej: 2025-001"
-                  value={ayudaForm.numero_orden}
-                  onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
-                />
-              </div>
-              <div className="ps-form-group">
-                <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
-                <input
-                  type="text"
-                  maxLength={50}
-                  placeholder="Ej: 166675"
-                  value={ayudaForm.numero_cheque}
-                  onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
-                />
+              <div className="ps-form-row">
+                <div className="ps-form-group">
+                  <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    placeholder="Ej: 2025-001"
+                    value={ayudaForm.numero_orden}
+                    onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
+                  />
+                </div>
+                <div className="ps-form-group">
+                  <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    placeholder="Ej: 166675"
+                    value={ayudaForm.numero_cheque}
+                    onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="ps-form-group">
                 <label>Observaciones</label>
