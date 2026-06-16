@@ -41,7 +41,7 @@ const EMPTY_PRES  = {
 };
 const EMPTY_AYUDA = {
   fecha: new Date().toISOString().slice(0, 10),
-  concepto: '', beneficiario: '', numero_orden: '', monto: '', observaciones: '',
+  concepto: '', beneficiario: '', numero_orden: '', numero_cheque: '', monto: '', observaciones: '',
   estado_liquidacion: 'sin_liquidar',
 };
 
@@ -106,6 +106,10 @@ export default function PresupuestoDiputados() {
   const [ordenVal,   setOrdenVal]   = useState('');
   const [ordenSaving, setOrdenSaving] = useState(false);
   const [ordenErr,    setOrdenErr]   = useState('');
+  const [chequeModal,  setChequeModal]  = useState(null); // ayuda obj
+  const [chequeVal,    setChequeVal]    = useState('');
+  const [chequeSaving, setChequeSaving] = useState(false);
+  const [chequeErr,    setChequeErr]    = useState('');
 
   /* ── table sort ─────────────────────────────────────────── */
   const [sortField, setSortField] = useState('fecha');
@@ -477,6 +481,7 @@ export default function PresupuestoDiputados() {
       concepto:      a.concepto,
       beneficiario:  a.beneficiario || '',
       numero_orden:  a.numero_orden  || '',
+      numero_cheque: a.numero_cheque || '',
       monto:         a.monto.toString(),
       observaciones: a.observaciones || '',
     });
@@ -528,6 +533,27 @@ export default function PresupuestoDiputados() {
       setOrdenErr(err.response?.data?.message || 'Error al guardar.');
     } finally {
       setOrdenSaving(false);
+    }
+  };
+
+  /* ── handler número de cheque ───────────────────────────── */
+  const handleCheque = async () => {
+    if (!chequeModal) return;
+    setChequeSaving(true);
+    setChequeErr('');
+    try {
+      await api.patch(
+        `/presupuesto/${presupuesto.id}/ayudas/${chequeModal.id}/cheque`,
+        { numero_cheque: chequeVal.trim() },
+        { headers: authHeaders() }
+      );
+      showToast('Número de cheque asignado.', 'ok');
+      setChequeModal(null);
+      loadBudget();
+    } catch (err) {
+      setChequeErr(err.response?.data?.message || 'Error al guardar.');
+    } finally {
+      setChequeSaving(false);
     }
   };
 
@@ -2058,6 +2084,7 @@ export default function PresupuestoDiputados() {
                           <th>Concepto</th>
                           <th>Beneficiario</th>
                           <th>N° Orden</th>
+                          <th>N° Cheque</th>
                           <th>Estado</th>
                           <th className="ps-th-monto ps-th-sort" onClick={() => toggleSort('monto')}>
                             Monto {sortField === 'monto' ? (sortDir === 'asc' ? <FiArrowUp size={12}/> : <FiArrowDown size={12}/>) : <span className="ps-sort-idle">↕</span>}
@@ -2095,6 +2122,14 @@ export default function PresupuestoDiputados() {
                                 ? <span className="ps-orden-badge">{a.numero_orden}</span>
                                 : canEdit
                                   ? <button className="ps-orden-asignar" onClick={() => { setOrdenModal(a); setOrdenVal(''); setOrdenErr(''); }} title="Asignar número de orden">+ Orden</button>
+                                  : <span className="ps-td-vacio">—</span>
+                              }
+                            </td>
+                            <td className="ps-td-orden">
+                              {a.numero_cheque
+                                ? <span className="ps-orden-badge">{a.numero_cheque}</span>
+                                : canEdit
+                                  ? <button className="ps-orden-asignar" onClick={() => { setChequeModal(a); setChequeVal(''); setChequeErr(''); }} title="Asignar número de cheque">+ Cheque</button>
                                   : <span className="ps-td-vacio">—</span>
                               }
                             </td>
@@ -2582,6 +2617,16 @@ export default function PresupuestoDiputados() {
                 />
               </div>
               <div className="ps-form-group">
+                <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  placeholder="Ej: 166675"
+                  value={ayudaForm.numero_cheque}
+                  onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
+                />
+              </div>
+              <div className="ps-form-group">
                 <label>Observaciones</label>
                 <textarea
                   rows={2}
@@ -2674,6 +2719,16 @@ export default function PresupuestoDiputados() {
                   placeholder="Ej: 2025-001"
                   value={ayudaForm.numero_orden}
                   onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
+                />
+              </div>
+              <div className="ps-form-group">
+                <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  placeholder="Ej: 166675"
+                  value={ayudaForm.numero_cheque}
+                  onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
                 />
               </div>
               <div className="ps-form-group">
@@ -2882,6 +2937,42 @@ export default function PresupuestoDiputados() {
                 <button type="button" className="ps-btn-secondary" onClick={() => setOrdenModal(null)}>Cancelar</button>
                 <button type="button" className="ps-btn-primary" onClick={handleOrden} disabled={ordenSaving || !ordenVal.trim()}>
                   {ordenSaving ? 'Guardando…' : 'Guardar Orden'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mini-modal: Asignar Número de Cheque ── */}
+      {chequeModal && (
+        <div className="ps-overlay">
+          <div className="ps-modal ps-modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="ps-modal-header">
+              <h2>Asignar Número de Cheque</h2>
+              <button className="ps-modal-close" onClick={() => setChequeModal(null)}><FiX size={18} /></button>
+            </div>
+            <div className="ps-modal-form">
+              <p style={{ fontSize: '0.83rem', color: '#475569', marginBottom: 12 }}>
+                <strong>{chequeModal.concepto}</strong>
+              </p>
+              <div className="ps-form-group">
+                <label>Número de Cheque</label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  placeholder="Ej: 166675"
+                  value={chequeVal}
+                  onChange={e => setChequeVal(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCheque()}
+                  autoFocus
+                />
+              </div>
+              {chequeErr && <div className="ps-form-error">{chequeErr}</div>}
+              <div className="ps-modal-footer">
+                <button type="button" className="ps-btn-secondary" onClick={() => setChequeModal(null)}>Cancelar</button>
+                <button type="button" className="ps-btn-primary" onClick={handleCheque} disabled={chequeSaving || !chequeVal.trim()}>
+                  {chequeSaving ? 'Guardando…' : 'Guardar Cheque'}
                 </button>
               </div>
             </div>

@@ -52,6 +52,9 @@ router.patch('/:id/ayudas/:aid_id/liquidacion', verifyToken, onlyAdmins, audit, 
 // Asignar número de orden — admin
 router.patch('/:id/ayudas/:aid_id/orden', verifyToken, onlyAdmins, audit, ctrl.patchOrden);
 
+// Asignar número de cheque — admin
+router.patch('/:id/ayudas/:aid_id/cheque', verifyToken, onlyAdmins, audit, ctrl.patchCheque);
+
 // Eliminar ayuda — admin
 router.delete('/:id/ayudas/:aid_id', verifyToken, onlyAdmins, audit, ctrl.deleteAyuda);
 

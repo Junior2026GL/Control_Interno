@@ -31,7 +31,7 @@ exports.getByDiputado = async (req, res) => {
 
     const pres = presRows[0];
     const [ayudas] = await db.promise().query(
-      `SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.monto, a.observaciones,
+      `SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
               a.estado_liquidacion, a.fecha_liquidacion, a.created_at, a.created_by,
               u.nombre AS creado_por_nombre
        FROM ayudas_sociales a
@@ -356,12 +356,13 @@ exports.createAyuda = async (req, res) => {
       });
     }
 
-    const numero_orden_ins = sanitize(req.body.numero_orden) || null;
+    const numero_orden_ins  = sanitize(req.body.numero_orden)  || null;
+    const numero_cheque_ins = sanitize(req.body.numero_cheque) || null;
     const [result] = await conn.query(
       `INSERT INTO ayudas_sociales
-         (presupuesto_id, diputado_id, fecha, concepto, beneficiario, numero_orden, monto, observaciones, created_by, estado_liquidacion)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'sin_liquidar')`,
-      [presId, pres.diputado_id, fecha, concepto, beneficiario, numero_orden_ins, monto, observaciones, req.user?.id || null]
+         (presupuesto_id, diputado_id, fecha, concepto, beneficiario, numero_orden, numero_cheque, monto, observaciones, created_by, estado_liquidacion)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sin_liquidar')`,
+      [presId, pres.diputado_id, fecha, concepto, beneficiario, numero_orden_ins, numero_cheque_ins, monto, observaciones, req.user?.id || null]
     );
     await conn.commit();
     res.status(201).json({ message: 'Ayuda social registrada correctamente.', id: result.insertId });
@@ -439,10 +440,11 @@ exports.updateAyuda = async (req, res) => {
         message: `El monto excede el presupuesto disponible. Disponible: L ${disponible.toLocaleString('es-HN', { minimumFractionDigits: 2 })}.`,
       });
 
-    const numero_orden_upd = sanitize(req.body.numero_orden) || null;
+    const numero_orden_upd  = sanitize(req.body.numero_orden)  || null;
+    const numero_cheque_upd = sanitize(req.body.numero_cheque) || null;
     await db.promise().query(
-      'UPDATE ayudas_sociales SET fecha=?, concepto=?, beneficiario=?, numero_orden=?, monto=?, observaciones=? WHERE id=? AND presupuesto_id=?',
-      [fecha, concepto, beneficiario, numero_orden_upd, monto, observaciones, aidId, presId]
+      'UPDATE ayudas_sociales SET fecha=?, concepto=?, beneficiario=?, numero_orden=?, numero_cheque=?, monto=?, observaciones=? WHERE id=? AND presupuesto_id=?',
+      [fecha, concepto, beneficiario, numero_orden_upd, numero_cheque_upd, monto, observaciones, aidId, presId]
     );
     res.json({ message: 'Ayuda actualizada correctamente.' });
   } catch (err) {
@@ -566,6 +568,36 @@ exports.patchOrden = async (req, res) => {
 };
 
 // ──────────────────────────────────────────────────────────────
+// PATCH /api/presupuesto/:id/ayudas/:aid_id/cheque
+// Asignar / actualizar solo el número de cheque
+// ──────────────────────────────────────────────────────────────
+exports.patchCheque = async (req, res) => {
+  const presId = parseInt(req.params.id, 10);
+  const aidId  = parseInt(req.params.aid_id, 10);
+  if (isNaN(presId) || isNaN(aidId)) return res.status(400).json({ message: 'ID inválido.' });
+
+  const numero_cheque = sanitize(req.body.numero_cheque) || null;
+  if (numero_cheque && numero_cheque.length > 50)
+    return res.status(400).json({ message: 'Número de cheque demasiado largo (máx. 50 caracteres).' });
+
+  try {
+    const [rows] = await db.promise().query(
+      'SELECT id FROM ayudas_sociales WHERE id = ? AND presupuesto_id = ?', [aidId, presId]
+    );
+    if (!rows.length) return res.status(404).json({ message: 'Ayuda no encontrada.' });
+
+    await db.promise().query(
+      'UPDATE ayudas_sociales SET numero_cheque = ? WHERE id = ? AND presupuesto_id = ?',
+      [numero_cheque, aidId, presId]
+    );
+    res.json({ message: 'Número de cheque actualizado.', numero_cheque });
+  } catch (err) {
+    console.error('[presupuesto] Error en patchCheque:', err);
+    res.status(500).json({ message: 'Error al actualizar el número de cheque.' });
+  }
+};
+
+// ──────────────────────────────────────────────────────────────
 // GET /api/presupuesto/resumen?anio=YYYY
 // Resumen de todos los diputados con presupuesto para el año
 // ──────────────────────────────────────────────────────────────
@@ -661,7 +693,7 @@ exports.getReportesAyudas = async (req, res) => {
 
     const [rows] = await db.promise().query(
       `SELECT
-         a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.monto, a.observaciones,
+         a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
          a.estado_liquidacion, a.created_at, p.anio,
          d.id AS diputado_id, d.nombre AS diputado, d.departamento, d.tipo, d.partido,
          u.nombre AS creado_por_nombre
