@@ -261,7 +261,12 @@ export default function Ayudas() {
   const hayFiltros    = busqueda || filtroTipo || filtroDesde || filtroHasta;
   const limpiarFiltros = () => { setBusqueda(''); setFiltroTipo(''); setFiltroDesde(''); setFiltroHasta(''); setPage(1); };
 
-  const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM }); setFormErrors({}); setModal(true); };
+  const openNew = () => { 
+    setEditing(null); 
+    setForm({ ...EMPTY_FORM, observaciones: `AYUDA SOCIAL GESTIONADA Y DOCUMENTA POR HD : ${user?.nombre || ''}` }); 
+    setFormErrors({}); 
+    setModal(true); 
+  };
   const openEdit = (a) => {
     setEditing(a.id);
     setForm({ nombre_completo: a.nombre_completo, dni: a.dni, rtn: a.rtn,
