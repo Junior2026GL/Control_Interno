@@ -2050,7 +2050,7 @@ export default function PresupuestoDiputados() {
                     {canEdit && (
                       <button
                         className="ps-btn-primary"
-                        onClick={() => { setAyudaForm(EMPTY_AYUDA); setFormErr(''); setModal('ayuda'); }}
+                        onClick={() => { setAyudaForm({ ...EMPTY_AYUDA, observaciones: `AYUDA SOCIAL GESTIONADA Y DOCUMENTA POR HD : ${me?.nombre || ''}` }); setFormErr(''); setModal('ayuda'); }}
                         disabled={presupuesto.disponible <= 0}
                         title={presupuesto.disponible <= 0 ? 'Presupuesto agotado' : ''}
                       >
@@ -2067,7 +2067,7 @@ export default function PresupuestoDiputados() {
                     {canEdit && presupuesto.disponible > 0 && (
                       <button
                         className="ps-btn-primary"
-                        onClick={() => { setAyudaForm(EMPTY_AYUDA); setFormErr(''); setModal('ayuda'); }}
+                        onClick={() => { setAyudaForm({ ...EMPTY_AYUDA, observaciones: `AYUDA SOCIAL GESTIONADA Y DOCUMENTA POR HD : ${me?.nombre || ''}` }); setFormErr(''); setModal('ayuda'); }}
                       >
                         <FiPlus size={14} /> Registrar primera ayuda
                       </button>
