@@ -651,12 +651,6 @@ export default function CheckList() {
               <span className="cl-hstat-val">{cntActivos}</span>
               <span className="cl-hstat-lbl">Activos</span>
             </div>
-            {cntAnulados > 0 && (
-              <div className="cl-hstat cl-hstat--anulado">
-                <span className="cl-hstat-val">{cntAnulados}</span>
-                <span className="cl-hstat-lbl">Anulados</span>
-              </div>
-            )}
           </div>
         </div>
 
