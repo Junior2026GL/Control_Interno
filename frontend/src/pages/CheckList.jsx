@@ -299,14 +299,31 @@ export default function CheckList() {
       for (let i = 0; i < uint8.length; i++) bin += String.fromCharCode(uint8[i]);
       return btoa(bin);
     };
-    const [fontNormal, fontBold] = await Promise.all([
-      loadFont('/fonts/Roboto-Regular.ttf'),
-      loadFont('/fonts/Roboto-Bold.ttf'),
-    ]);
-    doc.addFileToVFS('Roboto-Regular.ttf', fontNormal);
-    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-    doc.addFileToVFS('Roboto-Bold.ttf', fontBold);
-    doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
+    const nativeSetFont = doc.setFont.bind(doc);
+    let pdfFontFamily = 'helvetica';
+    try {
+      const [fontNormal, fontBold] = await Promise.all([
+        loadFont('/fonts/Roboto-Regular.ttf'),
+        loadFont('/fonts/Roboto-Bold.ttf'),
+      ]);
+      doc.addFileToVFS('Roboto-Regular.ttf', fontNormal);
+      doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+      doc.addFileToVFS('Roboto-Bold.ttf', fontBold);
+      doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
+
+      // Validate metrics early; some proxies/AV products may return non-font payloads.
+      nativeSetFont('Roboto', 'normal');
+      doc.getTextWidth('TEST');
+      pdfFontFamily = 'Roboto';
+    } catch (fontErr) {
+      console.warn('[generarPDF] Fuente Roboto no disponible, se usará Helvetica.', fontErr);
+    }
+
+    // Force safe fallback if any call still tries to set Roboto.
+    doc.setFont = (fontName, fontStyle, fontWeight) => {
+      const safeName = fontName === 'Roboto' ? pdfFontFamily : fontName;
+      return nativeSetFont(safeName, fontStyle, fontWeight);
+    };
 
     const loadImg = (url) => new Promise(async (resolve) => {
       try {
