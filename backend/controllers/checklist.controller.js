@@ -112,7 +112,13 @@ exports.create = (req, res) => {
         observaciones, req.user.id,
       ],
       (err2, result) => {
-        if (err2) { console.error('[checklist] create:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+        if (err2) {
+          if (err2.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ message: `El número correlativo ${numero} ya existe (puede ser de un expediente anulado). El sistema asignará otro número automáticamente; cierre este modal y vuelva a crear el check list.` });
+          }
+          console.error('[checklist] create:', err2);
+          return res.status(500).json({ message: 'Error interno del servidor.' });
+        }
         logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'checklist', detalle: `Creó expediente N° ${numero}${numero_expediente ? ' — ' + numero_expediente : ''}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
         res.status(201).json({ id: result.insertId, numero, message: 'Check list creado correctamente.' });
       }
@@ -210,6 +216,15 @@ exports.anular = (req, res) => {
     (err, result) => {
       if (err) { console.error('[checklist] anular:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
       if (result.affectedRows === 0) return res.status(404).json({ message: 'Check list no encontrado o ya estaba anulado.' });
+      // Liberar la orden asociada en orden_checklist para que no quede como 'usado'
+      // (el número quedará bloqueado por la restricción UNIQUE de checklist_expediente)
+      db.query(
+        `UPDATE orden_checklist
+         SET estado = 'libre', usuario_id = NULL, fecha_registro = NULL, checklist_id = NULL
+         WHERE checklist_id = ? AND estado = 'usado'`,
+        [id],
+        (errOC) => { if (errOC) console.error('[checklist] anular — liberar orden_checklist:', errOC.message); }
+      );
       logEvent({
         usuario_id: req.user.id, usuario_nombre: req.user.nombre || null,
         accion: 'ANULAR', modulo: 'checklist',

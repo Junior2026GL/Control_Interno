@@ -68,9 +68,12 @@ exports.reservar = (req, res) => {
       if (txErr) { conn.release(); return res.status(500).json({ message: 'Error interno.' }); }
 
       conn.query(
-        `SELECT id, numero, anio FROM orden_checklist
-         WHERE anio = ? AND estado = 'libre'
-         ORDER BY numero ASC LIMIT 1 FOR UPDATE`,
+        `SELECT oc.id, oc.numero, oc.anio
+         FROM orden_checklist oc
+         LEFT JOIN checklist_expediente cl
+           ON CAST(cl.numero AS UNSIGNED) = oc.numero
+         WHERE oc.anio = ? AND oc.estado = 'libre' AND cl.id IS NULL
+         ORDER BY oc.numero ASC LIMIT 1 FOR UPDATE`,
         [anio],
         (err, rows) => {
           if (err) return conn.rollback(() => { conn.release(); res.status(500).json({ message: 'Error interno.' }); });

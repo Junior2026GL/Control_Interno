@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useContext } from 'react';
 import {
-  FiPlus, FiX, FiEye, FiEdit2, FiSlash, FiSearch,
+  FiPlus, FiX, FiEye, FiEdit2, FiSearch,
   FiPrinter, FiRefreshCw, FiClipboard,
-  FiChevronLeft, FiChevronRight, FiAlertTriangle,
+  FiChevronLeft, FiChevronRight,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
 import api from '../api/axios';
@@ -119,7 +119,6 @@ function FormFields({ values, onChange }) {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CheckList() {
   const { user } = useContext(AuthContext);
-  const canDelete = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(user?.rol);
 
   const [lista,   setLista]   = useState([]);
   const [loading, setLoading] = useState(false);
@@ -141,10 +140,7 @@ export default function CheckList() {
   const [editing,    setEditing]    = useState(false);
 
   const [verItem,    setVerItem]    = useState(null);
-  const [delItem,    setDelItem]    = useState(null);  // modal anular
-  const [delMotivo,  setDelMotivo]  = useState('');
-  const [deleting,   setDeleting]   = useState(false);
-  const [tabFiltro,  setTabFiltro]  = useState('activos'); // 'activos' | 'anulados' | 'todos'
+  const [tabFiltro,  setTabFiltro]  = useState('activos'); // 'activos' | 'todos'
 
   // ── toast helper ─────────────────────────────────────────────────────────
   const showToast = (msg, type = 'error') => {
@@ -165,16 +161,13 @@ export default function CheckList() {
 
   // ── contadores ───────────────────────────────────────────
   const cntActivos  = lista.filter(cl => cl.estado !== 'anulado').length;
-  const cntAnulados = lista.filter(cl => cl.estado === 'anulado').length;
 
   // ── filtro / paginación ────────────────────────────────────────
   const listaMostrada = (() => {
     const q = busqueda.trim().toLowerCase();
-    const base = tabFiltro === 'activos'
-      ? lista.filter(cl => cl.estado !== 'anulado')
-      : tabFiltro === 'anulados'
-        ? lista.filter(cl => cl.estado === 'anulado')
-        : lista;
+    const base = tabFiltro === 'todos'
+      ? lista
+      : lista.filter(cl => cl.estado !== 'anulado');
     if (!q) return base;
     return base.filter(cl =>
       String(cl.numero).includes(q) ||
@@ -281,26 +274,7 @@ export default function CheckList() {
     }
   };
 
-  // ── anular ────────────────────────────────────────────────────────────
-  const openAnular = (cl) => { setDelItem(cl); setDelMotivo(''); };
-  const closeAnular = () => { setDelItem(null); setDelMotivo(''); };
 
-  const handleAnular = async () => {
-    if (!delItem) return;
-    if (!delMotivo.trim()) { showToast('Debe indicar el motivo de anulación.', 'error'); return; }
-    setDeleting(true);
-    try {
-      await api.post(`/checklist/${delItem.id}/anular`, { motivo: delMotivo }, { headers: authHeaders() });
-      closeAnular();
-      fetchLista();
-      setTabFiltro('anulados');
-      showToast('Check list anulado correctamente.', 'ok');
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Error al anular.', 'error');
-    } finally {
-      setDeleting(false);
-    }
-  };
 
   // ── PDF ───────────────────────────────────────────────────────────────────
   const generarPDF = async (cl, print = false) => {    try {    const doc    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
@@ -705,10 +679,6 @@ export default function CheckList() {
                 onClick={() => { setTabFiltro('activos'); setPage(1); }}
               >Activos <span className="cl-tab-cnt">{cntActivos}</span></button>
               <button
-                className={`cl-tab ${tabFiltro === 'anulados' ? 'cl-tab--anulado cl-tab--active-anulado' : ''}`}
-                onClick={() => { setTabFiltro('anulados'); setPage(1); }}
-              >Anulados <span className="cl-tab-cnt">{cntAnulados}</span></button>
-              <button
                 className={`cl-tab ${tabFiltro === 'todos' ? 'cl-tab--active' : ''}`}
                 onClick={() => { setTabFiltro('todos'); setPage(1); }}
               >Todos <span className="cl-tab-cnt">{lista.length}</span></button>
@@ -783,9 +753,6 @@ export default function CheckList() {
                           <button className="cl-act-btn cl-act-btn--dl"    title="Descargar PDF" onClick={() => generarPDF(cl, false)}><FiClipboard size={13}/></button>
                           {cl.estado !== 'anulado' && (
                             <button className="cl-act-btn cl-act-btn--edit" title="Editar" onClick={() => openEditar(cl)}><FiEdit2 size={13}/></button>
-                          )}
-                          {canDelete && cl.estado !== 'anulado' && (
-                            <button className="cl-act-btn cl-act-btn--del" title="Anular" onClick={() => openAnular(cl)}><FiSlash size={13}/></button>
                           )}
                         </div>
                       </td>
@@ -968,49 +935,7 @@ export default function CheckList() {
         </div>
       )}
 
-      {/* ══════════════════════════════════════════════════════════
-          MODAL ANULAR
-      ══════════════════════════════════════════════════════════ */}
-      {delItem && (
-        <div className="cl-backdrop" onClick={e => e.target === e.currentTarget && closeAnular()}>
-          <div className="cl-modal cl-modal-sm">
-            <div className="cl-modal-header cl-modal-header-danger">
-              <div className="cl-modal-icon"><FiAlertTriangle size={20} color="#d97706" /></div>
-              <div>
-                <h3>Anular Check List</h3>
-                <p>El registro quedará como anulado con trazabilidad completa.</p>
-              </div>
-              <button className="cl-modal-close" onClick={closeAnular}><FiX size={18} /></button>
-            </div>
-            <div className="cl-form" style={{ paddingBottom: 4 }}>
-              <p style={{ margin: '0 0 12px', fontSize: 14, color: '#475569' }}>
-                Anular el check list&nbsp;
-                <strong>#{String(delItem.numero).padStart(4, '0')}</strong>
-                {delItem.numero_expediente ? ` — ${delItem.numero_expediente}` : ''}.
-              </p>
-              <div className="cl-form-group">
-                <label>Motivo de anulación <span style={{color:'#e11d48'}}>*</span></label>
-                <textarea
-                  className="cl-textarea"
-                  style={{ minHeight: 80 }}
-                  placeholder="Indique el motivo por el que se anula este expediente..."
-                  value={delMotivo}
-                  onChange={e => setDelMotivo(e.target.value)}
-                  maxLength={500}
-                  autoFocus
-                />
-                <small style={{ color: '#94a3b8', fontSize: 11 }}>{delMotivo.length}/500</small>
-              </div>
-            </div>
-            <div className="cl-modal-footer">
-              <button className="btn-secondary" onClick={closeAnular} disabled={deleting}>Cancelar</button>
-              <button className="btn-danger" onClick={handleAnular} disabled={deleting || !delMotivo.trim()}>
-                {deleting ? 'Anulando…' : <><FiSlash size={13}/> Anular expediente</>}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* ── Toast ── */}
       {toast && <div className={`cl-toast ${toast.type}`}>{toast.msg}</div>}

@@ -7,7 +7,7 @@ router.get('/',              verify, ctrl.getAll);
 router.get('/:id',           verify, ctrl.getOne);
 router.post('/',             verify, audit, ctrl.create);
 router.put('/:id',           verify, audit, ctrl.update);
-router.post('/:id/anular',   verify, audit, ctrl.anular);
+// router.post('/:id/anular', verify, audit, ctrl.anular);   // opción de anular deshabilitada
 router.delete('/:id',        verify, audit, ctrl.remove);
 
 module.exports = router;
