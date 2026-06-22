@@ -863,7 +863,7 @@ export default function Autorizaciones() {
       const fw2    = fh / aspect;
       y += 3; // espacio adicional antes de firma
       doc.addImage(firmaRes.data, 'PNG', sigCX - fw2 / 2, y, fw2, fh);
-      y += fh + 2;
+      y += fh + 10; // más espacio después de firma para el nombre
     }
 
     // línea de firma más corta
