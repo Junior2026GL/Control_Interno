@@ -490,7 +490,7 @@ export default function Autorizaciones() {
         const img    = new Image();
         img.onload = () => {
           try {
-            const scale  = Math.min(220 / img.naturalWidth, 220 / img.naturalHeight, 1);
+            const scale  = Math.min(500 / img.naturalWidth, 500 / img.naturalHeight, 3);
             const canvas = document.createElement('canvas');
             canvas.width  = Math.round(img.naturalWidth  * scale);
             canvas.height = Math.round(img.naturalHeight * scale);
