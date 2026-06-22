@@ -38,6 +38,10 @@ function fmtMonto(num) {
   }).format(num ?? 0);
 }
 
+function hasFactura(item) {
+  return item?.lleva_factura === true || Number(item?.lleva_factura) === 1;
+}
+
 // ── Number to Spanish words (Lempiras) ──────────────────────────────────────
 const UNIDADES  = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
                    'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE',
@@ -107,9 +111,11 @@ const ESTADO_CFG = {
 const EMPTY_FORM = {
   tipo_pago: 'CHEQUE', beneficiario: '', monto: '', monto_letras: '',
   detalle: '', anio: new Date().getFullYear(), org: '11111', fondo: '11',
+  lleva_factura: false, numero_factura: '',
 };
 
 const MONTO_MAX = 99_999_999;
+const FACTURA_REGEX = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
 
 // ─── validación ─────────────────────────────────────────────────────────────
 function validate(form) {
@@ -131,6 +137,11 @@ function validate(form) {
   const anioVal = parseInt(form.anio, 10);
   if (!form.anio || isNaN(anioVal) || anioVal < 2000 || anioVal > 2100)
     errs.anio = 'El año debe estar entre 2000 y 2100.';
+  if (form.lleva_factura) {
+    const factura = (form.numero_factura || '').trim();
+    if (!factura) errs.numero_factura = 'El número de factura es requerido.';
+    else if (!FACTURA_REGEX.test(factura)) errs.numero_factura = 'Formato inválido. Use 000-001-01-000037777.';
+  }
   return errs;
 }
 
@@ -214,6 +225,7 @@ export default function Autorizaciones() {
     if (q) l = l.filter(a =>
       (a.beneficiario || '').toLowerCase().includes(q) ||
       String(a.numero).padStart(4, '0').includes(q) ||
+      (a.numero_factura || '').toLowerCase().includes(q) ||
       (a.creado_por_nombre || '').toLowerCase().includes(q) ||
       (a.tipo_pago || '').toLowerCase().includes(q) ||
       String(a.anio || '').includes(q)
@@ -334,6 +346,8 @@ export default function Autorizaciones() {
       anio:         a.anio || new Date().getFullYear(),
       org:          a.org || '',
       fondo:        a.fondo || '',
+      lleva_factura: hasFactura(a),
+      numero_factura: a.numero_factura || '',
     });
     setEditErrors({});
   };
@@ -360,6 +374,8 @@ export default function Autorizaciones() {
         monto:        parseFloat(parseFloat(editForm.monto).toFixed(2)),
         monto_letras: editForm.monto_letras.trim(),
         detalle:      editForm.detalle.trim(),
+        lleva_factura: !!editForm.lleva_factura,
+        numero_factura: editForm.lleva_factura ? (editForm.numero_factura || '').trim() : null,
       }, { headers: authHeaders() });
       setEditItem(null);
       fetchLista();
@@ -384,6 +400,8 @@ export default function Autorizaciones() {
         monto:         parseFloat(parseFloat(form.monto).toFixed(2)),
         monto_letras:  form.monto_letras.trim(),
         detalle:       form.detalle.trim(),
+        lleva_factura: !!form.lleva_factura,
+        numero_factura: form.lleva_factura ? (form.numero_factura || '').trim() : null,
       }, { headers: authHeaders() });
       setModalCrear(false);
       setForm({ ...EMPTY_FORM });
@@ -686,6 +704,25 @@ export default function Autorizaciones() {
     });
 
     const CB_TOTAL_H = CB_ROW_H * TIPOS_PDF.length;
+
+    // No. factura (opcional) en el área derecha del bloque de tipo de pago
+    const FACT_X = L + 98;
+    const FACT_Y = y + 3;
+    const FACT_W = CW - (FACT_X - L) - 4;
+    const FACT_H = 11;
+    const facturaValue = hasFactura(item) ? sa(item.numero_factura || '') : '';
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...NEGRO);
+    doc.text('NO. FACTURA:', FACT_X, FACT_Y + 4.2);
+    doc.setDrawColor(...NEGRO);
+    doc.setLineWidth(0.35);
+    doc.rect(FACT_X + 30, FACT_Y + 1, FACT_W - 30, FACT_H, 'S');
+    if (facturaValue) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.text(facturaValue, FACT_X + 33, FACT_Y + 8.8, { maxWidth: FACT_W - 35 });
+    }
 
     // ════════════════════════════════════════════════════
     //  BENEFICIARIO
@@ -1482,6 +1519,40 @@ export default function Autorizaciones() {
                 {editErrors.tipo_pago && <span className="field-error">{editErrors.tipo_pago}</span>}
               </div>
               <div className="aut-form-group">
+                <label>Factura</label>
+                <div className="aut-check-row">
+                  <label className="aut-check-label">
+                    <input
+                      type="checkbox"
+                      checked={!!editForm.lleva_factura}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        setEditForm(p => ({ ...p, lleva_factura: checked, numero_factura: checked ? p.numero_factura : '' }));
+                        setEditErrors(p => ({ ...p, numero_factura: '' }));
+                      }}
+                    />
+                    Este pago lleva número de factura
+                  </label>
+                </div>
+                {editForm.lleva_factura && (
+                  <>
+                    <input
+                      className={`caja-input${editErrors.numero_factura ? ' input-error' : ''}`}
+                      type="text"
+                      maxLength={30}
+                      placeholder="000-001-01-000037777"
+                      value={editForm.numero_factura || ''}
+                      onChange={e => {
+                        setEditForm(p => ({ ...p, numero_factura: e.target.value }));
+                        setEditErrors(p => ({ ...p, numero_factura: '' }));
+                      }}
+                    />
+                    <small className="aut-factura-hint">Formato esperado: 000-001-01-000037777</small>
+                    {editErrors.numero_factura && <span className="field-error">{editErrors.numero_factura}</span>}
+                  </>
+                )}
+              </div>
+              <div className="aut-form-group">
                 <label>Beneficiario / Proveedor</label>
                 <input className={`caja-input${editErrors.beneficiario ? ' input-error' : ''}`}
                   type="text" maxLength={200} placeholder="Nombre del beneficiario"
@@ -1570,6 +1641,39 @@ export default function Autorizaciones() {
                   ))}
                 </div>
                 {formErrors.tipo_pago && <span className="field-error">{formErrors.tipo_pago}</span>}
+              </div>
+
+              <div className="aut-form-group">
+                <label>Factura</label>
+                <div className="aut-check-row">
+                  <label className="aut-check-label">
+                    <input
+                      type="checkbox"
+                      checked={!!form.lleva_factura}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        setF('lleva_factura', checked);
+                        if (!checked) setF('numero_factura', '');
+                        clearErr('numero_factura');
+                      }}
+                    />
+                    Este pago lleva número de factura
+                  </label>
+                </div>
+                {form.lleva_factura && (
+                  <>
+                    <input
+                      className={`caja-input${formErrors.numero_factura ? ' input-error' : ''}`}
+                      type="text"
+                      maxLength={30}
+                      placeholder="000-001-01-000037777"
+                      value={form.numero_factura || ''}
+                      onChange={e => { setF('numero_factura', e.target.value); clearErr('numero_factura'); }}
+                    />
+                    <small className="aut-factura-hint">Formato esperado: 000-001-01-000037777</small>
+                    {formErrors.numero_factura && <span className="field-error">{formErrors.numero_factura}</span>}
+                  </>
+                )}
               </div>
 
               {/* Beneficiario */}
@@ -1669,6 +1773,10 @@ export default function Autorizaciones() {
               <div className="aut-ver-row">
                 <span className="aut-ver-label">Monto</span>
                 <span><strong>{fmtMonto(verItem.monto)}</strong></span>
+              </div>
+              <div className="aut-ver-row">
+                <span className="aut-ver-label">Factura</span>
+                <span>{hasFactura(verItem) ? (verItem.numero_factura || '—') : 'No aplica'}</span>
               </div>
               <div className="aut-ver-row">
                 <span className="aut-ver-label">Cantidad en letras</span>

@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pago (
   anio YEAR NOT NULL,
   org VARCHAR(20) NOT NULL DEFAULT '',
   fondo VARCHAR(20) NOT NULL DEFAULT '',
+  lleva_factura TINYINT(1) NOT NULL DEFAULT 0,
+  numero_factura VARCHAR(30) NULL,
   estado ENUM('PENDIENTE','AUTORIZADO','RECHAZADO') NOT NULL DEFAULT 'PENDIENTE',
   creado_por INT NOT NULL,
   autorizado_por INT NULL,

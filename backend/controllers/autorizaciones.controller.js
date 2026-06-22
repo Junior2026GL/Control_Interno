@@ -5,6 +5,7 @@ const { logEvent, getClientIP } = require('../middleware/audit');
 const VALID_TIPOS = ['CHEQUE', 'CONTRA_ENTREGA', 'TRANSFERENCIA', 'PAGO_LINEA'];
 const MONTO_MAX   = 99_999_999;
 const ANIO_REGEX  = /^\d{4}$/; // valida año de 4 dígitos
+const FACTURA_REGEX = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,7 @@ exports.create = (req, res) => {
   const {
     tipo_pago, beneficiario: rawBenef, monto, monto_letras: rawLetras,
     detalle: rawDetalle, anio, org: rawOrg, fondo: rawFondo,
+    lleva_factura: rawLlevaFactura, numero_factura: rawNumeroFactura,
   } = req.body;
 
   // tipo_pago
@@ -128,13 +130,22 @@ exports.create = (req, res) => {
   const org   = (rawOrg   || '').trim().substring(0, 20) || null;
   const fondo = (rawFondo || '').trim().substring(0, 20) || null;
 
+  const lleva_factura = rawLlevaFactura === true || rawLlevaFactura === 1 || rawLlevaFactura === '1';
+  const numero_factura = lleva_factura ? (rawNumeroFactura || '').trim() : null;
+  if (lleva_factura) {
+    if (!numero_factura)
+      return res.status(400).json({ message: 'Debe ingresar el número de factura.' });
+    if (!FACTURA_REGEX.test(numero_factura))
+      return res.status(400).json({ message: 'Número de factura inválido. Use el formato 000-001-01-000037777.' });
+  }
+
   nextNumero((err, numero) => {
     if (err) { console.error('[autorizaciones] Error en nextNumero:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
     db.query(
       `INSERT INTO autorizaciones_pago
-        (numero, tipo_pago, beneficiario, monto, monto_letras, detalle, anio, org, fondo, creado_por)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`,
-      [numero, tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, req.user.id],
+        (numero, tipo_pago, beneficiario, monto, monto_letras, detalle, anio, org, fondo, lleva_factura, numero_factura, creado_por)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [numero, tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, lleva_factura ? 1 : 0, numero_factura, req.user.id],
       (err2, result) => {
         if (err2) { console.error('[autorizaciones] Error en create INSERT:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
         logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'autorizaciones', detalle: `Creó autorización N° ${numero} — Beneficiario: ${beneficiario}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
@@ -155,6 +166,7 @@ exports.update = (req, res) => {
   const {
     tipo_pago, beneficiario: rawBenef, monto, monto_letras: rawLetras,
     detalle: rawDetalle, anio, org: rawOrg, fondo: rawFondo,
+    lleva_factura: rawLlevaFactura, numero_factura: rawNumeroFactura,
   } = req.body;
 
   if (!tipo_pago || !VALID_TIPOS.includes(tipo_pago))
@@ -186,6 +198,15 @@ exports.update = (req, res) => {
   const org   = (rawOrg   || '').trim().substring(0, 20) || null;
   const fondo = (rawFondo || '').trim().substring(0, 20) || null;
 
+  const lleva_factura = rawLlevaFactura === true || rawLlevaFactura === 1 || rawLlevaFactura === '1';
+  const numero_factura = lleva_factura ? (rawNumeroFactura || '').trim() : null;
+  if (lleva_factura) {
+    if (!numero_factura)
+      return res.status(400).json({ message: 'Debe ingresar el número de factura.' });
+    if (!FACTURA_REGEX.test(numero_factura))
+      return res.status(400).json({ message: 'Número de factura inválido. Use el formato 000-001-01-000037777.' });
+  }
+
   // SUPER_ADMIN/ADMIN: editan cualquier registro; ASISTENTE: solo los suyos
   const canEdit = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(req.user.rol);
   if (!canEdit) return res.status(403).json({ message: 'No tiene permiso para editar.' });
@@ -201,9 +222,9 @@ exports.update = (req, res) => {
     db.query(
       `UPDATE autorizaciones_pago
          SET tipo_pago = ?, beneficiario = ?, monto = ?, monto_letras = ?,
-             detalle = ?, anio = ?, org = ?, fondo = ?
+             detalle = ?, anio = ?, org = ?, fondo = ?, lleva_factura = ?, numero_factura = ?
        WHERE id = ?`,
-      [tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, id],
+      [tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, lleva_factura ? 1 : 0, numero_factura, id],
       (err2) => {
         if (err2) { console.error('[autorizaciones] Error en update UPDATE:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
         logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'autorizaciones', detalle: `Actualizó autorización ID #${id} — ${beneficiario}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
