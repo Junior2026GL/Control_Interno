@@ -852,18 +852,17 @@ export default function Autorizaciones() {
     // ════════════════════════════════════════════════════
     //  SECCIÓN DE FIRMA
     // ════════════════════════════════════════════════════
-    y += 22;
+    y += 12;
     const sigCX = PW / 2;
 
     // imagen de firma (solo si AUTORIZADO y existe)
     if (firmaRes) {
       const aspect = firmaRes.h / firmaRes.w;
-      const fw     = 110;
-      const fh     = Math.min(fw * aspect, 50);
+      const fw     = 100;
+      const fh     = Math.min(fw * aspect, 35);
       const fw2    = fh / aspect;
-      y += 3; // espacio adicional antes de firma
       doc.addImage(firmaRes.data, 'PNG', sigCX - fw2 / 2, y, fw2, fh);
-      y += fh + 10; // más espacio después de firma para el nombre
+      y += fh + 8;
     }
 
     // línea de firma más corta
