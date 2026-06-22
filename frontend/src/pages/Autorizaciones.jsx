@@ -858,9 +858,10 @@ export default function Autorizaciones() {
     // imagen de firma (solo si AUTORIZADO y existe)
     if (firmaRes) {
       const aspect = firmaRes.h / firmaRes.w;
-      const fw     = 80;
-      const fh     = Math.min(fw * aspect, 35);
+      const fw     = 110;
+      const fh     = Math.min(fw * aspect, 50);
       const fw2    = fh / aspect;
+      y += 3; // espacio adicional antes de firma
       doc.addImage(firmaRes.data, 'PNG', sigCX - fw2 / 2, y, fw2, fh);
       y += fh + 2;
     }
