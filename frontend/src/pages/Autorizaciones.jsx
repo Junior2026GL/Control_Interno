@@ -855,17 +855,17 @@ export default function Autorizaciones() {
     y += 12;
     const sigCX = PW / 2;
     const footerTopY = PH - 14;
-    const sigLineY = footerTopY - 28;
+    const sigLineY = footerTopY - 24;
     const sigNameMaxWidth = 86;
-    const sigNameY = sigLineY + 8;
+    const sigNameY = sigLineY + 9;
 
     // imagen de firma (solo si AUTORIZADO y existe)
     if (firmaRes) {
       const aspect = firmaRes.h / firmaRes.w;
-      const fw     = 96;
-      const fh     = Math.min(fw * aspect, 31);
+      const fw     = 108;
+      const fh     = Math.min(fw * aspect, 35);
       const fw2    = fh / aspect;
-      const sigImageY = Math.max(y, sigLineY - fh - 4);
+      const sigImageY = Math.max(y, sigLineY - fh - 3);
       doc.addImage(firmaRes.data, 'PNG', sigCX - fw2 / 2, sigImageY, fw2, fh);
     }
 
@@ -887,7 +887,7 @@ export default function Autorizaciones() {
       }
       firmaNombreLines[1] += '...';
     }
-    const sigRoleY = sigNameY + (firmaNombreLines.length - 1) * 4.2 + 7;
+    const sigRoleY = sigNameY + (firmaNombreLines.length - 1) * 4.2 + 8;
     doc.setTextColor(...NEGRO);
     doc.text(firmaNombreLines, sigCX, sigNameY, { align: 'center', lineHeightFactor: 1.05 });
     doc.setFont('helvetica', 'normal');
