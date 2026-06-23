@@ -854,32 +854,46 @@ export default function Autorizaciones() {
     // ════════════════════════════════════════════════════
     y += 12;
     const sigCX = PW / 2;
+    const footerTopY = PH - 14;
+    const sigLineY = footerTopY - 28;
+    const sigNameMaxWidth = 86;
+    const sigNameY = sigLineY + 6;
 
     // imagen de firma (solo si AUTORIZADO y existe)
     if (firmaRes) {
       const aspect = firmaRes.h / firmaRes.w;
-      const fw     = 100;
-      const fh     = Math.min(fw * aspect, 35);
+      const fw     = 82;
+      const fh     = Math.min(fw * aspect, 26);
       const fw2    = fh / aspect;
-      doc.addImage(firmaRes.data, 'PNG', sigCX - fw2 / 2, y, fw2, fh);
-      y += fh + 8;
+      const sigImageY = Math.max(y, sigLineY - fh - 6);
+      doc.addImage(firmaRes.data, 'PNG', sigCX - fw2 / 2, sigImageY, fw2, fh);
     }
 
     // línea de firma más corta
     doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.5);
-    doc.line(sigCX - 32, y, sigCX + 32, y);
+    doc.line(sigCX - 32, sigLineY, sigCX + 32, sigLineY);
 
     const firmaNombre = sa(
       (item.firma_nombre || '').toUpperCase()
     );
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(10.5);
+    let firmaNombreLines = doc.splitTextToSize(firmaNombre, sigNameMaxWidth);
+    if (firmaNombreLines.length > 2) {
+      firmaNombreLines = [firmaNombreLines[0], firmaNombreLines[1]];
+      while (firmaNombreLines[1].length > 3 && doc.getTextWidth(firmaNombreLines[1] + '...') > sigNameMaxWidth) {
+        firmaNombreLines[1] = firmaNombreLines[1].slice(0, -1);
+      }
+      firmaNombreLines[1] += '...';
+    }
+    const sigRoleY = sigNameY + (firmaNombreLines.length - 1) * 4.2 + 6;
     doc.setTextColor(...NEGRO);
-    doc.text(firmaNombre, sigCX, y + 6, { align: 'center' });
+    doc.text(firmaNombreLines, sigCX, sigNameY, { align: 'center', lineHeightFactor: 1.05 });
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text('PAGADOR ESPECIAL', sigCX, y + 12, { align: 'center' });
+    doc.setFontSize(9.5);
+    doc.setTextColor(55, 55, 55);
+    doc.text('PAGADOR ESPECIAL', sigCX, sigRoleY, { align: 'center' });
 
     // ════════════════════════════════════════════════════
     //  PIE DE PÁGINA (solo si AUTORIZADO o RECHAZADO)
