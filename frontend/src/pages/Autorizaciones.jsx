@@ -720,7 +720,7 @@ export default function Autorizaciones() {
     doc.rect(FACT_X + 30, FACT_Y + 1, FACT_W - 30, FACT_H, 'S');
     if (facturaValue) {
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10.5);
+      doc.setFontSize(12.5);
       doc.text(facturaValue, FACT_X + 33, FACT_Y + 8.8, { maxWidth: FACT_W - 35 });
     }
 
