@@ -887,7 +887,7 @@ export default function Autorizaciones() {
       }
       firmaNombreLines[1] += '...';
     }
-    const sigRoleY = sigNameY + (firmaNombreLines.length - 1) * 4.2 + 9;
+    const sigRoleY = sigNameY + (firmaNombreLines.length - 1) * 4.2 + 6;
     doc.setTextColor(...NEGRO);
     doc.text(firmaNombreLines, sigCX, sigNameY, { align: 'center', lineHeightFactor: 1.05 });
     doc.setFont('helvetica', 'normal');
