@@ -222,10 +222,12 @@ export default function Autorizaciones() {
   const listaMostrada = (() => {
     let l = filtroEstado === 'TODOS' ? lista : lista.filter(a => a.estado === filtroEstado);
     const q = busqueda.trim().toLowerCase();
+    const qFactura = q.replace(/[^a-z0-9]/g, '');
     if (q) l = l.filter(a =>
       (a.beneficiario || '').toLowerCase().includes(q) ||
       String(a.numero).padStart(4, '0').includes(q) ||
       (a.numero_factura || '').toLowerCase().includes(q) ||
+      (a.numero_factura || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(qFactura) ||
       (a.creado_por_nombre || '').toLowerCase().includes(q) ||
       (a.tipo_pago || '').toLowerCase().includes(q) ||
       String(a.anio || '').includes(q)
@@ -1375,7 +1377,7 @@ export default function Autorizaciones() {
           <input
             type="text"
             className="aut-search-input"
-            placeholder="Buscar beneficiario, N°, tipo, año…"
+            placeholder="Buscar beneficiario, N°, factura, tipo, año…"
             value={busqueda}
             onChange={e => { setBusqueda(e.target.value); setPage(1); }}
           />
