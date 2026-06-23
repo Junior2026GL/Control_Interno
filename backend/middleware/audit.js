@@ -88,39 +88,45 @@ function logEvent({
 /**
  * Middleware automático: registra POST / PUT / PATCH / DELETE al completar.
  * No registra el módulo de auditoría mismo para evitar ruido.
+ * Fire-and-forget para evitar bloqueos en caso de fallos de BD.
  */
 const auditMiddleware = (req, res, next) => {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
 
   res.on('finish', () => {
-    const ruta   = req.originalUrl || '';
-    const modulo = ruta.split('/')[2] || null; // /api/[modulo]/...
+    try {
+      const ruta   = req.originalUrl || '';
+      const modulo = ruta.split('/')[2] || null; // /api/[modulo]/...
 
-    // No auto-loguear auditoría ni auth (auth ya registra LOGIN_OK/LOGIN_FAIL manualmente)
-    if (modulo === 'auditoria' || modulo === 'auth') return;
+      // No auto-loguear auditoría ni auth (auth ya registra LOGIN_OK/LOGIN_FAIL manualmente)
+      if (modulo === 'auditoria' || modulo === 'auth') return;
 
-    const status    = res.statusCode;
-    const resultado = status >= 200 && status < 300 ? 'EXITO' : 'FALLO';
+      const status    = res.statusCode;
+      const resultado = status >= 200 && status < 300 ? 'EXITO' : 'FALLO';
 
-    let accion;
-    switch (req.method) {
-      case 'POST':   accion = 'CREAR';       break;
-      case 'PUT':
-      case 'PATCH':  accion = 'ACTUALIZAR';  break;
-      case 'DELETE': accion = 'ELIMINAR';    break;
-      default:       accion = req.method;
+      let accion;
+      switch (req.method) {
+        case 'POST':   accion = 'CREAR';       break;
+        case 'PUT':
+        case 'PATCH':  accion = 'ACTUALIZAR';  break;
+        case 'DELETE': accion = 'ELIMINAR';    break;
+        default:       accion = req.method;
+      }
+
+      logEvent({
+        usuario_id:     req.user?.id     || null,
+        usuario_nombre: req.user?.nombre || null,
+        accion,
+        modulo,
+        ip:      getClientIP(req),
+        metodo:  req.method,
+        ruta,
+        resultado,
+      });
+    } catch (err) {
+      console.error('[AUDIT] Error en auditMiddleware:', err.message);
+      // No bloquear la respuesta en caso de error
     }
-
-    logEvent({
-      usuario_id:     req.user?.id     || null,
-      usuario_nombre: req.user?.nombre || null,
-      accion,
-      modulo,
-      ip:      getClientIP(req),
-      metodo:  req.method,
-      ruta,
-      resultado,
-    });
   });
 
   next();

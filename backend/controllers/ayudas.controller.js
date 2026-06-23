@@ -16,7 +16,6 @@ const TIPOS_AYUDA = [
 const DATE_REGEX  = /^\d{4}-\d{2}-\d{2}$/;
 const CANTIDAD_MAX = 9_999_999;
 
-// ── GET all ───────────────────────────────────────────────
 exports.getAyudas = (req, res) => {
   db.query(
     `SELECT a.*, u.nombre AS registrado_por
@@ -26,8 +25,11 @@ exports.getAyudas = (req, res) => {
      LIMIT 2000`,
     (err, results) => {
       if (err) {
-        console.error('[ayudas] getAyudas:', err);
-        return res.status(500).json({ message: 'Error interno del servidor.' });
+        console.error('[ayudas] getAyudas:', err.message);
+        const msg = err.code === 'PROTOCOL_CONNECTION_LOST' 
+          ? 'Conexión perdida. Intente nuevamente.'
+          : 'Error al obtener las ayudas.';
+        return res.status(500).json({ message: msg });
       }
       res.json(results);
     }
@@ -111,8 +113,11 @@ exports.createAyuda = (req, res) => {
     [nombre_completo, dni, rtn, fecha, cantidadNum, tipo_ayuda, nombre_gestor, observaciones, req.user.id],
     (err, result) => {
       if (err) {
-        console.error('[ayudas] createAyuda:', err);
-        return res.status(500).json({ message: 'Error interno del servidor.' });
+        console.error('[ayudas] createAyuda:', err.message);
+        const msg = err.code === 'PROTOCOL_CONNECTION_LOST' 
+          ? 'Conexión perdida. Intente nuevamente.'
+          : 'Error al registrar la ayuda. Intente nuevamente.';
+        return res.status(500).json({ message: msg });
       }
       logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'ayudas', detalle: `Registró ayuda para: ${nombre_completo} — Tipo: ${tipo_ayuda}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.status(201).json({ id: result.insertId, message: 'Ayuda registrada correctamente.' });
@@ -184,8 +189,11 @@ exports.updateAyuda = (req, res) => {
     [nombre_completo, dni, rtn, fecha, cantidadNum, tipo_ayuda, nombre_gestor, observaciones, id],
     (err, result) => {
       if (err) {
-        console.error('[ayudas] updateAyuda:', err);
-        return res.status(500).json({ message: 'Error interno del servidor.' });
+        console.error('[ayudas] updateAyuda:', err.message);
+        const msg = err.code === 'PROTOCOL_CONNECTION_LOST' 
+          ? 'Conexión perdida. Intente nuevamente.'
+          : 'Error al actualizar la ayuda. Intente nuevamente.';
+        return res.status(500).json({ message: msg });
       }
       if (result.affectedRows === 0)
         return res.status(404).json({ message: 'Ayuda no encontrada.' });
@@ -205,8 +213,11 @@ exports.deleteAyuda = (req, res) => {
 
   db.query('DELETE FROM ayudas WHERE id = ?', [id], (err, result) => {
     if (err) {
-      console.error('[ayudas] deleteAyuda:', err);
-      return res.status(500).json({ message: 'Error interno del servidor.' });
+      console.error('[ayudas] deleteAyuda:', err.message);
+      const msg = err.code === 'PROTOCOL_CONNECTION_LOST' 
+        ? 'Conexión perdida. Intente nuevamente.'
+        : 'Error al eliminar la ayuda.';
+      return res.status(500).json({ message: msg });
     }
     if (result.affectedRows === 0)
       return res.status(404).json({ message: 'Ayuda no encontrada.' });

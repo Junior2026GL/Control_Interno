@@ -8,8 +8,12 @@ const pool = mysql.createPool({
   password:          process.env.DB_PASSWORD,
   database:          process.env.DB_NAME,
   waitForConnections: true,
-  connectionLimit:   20,
+  connectionLimit:   30,
   queueLimit:        0,
+  enableTimeout:     true,
+  connectionTimeout: 10000,
+  acquireTimeout:    10000,
+  timeout:           10000,
 });
 
 // Verify connection on startup
@@ -21,6 +25,11 @@ pool.getConnection((err, conn) => {
   }
   console.log('Base de datos conectada');
   conn.release();
+});
+
+// Manejar errores de conexión
+pool.on('error', (err) => {
+  console.error('[DB] Error de conexión:', err.message);
 });
 
 module.exports = pool;
