@@ -711,6 +711,7 @@ export default function Autorizaciones() {
     const FACT_W = CW - (FACT_X - L) - 4;
     const FACT_H = 11;
     const facturaValue = hasFactura(item) ? sa(item.numero_factura || '') : '';
+    const facturaDisplay = facturaValue || 'N/A';
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(...NEGRO);
@@ -718,10 +719,12 @@ export default function Autorizaciones() {
     doc.setDrawColor(...NEGRO);
     doc.setLineWidth(0.35);
     doc.rect(FACT_X + 30, FACT_Y + 1, FACT_W - 30, FACT_H, 'S');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12.5);
     if (facturaValue) {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12.5);
-      doc.text(facturaValue, FACT_X + 33, FACT_Y + 8.8, { maxWidth: FACT_W - 35 });
+      doc.text(facturaDisplay, FACT_X + 33, FACT_Y + 8.8, { maxWidth: FACT_W - 35 });
+    } else {
+      doc.text(facturaDisplay, FACT_X + 30 + (FACT_W - 30) / 2, FACT_Y + 8.8, { align: 'center' });
     }
 
     // ════════════════════════════════════════════════════
