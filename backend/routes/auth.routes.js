@@ -108,33 +108,55 @@ router.post('/login', loginLimiter, (req, res) => {
     const refreshToken = crypto.randomBytes(64).toString('hex');
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
 
-    // Revocar refresh tokens anteriores de este usuario (un token activo por sesión)
-    db.query('UPDATE refresh_tokens SET revoked=1 WHERE usuario_id=? AND revoked=0', [user.id]);
-    db.query(
-      'INSERT INTO refresh_tokens (usuario_id, token, expires_at, ip) VALUES (?, ?, ?, ?)',
-      [user.id, refreshToken, expiresAt, ip],
-      (rtErr) => { if (rtErr) console.error('[auth] Error guardando refresh token:', rtErr); }
-    );
-
-    logEvent({ usuario_id: user.id, usuario_nombre: user.nombre, accion: 'LOGIN_OK', modulo: 'auth', ip, resultado: 'EXITO' });
-
-    db.query(
-      'SELECT m.clave FROM modulos m JOIN usuario_modulos um ON m.id = um.modulo_id WHERE um.usuario_id = ?',
-      [user.id],
-      (err2, modResults) => {
-        const modulos = err2 ? [] : modResults.map(r => r.clave);
-        res.json({
-          token: accessToken,
-          refreshToken,
-          user: {
-            id: user.id,
-            nombre: user.nombre,
-            rol: user.rol,
-            modulos,
-          }
-        });
+    // Revocar refresh tokens anteriores y persistir el nuevo antes de responder login.
+    db.query('UPDATE refresh_tokens SET revoked=1 WHERE usuario_id=? AND revoked=0', [user.id], (revokeErr) => {
+      if (revokeErr) {
+        console.error('[auth] Error revocando refresh tokens previos:', revokeErr);
+        return res.status(500).json({ message: 'Error en el servidor' });
       }
-    );
+
+      const saveRefresh = (withIp) => {
+        const sql = withIp
+          ? 'INSERT INTO refresh_tokens (usuario_id, token, expires_at, ip) VALUES (?, ?, ?, ?)'
+          : 'INSERT INTO refresh_tokens (usuario_id, token, expires_at) VALUES (?, ?, ?)';
+        const params = withIp
+          ? [user.id, refreshToken, expiresAt, ip]
+          : [user.id, refreshToken, expiresAt];
+
+        db.query(sql, params, (rtErr) => {
+          // Compatibilidad con esquemas antiguos sin columna ip.
+          if (rtErr && withIp && rtErr.code === 'ER_BAD_FIELD_ERROR') {
+            return saveRefresh(false);
+          }
+          if (rtErr) {
+            console.error('[auth] Error guardando refresh token:', rtErr);
+            return res.status(500).json({ message: 'Error en el servidor' });
+          }
+
+          logEvent({ usuario_id: user.id, usuario_nombre: user.nombre, accion: 'LOGIN_OK', modulo: 'auth', ip, resultado: 'EXITO' });
+
+          db.query(
+            'SELECT m.clave FROM modulos m JOIN usuario_modulos um ON m.id = um.modulo_id WHERE um.usuario_id = ?',
+            [user.id],
+            (err2, modResults) => {
+              const modulos = err2 ? [] : modResults.map(r => r.clave);
+              res.json({
+                token: accessToken,
+                refreshToken,
+                user: {
+                  id: user.id,
+                  nombre: user.nombre,
+                  rol: user.rol,
+                  modulos,
+                }
+              });
+            }
+          );
+        });
+      };
+
+      saveRefresh(true);
+    });
   });
 });
 

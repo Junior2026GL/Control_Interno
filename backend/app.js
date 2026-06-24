@@ -17,15 +17,6 @@ app.use(helmet());
 const trustProxy = parseInt(process.env.TRUST_PROXY || '0', 10);
 if (trustProxy > 0) app.set('trust proxy', trustProxy);
 
-// ── Rate Limiting: máx 10 intentos de login por 15 min por IP ─
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: 'Demasiados intentos de acceso. Intente nuevamente en 15 minutos.' },
-});
-
 // ── Rate Limiting general: 200 req/min por usuario autenticado o IP ──
 const generalLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -71,7 +62,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(auditMiddleware);
 app.use(generalLimiter);
 
-app.use('/api/auth',            loginLimiter, require('./routes/auth.routes'));
+app.use('/api/auth',            require('./routes/auth.routes'));
 app.use('/api/users',           require('./routes/users.routes'));
 app.use('/api/caja',            require('./routes/caja.routes'));
 app.use('/api/modulos',         require('./routes/modulos.routes'));
