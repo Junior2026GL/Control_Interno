@@ -307,3 +307,5 @@ exports.cerrarSesion = (req, res) => {
     }
   );
 };
+
+
