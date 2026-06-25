@@ -11,6 +11,10 @@ const PAGE_SIZE = 100;
 
 function pad(n) { return String(n).padStart(4, '0'); }
 
+function estadoVisual(orden) {
+  return orden.estado_visual || orden.estado;
+}
+
 export default function OrdenChecklist() {
   const { user } = useContext(AuthContext);
   const isAdmin  = ROLES_ADMIN.includes(user?.rol);
@@ -105,10 +109,10 @@ export default function OrdenChecklist() {
 
   // Estadísticas
   const total      = ordenes.length;
-  const usadas     = ordenes.filter(o => o.estado === 'usado' && o.checklist_estado !== 'anulado').length;
-  const anuladas   = ordenes.filter(o => o.estado === 'usado' && o.checklist_estado === 'anulado').length;
-  const libres     = ordenes.filter(o => o.estado === 'libre').length;
-  const reservadas = ordenes.filter(o => o.estado === 'reservado').length;
+  const usadas     = ordenes.filter(o => estadoVisual(o) === 'usado').length;
+  const anuladas   = ordenes.filter(o => estadoVisual(o) === 'anulado').length;
+  const libres     = ordenes.filter(o => estadoVisual(o) === 'libre').length;
+  const reservadas = ordenes.filter(o => estadoVisual(o) === 'reservado').length;
   const pctUsadas  = total > 0 ? Math.round(((usadas + anuladas) / total) * 100) : 0;
 
   return (
@@ -229,19 +233,20 @@ export default function OrdenChecklist() {
         ) : (
           <div className="oc-grid">
             {ordenesPag.map(o => {
-              const esAnulado = o.estado === 'usado' && o.checklist_estado === 'anulado';
+              const visual = estadoVisual(o);
+              const esAnulado = visual === 'anulado';
               return (
                 <div
                   key={o.id}
-                  className={`oc-cell ${esAnulado ? 'oc-cell--anulado' : `oc-cell--${o.estado}`}`}
+                  className={`oc-cell ${esAnulado ? 'oc-cell--anulado' : `oc-cell--${visual}`}`}
                   onMouseEnter={e => {
-                    if (o.estado !== 'libre') {
+                    if (visual !== 'libre') {
                       const rect = e.currentTarget.getBoundingClientRect();
                       setTooltip({ o, esAnulado, x: rect.left, y: rect.bottom + 8 });
                     }
                   }}
                   onMouseLeave={() => setTooltip(null)}
-                  title={o.estado !== 'libre' ? `${pad(o.numero)}-${anio}` : undefined}
+                  title={visual !== 'libre' ? `${pad(o.numero)}-${anio}` : undefined}
                 >
                   {pad(o.numero)}
                 </div>

@@ -24,11 +24,21 @@ exports.getByAnio = (req, res) => {
   const anio = parseInt(req.query.anio, 10) || new Date().getFullYear();
   db.query(
     `SELECT oc.*, u.nombre AS usuario_nombre,
-            cl.numero AS checklist_numero,
-            cl.estado AS checklist_estado
+            COALESCE(cl_link.numero, cl_num.numero) AS checklist_numero,
+            COALESCE(cl_link.estado, cl_num.estado) AS checklist_estado,
+            CASE
+              WHEN oc.estado = 'reservado' THEN 'reservado'
+              WHEN COALESCE(cl_link.id, cl_num.id) IS NOT NULL
+                THEN CASE
+                  WHEN COALESCE(cl_link.estado, cl_num.estado) = 'anulado' THEN 'anulado'
+                  ELSE 'usado'
+                END
+              ELSE oc.estado
+            END AS estado_visual
      FROM orden_checklist oc
      LEFT JOIN usuarios u ON u.id = oc.usuario_id
-     LEFT JOIN checklist_expediente cl ON cl.id = oc.checklist_id
+     LEFT JOIN checklist_expediente cl_link ON cl_link.id = oc.checklist_id
+     LEFT JOIN checklist_expediente cl_num ON CAST(cl_num.numero AS UNSIGNED) = oc.numero
      WHERE oc.anio = ?
      ORDER BY oc.numero ASC`,
     [anio],
@@ -44,8 +54,10 @@ exports.getByAnio = (req, res) => {
 exports.getProxima = (req, res) => {
   const anio = parseInt(req.query.anio, 10) || new Date().getFullYear();
   db.query(
-    `SELECT id, numero, anio FROM orden_checklist
-     WHERE anio = ? AND estado = 'libre'
+    `SELECT oc.id, oc.numero, oc.anio
+     FROM orden_checklist oc
+     LEFT JOIN checklist_expediente cl ON CAST(cl.numero AS UNSIGNED) = oc.numero
+     WHERE oc.anio = ? AND oc.estado = 'libre' AND cl.id IS NULL
      ORDER BY numero ASC LIMIT 1`,
     [anio],
     (err, rows) => {
