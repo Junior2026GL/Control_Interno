@@ -310,8 +310,8 @@ export default function OrdenChecklist() {
               <span>Checklist: <strong>{tooltip.o.checklist_numero}-{anio}</strong></span>
             )}
             <span>👤 {tooltip.o.usuario_nombre || '—'}</span>
-            {tooltip.o.fecha_registro && (
-              <span>🕐 {new Date(tooltip.o.fecha_registro).toLocaleString('es-HN')}</span>
+            {(tooltip.o.fecha_registro || tooltip.o.checklist_fecha_creacion) && (
+              <span>🕐 {new Date(tooltip.o.fecha_registro || tooltip.o.checklist_fecha_creacion).toLocaleString('es-HN')}</span>
             )}
           </div>
         )}

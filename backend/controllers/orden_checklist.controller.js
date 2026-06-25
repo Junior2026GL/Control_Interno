@@ -23,9 +23,10 @@ setInterval(() => {
 exports.getByAnio = (req, res) => {
   const anio = parseInt(req.query.anio, 10) || new Date().getFullYear();
   db.query(
-    `SELECT oc.*, u.nombre AS usuario_nombre,
+    `SELECT oc.*, COALESCE(u_oc.nombre, u_cl.nombre) AS usuario_nombre,
             COALESCE(cl_link.numero, cl_num.numero) AS checklist_numero,
             COALESCE(cl_link.estado, cl_num.estado) AS checklist_estado,
+            COALESCE(cl_link.fecha_creacion, cl_num.fecha_creacion) AS checklist_fecha_creacion,
             CASE
               WHEN oc.estado = 'reservado' THEN 'reservado'
               WHEN COALESCE(cl_link.id, cl_num.id) IS NOT NULL
@@ -36,9 +37,10 @@ exports.getByAnio = (req, res) => {
               ELSE oc.estado
             END AS estado_visual
      FROM orden_checklist oc
-     LEFT JOIN usuarios u ON u.id = oc.usuario_id
+     LEFT JOIN usuarios u_oc ON u_oc.id = oc.usuario_id
      LEFT JOIN checklist_expediente cl_link ON cl_link.id = oc.checklist_id
      LEFT JOIN checklist_expediente cl_num ON CAST(cl_num.numero AS UNSIGNED) = oc.numero
+     LEFT JOIN usuarios u_cl ON u_cl.id = COALESCE(cl_link.creado_por, cl_num.creado_por)
      WHERE oc.anio = ?
      ORDER BY oc.numero ASC`,
     [anio],

@@ -10,6 +10,7 @@ const BOOL_FIELDS = [
 
 function sanitize(str) { return (str || '').toString().trim(); }
 function toBool(v) { return v ? 1 : 0; }
+const RESERVA_TTL_MINUTES = 15;
 
 // ── folio secuencial con transacción (evita duplicados) ──────────────────────
 function nextNumero(cb) {
@@ -81,59 +82,150 @@ exports.create = (req, res) => {
   const numero_folios     = sanitize(req.body.numero_folios)     || null;
   const numero_expediente = sanitize(req.body.numero_expediente) || null;
   const observaciones     = sanitize(req.body.observaciones)     || null;
-  // Si viene numero_orden (de orden_checklist), usarlo en lugar del auto-incremental
   const numero_orden      = req.body.numero_orden ? parseInt(req.body.numero_orden, 10) : null;
+  const numero_orden_id   = req.body.numero_orden_id ? parseInt(req.body.numero_orden_id, 10) : null;
+  const numero_orden_anio = req.body.numero_orden_anio ? parseInt(req.body.numero_orden_anio, 10) : null;
 
   if (!numero_folios)
     return res.status(400).json({ message: 'El N° de Folios Expediente es obligatorio.' });
+
+  if (isNaN(numero_orden) || numero_orden <= 0 || isNaN(numero_orden_id) || numero_orden_id <= 0 || isNaN(numero_orden_anio) || numero_orden_anio < 2020 || numero_orden_anio > 2100)
+    return res.status(409).json({ message: 'Debe reservar una orden válida antes de crear el check list.' });
 
   if (observaciones && observaciones.length > 2000)
     return res.status(400).json({ message: 'Las observaciones no pueden superar 2000 caracteres.' });
 
   const bools = {};
   for (const f of BOOL_FIELDS) bools[f] = toBool(req.body[f]);
+  const numero = String(numero_orden).padStart(4, '0');
 
-  const doInsert = (numero) => {
-    db.query(
-      `INSERT INTO checklist_expediente
-        (numero, numero_folios, numero_expediente,
-         orden_pago_da, acta_recepcion, acta_entrega, validacion_factura_sar,
-         factura_original, formato_sap, orden_compra, solvencia_fiscal,
-         permiso_operacion, validacion_rtn, resumen_cotizacion, cotizaciones,
-         informe_tecnico, solicitud_eventos, memo_requisicion, constancia_legal, otros,
-         observaciones, creado_por)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [
-        numero, numero_folios, numero_expediente,
-        bools.orden_pago_da, bools.acta_recepcion, bools.acta_entrega, bools.validacion_factura_sar,
-        bools.factura_original, bools.formato_sap, bools.orden_compra, bools.solvencia_fiscal,
-        bools.permiso_operacion, bools.validacion_rtn, bools.resumen_cotizacion, bools.cotizaciones,
-        bools.informe_tecnico, bools.solicitud_eventos, bools.memo_requisicion, bools.constancia_legal, bools.otros,
-        observaciones, req.user.id,
-      ],
-      (err2, result) => {
-        if (err2) {
-          if (err2.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ message: `El número correlativo ${numero} ya existe (puede ser de un expediente anulado). El sistema asignará otro número automáticamente; cierre este modal y vuelva a crear el check list.` });
-          }
-          console.error('[checklist] create:', err2);
-          return res.status(500).json({ message: 'Error interno del servidor.' });
-        }
-        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'checklist', detalle: `Creó expediente N° ${numero}${numero_expediente ? ' — ' + numero_expediente : ''}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
-        res.status(201).json({ id: result.insertId, numero, message: 'Check list creado correctamente.' });
+  db.getConnection((connErr, conn) => {
+    if (connErr) {
+      console.error('[checklist] create getConnection:', connErr);
+      return res.status(500).json({ message: 'Error interno del servidor.' });
+    }
+
+    conn.beginTransaction(txErr => {
+      if (txErr) {
+        conn.release();
+        return res.status(500).json({ message: 'Error interno del servidor.' });
       }
-    );
-  };
 
-  if (numero_orden) {
-    // Formatear igual que nextNumero: string de 4 dígitos
-    doInsert(String(numero_orden).padStart(4, '0'));
-  } else {
-    nextNumero((err, numero) => {
-      if (err) { console.error('[checklist] nextNumero:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
-      doInsert(numero);
+      conn.query(
+        `SELECT id, numero, anio, estado, usuario_id, fecha_registro
+         FROM orden_checklist
+         WHERE id = ?
+           AND numero = ?
+           AND anio = ?
+           AND estado = 'reservado'
+           AND usuario_id = ?
+           AND fecha_registro >= DATE_SUB(NOW(), INTERVAL ${RESERVA_TTL_MINUTES} MINUTE)
+         FOR UPDATE`,
+        [numero_orden_id, numero_orden, numero_orden_anio, req.user.id],
+        (orderErr, orderRows) => {
+          if (orderErr) {
+            return conn.rollback(() => {
+              conn.release();
+              console.error('[checklist] create SELECT orden_checklist:', orderErr);
+              res.status(500).json({ message: 'Error interno del servidor.' });
+            });
+          }
+
+          if (!orderRows.length) {
+            return conn.rollback(() => {
+              conn.release();
+              res.status(409).json({ message: 'La orden reservada ya no está disponible. Cierre el modal y vuelva a intentarlo.' });
+            });
+          }
+
+          conn.query(
+            'SELECT id FROM checklist_expediente WHERE CAST(numero AS UNSIGNED) = ? LIMIT 1 FOR UPDATE',
+            [numero_orden],
+            (dupErr, dupRows) => {
+              if (dupErr) {
+                return conn.rollback(() => {
+                  conn.release();
+                  console.error('[checklist] create SELECT checklist_expediente:', dupErr);
+                  res.status(500).json({ message: 'Error interno del servidor.' });
+                });
+              }
+
+              if (dupRows.length) {
+                return conn.rollback(() => {
+                  conn.release();
+                  res.status(409).json({ message: `La orden ${numero} ya está asociada a otro check list. Cierre el modal y vuelva a intentarlo.` });
+                });
+              }
+
+              conn.query(
+                `INSERT INTO checklist_expediente
+                  (numero, numero_folios, numero_expediente,
+                   orden_pago_da, acta_recepcion, acta_entrega, validacion_factura_sar,
+                   factura_original, formato_sap, orden_compra, solvencia_fiscal,
+                   permiso_operacion, validacion_rtn, resumen_cotizacion, cotizaciones,
+                   informe_tecnico, solicitud_eventos, memo_requisicion, constancia_legal, otros,
+                   observaciones, creado_por)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                [
+                  numero, numero_folios, numero_expediente,
+                  bools.orden_pago_da, bools.acta_recepcion, bools.acta_entrega, bools.validacion_factura_sar,
+                  bools.factura_original, bools.formato_sap, bools.orden_compra, bools.solvencia_fiscal,
+                  bools.permiso_operacion, bools.validacion_rtn, bools.resumen_cotizacion, bools.cotizaciones,
+                  bools.informe_tecnico, bools.solicitud_eventos, bools.memo_requisicion, bools.constancia_legal, bools.otros,
+                  observaciones, req.user.id,
+                ],
+                (insertErr, result) => {
+                  if (insertErr) {
+                    return conn.rollback(() => {
+                      conn.release();
+                      if (insertErr.code === 'ER_DUP_ENTRY') {
+                        return res.status(409).json({ message: `La orden ${numero} ya está asociada a otro check list. Cierre el modal y vuelva a intentarlo.` });
+                      }
+                      console.error('[checklist] create INSERT checklist_expediente:', insertErr);
+                      res.status(500).json({ message: 'Error interno del servidor.' });
+                    });
+                  }
+
+                  conn.query(
+                    `UPDATE orden_checklist
+                     SET estado = 'usado', checklist_id = ?, fecha_registro = NOW()
+                     WHERE id = ? AND estado = 'reservado' AND usuario_id = ?`,
+                    [result.insertId, numero_orden_id, req.user.id],
+                    (updateErr, updateResult) => {
+                      if (updateErr) {
+                        return conn.rollback(() => {
+                          conn.release();
+                          console.error('[checklist] create UPDATE orden_checklist:', updateErr);
+                          res.status(500).json({ message: 'Error interno del servidor.' });
+                        });
+                      }
+
+                      if (updateResult.affectedRows === 0) {
+                        return conn.rollback(() => {
+                          conn.release();
+                          res.status(409).json({ message: 'La orden reservada cambió de estado antes de guardar. Cierre el modal y vuelva a intentarlo.' });
+                        });
+                      }
+
+                      conn.commit(commitErr => {
+                        conn.release();
+                        if (commitErr) {
+                          console.error('[checklist] create COMMIT:', commitErr);
+                          return res.status(500).json({ message: 'Error interno del servidor.' });
+                        }
+                        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'checklist', detalle: `Creó expediente N° ${numero}${numero_expediente ? ' — ' + numero_expediente : ''}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
+                        res.status(201).json({ id: result.insertId, numero, message: 'Check list creado correctamente.' });
+                      });
+                    }
+                  );
+                }
+              );
+            }
+          );
+        }
+      );
     });
-  }
+  });
 };
 
 // ── PUT /api/checklist/:id ─────────────────────────────────────────────────

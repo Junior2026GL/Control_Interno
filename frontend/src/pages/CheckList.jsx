@@ -198,7 +198,11 @@ export default function CheckList() {
     try {
       const { data } = await api.post('/orden-checklist/reservar', { anio }, { headers: authHeaders() });
       orden = data;
-    } catch { /* sin órdenes disponibles, se puede crear sin número */ }
+    } catch (err) {
+      setAbriendo(false);
+      showToast(err.response?.data?.message || 'No se pudo reservar una orden para crear el check list.');
+      return;
+    }
     const base = buildEmpty();
     if (orden) {
       const num = String(orden.numero).padStart(4, '0');
@@ -226,14 +230,19 @@ export default function CheckList() {
     e.preventDefault();
     setFormErr('');
     if (!form.numero_folios.trim()) { setFormErr('El N° de Folios Expediente es obligatorio.'); return; }
+    if (!ordenReservada?.id || !ordenReservada?.numero || !ordenReservada?.anio) {
+      setFormErr('Debe reservar una orden válida antes de crear el check list.');
+      return;
+    }
     setSaving(true);
     try {
-      const res = await api.post('/checklist', { ...form, numero_orden: ordenReservada?.numero }, { headers: authHeaders() });
-      // Confirmar la orden reservada vinculándola al checklist creado
-      if (ordenReservada) {
-        try { await api.post('/orden-checklist/confirmar', { id: ordenReservada.id, checklist_id: res.data.id }, { headers: authHeaders() }); } catch { /* silencioso */ }
-        setOrdenReservada(null);
-      }
+      await api.post('/checklist', {
+        ...form,
+        numero_orden: ordenReservada.numero,
+        numero_orden_id: ordenReservada.id,
+        numero_orden_anio: ordenReservada.anio,
+      }, { headers: authHeaders() });
+      setOrdenReservada(null);
       setModalCrear(false);
       setForm(buildEmpty());
       fetchLista();
