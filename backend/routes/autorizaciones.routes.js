@@ -17,6 +17,8 @@ const firmarLimiter = rateLimit({
 });
 
 router.get('/',                  verify, ctrl.getAll);
+router.get('/config/correlativo', verify, ctrl.getCorrelativoConfig);
+router.put('/config/correlativo', verify, audit, ctrl.updateCorrelativoConfig);
 router.get('/:id',               verify, ctrl.getOne);
 router.post('/',                 verify, audit, ctrl.create);
 router.put('/:id',               verify, audit, ctrl.update);

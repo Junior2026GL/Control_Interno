@@ -144,6 +144,19 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pago (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
+-- Tabla: autorizaciones_secuencia  (siguiente correlativo editable)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS autorizaciones_secuencia (
+  id               TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+  siguiente_numero INT UNSIGNED     NOT NULL DEFAULT 1,
+  actualizado_por   INT              NULL,
+  actualizado_en    TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_aut_seq_usuario FOREIGN KEY (actualizado_por) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO autorizaciones_secuencia (id, siguiente_numero) VALUES (1, 1);
+
+-- ------------------------------------------------------------
 -- Tabla: auditoria  (registro de eventos de seguridad y acciones)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS auditoria (

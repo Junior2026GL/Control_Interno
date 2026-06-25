@@ -6,6 +6,7 @@ const VALID_TIPOS = ['CHEQUE', 'CONTRA_ENTREGA', 'TRANSFERENCIA', 'PAGO_LINEA'];
 const MONTO_MAX   = 99_999_999;
 const ANIO_REGEX  = /^\d{4}$/; // valida año de 4 dígitos
 const FACTURA_REGEX = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
+const CORRELATIVO_ID = 1;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -22,18 +23,130 @@ function nextNumero(cb) {
           if (err) {
             return conn.rollback(() => { conn.release(); cb(err); });
           }
-          const last = rows.length ? parseInt(rows[0].ultimo, 10) : 0;
-          const next = String(last + 1).padStart(4, '0');
-          conn.commit(commitErr => {
-            conn.release();
-            if (commitErr) return cb(commitErr);
-            cb(null, next);
-          });
+          conn.query(
+            'INSERT INTO autorizaciones_secuencia (id, siguiente_numero) VALUES (?, 1) ON DUPLICATE KEY UPDATE id = id',
+            [CORRELATIVO_ID],
+            (err2) => {
+              if (err2) {
+                return conn.rollback(() => { conn.release(); cb(err2); });
+              }
+              conn.query(
+                'SELECT siguiente_numero FROM autorizaciones_secuencia WHERE id = ? FOR UPDATE',
+                [CORRELATIVO_ID],
+                (err3, rows2) => {
+                  if (err3) {
+                    return conn.rollback(() => { conn.release(); cb(err3); });
+                  }
+                  const last = rows.length ? parseInt(rows[0].ultimo, 10) : 0;
+                  const configured = rows2.length ? parseInt(rows2[0].siguiente_numero, 10) : 1;
+                  const nextValue = Math.max(last + 1, configured);
+                  conn.query(
+                    'UPDATE autorizaciones_secuencia SET siguiente_numero = ? WHERE id = ?',
+                    [nextValue + 1, CORRELATIVO_ID],
+                    (err4) => {
+                      if (err4) {
+                        return conn.rollback(() => { conn.release(); cb(err4); });
+                      }
+                      conn.commit(commitErr => {
+                        conn.release();
+                        if (commitErr) return cb(commitErr);
+                        cb(null, String(nextValue).padStart(4, '0'));
+                      });
+                    }
+                  );
+                }
+              );
+            }
+          );
         }
       );
     });
   });
 }
+
+exports.getCorrelativoConfig = (req, res) => {
+  if (req.user?.rol !== 'SUPER_ADMIN') {
+    return res.status(403).json({ message: 'No tiene permiso para ver esta configuración.' });
+  }
+
+  const sql = `
+    SELECT
+      COALESCE(cfg.siguiente_numero, 1) AS siguiente_numero,
+      COALESCE(ult.ultimo_numero, 0) AS ultimo_numero
+    FROM (SELECT 1 AS id) base
+    LEFT JOIN autorizaciones_secuencia cfg ON cfg.id = base.id
+    CROSS JOIN (
+      SELECT IFNULL(MAX(CAST(numero AS UNSIGNED)), 0) AS ultimo_numero
+      FROM autorizaciones_pago
+    ) ult
+  `;
+
+  db.query(sql, (err, rows) => {
+    if (err) {
+      console.error('[autorizaciones] Error en getCorrelativoConfig:', err);
+      return res.status(500).json({ message: 'Error interno del servidor.' });
+    }
+    const row = rows[0] || {};
+    const siguiente_numero = parseInt(row.siguiente_numero, 10) || 1;
+    const ultimo_numero = parseInt(row.ultimo_numero, 10) || 0;
+    const numero_sugerido = Math.max(siguiente_numero, ultimo_numero + 1);
+    res.json({ siguiente_numero, ultimo_numero, numero_sugerido });
+  });
+};
+
+exports.updateCorrelativoConfig = (req, res) => {
+  if (req.user?.rol !== 'SUPER_ADMIN') {
+    return res.status(403).json({ message: 'No tiene permiso para cambiar esta configuración.' });
+  }
+
+  const solicitado = parseInt(req.body?.siguiente_numero, 10);
+  if (isNaN(solicitado) || solicitado < 1) {
+    return res.status(400).json({ message: 'El número inicial es inválido.' });
+  }
+
+  db.query(
+    'SELECT IFNULL(MAX(CAST(numero AS UNSIGNED)), 0) AS ultimo_numero FROM autorizaciones_pago',
+    (err, rows) => {
+      if (err) {
+        console.error('[autorizaciones] Error en updateCorrelativoConfig SELECT:', err);
+        return res.status(500).json({ message: 'Error interno del servidor.' });
+      }
+
+      const ultimo_numero = rows.length ? parseInt(rows[0].ultimo_numero, 10) : 0;
+      const siguiente_numero = Math.max(solicitado, ultimo_numero + 1);
+
+      db.query(
+        `INSERT INTO autorizaciones_secuencia (id, siguiente_numero, actualizado_por)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE siguiente_numero = VALUES(siguiente_numero), actualizado_por = VALUES(actualizado_por)` ,
+        [CORRELATIVO_ID, siguiente_numero, req.user.id],
+        (err2) => {
+          if (err2) {
+            console.error('[autorizaciones] Error en updateCorrelativoConfig UPSERT:', err2);
+            return res.status(500).json({ message: 'Error interno del servidor.' });
+          }
+          logEvent({
+            usuario_id: req.user.id,
+            usuario_nombre: req.user.nombre || null,
+            accion: 'ACTUALIZAR',
+            modulo: 'autorizaciones',
+            detalle: `Actualizó el correlativo inicial de autorizaciones a ${siguiente_numero}`,
+            ip: getClientIP(req),
+            metodo: req.method,
+            ruta: req.originalUrl,
+            resultado: 'EXITO',
+          });
+          res.json({
+            message: 'Correlativo actualizado correctamente.',
+            siguiente_numero,
+            ultimo_numero,
+            numero_sugerido: siguiente_numero,
+          });
+        }
+      );
+    }
+  );
+};
 
 // ── GET /api/autorizaciones ───────────────────────────────────────────────────
 // SUPER_ADMIN / ADMIN: ve todas

@@ -42,6 +42,12 @@ function hasFactura(item) {
   return item?.lleva_factura === true || Number(item?.lleva_factura) === 1;
 }
 
+function formatNumero(num) {
+  const value = parseInt(num, 10);
+  if (isNaN(value) || value < 0) return '—';
+  return String(value).padStart(4, '0');
+}
+
 // ── Number to Spanish words (Lempiras) ──────────────────────────────────────
 const UNIDADES  = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
                    'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE',
@@ -206,6 +212,13 @@ export default function Autorizaciones() {
     setTimeout(() => setToast(null), 4500);
   };
 
+  // correlativo editable por super admin
+  const [correlativoInfo, setCorrelativoInfo] = useState(null);
+  const [correlativoForm, setCorrelativoForm] = useState('');
+  const [correlativoLoading, setCorrelativoLoading] = useState(false);
+  const [correlativoSaving, setCorrelativoSaving] = useState(false);
+  const [correlativoError, setCorrelativoError] = useState('');
+
   // ── fetch ────────────────────────────────────────────────────────────────
   const fetchLista = useCallback(() => {
     setLoading(true);
@@ -215,7 +228,23 @@ export default function Autorizaciones() {
       .finally(() => setLoading(false));
   }, []);
 
+  const fetchCorrelativo = useCallback(() => {
+    if (!esSuperAdmin) return;
+    setCorrelativoLoading(true);
+    api.get('/autorizaciones/config/correlativo', { headers: authHeaders() })
+      .then(r => {
+        setCorrelativoInfo(r.data);
+        setCorrelativoForm(String(r.data?.numero_sugerido ?? r.data?.siguiente_numero ?? ''));
+        setCorrelativoError('');
+      })
+      .catch(err => {
+        setCorrelativoError(err.response?.data?.message || 'No se pudo cargar el correlativo.');
+      })
+      .finally(() => setCorrelativoLoading(false));
+  }, [esSuperAdmin]);
+
   useEffect(() => { fetchLista(); }, [fetchLista]);
+  useEffect(() => { if (esSuperAdmin) fetchCorrelativo(); }, [esSuperAdmin, fetchCorrelativo]);
 
   // ── filtro + búsqueda ────────────────────────────────────────────────────
   const pendingCount = lista.filter(a => a.estado === 'PENDIENTE').length;
@@ -414,6 +443,30 @@ export default function Autorizaciones() {
       setFormErrors({ _server: err.response?.data?.message || 'Error al guardar.' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleGuardarCorrelativo = async (e) => {
+    e.preventDefault();
+    const numero = parseInt(correlativoForm, 10);
+    if (isNaN(numero) || numero < 1) {
+      setCorrelativoError('Ingrese un número válido mayor que cero.');
+      return;
+    }
+
+    setCorrelativoSaving(true);
+    setCorrelativoError('');
+    try {
+      const { data } = await api.put('/autorizaciones/config/correlativo', {
+        siguiente_numero: numero,
+      }, { headers: authHeaders() });
+      setCorrelativoInfo(data);
+      setCorrelativoForm(String(data.siguiente_numero || numero));
+      showToast(`Correlativo guardado. Próximo número: ${formatNumero(data.numero_sugerido || data.siguiente_numero)}`, 'ok');
+    } catch (err) {
+      setCorrelativoError(err.response?.data?.message || 'Error al guardar el correlativo.');
+    } finally {
+      setCorrelativoSaving(false);
     }
   };
 
@@ -985,6 +1038,45 @@ export default function Autorizaciones() {
             </button>
           )}
         </div>
+
+        {esSuperAdmin && (
+          <form className="aut-sequence-card" onSubmit={handleGuardarCorrelativo}>
+            <div className="aut-sequence-head">
+              <div>
+                <h2>Inicio de correlativo</h2>
+                <p>Define desde qué número empezarán las nuevas autorizaciones.</p>
+              </div>
+              <div className="aut-sequence-badge">
+                <span>Siguiente número disponible</span>
+                <strong>{correlativoLoading ? 'Cargando…' : formatNumero(correlativoInfo?.numero_sugerido ?? correlativoInfo?.siguiente_numero)}</strong>
+              </div>
+            </div>
+            <div className="aut-sequence-grid">
+              <div className="aut-form-group">
+                <label>Número inicial</label>
+                <input
+                  className="caja-input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={correlativoForm}
+                  onChange={e => {
+                    setCorrelativoForm(e.target.value);
+                    setCorrelativoError('');
+                  }}
+                  placeholder="Ej. 500"
+                />
+              </div>
+              <button className="btn-primary" type="submit" disabled={correlativoSaving || correlativoLoading}>
+                {correlativoSaving ? 'Guardando…' : 'Guardar inicio'}
+              </button>
+            </div>
+            {correlativoError && <div className="field-error">{correlativoError}</div>}
+            <p className="aut-sequence-note">
+              Si ya existen números mayores guardados, el sistema usará ese valor como mínimo para no duplicar correlativos.
+            </p>
+          </form>
+        )}
 
         {/* Stats */}
         {(() => {

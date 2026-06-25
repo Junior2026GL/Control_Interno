@@ -26,25 +26,46 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pago (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `;
 
+const sqlSecuencia = `
+CREATE TABLE IF NOT EXISTS autorizaciones_secuencia (
+  id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+  siguiente_numero INT UNSIGNED NOT NULL DEFAULT 1,
+  actualizado_por INT NULL,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_aut_seq_usuario FOREIGN KEY (actualizado_por) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+`;
+
 db.query(sqlTabla, (err) => {
   if (err) { console.error('ERROR tabla:', err.message); process.exit(1); }
-  console.log('[1/3] Tabla autorizaciones_pago OK');
+  console.log('[1/4] Tabla autorizaciones_pago OK');
 
-  db.query(
-    "INSERT IGNORE INTO modulos (nombre, clave) VALUES ('Autorizaciones de Pago', 'autorizaciones')",
-    (err2) => {
-      if (err2) { console.error('ERROR modulo:', err2.message); process.exit(1); }
-      console.log('[2/3] Modulo autorizaciones OK');
+  db.query(sqlSecuencia, (err2) => {
+    if (err2) { console.error('ERROR secuencia:', err2.message); process.exit(1); }
+    console.log('[2/4] Tabla autorizaciones_secuencia OK');
 
-      db.query(
-        "INSERT IGNORE INTO usuario_modulos (usuario_id, modulo_id) SELECT 1, id FROM modulos WHERE clave = 'autorizaciones'",
-        (err3) => {
-          if (err3) { console.error('ERROR permisos:', err3.message); process.exit(1); }
-          console.log('[3/3] Permisos SUPER_ADMIN OK');
-          console.log('Migracion completada.');
-          process.exit(0);
-        }
-      );
-    }
-  );
+    db.query(
+      "INSERT IGNORE INTO modulos (nombre, clave) VALUES ('Autorizaciones de Pago', 'autorizaciones')",
+      (err3) => {
+        if (err3) { console.error('ERROR modulo:', err3.message); process.exit(1); }
+        console.log('[3/4] Modulo autorizaciones OK');
+
+        db.query(
+          "INSERT IGNORE INTO usuario_modulos (usuario_id, modulo_id) SELECT 1, id FROM modulos WHERE clave = 'autorizaciones'",
+          (err4) => {
+            if (err4) { console.error('ERROR permisos:', err4.message); process.exit(1); }
+            db.query(
+              "INSERT IGNORE INTO autorizaciones_secuencia (id, siguiente_numero) VALUES (1, 1)",
+              (err5) => {
+                if (err5) { console.error('ERROR secuencia default:', err5.message); process.exit(1); }
+                console.log('[4/4] Permisos SUPER_ADMIN OK');
+                console.log('Migracion completada.');
+                process.exit(0);
+              }
+            );
+          }
+        );
+      }
+    );
+  });
 });
