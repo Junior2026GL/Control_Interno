@@ -123,6 +123,22 @@ const EMPTY_FORM = {
 const MONTO_MAX = 99_999_999;
 const FACTURA_REGEX = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
 
+function isEmptyCreateForm(form) {
+  const anioDefault = String(EMPTY_FORM.anio);
+  return (
+    (form.tipo_pago || '') === EMPTY_FORM.tipo_pago &&
+    (form.beneficiario || '').trim() === '' &&
+    (form.monto || '').toString().trim() === '' &&
+    (form.monto_letras || '').trim() === '' &&
+    (form.detalle || '').trim() === '' &&
+    String(form.anio ?? '') === anioDefault &&
+    (form.org || '') === EMPTY_FORM.org &&
+    (form.fondo || '') === EMPTY_FORM.fondo &&
+    !!form.lleva_factura === false &&
+    (form.numero_factura || '').trim() === ''
+  );
+}
+
 // ─── validación ─────────────────────────────────────────────────────────────
 function validate(form) {
   const errs = {};
@@ -468,6 +484,16 @@ export default function Autorizaciones() {
     } finally {
       setCorrelativoSaving(false);
     }
+  };
+
+  const requestCloseCrear = () => {
+    if (!isEmptyCreateForm(form)) {
+      const ok = window.confirm('Tiene cambios sin guardar. ¿Desea cerrar este formulario?');
+      if (!ok) return;
+    }
+    setModalCrear(false);
+    setFormErrors({});
+    setForm({ ...EMPTY_FORM });
   };
 
   // ── autorizar ────────────────────────────────────────────────────────────
@@ -1729,12 +1755,12 @@ export default function Autorizaciones() {
 
       {/* ═══ MODAL CREAR ══════════════════════════════════════════════════════ */}
       {modalCrear && (
-        <div className="modal-overlay" onClick={() => setModalCrear(false)}>
+        <div className="modal-overlay" onClick={requestCloseCrear}>
           <div className="aut-modal" onClick={e => e.stopPropagation()}>
             <div className="aut-modal-header">
               <div className="aut-modal-icon"><FiFileText size={20} color="#274C8D" /></div>
               <div><h3>Nueva Autorización de Pago</h3><p>Pagaduría Especial — Congreso Nacional</p></div>
-              <button className="modal-close-btn" onClick={() => setModalCrear(false)}><FiX size={18} /></button>
+              <button className="modal-close-btn" onClick={requestCloseCrear}><FiX size={18} /></button>
             </div>
             <form onSubmit={handleCrear} className="aut-form">
 
@@ -1850,7 +1876,7 @@ export default function Autorizaciones() {
               {formErrors._server && <div className="caja-form-error">{formErrors._server}</div>}
 
               <div className="caja-modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setModalCrear(false)}>Cancelar</button>
+                <button type="button" className="btn-secondary" onClick={requestCloseCrear}>Cancelar</button>
                 <button type="submit" className="btn-primary" disabled={saving}>
                   {saving ? 'Guardando…' : 'Crear Autorización'}
                 </button>
