@@ -1755,7 +1755,7 @@ export default function Autorizaciones() {
 
       {/* ═══ MODAL CREAR ══════════════════════════════════════════════════════ */}
       {modalCrear && (
-        <div className="modal-overlay" onClick={requestCloseCrear}>
+        <div className="modal-overlay">
           <div className="aut-modal" onClick={e => e.stopPropagation()}>
             <div className="aut-modal-header">
               <div className="aut-modal-icon"><FiFileText size={20} color="#274C8D" /></div>
