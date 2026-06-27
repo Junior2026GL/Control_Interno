@@ -83,5 +83,6 @@ app.use('/api/checklist',        require('./routes/checklist.routes'));
 app.use('/api/orden-checklist',  require('./routes/orden_checklist.routes'));
 app.use('/api/bodegas',          require('./routes/bodegas.routes'));
 app.use('/api/censo',            require('./routes/censo.routes'));
+app.use('/api/ordenes-pago',     require('./routes/ordenes_pago.routes'));
 
 module.exports = app;

@@ -27,6 +27,7 @@ import OrdenChecklist from './pages/OrdenChecklist';
 import Bodegas from './pages/Bodegas';
 import ViaticosDiputados from './pages/ViaticosDiputados';
 import BusquedaAyudas from './pages/BusquedaAyudas';
+import OrdenesPago from './pages/OrdenesPago';
 import PrivateRoute from './components/PrivateRoute';
 import RoleRoute from './components/RoleRoute';
 import ModuleRoute from './components/ModuleRoute';
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="/bodegas" element={<ModuleRoute modulo="bodegas"><Bodegas /></ModuleRoute>} />
             <Route path="/viaticos-diputados" element={<ModuleRoute modulo="viaticos-diputados"><ViaticosDiputados /></ModuleRoute>} />
             <Route path="/busqueda-ayudas" element={<ModuleRoute modulo="busqueda-ayudas"><BusquedaAyudas /></ModuleRoute>} />
+            <Route path="/ordenes-pago" element={<ModuleRoute modulo="ordenes-pago"><OrdenesPago /></ModuleRoute>} />
           </Routes>
         </SocketProvider>
         </BrowserRouter>

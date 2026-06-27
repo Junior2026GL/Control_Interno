@@ -5,6 +5,7 @@ import {
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
+  LuFileCheck2,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -152,6 +153,14 @@ const ALL_MODULES = [
     description: 'Control de correlativos de órdenes por año',
     icon: LuListOrdered,
     gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
+  },
+  {
+    path: '/ordenes-pago',
+    label: 'Órdenes de Pago',
+    clave: 'ordenes-pago',
+    description: 'Emisión, aprobación e impresión de órdenes de pago',
+    icon: LuFileCheck2,
+    gradient: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%)',
   },
   {
     path: '/bodegas',
