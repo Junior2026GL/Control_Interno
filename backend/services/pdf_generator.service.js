@@ -104,9 +104,9 @@ const OFFSET_X    = OFFSET_X_MM * 2.835;
 const OFFSET_Y    = OFFSET_Y_MM * 2.835;
 
 // Ruta del archivo de firma del presidente
-// Prioridad: 1) private/firma_presidente.png  2) frontend/public/Firma_tm.svg
+// Prioridad: 1) private/firma_presidente.svg  2) private/firma_presidente.png
 const FIRMA_PNG_PATH  = path.join(__dirname, '../private/firma_presidente.png');
-const FIRMA_SVG_PATH  = path.join(__dirname, '../../frontend/public/Firma_tm.svg');
+const FIRMA_SVG_PATH  = path.join(__dirname, '../private/firma_presidente.svg');
 
 /**
  * Aplica el offset global a las coordenadas.
@@ -151,27 +151,27 @@ function truncate(text, maxW, size) {
 
 /**
  * Carga el buffer de imagen de la firma del presidente.
- * Prioridad: PNG (private/) → SVG Firma_tm.svg (convertido con sharp).
+ * Prioridad: SVG (private/) → PNG (private/).
  * Retorna null si no se encuentra ningún archivo.
  */
 async function cargarFirma() {
-  // 1. Si existe PNG personalizado, lo usa directamente
-  if (fs.existsSync(FIRMA_PNG_PATH)) {
-    return { buffer: fs.readFileSync(FIRMA_PNG_PATH), tipo: 'png' };
-  }
-
-  // 2. Firma_tm.svg → convierte con sharp
+  // 1. SVG vectorial → convierte con sharp (mejor calidad)
   if (fs.existsSync(FIRMA_SVG_PATH)) {
     try {
       const sharp  = require('sharp');
       const buffer = await sharp(FIRMA_SVG_PATH)
-        .resize(320, 120, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-        .png()
+        .resize(600, 225, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .png({ compressionLevel: 9 })
         .toBuffer();
       return { buffer, tipo: 'png' };
     } catch (e) {
-      console.warn('[pdf_generator] Error al convertir Firma_tm.svg con sharp:', e.message);
+      console.warn('[pdf_generator] Error al convertir firma_presidente.svg con sharp:', e.message);
     }
+  }
+
+  // 2. Fallback: PNG directo
+  if (fs.existsSync(FIRMA_PNG_PATH)) {
+    return { buffer: fs.readFileSync(FIRMA_PNG_PATH), tipo: 'png' };
   }
 
   return null;
