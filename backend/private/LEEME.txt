@@ -1,0 +1,10 @@
+# Carpeta privada — Archivos sensibles del sistema
+# Colocar aquí la firma del presidente en formato SVG o PNG.
+# Esta carpeta NO debe ser servida como estática ni incluida en backups públicos.
+#
+# Archivos soportados:
+#   firma_presidente.svg  → se convierte a PNG automáticamente con sharp
+#   firma_presidente.png  → se usa directamente (prioridad sobre SVG)
+#
+# Para omitir del control de versiones, agregue al .gitignore:
+#   backend/private/firma_presidente.*
