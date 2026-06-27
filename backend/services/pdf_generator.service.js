@@ -79,20 +79,20 @@ const COORDS = {
   importe_descripcion:     { x: 543, y: 197, size: 8, align: 'right' },
 
   // Cantidad a pagar
-  cantidad_a_pagar:        { x: 543, y: 112, size: 9, align: 'right' },
+  cantidad_a_pagar:        { x: 543, y: 158, size: 13, align: 'right' },
 
   // Total (repetición del monto en sección inferior)
-  total:                   { x: 543, y: 91,  size: 9, align: 'right' },
+  total:                   { x: 543, y: 136, size: 12, align: 'right' },
 
   // Fecha  (Tegucigalpa, M.D.C., ____ de _____ de _____)
   fecha_texto:             { x: 249, y: 52,  size: 8 },
 
   // Firma del presidente — imagen
   firma_presidente: {
-    x: 370,   // pts desde izquierda
-    y: 72,    // pts desde abajo
-    width: 160,
-    height: 60,
+    x: 345,   // pts desde izquierda
+    y: 35,    // pts desde abajo
+    width: 235,
+    height: 92,
     opacity: 0.92,
   },
 };
