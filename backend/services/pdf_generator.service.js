@@ -104,10 +104,9 @@ const OFFSET_X    = OFFSET_X_MM * 2.835;
 const OFFSET_Y    = OFFSET_Y_MM * 2.835;
 
 // Ruta del archivo de firma del presidente
-// Prioridad: 1) private/firma_presidente.png  2) private/firma_presidente.svg  3) frontend/public/Firma_tm.svg
-const FIRMA_PNG_PATH      = path.join(__dirname, '../private/firma_presidente.png');
-const FIRMA_SVG_PATH      = path.join(__dirname, '../private/firma_presidente.svg');
-const FIRMA_SVG_FALLBACK  = path.join(__dirname, '../../frontend/public/Firma_tm.svg');
+// Prioridad: 1) private/firma_presidente.png  2) frontend/public/Firma_tm.svg
+const FIRMA_PNG_PATH  = path.join(__dirname, '../private/firma_presidente.png');
+const FIRMA_SVG_PATH  = path.join(__dirname, '../../frontend/public/Firma_tm.svg');
 
 /**
  * Aplica el offset global a las coordenadas.
@@ -152,16 +151,16 @@ function truncate(text, maxW, size) {
 
 /**
  * Carga el buffer de imagen de la firma del presidente.
- * Prioridad: PNG → SVG (convertido con sharp si está disponible).
+ * Prioridad: PNG (private/) → SVG Firma_tm.svg (convertido con sharp).
  * Retorna null si no se encuentra ningún archivo.
  */
 async function cargarFirma() {
-  // 1. Si existe PNG, lo usa directamente
+  // 1. Si existe PNG personalizado, lo usa directamente
   if (fs.existsSync(FIRMA_PNG_PATH)) {
     return { buffer: fs.readFileSync(FIRMA_PNG_PATH), tipo: 'png' };
   }
 
-  // 2. Si existe SVG, intenta convertir con sharp
+  // 2. Firma_tm.svg → convierte con sharp
   if (fs.existsSync(FIRMA_SVG_PATH)) {
     try {
       const sharp  = require('sharp');
@@ -171,7 +170,7 @@ async function cargarFirma() {
         .toBuffer();
       return { buffer, tipo: 'png' };
     } catch (e) {
-      console.warn('[pdf_generator] sharp no disponible o error al convertir SVG:', e.message);
+      console.warn('[pdf_generator] Error al convertir Firma_tm.svg con sharp:', e.message);
     }
   }
 

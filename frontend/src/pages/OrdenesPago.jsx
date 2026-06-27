@@ -21,10 +21,8 @@ const ESTADO_COLORS = {
 };
 
 const EMPTY_FORM = {
-  tipo_origen:             'MANUAL',
-  ayuda_social_id:         '',
   beneficiario:            '',
-  codigo_beneficiario:     '',
+  codigo_beneficiario:     ''
   monto:                   '',
   forma_pago:              'TRANSFERENCIA',
   no_cheque_transferencia: '',
@@ -68,7 +66,7 @@ function EstadoBadge({ estado }) {
 function validate(f) {
   const e = {};
   const ben = (f.beneficiario || '').trim();
-  if (!ben)              e.beneficiario = 'El beneficiario es requerido.';
+  if (!ben)                e.beneficiario = 'El beneficiario es requerido.';
   else if (ben.length < 2) e.beneficiario = 'Mínimo 2 caracteres.';
   else if (ben.length > 250) e.beneficiario = 'Máximo 250 caracteres.';
 
@@ -81,20 +79,14 @@ function validate(f) {
   if (!f.fecha) e.fecha = 'La fecha es requerida.';
 
   const con = (f.concepto || '').trim();
-  if (!con || con.length < 3)  e.concepto = 'El concepto es requerido (mín. 3 caracteres).';
-  else if (con.length > 500)   e.concepto = 'Máximo 500 caracteres.';
+  if (!con || con.length < 3) e.concepto = 'El concepto es requerido (mín. 3 caracteres).';
+  else if (con.length > 500)  e.concepto = 'Máximo 500 caracteres.';
 
   if (!['CHEQUE', 'TRANSFERENCIA'].includes(f.forma_pago))
     e.forma_pago = 'Seleccione una forma de pago.';
 
   if (!['CORRIENTE', 'CAPITAL', 'D_PUB'].includes(f.tipo_cuenta))
     e.tipo_cuenta = 'Seleccione el tipo de cuenta.';
-
-  if (!['MANUAL', 'AYUDA_DIPUTADO'].includes(f.tipo_origen))
-    e.tipo_origen = 'Tipo de origen inválido.';
-
-  if (f.tipo_origen === 'AYUDA_DIPUTADO' && !f.ayuda_social_id)
-    e.ayuda_social_id = 'Ingrese el ID de la ayuda social.';
 
   return e;
 }
@@ -113,17 +105,15 @@ export default function OrdenesPago() {
 
   // ── Filtros ───────────────────────────────────────────────────────────────
   const [filtroEstado, setFiltroEstado] = useState('');
-  const [filtroTipo,   setFiltroTipo]   = useState('');
   const [filtroAnio,   setFiltroAnio]   = useState('');
   const [busqueda,     setBusqueda]     = useState('');
 
   // ── Modal crear/editar ────────────────────────────────────────────────────
-  const [modal,       setModal]       = useState(false);
-  const [editing,     setEditing]     = useState(null);
-  const [form,        setForm]        = useState({ ...EMPTY_FORM });
-  const [formErrors,  setFormErrors]  = useState({});
-  const [saving,      setSaving]      = useState(false);
-  const [prefilling,  setPrefilling]  = useState(false);
+  const [modal,      setModal]      = useState(false);
+  const [editing,    setEditing]    = useState(null);
+  const [form,       setForm]       = useState({ ...EMPTY_FORM });
+  const [formErrors, setFormErrors] = useState({});
+  const [saving,     setSaving]     = useState(false);
 
   // ── Modal ver detalle ─────────────────────────────────────────────────────
   const [viewModal, setViewModal] = useState(null);
@@ -150,10 +140,9 @@ export default function OrdenesPago() {
     setLoading(true);
     try {
       const params = { page: pg, limit: PAGE_SIZE };
-      if (filtroEstado)    params.estado      = filtroEstado;
-      if (filtroTipo)      params.tipo_origen = filtroTipo;
-      if (filtroAnio)      params.anio        = filtroAnio;
-      if (busqueda.trim()) params.q           = busqueda.trim();
+      if (filtroEstado)    params.estado = filtroEstado;
+      if (filtroAnio)      params.anio   = filtroAnio;
+      if (busqueda.trim()) params.q      = busqueda.trim();
 
       const res = await api.get('/ordenes-pago', { params });
       setOrdenes(res.data.data);
@@ -164,24 +153,9 @@ export default function OrdenesPago() {
     } finally {
       setLoading(false);
     }
-  }, [filtroEstado, filtroTipo, filtroAnio, busqueda]);
+  }, [filtroEstado, filtroAnio, busqueda]);
 
   useEffect(() => { fetchOrdenes(1); }, [fetchOrdenes]);
-
-  // ── Pre-llenar desde ayuda social ─────────────────────────────────────────
-  async function prefillarDesdeAyuda(ayudaId) {
-    if (!ayudaId) return;
-    setPrefilling(true);
-    try {
-      const res = await api.get(`/ordenes-pago/from-ayuda/${ayudaId}`);
-      setForm(prev => ({ ...prev, ...res.data }));
-      showToast('Datos precargados desde la ayuda social.');
-    } catch (err) {
-      showToast(err.response?.data?.message || 'No se pudo precargar la ayuda.', 'error');
-    } finally {
-      setPrefilling(false);
-    }
-  }
 
   // ── Abrir modal creación ──────────────────────────────────────────────────
   function openCreate() {
@@ -195,9 +169,7 @@ export default function OrdenesPago() {
   function openEdit(orden) {
     setEditing(orden.id);
     setForm({
-      tipo_origen:             orden.tipo_origen             || 'MANUAL',
-      ayuda_social_id:         orden.ayuda_social_id         || '',
-      beneficiario:            orden.beneficiario            || '',
+      beneficiario:            orden.beneficiario            || ''
       codigo_beneficiario:     orden.codigo_beneficiario     || '',
       monto:                   orden.monto                   || '',
       forma_pago:              orden.forma_pago              || 'TRANSFERENCIA',
@@ -230,9 +202,9 @@ export default function OrdenesPago() {
     try {
       const payload = {
         ...form,
-        monto:          parseFloat(form.monto),
-        cargo_anio:     form.cargo_anio ? parseInt(form.cargo_anio, 10) : null,
-        ayuda_social_id: form.ayuda_social_id ? parseInt(form.ayuda_social_id, 10) : null,
+        tipo_origen: 'MANUAL',
+        monto:       parseFloat(form.monto),
+        cargo_anio:  form.cargo_anio ? parseInt(form.cargo_anio, 10) : null,
       };
 
       if (editing) {
@@ -393,16 +365,6 @@ export default function OrdenesPago() {
             <option value="ANULADA">Anulada</option>
           </select>
 
-          <select
-            value={filtroTipo}
-            onChange={e => setFiltroTipo(e.target.value)}
-            className="op-select"
-          >
-            <option value="">Todos los tipos</option>
-            <option value="MANUAL">Manual</option>
-            <option value="AYUDA_DIPUTADO">Ayuda Social</option>
-          </select>
-
           <input
             type="number"
             placeholder="Año"
@@ -433,7 +395,6 @@ export default function OrdenesPago() {
                   <th>Monto</th>
                   <th>Fecha</th>
                   <th>Estado</th>
-                  <th>Tipo</th>
                   <th>Creado por</th>
                   <th>Acciones</th>
                 </tr>
@@ -452,11 +413,6 @@ export default function OrdenesPago() {
                     <td className="op-td-monto">{fmtMonto(o.monto)}</td>
                     <td>{fmtFecha(o.fecha)}</td>
                     <td><EstadoBadge estado={o.estado} /></td>
-                    <td>
-                      <span className={`op-tipo ${o.tipo_origen === 'AYUDA_DIPUTADO' ? 'op-tipo-ayuda' : 'op-tipo-manual'}`}>
-                        {o.tipo_origen === 'AYUDA_DIPUTADO' ? 'Ayuda Social' : 'Manual'}
-                      </span>
-                    </td>
                     <td>{o.creado_por_nombre || '—'}</td>
                     <td>
                       <div className="op-actions">
@@ -563,54 +519,6 @@ export default function OrdenesPago() {
 
             <div className="op-modal-body">
 
-              {/* Tipo de origen + ID ayuda */}
-              <div className="op-form-row op-form-row-2">
-                <div className="op-form-group">
-                  <label>Tipo de Origen *</label>
-                  <select
-                    className={`op-input${formErrors.tipo_origen ? ' op-input-error' : ''}`}
-                    value={form.tipo_origen}
-                    onChange={e => setForm(f => ({ ...f, tipo_origen: e.target.value }))}
-                    disabled={!!editing}
-                  >
-                    <option value="MANUAL">Manual</option>
-                    <option value="AYUDA_DIPUTADO">Ayuda Social (Diputado)</option>
-                  </select>
-                  {formErrors.tipo_origen && (
-                    <span className="op-field-error">{formErrors.tipo_origen}</span>
-                  )}
-                </div>
-
-                {form.tipo_origen === 'AYUDA_DIPUTADO' && (
-                  <div className="op-form-group">
-                    <label>ID Ayuda Social *</label>
-                    <div className="op-input-prefill-wrap">
-                      <input
-                        type="number"
-                        className={`op-input${formErrors.ayuda_social_id ? ' op-input-error' : ''}`}
-                        value={form.ayuda_social_id}
-                        onChange={e => setForm(f => ({ ...f, ayuda_social_id: e.target.value }))}
-                        placeholder="Ej: 1042"
-                        disabled={!!editing}
-                        min="1"
-                      />
-                      {!editing && (
-                        <button
-                          type="button"
-                          className="op-btn-prefill"
-                          onClick={() => prefillarDesdeAyuda(form.ayuda_social_id)}
-                          disabled={prefilling || !form.ayuda_social_id}
-                        >
-                          {prefilling ? '…' : 'Precargar'}
-                        </button>
-                      )}
-                    </div>
-                    {formErrors.ayuda_social_id && (
-                      <span className="op-field-error">{formErrors.ayuda_social_id}</span>
-                    )}
-                  </div>
-                )}
-              </div>
 
               {/* Beneficiario + Código */}
               <div className="op-form-row op-form-row-2">
@@ -872,10 +780,6 @@ export default function OrdenesPago() {
                 <div className="op-detail-row">
                   <span className="op-detail-label">Estado</span>
                   <EstadoBadge estado={viewModal.estado} />
-                </div>
-                <div className="op-detail-row">
-                  <span className="op-detail-label">Tipo</span>
-                  <span>{viewModal.tipo_origen === 'AYUDA_DIPUTADO' ? 'Ayuda Social' : 'Manual'}</span>
                 </div>
                 <div className="op-detail-row">
                   <span className="op-detail-label">Beneficiario</span>

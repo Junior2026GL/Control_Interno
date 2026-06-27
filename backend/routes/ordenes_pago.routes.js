@@ -21,9 +21,6 @@ router.get('/:id(\\d+)', verifyToken, ctrl.getById);
 // Historial de impresiones de una orden
 router.get('/:id(\\d+)/impresiones', verifyToken, ctrl.getImpresiones);
 
-// Pre-llenar OP desde una ayuda social registrada
-router.get('/from-ayuda/:ayuda_id(\\d+)', verifyToken, ctrl.getFromAyuda);
-
 // Generar PDF de la orden (solo APROBADA, IMPRESA o ENTREGADA)
 // ?motivo_reimpresion=texto  (opcional en reimpresiones)
 router.get('/:id(\\d+)/pdf', verifyToken, ctrl.generarPDF);

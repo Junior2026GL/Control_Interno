@@ -9,9 +9,6 @@ const { generarOrdenPagoPDF } = require('../services/pdf_generator.service');
 const ROLES_OPERACION  = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 const ROLES_APROBACION = ['SUPER_ADMIN', 'ADMIN'];
 
-// ── Sufijos de numeración por tipo_origen ─────────────────────────────────────
-const SUFIJO_POR_TIPO = { AYUDA_DIPUTADO: 'AS', MANUAL: 'OP' };
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function sanitize(str)  { return (str || '').toString().trim(); }
 function toInt(v)       { const n = parseInt(v, 10);   return isNaN(n) ? null : n; }
@@ -154,79 +151,6 @@ exports.getById = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/ordenes-pago/from-ayuda/:ayuda_id
-// Pre-llena datos para una OP desde una ayuda social registrada
-// ─────────────────────────────────────────────────────────────────────────────
-exports.getFromAyuda = async (req, res) => {
-  const ayudaId = toInt(req.params.ayuda_id);
-  if (!ayudaId) return res.status(400).json({ message: 'ID de ayuda inválido.' });
-
-  try {
-    const [[ayuda]] = await db.promise().query(
-      `SELECT
-         a.id, a.beneficiario, a.monto, a.concepto, a.fecha,
-         a.numero_orden AS op_numero_existente,
-         pd.anio,
-         d.nombre    AS diputado_nombre,
-         d.identidad AS diputado_identidad
-       FROM ayudas_sociales a
-       JOIN presupuesto_diputados pd ON pd.id = a.presupuesto_id
-       JOIN diputados d ON d.id = a.diputado_id
-       WHERE a.id = ?`,
-      [ayudaId],
-    );
-
-    if (!ayuda) return res.status(404).json({ message: 'Ayuda social no encontrada.' });
-
-    // Verificar que no tenga ya una OP activa
-    const [[opExistente]] = await db.promise().query(
-      `SELECT id, numero_orden, estado
-       FROM ordenes_pago
-       WHERE ayuda_social_id = ? AND estado NOT IN ('ANULADA')
-       LIMIT 1`,
-      [ayudaId],
-    );
-
-    if (opExistente) {
-      return res.status(409).json({
-        message: `Esta ayuda ya tiene la orden de pago ${opExistente.numero_orden || '#' + opExistente.id} en estado ${opExistente.estado}.`,
-        orden_existente: opExistente,
-      });
-    }
-
-    // Construir prefill
-    const monto = parseFloat(ayuda.monto);
-    res.json({
-      tipo_origen:         'AYUDA_DIPUTADO',
-      ayuda_social_id:     ayuda.id,
-      beneficiario:        ayuda.beneficiario,
-      codigo_beneficiario: ayuda.diputado_identidad || '',
-      monto,
-      monto_letras:        montoALetras(monto),
-      concepto:            ayuda.concepto || '',
-      descripcion_detallada: '',
-      valor_adeuda_por:    '',
-      fecha:               typeof ayuda.fecha === 'string'
-                             ? ayuda.fecha.slice(0, 10)
-                             : ayuda.fecha.toISOString().slice(0, 10),
-      cargo_anio:          ayuda.anio,
-      cargo_cuenta:        '513-00',
-      forma_pago:          'TRANSFERENCIA',
-      tipo_cuenta:         'CORRIENTE',
-      // Valores contables a completar por el operador
-      cargo_org:           '',
-      cargo_fondo:         '0001',
-      cargo_tipo_prog:     '11',
-      cargo_sub_prog:      '',
-      cargo_act:           '',
-    });
-  } catch (err) {
-    console.error('[ordenes-pago] getFromAyuda:', err);
-    res.status(500).json({ message: 'Error al obtener datos de la ayuda.' });
-  }
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ordenes-pago
 // Crea una nueva orden en estado BORRADOR
 // ─────────────────────────────────────────────────────────────────────────────
@@ -235,7 +159,6 @@ exports.create = async (req, res) => {
     return res.status(403).json({ message: 'No tiene permisos para crear órdenes de pago.' });
 
   const {
-    tipo_origen, ayuda_social_id,
     beneficiario: rawBeneficiario,
     codigo_beneficiario: rawCodigo,
     monto: rawMonto,
@@ -251,10 +174,6 @@ exports.create = async (req, res) => {
   } = req.body;
 
   // ── Validaciones ──────────────────────────────────────────────────────────
-  const tiposOrigen = ['AYUDA_DIPUTADO', 'MANUAL'];
-  if (!tiposOrigen.includes(sanitize(tipo_origen)))
-    return res.status(400).json({ message: 'Tipo de origen inválido.' });
-
   const beneficiario = sanitize(rawBeneficiario);
   if (!beneficiario || beneficiario.length < 2 || beneficiario.length > 250)
     return res.status(400).json({ message: 'El beneficiario es requerido (máx. 250 caracteres).' });
@@ -277,31 +196,12 @@ exports.create = async (req, res) => {
   if (!concepto || concepto.length < 3 || concepto.length > 500)
     return res.status(400).json({ message: 'El concepto es requerido (mín. 3, máx. 500 caracteres).' });
 
-  // Si viene de ayuda social, verificar que no tenga OP activa
-  const ayudaId = tipo_origen === 'AYUDA_DIPUTADO' ? toInt(ayuda_social_id) : null;
-  if (tipo_origen === 'AYUDA_DIPUTADO') {
-    if (!ayudaId) return res.status(400).json({ message: 'Se requiere ayuda_social_id para este tipo.' });
-
-    try {
-      const [[existe]] = await db.promise().query(
-        `SELECT id FROM ordenes_pago WHERE ayuda_social_id = ? AND estado NOT IN ('ANULADA') LIMIT 1`,
-        [ayudaId],
-      );
-      if (existe)
-        return res.status(409).json({ message: 'Esta ayuda social ya tiene una orden de pago activa.' });
-    } catch (err) {
-      console.error('[ordenes-pago] create - verificación ayuda:', err);
-      return res.status(500).json({ message: 'Error interno al verificar la ayuda.' });
-    }
-  }
-
-  const sufijo      = SUFIJO_POR_TIPO[sanitize(tipo_origen)] || 'OP';
   const monto_letras = montoALetras(monto);
 
   try {
     const [result] = await db.promise().query(
       `INSERT INTO ordenes_pago
-         (tipo_origen, ayuda_social_id, sufijo_orden,
+         (tipo_origen, sufijo_orden,
           beneficiario, codigo_beneficiario,
           monto, monto_letras,
           forma_pago, no_cheque_transferencia, tipo_cuenta,
@@ -309,9 +209,8 @@ exports.create = async (req, res) => {
           cargo_sub_prog, cargo_act, cargo_cuenta,
           valor_adeuda_por, concepto, descripcion_detallada,
           fecha, estado, observaciones, created_by)
-       VALUES (?,?,?,  ?,?,  ?,?,  ?,?,?,  ?,?,?,?,?,?,?,  ?,?,?,  ?,?,?,?)`,
+       VALUES ('MANUAL','OP',  ?,?,  ?,?,  ?,?,?,  ?,?,?,?,?,?,?,  ?,?,?,  ?,?,?,?)`,
       [
-        sanitize(tipo_origen), ayudaId, sufijo,
         beneficiario, sanitize(rawCodigo) || null,
         monto, monto_letras,
         sanitize(forma_pago), sanitize(rawCheque) || null, sanitize(tipo_cuenta),
