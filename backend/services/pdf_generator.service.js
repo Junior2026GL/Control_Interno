@@ -90,8 +90,8 @@ const COORDS = {
   // Firma del presidente — imagen
   firma_presidente: {
     x: 388,   // pts desde izquierda
-    y: 35,    // pts desde abajo
-    width: 210,
+    y: 20,    // pts desde abajo
+    width: 235,
     height: 92,
     opacity: 0.92,
   },
