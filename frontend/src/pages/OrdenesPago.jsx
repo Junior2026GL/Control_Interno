@@ -22,7 +22,7 @@ const ESTADO_COLORS = {
 
 const EMPTY_FORM = {
   beneficiario:            '',
-  codigo_beneficiario:     ''
+  codigo_beneficiario:     '',
   monto:                   '',
   forma_pago:              'TRANSFERENCIA',
   no_cheque_transferencia: '',
@@ -169,7 +169,7 @@ export default function OrdenesPago() {
   function openEdit(orden) {
     setEditing(orden.id);
     setForm({
-      beneficiario:            orden.beneficiario            || ''
+      beneficiario:            orden.beneficiario            || '',
       codigo_beneficiario:     orden.codigo_beneficiario     || '',
       monto:                   orden.monto                   || '',
       forma_pago:              orden.forma_pago              || 'TRANSFERENCIA',
