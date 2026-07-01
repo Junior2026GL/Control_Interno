@@ -47,11 +47,12 @@ function exportToExcel(list, day, month, year) {
     'Departamento':     b.departamento,
     'Teléfono':         b.telefono || '',
     'Fecha Nacimiento': b.fecha_nacimiento,
+    'Estado':           b.activo ? 'Activo' : 'Inactivo',
   }));
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(rows);
   // Column widths
-  ws['!cols'] = [{ wch: 40 }, { wch: 25 }, { wch: 15 }, { wch: 22 }, { wch: 18 }, { wch: 18 }];
+  ws['!cols'] = [{ wch: 40 }, { wch: 25 }, { wch: 15 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 12 }];
   XLSX.utils.book_append_sheet(wb, ws, 'Cumpleaños');
   XLSX.writeFile(wb, `Cumpleanos_${String(day).padStart(2,'0')}_${MESES[month-1]}_${year}.xlsx`);
 }
