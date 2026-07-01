@@ -62,12 +62,12 @@ exports.getAll = (req, res) => {
       d.tipo,
       d.departamento,
       d.telefono,
+      d.activo,
       c.FECHA_NACIMIENTO
     FROM diputados d
     INNER JOIN censo_nacional c
       ON REPLACE(d.identidad, '-', '') = c.NUMERO_IDENTIDAD
-    WHERE d.activo = 1
-      AND d.identidad IS NOT NULL
+    WHERE d.identidad IS NOT NULL
       AND d.identidad <> ''
       AND c.FECHA_NACIMIENTO IS NOT NULL
       AND c.FECHA_NACIMIENTO <> ''
@@ -87,14 +87,15 @@ exports.getAll = (req, res) => {
           return null;
         }
         return {
-          id:          r.id,
-          nombre:      r.nombre,
-          partido:     r.partido || '—',
-          tipo:        r.tipo,
+          id:           r.id,
+          nombre:       r.nombre,
+          partido:      r.partido || '—',
+          tipo:         r.tipo,
           departamento: r.departamento,
-          telefono:    r.telefono || null,
-          mes:         fecha.mes,
-          dia:         fecha.dia,
+          telefono:     r.telefono || null,
+          activo:       r.activo === 1 || r.activo === true,
+          mes:          fecha.mes,
+          dia:          fecha.dia,
           anio:        fecha.anio,
           fecha_nacimiento: fecha.formateada,
         };
@@ -112,8 +113,7 @@ exports.getStats = (req, res) => {
        COUNT(*) AS total,
        SUM(CASE WHEN telefono IS NOT NULL AND telefono <> '' THEN 1 ELSE 0 END) AS con_telefono,
        SUM(CASE WHEN telefono IS NULL OR telefono = ''      THEN 1 ELSE 0 END) AS sin_telefono
-     FROM diputados
-     WHERE activo = 1`,
+     FROM diputados`,
     (err, rows) => {
       if (err) {
         console.error('[cumpleanos_diputados] Error en getStats:', err);

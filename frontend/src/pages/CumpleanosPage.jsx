@@ -298,12 +298,15 @@ export default function CumpleanosPage() {
               {modal.list.map((b, idx) => {
                 const meta = TIPO_META[b.tipo] || TIPO_META.PROPIETARIO;
                 return (
-                  <div key={idx} className="cb-person-card">
+                  <div key={idx} className={`cb-person-card${!b.activo ? ' cb-person-card--inactivo' : ''}`}>
                     <div className="cb-person-avatar" style={{ background: meta.bg, color: meta.color }}>
                       {b.nombre.charAt(0).toUpperCase()}
                     </div>
                     <div className="cb-person-info">
-                      <div className="cb-person-name">{b.nombre}</div>
+                      <div className="cb-person-name">
+                        {b.nombre}
+                        {!b.activo && <span className="cb-inactivo-badge">Inactivo</span>}
+                      </div>
                       <div className="cb-person-meta">
                         <span className="cb-person-dept">{b.departamento}</span>
                         {b.partido && b.partido !== '—' && (

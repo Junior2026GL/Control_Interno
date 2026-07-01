@@ -439,6 +439,27 @@
 }
 .cb-person-card:hover { border-color: #bfdbfe; background: #f8fbff; }
 
+.cb-person-card--inactivo {
+  opacity: .7;
+  border-color: #e5e7eb;
+  background: #f9fafb;
+}
+.cb-person-card--inactivo:hover { border-color: #d1d5db; background: #f3f4f6; }
+
+.cb-inactivo-badge {
+  display: inline-block;
+  margin-left: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #9ca3af;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  padding: 1px 7px;
+  vertical-align: middle;
+  letter-spacing: .3px;
+}
+
 .cb-person-avatar {
   width: 42px;
   height: 42px;
