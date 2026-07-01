@@ -178,15 +178,6 @@ export default function CumpleanosPage() {
             </div>
           </div>
         )}
-              <span className="cb-stat-lbl">Diputados con número de teléfono</span>
-            </div>
-            <div className="cb-stat-sep" />
-            <div className="cb-stat-item">
-              <span className="cb-stat-num cb-stat-num--red">{telStats.sin_telefono ?? '—'}</span>
-              <span className="cb-stat-lbl">Sin teléfono</span>
-            </div>
-          </div>
-        )}
 
         {/* Calendar card */}
         <div className="cb-card">
