@@ -103,6 +103,38 @@
   padding: 14px 22px;
   margin-bottom: 18px;
   box-shadow: 0 1px 4px rgba(0,0,0,.07);
+  flex-wrap: wrap;
+}
+
+/* Tarjeta destacada — cumpleaños del mes */
+.cb-stat-featured {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #be185d 0%, #ec4899 100%);
+  border-radius: 10px;
+  padding: 10px 18px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.cb-stat-featured-icon {
+  opacity: .9;
+  flex-shrink: 0;
+}
+.cb-stat-featured-num {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+.cb-stat-featured-lbl {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: .88;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 .cb-stat-item {
   display: flex;

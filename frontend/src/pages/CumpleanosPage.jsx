@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { FiChevronLeft, FiChevronRight, FiDownload, FiX, FiCalendar, FiRefreshCw, FiPhone } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiDownload, FiX, FiCalendar, FiRefreshCw, FiPhone, FiGift } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -151,18 +151,33 @@ export default function CumpleanosPage() {
         {/* Stats bar */}
         {!loading && !error && (
           <div className="cb-stats">
+            {/* Destacado: cumpleaños del mes */}
+            <div className="cb-stat-featured">
+              <FiGift className="cb-stat-featured-icon" size={28} />
+              <div>
+                <span className="cb-stat-featured-num">{totalMes}</span>
+                <span className="cb-stat-featured-lbl">Cumpleaños en {MESES[viewMonth - 1]}</span>
+              </div>
+            </div>
+
+            <div className="cb-stat-sep" />
+
             <div className="cb-stat-item">
               <span className="cb-stat-num">{birthdays.length}</span>
-              <span className="cb-stat-lbl">Diputados con fecha de nacimiento</span>
-            </div>
-            <div className="cb-stat-sep" />
-            <div className="cb-stat-item">
-              <span className="cb-stat-num">{totalMes}</span>
-              <span className="cb-stat-lbl">Cumpleaños en {MESES[viewMonth - 1]}</span>
+              <span className="cb-stat-lbl">Con fecha de nacimiento</span>
             </div>
             <div className="cb-stat-sep" />
             <div className="cb-stat-item">
               <span className="cb-stat-num cb-stat-num--green">{telStats.con_telefono ?? '—'}</span>
+              <span className="cb-stat-lbl">Con teléfono</span>
+            </div>
+            <div className="cb-stat-sep" />
+            <div className="cb-stat-item">
+              <span className="cb-stat-num cb-stat-num--red">{telStats.sin_telefono ?? '—'}</span>
+              <span className="cb-stat-lbl">Sin teléfono</span>
+            </div>
+          </div>
+        )}
               <span className="cb-stat-lbl">Diputados con número de teléfono</span>
             </div>
             <div className="cb-stat-sep" />
