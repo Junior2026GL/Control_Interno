@@ -5,7 +5,7 @@ import {
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
-  LuFileCheck2,
+  LuFileCheck2, LuCake,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -169,6 +169,14 @@ const ALL_MODULES = [
     description: 'Registro de entrega de canastas por diputado responsable',
     icon: LuLandmark,
     gradient: 'linear-gradient(135deg, #92400e 0%, #b45309 100%)',
+  },
+  {
+    path: '/cumpleanos-diputados',
+    label: 'Cumpleaños de Diputados',
+    clave: 'cumpleanos-diputados',
+    description: 'Calendario de fechas de nacimiento de diputados según el censo nacional',
+    icon: LuCake,
+    gradient: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
   },
   {
     path: '/ip-whitelist',
