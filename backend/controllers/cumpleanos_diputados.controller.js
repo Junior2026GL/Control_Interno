@@ -61,6 +61,7 @@ exports.getAll = (req, res) => {
       d.partido,
       d.tipo,
       d.departamento,
+      d.telefono,
       c.FECHA_NACIMIENTO
     FROM diputados d
     INNER JOIN censo_nacional c
@@ -91,6 +92,7 @@ exports.getAll = (req, res) => {
           partido:     r.partido || '—',
           tipo:        r.tipo,
           departamento: r.departamento,
+          telefono:    r.telefono || null,
           mes:         fecha.mes,
           dia:         fecha.dia,
           anio:        fecha.anio,

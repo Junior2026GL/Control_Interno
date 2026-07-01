@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { FiChevronLeft, FiChevronRight, FiDownload, FiX, FiCalendar, FiRefreshCw } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiDownload, FiX, FiCalendar, FiRefreshCw, FiPhone } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -297,6 +297,12 @@ export default function CumpleanosPage() {
                           </>
                         )}
                       </div>
+                      {b.telefono && (
+                        <div className="cb-person-tel">
+                          <FiPhone size={11} />
+                          <span>{b.telefono}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="cb-person-right">
                       <span
