@@ -104,3 +104,27 @@ exports.getAll = (req, res) => {
     res.json(data);
   });
 };
+
+// GET /api/cumpleanos-diputados/stats — totales de teléfono sobre todos los diputados activos
+exports.getStats = (req, res) => {
+  db.query(
+    `SELECT
+       COUNT(*) AS total,
+       SUM(CASE WHEN telefono IS NOT NULL AND telefono <> '' THEN 1 ELSE 0 END) AS con_telefono,
+       SUM(CASE WHEN telefono IS NULL OR telefono = ''      THEN 1 ELSE 0 END) AS sin_telefono
+     FROM diputados
+     WHERE activo = 1`,
+    (err, rows) => {
+      if (err) {
+        console.error('[cumpleanos_diputados] Error en getStats:', err);
+        return res.status(500).json({ message: 'Error al obtener estadísticas.' });
+      }
+      const r = rows[0];
+      res.json({
+        total:        r.total,
+        con_telefono: r.con_telefono,
+        sin_telefono: r.sin_telefono,
+      });
+    }
+  );
+};

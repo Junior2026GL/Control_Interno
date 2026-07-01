@@ -65,6 +65,7 @@ export default function CumpleanosPage() {
   const [error,     setError]     = useState('');
   const [modal,     setModal]     = useState(null); // { day, list }
   const [toast,     setToast]     = useState(null);
+  const [telStats,  setTelStats]  = useState({ con_telefono: null, sin_telefono: null });
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -75,8 +76,12 @@ export default function CumpleanosPage() {
     try {
       setLoading(true);
       setError('');
-      const res = await api.get('/cumpleanos-diputados');
-      setBirthdays(res.data);
+      const [resBday, resStats] = await Promise.all([
+        api.get('/cumpleanos-diputados'),
+        api.get('/cumpleanos-diputados/stats'),
+      ]);
+      setBirthdays(resBday.data);
+      setTelStats(resStats.data);
     } catch {
       setError('No se pudo cargar la información. Verifique que los diputados tienen número de identidad registrado.');
       showToast('Error al cargar los cumpleaños.');
@@ -153,6 +158,16 @@ export default function CumpleanosPage() {
             <div className="cb-stat-item">
               <span className="cb-stat-num">{totalMes}</span>
               <span className="cb-stat-lbl">Cumpleaños en {MESES[viewMonth - 1]}</span>
+            </div>
+            <div className="cb-stat-sep" />
+            <div className="cb-stat-item">
+              <span className="cb-stat-num cb-stat-num--green">{telStats.con_telefono ?? '—'}</span>
+              <span className="cb-stat-lbl">Diputados con número de teléfono</span>
+            </div>
+            <div className="cb-stat-sep" />
+            <div className="cb-stat-item">
+              <span className="cb-stat-num cb-stat-num--red">{telStats.sin_telefono ?? '—'}</span>
+              <span className="cb-stat-lbl">Sin teléfono</span>
             </div>
           </div>
         )}
