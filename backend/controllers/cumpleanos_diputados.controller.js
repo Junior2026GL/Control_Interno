@@ -1,6 +1,14 @@
 const db = require('../db');
 const { logEvent, getClientIP } = require('../middleware/audit');
 
+// Caché en memoria — TTL de 2 horas (los cumpleaños no cambian frecuentemente)
+const CACHE_TTL = 2 * 60 * 60 * 1000;
+const cache = { data: null, stats: null, ts: 0 };
+
+function cacheValid() {
+  return cache.data !== null && (Date.now() - cache.ts) < CACHE_TTL;
+}
+
 /**
  * Intenta parsear FECHA_NACIMIENTO desde varios formatos:
  *   YYYY/MM/DD  →  formato del censo nacional de Honduras
@@ -55,6 +63,11 @@ function parseFecha(str) {
 
 // GET /api/cumpleanos-diputados
 exports.getAll = (req, res) => {
+  // Servir desde caché si está vigente
+  if (cacheValid()) {
+    return res.json(cache.data);
+  }
+
   const sql = `
     SELECT
       d.id,
@@ -106,6 +119,10 @@ exports.getAll = (req, res) => {
 
     res.json(data);
 
+    // Guardar en caché
+    cache.data = data;
+    cache.ts   = Date.now();
+
     // Auditoría — registro de consulta a datos personales del censo
     logEvent({
       usuario_id:     req.user?.id,
@@ -123,6 +140,10 @@ exports.getAll = (req, res) => {
 
 // GET /api/cumpleanos-diputados/stats — totales de teléfono sobre todos los diputados activos
 exports.getStats = (req, res) => {
+  if (cacheValid() && cache.stats !== null) {
+    return res.json(cache.stats);
+  }
+
   db.query(
     `SELECT
        COUNT(*) AS total,
@@ -135,11 +156,13 @@ exports.getStats = (req, res) => {
         return res.status(500).json({ message: 'Error al obtener estadísticas.' });
       }
       const r = rows[0];
-      res.json({
+      const stats = {
         total:        r.total,
         con_telefono: r.con_telefono,
         sin_telefono: r.sin_telefono,
-      });
+      };
+      cache.stats = stats;
+      res.json(stats);
     }
   );
 };
