@@ -1,4 +1,5 @@
 const db = require('../db');
+const { logEvent, getClientIP } = require('../middleware/audit');
 
 /**
  * Intenta parsear FECHA_NACIMIENTO desde varios formatos:
@@ -72,6 +73,7 @@ exports.getAll = (req, res) => {
       AND c.FECHA_NACIMIENTO IS NOT NULL
       AND c.FECHA_NACIMIENTO <> ''
     ORDER BY d.nombre ASC
+    LIMIT 500
   `;
 
   db.query(sql, (err, rows) => {
@@ -103,6 +105,19 @@ exports.getAll = (req, res) => {
       .filter(Boolean);
 
     res.json(data);
+
+    // Auditoría — registro de consulta a datos personales del censo
+    logEvent({
+      usuario_id:     req.user?.id,
+      usuario_nombre: req.user?.nombre || null,
+      accion:         'CONSULTAR',
+      modulo:         'cumpleanos-diputados',
+      detalle:        `Consultó cumpleaños de diputados (${data.length} registros)`,
+      ip:             getClientIP(req),
+      metodo:         req.method,
+      ruta:           req.originalUrl,
+      resultado:      'EXITO',
+    });
   });
 };
 
