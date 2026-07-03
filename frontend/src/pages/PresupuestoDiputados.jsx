@@ -2095,6 +2095,7 @@ export default function PresupuestoDiputados() {
                     )}
                   </div>
                 ) : (
+                  <>
                   <div className="ps-table-wrap">
                     <table className="ps-table">
                       <thead>
@@ -2258,8 +2259,8 @@ export default function PresupuestoDiputados() {
                       <span className="std-pg-total">Pág. <strong>{ayudasPage}</strong> / {ayudasTotalPages}</span>
                     </div>
                   )}
-
-                {/* ── Analytics ── */}
+                  </>
+                )}
                 <div className="ps-analytics-card">
                   <button
                     className="ps-analytics-toggle"
