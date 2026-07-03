@@ -2153,7 +2153,7 @@ export default function PresupuestoDiputados() {
                                         })}
                                         {a.liquidado_por_nombre && (
                                           <div className="ps-td-liq-usuario">
-                                            {a.liquidado_por_nombre}
+                                            Registrado por: {a.liquidado_por_nombre}
                                           </div>
                                         )}
                                       </div>
