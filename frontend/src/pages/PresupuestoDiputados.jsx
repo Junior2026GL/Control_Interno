@@ -19,6 +19,7 @@ import './PresupuestoDiputados.css';
 const CURRENT_YEAR     = new Date().getFullYear();
 const YEARS            = [2026, 2027, 2028, 2029, 2030];
 const RESUMEN_PAGE_SIZE = 10;
+const AYUDAS_PAGE_SIZE  = 30;
 const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const MESES_LARGOS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto',
                       'Septiembre','Octubre','Noviembre','Diciembre'];
@@ -120,6 +121,7 @@ export default function PresupuestoDiputados() {
   const [resumen, setResumen]         = useState([]);
   const [loadingResumen, setLoadingResumen] = useState(false);
   const [resumenPage, setResumenPage] = useState(1);
+  const [ayudasPage,  setAyudasPage]  = useState(1);
 
   /* ── ui ────────────────────────────────────────────────── */
   const [toast, setToast]             = useState(null);
@@ -461,6 +463,15 @@ export default function PresupuestoDiputados() {
     });
     return arr;
   }, [ayudas, sortField, sortDir]);
+
+  // Reset página al cambiar orden o datos
+  useEffect(() => { setAyudasPage(1); }, [sortField, sortDir, ayudas]);
+
+  const ayudasTotalPages = Math.max(1, Math.ceil(sortedAyudas.length / AYUDAS_PAGE_SIZE));
+  const ayudasPaginadas  = sortedAyudas.slice(
+    (ayudasPage - 1) * AYUDAS_PAGE_SIZE,
+    ayudasPage * AYUDAS_PAGE_SIZE
+  );
 
   const resumenTotalPages = Math.ceil(resumen.length / RESUMEN_PAGE_SIZE);
   const resumenSlice = resumen.slice(
@@ -2108,7 +2119,7 @@ export default function PresupuestoDiputados() {
                         </tr>
                       </thead>
                       <tbody>
-                        {sortedAyudas.map(a => (
+                        {ayudasPaginadas.map(a => (
                           <tr key={a.id}>
                             <td className="ps-td-fecha">
                               {formatFecha(a.fecha)}
@@ -2212,7 +2223,41 @@ export default function PresupuestoDiputados() {
                       </tfoot>
                     </table>
                   </div>
-                )}
+
+                  {/* ── Paginación ayudas ── */}
+                  {sortedAyudas.length > AYUDAS_PAGE_SIZE && (
+                    <div className="std-pg" style={{ marginTop: 12 }}>
+                      <span className="std-pg-info">
+                        {Math.min((ayudasPage - 1) * AYUDAS_PAGE_SIZE + 1, sortedAyudas.length)}–{Math.min(ayudasPage * AYUDAS_PAGE_SIZE, sortedAyudas.length)} de <strong>{sortedAyudas.length}</strong> ayudas
+                      </span>
+                      <div className="std-pg-controls">
+                        <button className="std-pg-btn" disabled={ayudasPage === 1} onClick={() => setAyudasPage(1)}>«</button>
+                        <button className="std-pg-btn" disabled={ayudasPage === 1} onClick={() => setAyudasPage(p => p - 1)}>‹</button>
+                        {(() => {
+                          const maxBtns = 7;
+                          let start = Math.max(1, ayudasPage - Math.floor(maxBtns / 2));
+                          let end   = Math.min(ayudasTotalPages, start + maxBtns - 1);
+                          if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                          const nums = [];
+                          if (start > 1) {
+                            nums.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setAyudasPage(1)}>1</button>);
+                            if (start > 2) nums.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                          }
+                          for (let p = start; p <= end; p++) {
+                            nums.push(<button key={p} className={`std-pg-btn std-pg-num${ayudasPage === p ? ' std-pg-num--active' : ''}`} onClick={() => setAyudasPage(p)}>{p}</button>);
+                          }
+                          if (end < ayudasTotalPages) {
+                            if (end < ayudasTotalPages - 1) nums.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                            nums.push(<button key={ayudasTotalPages} className="std-pg-btn std-pg-num" onClick={() => setAyudasPage(ayudasTotalPages)}>{ayudasTotalPages}</button>);
+                          }
+                          return nums;
+                        })()}
+                        <button className="std-pg-btn" disabled={ayudasPage >= ayudasTotalPages} onClick={() => setAyudasPage(p => p + 1)}>›</button>
+                        <button className="std-pg-btn" disabled={ayudasPage >= ayudasTotalPages} onClick={() => setAyudasPage(ayudasTotalPages)}>»</button>
+                      </div>
+                      <span className="std-pg-total">Pág. <strong>{ayudasPage}</strong> / {ayudasTotalPages}</span>
+                    </div>
+                  )}
 
                 {/* ── Analytics ── */}
                 <div className="ps-analytics-card">
