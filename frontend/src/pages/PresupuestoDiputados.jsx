@@ -933,7 +933,7 @@ export default function PresupuestoDiputados() {
         };
       };
       const liqMap2 = new Map();
-      const W0m = 9, W1m = 20, W3m = 28, W4m = 30, W5m = 25, W6m = 25;
+      const W0m = 12, W1m = 20, W3m = 28, W4m = 30, W5m = 22, W6m = 25;
       const W2m = CW - W0m - W1m - W3m - W4m - W5m - W6m;
 
       autoTable(doc, {
@@ -1462,11 +1462,11 @@ export default function PresupuestoDiputados() {
     y += 7;
 
     // ── Tabla ayudas ───────────────────────────────────────
-    const W0 = 9;    // #
+    const W0 = 12;    // #
     const W1 = 20;   // Fecha ayuda
     const W3 = 28;   // Beneficiario
     const W4 = 30;   // Estado
-    const W5 = 30;   // Registrado por
+    const W5 = 27;   // Registrado por
     const W6 = 25;   // Monto
     const W2 = CW - W0 - W1 - W3 - W4 - W5 - W6; // Concepto (resto)
 
