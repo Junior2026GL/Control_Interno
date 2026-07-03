@@ -606,6 +606,7 @@
   background: #eff6ff;
 }
 .ps-td-liq-fecha { font-size: 11px; color: #64748b; margin-top: 4px; }
+.ps-td-liq-usuario { font-size: 10px; color: #94a3b8; margin-top: 2px; font-style: italic; }
 .ps-td-monto   { text-align: right; font-weight: 700; color: #d97706; font-variant-numeric: tabular-nums; white-space: nowrap; vertical-align: middle; }
 
 .ps-td-actions {

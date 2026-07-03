@@ -32,10 +32,12 @@ exports.getByDiputado = async (req, res) => {
     const pres = presRows[0];
     const [ayudas] = await db.promise().query(
       `SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
-              a.estado_liquidacion, a.fecha_liquidacion, a.created_at, a.created_by,
-              u.nombre AS creado_por_nombre
+              a.estado_liquidacion, a.fecha_liquidacion, a.liquidado_por, a.created_at, a.created_by,
+              u.nombre AS creado_por_nombre,
+              ul.nombre AS liquidado_por_nombre
        FROM ayudas_sociales a
-       LEFT JOIN usuarios u ON u.id = a.created_by
+       LEFT JOIN usuarios u  ON u.id  = a.created_by
+       LEFT JOIN usuarios ul ON ul.id = a.liquidado_por
        WHERE a.presupuesto_id = ?
        ORDER BY a.fecha DESC, a.id DESC`,
       [pres.id]
@@ -93,6 +95,8 @@ exports.getByDiputado = async (req, res) => {
               ? a.fecha_liquidacion
               : a.fecha_liquidacion.toISOString())
           : null,
+        liquidado_por:        a.liquidado_por || null,
+        liquidado_por_nombre: a.liquidado_por_nombre || null,
       })),
     });
   } catch (err) {
@@ -491,12 +495,13 @@ exports.patchLiquidacion = async (req, res) => {
         });
     }
 
-    // If changing away from liquido, clear fecha_liquidacion
-    const nuevoFechaLiq = estado === 'liquido' ? fechaLiq : null;
+    // If changing away from liquido, clear fecha_liquidacion and liquidado_por
+    const nuevoFechaLiq   = estado === 'liquido' ? fechaLiq : null;
+    const nuevoLiquidadoPor = estado === 'liquido' ? (req.user?.id || null) : null;
 
     await db.promise().query(
-      'UPDATE ayudas_sociales SET estado_liquidacion=?, fecha_liquidacion=? WHERE id=?',
-      [estado, nuevoFechaLiq, aidId]
+      'UPDATE ayudas_sociales SET estado_liquidacion=?, fecha_liquidacion=?, liquidado_por=? WHERE id=?',
+      [estado, nuevoFechaLiq, nuevoLiquidadoPor, aidId]
     );
     res.json({ message: 'Estado de liquidación actualizado correctamente.' });
   } catch (err) {

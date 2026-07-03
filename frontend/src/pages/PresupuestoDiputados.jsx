@@ -2151,6 +2151,11 @@ export default function PresupuestoDiputados() {
                                           day: '2-digit', month: 'short', year: 'numeric',
                                           hour: '2-digit', minute: '2-digit', hour12: true,
                                         })}
+                                        {a.liquidado_por_nombre && (
+                                          <div className="ps-td-liq-usuario">
+                                            {a.liquidado_por_nombre}
+                                          </div>
+                                        )}
                                       </div>
                                     )}
                                   </>
