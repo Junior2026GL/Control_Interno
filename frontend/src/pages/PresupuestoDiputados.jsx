@@ -933,7 +933,7 @@ export default function PresupuestoDiputados() {
         };
       };
       const liqMap2 = new Map();
-      const W0m = 6, W1m = 20, W3m = 28, W4m = 30, W5m = 25, W6m = 28;
+      const W0m = 9, W1m = 20, W3m = 28, W4m = 30, W5m = 25, W6m = 25;
       const W2m = CW - W0m - W1m - W3m - W4m - W5m - W6m;
 
       autoTable(doc, {
@@ -942,7 +942,7 @@ export default function PresupuestoDiputados() {
         body: ayudasMes.map((a, idx) => {
           const est       = estadoLiquidacion(a);
           const estadoLbl = LIQUIDACION_META[est]?.label || '—';
-          if (a.fecha_liquidacion && est === 'liquido') liqMap2.set(idx, fmtLiq2(a.fecha_liquidacion));
+          if (a.fecha_liquidacion && est === 'liquido') liqMap2.set(idx, { ...fmtLiq2(a.fecha_liquidacion), usuario: a.liquidado_por_nombre || null });
           return [
             String(idx + 1),
             formatFecha(a.fecha),
@@ -964,7 +964,7 @@ export default function PresupuestoDiputados() {
           fontSize: 7.8, textColor: C_NEGRO,
           lineColor: [210, 220, 235], lineWidth: 0.2,
           cellPadding: { top: 2.8, bottom: 2.8, left: 2.5, right: 2.5 },
-          minCellHeight: 16,
+          minCellHeight: 20,
         },
         alternateRowStyles: { fillColor: [244, 247, 255] },
         columnStyles: {
@@ -996,10 +996,14 @@ export default function PresupuestoDiputados() {
           const cx  = cell.x + cell.width / 2;
           const mid = cell.y + cell.height / 2;
           d.setFontSize(7.8); d.setFont('helvetica', 'bold'); d.setTextColor(21, 128, 61);
-          d.text('Líquido', cx, mid - 3.5, { align: 'center' });
+          d.text('Líquido', cx, mid - 5, { align: 'center' });
           d.setFontSize(7.5); d.setFont('helvetica', 'normal'); d.setTextColor(...C_NEGRO);
-          d.text(info.fecha, cx, mid + 0.8, { align: 'center' });
-          d.text(info.hora,  cx, mid + 4.8, { align: 'center' });
+          d.text(info.fecha, cx, mid - 1, { align: 'center' });
+          d.text(info.hora,  cx, mid + 3, { align: 'center' });
+          if (info.usuario) {
+            d.setFontSize(6.5); d.setTextColor(120, 140, 180);
+            d.text(`Reg: ${info.usuario}`, cx, mid + 7, { align: 'center' });
+          }
         },
       });
       y = doc.lastAutoTable.finalY + 6;
@@ -1458,12 +1462,12 @@ export default function PresupuestoDiputados() {
     y += 7;
 
     // ── Tabla ayudas ───────────────────────────────────────
-    const W0 = 6;    // #
+    const W0 = 9;    // #
     const W1 = 20;   // Fecha ayuda
     const W3 = 28;   // Beneficiario
     const W4 = 30;   // Estado
     const W5 = 30;   // Registrado por
-    const W6 = 28;   // Monto
+    const W6 = 25;   // Monto
     const W2 = CW - W0 - W1 - W3 - W4 - W5 - W6; // Concepto (resto)
 
     const fmtLiqPDF = ts => {
@@ -1485,7 +1489,7 @@ export default function PresupuestoDiputados() {
         const est       = estadoLiquidacion(a);
         const estadoLbl = LIQUIDACION_META[est]?.label || '—';
         if (a.fecha_liquidacion && est === 'liquido') {
-          liqFechasMap.set(idx, fmtLiqPDF(a.fecha_liquidacion));
+          liqFechasMap.set(idx, { ...fmtLiqPDF(a.fecha_liquidacion), usuario: a.liquidado_por_nombre || null });
         }
         return [
           String(idx + 1),
@@ -1513,7 +1517,7 @@ export default function PresupuestoDiputados() {
         lineColor:   [210, 220, 235],
         lineWidth:   0.2,
         cellPadding: { top: 2.8, bottom: 2.8, left: 2.5, right: 2.5 },
-        minCellHeight: 16,
+        minCellHeight: 20,
       },
       alternateRowStyles: { fillColor: [244, 247, 255] },
       columnStyles: {
@@ -1552,15 +1556,21 @@ export default function PresupuestoDiputados() {
         d.setFontSize(7.8);
         d.setFont('helvetica', 'bold');
         d.setTextColor(21, 128, 61);
-        d.text('Líquido', cx, mid - 3.5, { align: 'center' });
+        d.text('Líquido', cx, mid - 5, { align: 'center' });
         // Línea 2: fecha
         d.setFontSize(7.5);
         d.setFont('helvetica', 'normal');
         d.setTextColor(...C_NEGRO);
-        d.text(info.fecha, cx, mid + 0.8, { align: 'center' });
+        d.text(info.fecha, cx, mid - 1, { align: 'center' });
         // Línea 3: hora
         d.setFontSize(7.5);
-        d.text(info.hora, cx, mid + 4.8, { align: 'center' });
+        d.text(info.hora, cx, mid + 3, { align: 'center' });
+        // Línea 4: usuario
+        if (info.usuario) {
+          d.setFontSize(6.5);
+          d.setTextColor(120, 140, 180);
+          d.text(`Reg: ${info.usuario}`, cx, mid + 7, { align: 'center' });
+        }
       },
     });
     y = doc.lastAutoTable.finalY + 6;
