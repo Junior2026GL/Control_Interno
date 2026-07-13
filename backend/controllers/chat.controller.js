@@ -19,118 +19,108 @@ const query = (sql, params = []) =>
     db.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)))
   );
 
-// ── Build context from DB ────────────────────────────────────────────────────
-async function buildContext() {
-  const [cajaRes, movimientos, autorizaciones, usuarios, diputados, presupuestos, ayudas, ayudasRegistro] = await Promise.all([
-    query(`
-      SELECT
-        SUM(CASE WHEN tipo IN ('RECARGA','INGRESO') THEN monto ELSE 0 END) AS ingresos,
-        SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END) AS egresos
-      FROM caja_chica
-    `),
-    query(`
-      SELECT cc.fecha, cc.descripcion, cc.tipo, cc.monto, cc.categoria,
-             u.nombre AS usuario
-      FROM caja_chica cc
-      JOIN usuarios u ON u.id = cc.usuario_id
-      ORDER BY cc.fecha DESC
-      LIMIT 100
-    `),
-    query(`
-      SELECT ap.numero, ap.tipo_pago, ap.beneficiario, ap.monto,
-             ap.detalle, ap.estado, ap.fecha_creacion, ap.fecha_autorizacion,
-             ap.motivo_rechazo, ap.firma_nombre,
-             c.nombre AS creado_por, a.nombre AS autorizado_por
-      FROM autorizaciones_pago ap
-      LEFT JOIN usuarios c ON c.id = ap.creado_por
-      LEFT JOIN usuarios a ON a.id = ap.autorizado_por
-      ORDER BY ap.fecha_creacion DESC
-      LIMIT 100
-    `),
-    query(`SELECT nombre, username, email, rol, activo FROM usuarios ORDER BY nombre`),
-    query(`
-      SELECT id, departamento, numero, tipo, nombre, identidad, partido, telefono, correo
-      FROM diputados
-      ORDER BY departamento ASC, numero ASC, nombre ASC
-      LIMIT 500
-    `),
-    query(`
-      SELECT pd.id, pd.anio, pd.monto_asignado, pd.observaciones, pd.created_at,
-             d.nombre AS diputado_nombre, d.departamento, d.tipo AS diputado_tipo, d.partido,
-             COALESCE(SUM(a.monto), 0) AS ejecutado,
-             (pd.monto_asignado - COALESCE(SUM(a.monto), 0)) AS disponible
-      FROM presupuesto_diputados pd
-      JOIN diputados d ON d.id = pd.diputado_id
-      LEFT JOIN ayudas_sociales a ON a.presupuesto_id = pd.id
-      GROUP BY pd.id
-      ORDER BY pd.anio DESC, d.departamento ASC, d.nombre ASC
-      LIMIT 500
-    `),
-    query(`
-      SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.monto, a.observaciones,
-             a.created_at, d.nombre AS diputado_nombre, d.departamento,
-             u.nombre AS registrado_por
-      FROM ayudas_sociales a
-      JOIN presupuesto_diputados pd ON pd.id = a.presupuesto_id
-      JOIN diputados d ON d.id = pd.diputado_id
-      LEFT JOIN usuarios u ON u.id = a.created_by
-      ORDER BY a.fecha DESC, a.id DESC
-      LIMIT 500
-    `),
-    query(`
-      SELECT a.id, a.nombre_completo, a.dni, a.rtn, a.fecha,
-             a.cantidad, a.tipo_ayuda, a.observaciones,
-             u.nombre AS registrado_por
-      FROM ayudas a
-      LEFT JOIN usuarios u ON u.id = a.usuario_id
-      ORDER BY a.fecha DESC, a.id DESC
-      LIMIT 500
-    `),
-  ]);
+// ── Detecta qué módulos son relevantes según el mensaje ──────────────────────
+function detectarTemas(texto) {
+  const t = texto.toLowerCase();
+  return {
+    caja:          /caja|saldo|ingreso|egreso|movimiento|recarga|gasto/.test(t),
+    autorizaciones:/autorizaci[oó]n|autorizar|orden.*pago|aprobar|rechazar|firma/.test(t),
+    usuarios:      /usuario|acceso|login|rol|permiso/.test(t),
+    diputados:     /diputado|partido|propietario|suplente|congreso/.test(t),
+    presupuesto:   /presupuesto|asignado|ejecutado|disponible|ejecuci[oó]n/.test(t),
+    ayudasSociales:/ayuda.{0,10}social|social.{0,10}ayuda/.test(t),
+    ayudasRegistro:/\bayuda|pagadur[ií]a|beneficiario|dni|rtn|econ[oó]mica|m[eé]dica|alimentaria|educativa|especie/.test(t),
+  };
+}
 
-  const ingresos = parseFloat(cajaRes[0].ingresos) || 0;
-  const egresos  = parseFloat(cajaRes[0].egresos)  || 0;
-  const saldo    = ingresos - egresos;
+// ── Build context from DB (solo datos relevantes al mensaje) ─────────────────
+async function buildContext(mensaje, historial = []) {
+  const textoCompleto = mensaje + ' ' + historial.slice(-4).map(h => h.contenido).join(' ');
+  const temas = detectarTemas(textoCompleto);
+  const hayTema = Object.values(temas).some(Boolean);
 
-  const totalPresupuestado = presupuestos.reduce((s, p) => s + parseFloat(p.monto_asignado), 0);
-  const totalEjecutado     = presupuestos.reduce((s, p) => s + parseFloat(p.ejecutado), 0);
-  const totalDisponible    = totalPresupuestado - totalEjecutado;
+  // Mensaje genérico → resumen compacto de todos los módulos sin arrays detallados
+  if (!hayTema) {
+    const [cajaRes, cntAut, cntDip, cntAyudas] = await Promise.all([
+      query(`SELECT SUM(CASE WHEN tipo IN ('RECARGA','INGRESO') THEN monto ELSE 0 END) AS ingresos, SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END) AS egresos FROM caja_chica`),
+      query(`SELECT estado, COUNT(*) AS total FROM autorizaciones_pago GROUP BY estado`),
+      query(`SELECT COUNT(*) AS total FROM diputados`),
+      query(`SELECT COUNT(*) AS total, COALESCE(SUM(cantidad),0) AS monto FROM ayudas`),
+    ]);
+    const ingresos = parseFloat(cajaRes[0].ingresos) || 0;
+    const egresos  = parseFloat(cajaRes[0].egresos)  || 0;
+    return [
+      `=== RESUMEN GENERAL DEL SISTEMA (${new Date().toLocaleDateString('es-GT')}) ===`,
+      `Caja Chica — Saldo: L${(ingresos - egresos).toFixed(2)} | Ingresos: L${ingresos.toFixed(2)} | Egresos: L${egresos.toFixed(2)}`,
+      `Autorizaciones de Pago — Por estado: ${JSON.stringify(cntAut)}`,
+      `Diputados registrados: ${cntDip[0].total}`,
+      `Registro de Ayudas — Total: ${cntAyudas[0].total} | Monto: L${parseFloat(cntAyudas[0].monto).toFixed(2)}`,
+    ].join('\n');
+  }
 
-  const totalAyudas      = ayudasRegistro.length;
-  const montoTotalAyudas = ayudasRegistro.reduce((s, a) => s + parseFloat(a.cantidad || 0), 0);
+  // Preparar solo las queries necesarias
+  const fetches = {};
 
-  return `
-=== DATOS REALES DEL SISTEMA (${new Date().toLocaleDateString('es-GT')}) ===
+  if (temas.caja) {
+    fetches.cajaRes     = query(`SELECT SUM(CASE WHEN tipo IN ('RECARGA','INGRESO') THEN monto ELSE 0 END) AS ingresos, SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END) AS egresos FROM caja_chica`);
+    fetches.movimientos = query(`SELECT cc.fecha, cc.descripcion, cc.tipo, cc.monto, cc.categoria, u.nombre AS usuario FROM caja_chica cc JOIN usuarios u ON u.id = cc.usuario_id ORDER BY cc.fecha DESC LIMIT 50`);
+  }
+  if (temas.autorizaciones) {
+    fetches.autorizaciones = query(`SELECT ap.numero, ap.tipo_pago, ap.beneficiario, ap.monto, ap.detalle, ap.estado, ap.fecha_creacion, ap.fecha_autorizacion, ap.motivo_rechazo, ap.firma_nombre, c.nombre AS creado_por, a.nombre AS autorizado_por FROM autorizaciones_pago ap LEFT JOIN usuarios c ON c.id = ap.creado_por LEFT JOIN usuarios a ON a.id = ap.autorizado_por ORDER BY ap.fecha_creacion DESC LIMIT 50`);
+  }
+  if (temas.usuarios) {
+    fetches.usuarios = query(`SELECT nombre, username, email, rol, activo FROM usuarios ORDER BY nombre`);
+  }
+  if (temas.diputados || temas.presupuesto || temas.ayudasSociales) {
+    fetches.diputados = query(`SELECT id, departamento, numero, tipo, nombre, identidad, partido, telefono, correo FROM diputados ORDER BY departamento ASC, numero ASC, nombre ASC LIMIT 500`);
+  }
+  if (temas.presupuesto || temas.ayudasSociales) {
+    fetches.presupuestos = query(`SELECT pd.id, pd.anio, pd.monto_asignado, pd.observaciones, d.nombre AS diputado_nombre, d.departamento, d.tipo AS diputado_tipo, d.partido, COALESCE(SUM(a.monto), 0) AS ejecutado, (pd.monto_asignado - COALESCE(SUM(a.monto), 0)) AS disponible FROM presupuesto_diputados pd JOIN diputados d ON d.id = pd.diputado_id LEFT JOIN ayudas_sociales a ON a.presupuesto_id = pd.id GROUP BY pd.id ORDER BY pd.anio DESC, d.departamento ASC, d.nombre ASC LIMIT 300`);
+  }
+  if (temas.ayudasSociales) {
+    fetches.ayudas = query(`SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.monto, a.observaciones, d.nombre AS diputado_nombre, d.departamento, u.nombre AS registrado_por FROM ayudas_sociales a JOIN presupuesto_diputados pd ON pd.id = a.presupuesto_id JOIN diputados d ON d.id = pd.diputado_id LEFT JOIN usuarios u ON u.id = a.created_by ORDER BY a.fecha DESC, a.id DESC LIMIT 200`);
+  }
+  if (temas.ayudasRegistro) {
+    fetches.ayudasRegistro = query(`SELECT a.id, a.nombre_completo, a.dni, a.rtn, a.fecha, a.cantidad, a.tipo_ayuda, a.observaciones, u.nombre AS registrado_por FROM ayudas a LEFT JOIN usuarios u ON u.id = a.usuario_id ORDER BY a.fecha DESC, a.id DESC LIMIT 200`);
+  }
 
---- CAJA CHICA ---
-Saldo actual: L${saldo.toFixed(2)}
-Total ingresos/recargas: L${ingresos.toFixed(2)}
-Total egresos: L${egresos.toFixed(2)}
-Ultimos 100 movimientos: ${JSON.stringify(movimientos)}
+  // Resolver todas las promesas en paralelo
+  const keys   = Object.keys(fetches);
+  const values = await Promise.all(keys.map(k => fetches[k]));
+  const data   = Object.fromEntries(keys.map((k, i) => [k, values[i]]));
 
---- AUTORIZACIONES DE PAGO (ultimas 100) ---
-${JSON.stringify(autorizaciones)}
+  // Construir el contexto solo con los datos cargados
+  let ctx = `=== DATOS REALES DEL SISTEMA (${new Date().toLocaleDateString('es-GT')}) ===\n`;
 
---- USUARIOS DEL SISTEMA ---
-${JSON.stringify(usuarios)}
+  if (data.cajaRes) {
+    const ingresos = parseFloat(data.cajaRes[0].ingresos) || 0;
+    const egresos  = parseFloat(data.cajaRes[0].egresos)  || 0;
+    ctx += `\n--- CAJA CHICA ---\nSaldo actual: L${(ingresos - egresos).toFixed(2)}\nIngresos/recargas: L${ingresos.toFixed(2)}\nEgresos: L${egresos.toFixed(2)}\nUltimos 50 movimientos: ${JSON.stringify(data.movimientos)}\n`;
+  }
+  if (data.autorizaciones) {
+    ctx += `\n--- AUTORIZACIONES DE PAGO (ultimas 50) ---\n${JSON.stringify(data.autorizaciones)}\n`;
+  }
+  if (data.usuarios) {
+    ctx += `\n--- USUARIOS DEL SISTEMA ---\n${JSON.stringify(data.usuarios)}\n`;
+  }
+  if (data.diputados) {
+    ctx += `\n--- DIPUTADOS (${data.diputados.length} registros) ---\n${JSON.stringify(data.diputados)}\n`;
+  }
+  if (data.presupuestos) {
+    const totalPresupuestado = data.presupuestos.reduce((s, p) => s + parseFloat(p.monto_asignado), 0);
+    const totalEjecutado     = data.presupuestos.reduce((s, p) => s + parseFloat(p.ejecutado), 0);
+    ctx += `\n--- PRESUPUESTO DE DIPUTADOS (${data.presupuestos.length} registros) ---\nTotal presupuestado: L${totalPresupuestado.toFixed(2)}\nTotal ejecutado: L${totalEjecutado.toFixed(2)}\nDisponible: L${(totalPresupuestado - totalEjecutado).toFixed(2)}\nDetalle: ${JSON.stringify(data.presupuestos)}\n`;
+  }
+  if (data.ayudas) {
+    ctx += `\n--- AYUDAS SOCIALES (ultimas 200) ---\n${JSON.stringify(data.ayudas)}\n`;
+  }
+  if (data.ayudasRegistro) {
+    const total = data.ayudasRegistro.length;
+    const monto = data.ayudasRegistro.reduce((s, a) => s + parseFloat(a.cantidad || 0), 0);
+    ctx += `\n--- REGISTRO DE AYUDAS - Pagaduria Especial (ultimas 200) ---\nTotal: ${total} | Monto: L${monto.toFixed(2)}\nDetalle: ${JSON.stringify(data.ayudasRegistro)}\n`;
+  }
 
---- DIPUTADOS (${diputados.length} registros) ---
-${JSON.stringify(diputados)}
-
---- PRESUPUESTO DE DIPUTADOS (${presupuestos.length} registros) ---
-Total presupuestado: L${totalPresupuestado.toFixed(2)}
-Total ejecutado: L${totalEjecutado.toFixed(2)}
-Total disponible: L${totalDisponible.toFixed(2)}
-Detalle por diputado/año: ${JSON.stringify(presupuestos)}
-
---- AYUDAS SOCIALES (ultimas 500) ---
-${JSON.stringify(ayudas)}
-
---- REGISTRO DE AYUDAS - Pagaduria Especial (ultimas 500) ---
-Total registros: ${totalAyudas}
-Monto total entregado: L${montoTotalAyudas.toFixed(2)}
-Detalle: ${JSON.stringify(ayudasRegistro)}
-`.trim();
+  return ctx.trim();
 }
 
 // ── POST /api/chat/message ───────────────────────────────────────────────────
@@ -147,7 +137,7 @@ exports.sendMessage = async (req, res) => {
     return res.status(400).json({ message: 'Historial invalido' });
 
   try {
-    const contexto = await buildContext();
+    const contexto = await buildContext(mensaje, historial);
 
     const systemPrompt = `Eres el asistente de inteligencia artificial del sistema de la Pagaduría Especial. Tienes acceso a los datos reales y actualizados del sistema. Tu rol es responder preguntas con datos precisos y concretos.
 
@@ -180,7 +170,7 @@ ${contexto}`;
         ...safeMsgs,
         { role: 'user', content: mensaje.trim() },
       ],
-      max_tokens: 700,
+      max_tokens: 1000,
       temperature: 0.2,
     });
 
