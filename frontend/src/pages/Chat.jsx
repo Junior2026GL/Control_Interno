@@ -7,30 +7,42 @@ import './Chat.css';
 
 const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` });
 
+const fmtHora = ts => new Date(ts).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+
 function renderMarkdown(text) {
-  return text.split('\n').map((line, i) => {
+  return text.split('\n').map((line, i, arr) => {
     const parts = line.split(/\*\*(.+?)\*\*/g);
     return (
       <span key={i}>
         {parts.map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
-        {i < text.split('\n').length - 1 && <br />}
+        {i < arr.length - 1 && <br />}
       </span>
     );
   });
 }
 
+const SUGERENCIAS = [
+  'Ayudas sin liquidar',
+  'Resumen del presupuesto',
+  '¿Qué diputado tiene más disponible?',
+  'Ayudas registradas hoy',
+  'Total ejecutado este año',
+];
+
 const BIENVENIDA = {
   id: 0,
   rol: 'assistant',
-  contenido: '¡Hola! Soy el asistente de la Pagaduría Especial 🤖\nPuedo brindarte información sobre:\n• 💰 Caja Chica — saldo, ingresos, egresos y movimientos\n• 📋 Autorizaciones de Pago — estado, beneficiarios y montos\n• 🎁 Registro de Ayudas — beneficiarios, tipos y montos entregados\n• 🏛️ Diputados — datos, departamento y partido\n• 📊 Presupuesto de Diputados — asignado, ejecutado y disponible\n• 👥 Usuarios del sistema\n\n¿En qué te puedo ayudar?',
+  ts: Date.now(),
+  contenido: '¡Hola! Soy el asistente del módulo de Presupuesto Social 📊\n\nPuedo ayudarte con información precisa sobre:\n• Presupuesto asignado, ejecutado y disponible por diputado\n• Registro de ayudas: beneficiario, monto, número de orden y cheque\n• Estado de liquidación: sin liquidar, en proceso, liquidadas\n• Búsquedas por beneficiario, diputado o número de cheque\n• Totales, resúmenes y cálculos en tiempo real\n\n¿Qué deseas consultar?',
 };
 
 export default function Chat() {
-  const [mensajes, setMensajes]         = useState([BIENVENIDA]);
-  const [input, setInput]               = useState('');
-  const [cargando, setCargando]         = useState(false);
-  const [escuchando, setEscuchando]     = useState(false);
-  const [reproduciendo, setReproduciendo] = useState(null);
+  const [mensajes, setMensajes]                     = useState([BIENVENIDA]);
+  const [input, setInput]                            = useState('');
+  const [cargando, setCargando]                      = useState(false);
+  const [escuchando, setEscuchando]                  = useState(false);
+  const [reproduciendo, setReproduciendo]            = useState(null);
+  const [mostrarSugerencias, setMostrarSugerencias]  = useState(true);
 
   const messagesEndRef  = useRef(null);
   const reconocimientoRef = useRef(null);
@@ -47,15 +59,16 @@ export default function Chat() {
     if (!msg || cargando) return;
 
     setInput('');
+    setMostrarSugerencias(false);
     const historial = mensajes.map(m => ({ rol: m.rol, contenido: m.contenido }));
-    setMensajes(prev => [...prev, { id: Date.now(), rol: 'user', contenido: msg }]);
+    setMensajes(prev => [...prev, { id: Date.now(), ts: Date.now(), rol: 'user', contenido: msg }]);
     setCargando(true);
 
     try {
       const { data } = await api.post('/chat/message', { mensaje: msg, historial }, { headers: authHeader() });
-      setMensajes(prev => [...prev, { id: Date.now(), rol: 'assistant', contenido: data.respuesta }]);
+      setMensajes(prev => [...prev, { id: Date.now(), ts: Date.now(), rol: 'assistant', contenido: data.respuesta }]);
     } catch {
-      setMensajes(prev => [...prev, { id: Date.now(), rol: 'assistant', contenido: 'Hubo un error al procesar tu consulta. Por favor intenta de nuevo.' }]);
+      setMensajes(prev => [...prev, { id: Date.now(), ts: Date.now(), rol: 'assistant', contenido: 'Hubo un error al procesar tu consulta. Por favor intenta de nuevo.' }]);
     } finally {
       setCargando(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -98,7 +111,7 @@ export default function Chat() {
   };
 
   // ── Limpiar chat ────────────────────────────────────────────────────────────
-  const limpiarChat = () => { audioRef.current?.pause(); setReproduciendo(null); setMensajes([BIENVENIDA]); };
+  const limpiarChat = () => { audioRef.current?.pause(); setReproduciendo(null); setMensajes([BIENVENIDA]); setMostrarSugerencias(true); };
 
   return (
     <div className="page-shell">
@@ -108,10 +121,13 @@ export default function Chat() {
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-left">
-            <div className="chat-avatar-icon"><RiRobot2Line size={22} /></div>
+            <div className="chat-avatar-icon"><RiRobot2Line size={24} /></div>
             <div>
-              <h2 className="chat-title">Asistente IA</h2>
-              <p className="chat-subtitle">Control Interno · datos en tiempo real</p>
+              <h2 className="chat-title">Presupuesto Social IA</h2>
+              <div className="chat-status">
+                <span className="status-dot" />
+                <p className="chat-subtitle">En línea · datos en tiempo real</p>
+              </div>
             </div>
           </div>
           <button className="chat-clear-btn" onClick={limpiarChat} title="Limpiar conversación">
@@ -126,12 +142,22 @@ export default function Chat() {
               {m.rol === 'assistant' && <div className="chat-bot-avatar"><RiRobot2Line size={16} /></div>}
               <div className={`chat-bubble ${m.rol}`}>
                 <p className="bubble-text">{m.rol === 'assistant' ? renderMarkdown(m.contenido) : m.contenido}</p>
-                {m.rol === 'assistant' && (
-                  <button className={`tts-btn ${reproduciendo === m.id ? 'active' : ''}`}
-                    onClick={() => reproducirVoz(m.id, m.contenido)}
-                    title={reproduciendo === m.id ? 'Detener' : 'Escuchar respuesta'}>
-                    {reproduciendo === m.id ? <FiVolumeX size={13} /> : <FiVolume2 size={13} />}
-                  </button>
+                <div className="bubble-footer">
+                  <span className="bubble-time">{fmtHora(m.ts)}</span>
+                  {m.rol === 'assistant' && (
+                    <button className={`tts-btn ${reproduciendo === m.id ? 'active' : ''}`}
+                      onClick={() => reproducirVoz(m.id, m.contenido)}
+                      title={reproduciendo === m.id ? 'Detener' : 'Escuchar respuesta'}>
+                      {reproduciendo === m.id ? <FiVolumeX size={12} /> : <FiVolume2 size={12} />}
+                    </button>
+                  )}
+                </div>
+                {m.id === 0 && mostrarSugerencias && (
+                  <div className="sugerencias">
+                    {SUGERENCIAS.map(s => (
+                      <button key={s} className="chip" onClick={() => enviar(s)}>{s}</button>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
@@ -161,7 +187,7 @@ export default function Chat() {
               {escuchando ? <FiMicOff size={19} /> : <FiMic size={19} />}
             </button>
             <textarea ref={inputRef} className="chat-input"
-              placeholder="Escribe tu consulta… (Enter para enviar)"
+              placeholder="Consulta sobre presupuesto, ayudas, liquidaciones… (Enter para enviar)"
               value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); } }}
               rows={1} disabled={cargando} />

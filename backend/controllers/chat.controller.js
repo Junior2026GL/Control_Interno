@@ -19,106 +19,91 @@ const query = (sql, params = []) =>
     db.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)))
   );
 
-// ── Detecta qué módulos son relevantes según el mensaje ──────────────────────
-function detectarTemas(texto) {
-  const t = texto.toLowerCase();
-  return {
-    caja:          /caja|saldo|ingreso|egreso|movimiento|recarga|gasto/.test(t),
-    autorizaciones:/autorizaci[oó]n|autorizar|orden.*pago|aprobar|rechazar|firma/.test(t),
-    usuarios:      /usuario|acceso|login|rol|permiso/.test(t),
-    diputados:     /diputado|partido|propietario|suplente|congreso/.test(t),
-    presupuesto:   /presupuesto|asignado|ejecutado|disponible|ejecuci[oó]n/.test(t),
-    ayudasSociales:/ayuda.{0,10}social|social.{0,10}ayuda/.test(t),
-    ayudasRegistro:/\bayuda|pagadur[ií]a|beneficiario|dni|rtn|econ[oó]mica|m[eé]dica|alimentaria|educativa|especie/.test(t),
+// ── Build context: Presupuesto Social ────────────────────────────────────────
+async function buildContext() {
+  const anioActual = new Date().getFullYear();
+
+  const [presupuestos, ayudas] = await Promise.all([
+    query(`
+      SELECT pd.id, pd.anio, pd.monto_asignado,
+             d.nombre AS diputado, d.departamento, d.tipo AS tipo_diputado, d.partido,
+             COALESCE(SUM(a.monto), 0) AS ejecutado,
+             (pd.monto_asignado - COALESCE(SUM(a.monto), 0)) AS disponible
+      FROM presupuesto_diputados pd
+      JOIN diputados d ON d.id = pd.diputado_id
+      LEFT JOIN ayudas_sociales a ON a.presupuesto_id = pd.id
+      WHERE pd.anio >= ?
+      GROUP BY pd.id
+      ORDER BY pd.anio DESC, d.departamento ASC, d.nombre ASC
+    `, [anioActual - 1]),
+    query(`
+      SELECT a.id, a.fecha, a.concepto, a.beneficiario,
+             a.numero_orden, a.numero_cheque, a.monto,
+             a.estado_liquidacion, a.fecha_liquidacion, a.observaciones,
+             d.nombre AS diputado, d.departamento,
+             uc.nombre AS creado_por,
+             ul.nombre AS liquidado_por_nombre
+      FROM ayudas_sociales a
+      JOIN presupuesto_diputados pd ON pd.id = a.presupuesto_id
+      JOIN diputados d ON d.id = pd.diputado_id
+      LEFT JOIN usuarios uc ON uc.id = a.created_by
+      LEFT JOIN usuarios ul ON ul.id = a.liquidado_por
+      ORDER BY a.fecha DESC, a.id DESC
+      LIMIT 400
+    `),
+  ]);
+
+  const totalAsignado  = presupuestos.reduce((s, p) => s + parseFloat(p.monto_asignado), 0);
+  const totalEjecutado = presupuestos.reduce((s, p) => s + parseFloat(p.ejecutado), 0);
+  const sinLiquidar    = ayudas.filter(a => a.estado_liquidacion === 'sin_liquidar');
+  const enProceso      = ayudas.filter(a => a.estado_liquidacion === 'en_proceso');
+  const liquidadas     = ayudas.filter(a => a.estado_liquidacion === 'liquido');
+  const montoSinLiq    = sinLiquidar.reduce((s, a) => s + parseFloat(a.monto), 0);
+
+  const fmt      = n => `L${parseFloat(n).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmtFecha = f => {
+    if (!f) return '—';
+    const d = new Date(f);
+    return isNaN(d) ? String(f).slice(0, 10) : d.toLocaleDateString('es-GT');
   };
-}
+  const ESTADO = { sin_liquidar: 'SIN LIQUIDAR', en_proceso: 'EN PROCESO', liquido: 'LIQUIDADO' };
 
-// ── Build context from DB (solo datos relevantes al mensaje) ─────────────────
-async function buildContext(mensaje, historial = []) {
-  const textoCompleto = mensaje + ' ' + historial.slice(-4).map(h => h.contenido).join(' ');
-  const temas = detectarTemas(textoCompleto);
-  const hayTema = Object.values(temas).some(Boolean);
+  let ctx = `=== SISTEMA PRESUPUESTO SOCIAL (${new Date().toLocaleDateString('es-GT')}) ===\n\n`;
 
-  // Mensaje genérico → resumen compacto de todos los módulos sin arrays detallados
-  if (!hayTema) {
-    const [cajaRes, cntAut, cntDip, cntAyudas] = await Promise.all([
-      query(`SELECT SUM(CASE WHEN tipo IN ('RECARGA','INGRESO') THEN monto ELSE 0 END) AS ingresos, SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END) AS egresos FROM caja_chica`),
-      query(`SELECT estado, COUNT(*) AS total FROM autorizaciones_pago GROUP BY estado`),
-      query(`SELECT COUNT(*) AS total FROM diputados`),
-      query(`SELECT COUNT(*) AS total, COALESCE(SUM(cantidad),0) AS monto FROM ayudas`),
-    ]);
-    const ingresos = parseFloat(cajaRes[0].ingresos) || 0;
-    const egresos  = parseFloat(cajaRes[0].egresos)  || 0;
-    return [
-      `=== RESUMEN GENERAL DEL SISTEMA (${new Date().toLocaleDateString('es-GT')}) ===`,
-      `Caja Chica — Saldo: L${(ingresos - egresos).toFixed(2)} | Ingresos: L${ingresos.toFixed(2)} | Egresos: L${egresos.toFixed(2)}`,
-      `Autorizaciones de Pago — Por estado: ${JSON.stringify(cntAut)}`,
-      `Diputados registrados: ${cntDip[0].total}`,
-      `Registro de Ayudas — Total: ${cntAyudas[0].total} | Monto: L${parseFloat(cntAyudas[0].monto).toFixed(2)}`,
-    ].join('\n');
-  }
+  ctx += `--- RESUMEN GLOBAL ---\n`;
+  ctx += `Presupuestos registrados : ${presupuestos.length}\n`;
+  ctx += `Total asignado           : ${fmt(totalAsignado)}\n`;
+  ctx += `Total ejecutado          : ${fmt(totalEjecutado)}\n`;
+  ctx += `Total disponible         : ${fmt(totalAsignado - totalEjecutado)}\n`;
+  ctx += `Ayudas registradas       : ${ayudas.length}\n`;
+  ctx += `  Sin liquidar           : ${sinLiquidar.length}  (${fmt(montoSinLiq)})\n`;
+  ctx += `  En proceso             : ${enProceso.length}\n`;
+  ctx += `  Liquidadas             : ${liquidadas.length}\n\n`;
 
-  // Preparar solo las queries necesarias
-  const fetches = {};
+  ctx += `--- PRESUPUESTOS POR DIPUTADO ---\n`;
+  presupuestos.forEach(p => {
+    const pct = parseFloat(p.monto_asignado) > 0
+      ? ((parseFloat(p.ejecutado) / parseFloat(p.monto_asignado)) * 100).toFixed(1)
+      : '0.0';
+    ctx += `[Año ${p.anio}] ${p.diputado} | ${p.departamento} | ${p.tipo_diputado} | ${p.partido}\n`;
+    ctx += `  Asignado: ${fmt(p.monto_asignado)} | Ejecutado: ${fmt(p.ejecutado)} | Disponible: ${fmt(p.disponible)} | Ejecución: ${pct}%\n`;
+  });
 
-  if (temas.caja) {
-    fetches.cajaRes     = query(`SELECT SUM(CASE WHEN tipo IN ('RECARGA','INGRESO') THEN monto ELSE 0 END) AS ingresos, SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END) AS egresos FROM caja_chica`);
-    fetches.movimientos = query(`SELECT cc.fecha, cc.descripcion, cc.tipo, cc.monto, cc.categoria, u.nombre AS usuario FROM caja_chica cc JOIN usuarios u ON u.id = cc.usuario_id ORDER BY cc.fecha DESC LIMIT 50`);
-  }
-  if (temas.autorizaciones) {
-    fetches.autorizaciones = query(`SELECT ap.numero, ap.tipo_pago, ap.beneficiario, ap.monto, ap.detalle, ap.estado, ap.fecha_creacion, ap.fecha_autorizacion, ap.motivo_rechazo, ap.firma_nombre, c.nombre AS creado_por, a.nombre AS autorizado_por FROM autorizaciones_pago ap LEFT JOIN usuarios c ON c.id = ap.creado_por LEFT JOIN usuarios a ON a.id = ap.autorizado_por ORDER BY ap.fecha_creacion DESC LIMIT 50`);
-  }
-  if (temas.usuarios) {
-    fetches.usuarios = query(`SELECT nombre, username, email, rol, activo FROM usuarios ORDER BY nombre`);
-  }
-  if (temas.diputados || temas.presupuesto || temas.ayudasSociales) {
-    fetches.diputados = query(`SELECT id, departamento, numero, tipo, nombre, identidad, partido, telefono, correo FROM diputados ORDER BY departamento ASC, numero ASC, nombre ASC LIMIT 500`);
-  }
-  if (temas.presupuesto || temas.ayudasSociales) {
-    fetches.presupuestos = query(`SELECT pd.id, pd.anio, pd.monto_asignado, pd.observaciones, d.nombre AS diputado_nombre, d.departamento, d.tipo AS diputado_tipo, d.partido, COALESCE(SUM(a.monto), 0) AS ejecutado, (pd.monto_asignado - COALESCE(SUM(a.monto), 0)) AS disponible FROM presupuesto_diputados pd JOIN diputados d ON d.id = pd.diputado_id LEFT JOIN ayudas_sociales a ON a.presupuesto_id = pd.id GROUP BY pd.id ORDER BY pd.anio DESC, d.departamento ASC, d.nombre ASC LIMIT 300`);
-  }
-  if (temas.ayudasSociales) {
-    fetches.ayudas = query(`SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.monto, a.observaciones, d.nombre AS diputado_nombre, d.departamento, u.nombre AS registrado_por FROM ayudas_sociales a JOIN presupuesto_diputados pd ON pd.id = a.presupuesto_id JOIN diputados d ON d.id = pd.diputado_id LEFT JOIN usuarios u ON u.id = a.created_by ORDER BY a.fecha DESC, a.id DESC LIMIT 200`);
-  }
-  if (temas.ayudasRegistro) {
-    fetches.ayudasRegistro = query(`SELECT a.id, a.nombre_completo, a.dni, a.rtn, a.fecha, a.cantidad, a.tipo_ayuda, a.observaciones, u.nombre AS registrado_por FROM ayudas a LEFT JOIN usuarios u ON u.id = a.usuario_id ORDER BY a.fecha DESC, a.id DESC LIMIT 200`);
-  }
-
-  // Resolver todas las promesas en paralelo
-  const keys   = Object.keys(fetches);
-  const values = await Promise.all(keys.map(k => fetches[k]));
-  const data   = Object.fromEntries(keys.map((k, i) => [k, values[i]]));
-
-  // Construir el contexto solo con los datos cargados
-  let ctx = `=== DATOS REALES DEL SISTEMA (${new Date().toLocaleDateString('es-GT')}) ===\n`;
-
-  if (data.cajaRes) {
-    const ingresos = parseFloat(data.cajaRes[0].ingresos) || 0;
-    const egresos  = parseFloat(data.cajaRes[0].egresos)  || 0;
-    ctx += `\n--- CAJA CHICA ---\nSaldo actual: L${(ingresos - egresos).toFixed(2)}\nIngresos/recargas: L${ingresos.toFixed(2)}\nEgresos: L${egresos.toFixed(2)}\nUltimos 50 movimientos: ${JSON.stringify(data.movimientos)}\n`;
-  }
-  if (data.autorizaciones) {
-    ctx += `\n--- AUTORIZACIONES DE PAGO (ultimas 50) ---\n${JSON.stringify(data.autorizaciones)}\n`;
-  }
-  if (data.usuarios) {
-    ctx += `\n--- USUARIOS DEL SISTEMA ---\n${JSON.stringify(data.usuarios)}\n`;
-  }
-  if (data.diputados) {
-    ctx += `\n--- DIPUTADOS (${data.diputados.length} registros) ---\n${JSON.stringify(data.diputados)}\n`;
-  }
-  if (data.presupuestos) {
-    const totalPresupuestado = data.presupuestos.reduce((s, p) => s + parseFloat(p.monto_asignado), 0);
-    const totalEjecutado     = data.presupuestos.reduce((s, p) => s + parseFloat(p.ejecutado), 0);
-    ctx += `\n--- PRESUPUESTO DE DIPUTADOS (${data.presupuestos.length} registros) ---\nTotal presupuestado: L${totalPresupuestado.toFixed(2)}\nTotal ejecutado: L${totalEjecutado.toFixed(2)}\nDisponible: L${(totalPresupuestado - totalEjecutado).toFixed(2)}\nDetalle: ${JSON.stringify(data.presupuestos)}\n`;
-  }
-  if (data.ayudas) {
-    ctx += `\n--- AYUDAS SOCIALES (ultimas 200) ---\n${JSON.stringify(data.ayudas)}\n`;
-  }
-  if (data.ayudasRegistro) {
-    const total = data.ayudasRegistro.length;
-    const monto = data.ayudasRegistro.reduce((s, a) => s + parseFloat(a.cantidad || 0), 0);
-    ctx += `\n--- REGISTRO DE AYUDAS - Pagaduria Especial (ultimas 200) ---\nTotal: ${total} | Monto: L${monto.toFixed(2)}\nDetalle: ${JSON.stringify(data.ayudasRegistro)}\n`;
-  }
+  ctx += `\n--- REGISTRO DE AYUDAS (${ayudas.length} registros) ---\n`;
+  ayudas.forEach(a => {
+    ctx += `\n[#${a.id}] ${fmtFecha(a.fecha)} — ${a.diputado} (${a.departamento})\n`;
+    ctx += `  Beneficiario  : ${a.beneficiario}\n`;
+    ctx += `  Concepto      : ${a.concepto}\n`;
+    ctx += `  Monto         : ${fmt(a.monto)}\n`;
+    ctx += `  Nro. Orden    : ${a.numero_orden  || '—'}\n`;
+    ctx += `  Nro. Cheque   : ${a.numero_cheque || '—'}\n`;
+    ctx += `  Estado        : ${ESTADO[a.estado_liquidacion] || a.estado_liquidacion}\n`;
+    if (a.estado_liquidacion === 'liquido')
+      ctx += `  Liquidado el  : ${fmtFecha(a.fecha_liquidacion)} por ${a.liquidado_por_nombre || '—'}\n`;
+    if (a.observaciones)
+      ctx += `  Observaciones : ${a.observaciones}\n`;
+    ctx += `  Registrado por: ${a.creado_por || '—'}\n`;
+  });
 
   return ctx.trim();
 }
@@ -137,24 +122,22 @@ exports.sendMessage = async (req, res) => {
     return res.status(400).json({ message: 'Historial invalido' });
 
   try {
-    const contexto = await buildContext(mensaje, historial);
+    const contexto = await buildContext();
 
-    const systemPrompt = `Eres el asistente de inteligencia artificial del sistema de la Pagaduría Especial. Tienes acceso a los datos reales y actualizados del sistema. Tu rol es responder preguntas con datos precisos y concretos.
+    const systemPrompt = `Eres el asistente especializado del módulo de Presupuesto Social de la Pagaduría Especial. Tu única función es responder consultas sobre presupuestos asignados a diputados y el registro de ayudas sociales.
 
-Estás hablando con ${req.user.nombre}. Dirígete a él por su nombre en cada respuesta.
+Estás hablando con ${req.user.nombre}. Dirígete siempre a él por su nombre.
 
-Reglas:
-- Siempre responde en español.
+REGLAS ESTRICTAS:
+- Responde SIEMPRE en español.
 - Usa formato L0.00 para montos (Lempiras hondureños).
-- Se conciso pero completo.
-- Si el dato no esta en el contexto, dilo claramente.
-- No inventes datos ni valores.
-- Puedes hacer calculos con los datos que tienes.
-- Puedes consultar y responder sobre diputados: nombre, departamento, tipo (PROPIETARIO/SUPLENTE), partido, identidad, telefono y correo.
-- Puedes consultar y responder sobre el presupuesto de diputados: monto asignado, ejecutado, disponible por diputado y año.
-- Puedes consultar ayudas sociales registradas: beneficiario, concepto, monto, fecha y diputado al que pertenecen.
-- Puedes consultar y responder sobre el REGISTRO DE AYUDAS de la Pagaduría Especial: beneficiario (nombre_completo), DNI, RTN, fecha, cantidad, tipo de ayuda y observaciones. Puedes filtrar por tipo (Económica, Médica, Alimentaria, Educativa, Material/Especie, Social, Otra), por rango de fechas, y calcular totales por tipo o período.
-- Para calcular porcentajes de ejecucion usa: (ejecutado / monto_asignado) * 100.
+- Sé preciso: cita los datos EXACTOS del contexto, sin redondear ni estimar.
+- NUNCA inventes datos, montos, nombres o números que no estén en el contexto.
+- Si el dato no existe en el contexto, dilo claramente.
+- Al buscar por nombre, considera variaciones de mayúsculas/minúsculas.
+- Para listar múltiples registros, usa formato de lista clara con los datos relevantes.
+- Los estados de liquidación son: SIN LIQUIDAR, EN PROCESO, LIQUIDADO.
+- Para calcular ejecución: (ejecutado / asignado) × 100.
 
 ${contexto}`;
 
@@ -170,8 +153,8 @@ ${contexto}`;
         ...safeMsgs,
         { role: 'user', content: mensaje.trim() },
       ],
-      max_tokens: 1000,
-      temperature: 0.2,
+      max_tokens: 1500,
+      temperature: 0,
     });
 
     const respuesta = completion.choices[0].message.content;
