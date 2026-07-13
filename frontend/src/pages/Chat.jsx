@@ -21,14 +21,6 @@ function renderMarkdown(text) {
   });
 }
 
-const SUGERENCIAS = [
-  'Ayudas sin liquidar',
-  'Resumen del presupuesto',
-  '¿Qué diputado tiene más disponible?',
-  'Ayudas registradas hoy',
-  'Total ejecutado este año',
-];
-
 const BIENVENIDA = {
   id: 0,
   rol: 'assistant',
@@ -42,7 +34,6 @@ export default function Chat() {
   const [cargando, setCargando]                      = useState(false);
   const [escuchando, setEscuchando]                  = useState(false);
   const [reproduciendo, setReproduciendo]            = useState(null);
-  const [mostrarSugerencias, setMostrarSugerencias]  = useState(true);
   const [modoVoz, setModoVoz]                        = useState(false);
   const modoVozRef                                   = useRef(false);
 
@@ -76,7 +67,6 @@ export default function Chat() {
     if (!msg || cargando) return;
 
     setInput('');
-    setMostrarSugerencias(false);
     const historial = mensajes.map(m => ({ rol: m.rol, contenido: m.contenido }));
     setMensajes(prev => [...prev, { id: Date.now(), ts: Date.now(), rol: 'user', contenido: msg }]);
     setCargando(true);
@@ -169,7 +159,6 @@ export default function Chat() {
     setEscuchando(false);
     setReproduciendo(null);
     setMensajes([BIENVENIDA]);
-    setMostrarSugerencias(true);
   };
 
   return (
@@ -218,13 +207,6 @@ export default function Chat() {
                     </button>
                   )}
                 </div>
-                {m.id === 0 && mostrarSugerencias && (
-                  <div className="sugerencias">
-                    {SUGERENCIAS.map(s => (
-                      <button key={s} className="chip" onClick={() => enviar(s)}>{s}</button>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           ))}

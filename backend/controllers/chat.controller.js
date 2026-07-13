@@ -38,6 +38,7 @@ async function buildContext() {
     `, [anioActual - 1]),
     query(`
       SELECT a.id, a.fecha, a.concepto, a.beneficiario,
+             a.presupuesto_id,
              a.numero_orden, a.numero_cheque, a.monto,
              a.estado_liquidacion, a.fecha_liquidacion, a.observaciones,
              d.nombre AS diputado, d.departamento,
@@ -59,6 +60,16 @@ async function buildContext() {
   const enProceso      = ayudas.filter(a => a.estado_liquidacion === 'en_proceso');
   const liquidadas     = ayudas.filter(a => a.estado_liquidacion === 'liquido');
   const montoSinLiq    = sinLiquidar.reduce((s, a) => s + parseFloat(a.monto), 0);
+
+  // Conteos exactos por presupuesto (evita que la IA cuente incorrectamente)
+  const conteos = {};
+  ayudas.forEach(a => {
+    const pid = a.presupuesto_id;
+    if (!conteos[pid]) conteos[pid] = { total: 0, sin_liquidar: 0, en_proceso: 0, liquido: 0, monto_sin_liq: 0 };
+    conteos[pid].total++;
+    conteos[pid][a.estado_liquidacion] = (conteos[pid][a.estado_liquidacion] || 0) + 1;
+    if (a.estado_liquidacion === 'sin_liquidar') conteos[pid].monto_sin_liq += parseFloat(a.monto);
+  });
 
   const fmt      = n => `L${parseFloat(n).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const fmtFecha = f => {
@@ -85,8 +96,10 @@ async function buildContext() {
     const pct = parseFloat(p.monto_asignado) > 0
       ? ((parseFloat(p.ejecutado) / parseFloat(p.monto_asignado)) * 100).toFixed(1)
       : '0.0';
-    ctx += `[Año ${p.anio}] ${p.diputado} | ${p.departamento} | ${p.tipo_diputado} | ${p.partido}\n`;
-    ctx += `  Asignado: ${fmt(p.monto_asignado)} | Ejecutado: ${fmt(p.ejecutado)} | Disponible: ${fmt(p.disponible)} | Ejecución: ${pct}%\n`;
+    const c = conteos[p.id] || { total: 0, sin_liquidar: 0, en_proceso: 0, liquido: 0, monto_sin_liq: 0 };
+    ctx += `[A\u00f1o ${p.anio}] ${p.diputado} | ${p.departamento} | ${p.tipo_diputado} | ${p.partido}\n`;
+    ctx += `  Asignado: ${fmt(p.monto_asignado)} | Ejecutado: ${fmt(p.ejecutado)} | Disponible: ${fmt(p.disponible)} | Ejecuci\u00f3n: ${pct}%\n`;
+    ctx += `  Ayudas: ${c.total} total | SIN LIQUIDAR: ${c.sin_liquidar} (${fmt(c.monto_sin_liq)}) | EN PROCESO: ${c.en_proceso} | LIQUIDADAS: ${c.liquido}\n`;
   });
 
   ctx += `\n--- REGISTRO DE AYUDAS (${ayudas.length} registros) ---\n`;
