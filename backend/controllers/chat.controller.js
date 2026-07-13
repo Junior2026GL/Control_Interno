@@ -168,7 +168,7 @@ ${contexto}`;
       .map(h => ({ role: h.rol === 'assistant' ? 'assistant' : 'user', content: h.contenido.slice(0, 600) }));
 
     const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4.1-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         ...safeMsgs,
