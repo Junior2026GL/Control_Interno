@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { FiSend, FiMic, FiMicOff, FiVolume2, FiVolumeX, FiTrash2 } from 'react-icons/fi';
+import { FiSend, FiMic, FiMicOff, FiVolume2, FiVolumeX, FiTrash2, FiHeadphones } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
@@ -43,15 +43,32 @@ export default function Chat() {
   const [escuchando, setEscuchando]                  = useState(false);
   const [reproduciendo, setReproduciendo]            = useState(null);
   const [mostrarSugerencias, setMostrarSugerencias]  = useState(true);
+  const [modoVoz, setModoVoz]                        = useState(false);
+  const modoVozRef                                   = useRef(false);
 
-  const messagesEndRef  = useRef(null);
+  const messagesEndRef   = useRef(null);
   const reconocimientoRef = useRef(null);
-  const audioRef        = useRef(null);
-  const inputRef        = useRef(null);
+  const audioRef         = useRef(null);
+  const inputRef         = useRef(null);
+  const enviarRef        = useRef(null);
+  const activarMicRef    = useRef(null);
+  const reproducirVozRef = useRef(null);
+  const lastAutoPlayId   = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [mensajes, cargando]);
+
+  // ── Auto-play TTS cuando llega respuesta en Modo Voz ────────────────────
+  useEffect(() => {
+    if (!modoVozRef.current) return;
+    const asistente = mensajes.filter(m => m.rol === 'assistant' && m.id !== 0);
+    if (!asistente.length) return;
+    const ultimo = asistente[asistente.length - 1];
+    if (ultimo.id === lastAutoPlayId.current) return;
+    lastAutoPlayId.current = ultimo.id;
+    reproducirVozRef.current?.(ultimo.id, ultimo.contenido, true);
+  }, [mensajes]);
 
   // ── Enviar mensaje ──────────────────────────────────────────────────────────
   const enviar = async (textoDirecto) => {
@@ -71,47 +88,89 @@ export default function Chat() {
       setMensajes(prev => [...prev, { id: Date.now(), ts: Date.now(), rol: 'assistant', contenido: 'Hubo un error al procesar tu consulta. Por favor intenta de nuevo.' }]);
     } finally {
       setCargando(false);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      if (!modoVozRef.current) setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
+  enviarRef.current = enviar;
 
-  // ── Micrófono (Web Speech API — gratis, sin API key) ────────────────────────
-  const toggleMic = () => {
+  // ── Activar micrófono (reutilizable desde Modo Voz y manual) ───────────────
+  const activarMic = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.'); return; }
-
-    if (escuchando) { reconocimientoRef.current?.stop(); setEscuchando(false); return; }
-
+    if (!SR || cargando) return;
     const rec = new SR();
     rec.lang = 'es-GT';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
     reconocimientoRef.current = rec;
-
     rec.onstart  = () => setEscuchando(true);
-    rec.onresult = e => { setInput(prev => prev ? prev + ' ' + e.results[0][0].transcript : e.results[0][0].transcript); setEscuchando(false); };
-    rec.onerror  = () => setEscuchando(false);
-    rec.onend    = () => setEscuchando(false);
+    rec.onresult = e => {
+      const texto = e.results[0][0].transcript;
+      setEscuchando(false);
+      if (modoVozRef.current) {
+        enviarRef.current?.(texto);
+      } else {
+        setInput(prev => prev ? prev + ' ' + texto : texto);
+      }
+    };
+    rec.onerror = () => setEscuchando(false);
+    rec.onend   = () => setEscuchando(false);
     rec.start();
   };
+  activarMicRef.current = activarMic;
 
-  // ── Text-to-Speech (ElevenLabs) ─────────────────────────────────────────────
-  const reproducirVoz = async (id, texto) => {
-    if (reproduciendo === id) { audioRef.current?.pause(); setReproduciendo(null); return; }
+  // ── Toggle micrófono manual ───────────────────────────────────────────
+  const toggleMic = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.'); return; }
+    if (escuchando) { reconocimientoRef.current?.stop(); setEscuchando(false); return; }
+    activarMic();
+  };
+
+  // ── Text-to-Speech con soporte Modo Voz (ElevenLabs) ────────────────────
+  const reproducirVoz = async (id, texto, autoPlay = false) => {
+    if (!autoPlay && reproduciendo === id) { audioRef.current?.pause(); setReproduciendo(null); return; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     setReproduciendo(id);
     try {
-      const response = await api.post('/chat/tts', { texto }, { responseType: 'blob', headers: authHeader() });
+      const textoTTS = autoPlay ? texto.slice(0, 700) : texto;
+      const response = await api.post('/chat/tts', { texto: textoTTS }, { responseType: 'blob', headers: authHeader() });
       const url = URL.createObjectURL(response.data);
       const audio = new Audio(url);
       audioRef.current = audio;
       audio.play();
-      audio.onended = () => { setReproduciendo(null); URL.revokeObjectURL(url); };
+      audio.onended = () => {
+        setReproduciendo(null);
+        URL.revokeObjectURL(url);
+        if (modoVozRef.current) setTimeout(() => activarMicRef.current?.(), 700);
+      };
     } catch { setReproduciendo(null); }
   };
+  reproducirVozRef.current = reproducirVoz;
 
-  // ── Limpiar chat ────────────────────────────────────────────────────────────
-  const limpiarChat = () => { audioRef.current?.pause(); setReproduciendo(null); setMensajes([BIENVENIDA]); setMostrarSugerencias(true); };
+  // ── Toggle Modo Voz ────────────────────────────────────────────────
+  const toggleModoVoz = () => {
+    const nuevo = !modoVozRef.current;
+    modoVozRef.current = nuevo;
+    setModoVoz(nuevo);
+    if (!nuevo) {
+      reconocimientoRef.current?.stop();
+      audioRef.current?.pause();
+      setEscuchando(false);
+      setReproduciendo(null);
+    }
+  };
+
+  // ── Limpiar chat ────────────────────────────────────────────
+  const limpiarChat = () => {
+    audioRef.current?.pause();
+    reconocimientoRef.current?.stop();
+    modoVozRef.current = false;
+    setModoVoz(false);
+    setEscuchando(false);
+    setReproduciendo(null);
+    setMensajes([BIENVENIDA]);
+    setMostrarSugerencias(true);
+  };
 
   return (
     <div className="page-shell">
@@ -130,9 +189,16 @@ export default function Chat() {
               </div>
             </div>
           </div>
-          <button className="chat-clear-btn" onClick={limpiarChat} title="Limpiar conversación">
-            <FiTrash2 size={16} /><span>Limpiar</span>
-          </button>
+          <div className="chat-header-actions">
+            <button className={`voice-mode-btn ${modoVoz ? 'active' : ''}`} onClick={toggleModoVoz}
+              title={modoVoz ? 'Desactivar Modo Voz' : 'Activar Modo Voz — respuestas en audio automático'}>
+              <FiHeadphones size={16} />
+              <span>{modoVoz ? 'Voz ON' : 'Modo Voz'}</span>
+            </button>
+            <button className="chat-clear-btn" onClick={limpiarChat} title="Limpiar conversación">
+              <FiTrash2 size={16} /><span>Limpiar</span>
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
@@ -176,9 +242,14 @@ export default function Chat() {
 
         {/* Input */}
         <div className="chat-input-area">
-          {escuchando && (
-            <div className="listening-bar">
-              <span className="listening-dot" /> Escuchando...
+          {(escuchando || (modoVoz && !cargando)) && (
+            <div className={`listening-bar ${modoVoz ? 'voice-mode-bar' : ''}`}>
+              <span className="listening-dot" />
+              {modoVoz
+                ? escuchando    ? 'Escuchando… habla ahora'
+                : reproduciendo ? 'Reproduciendo respuesta…'
+                                : 'Modo Voz activo — presiona 🎤 para hablar'
+                : 'Escuchando...'}
             </div>
           )}
           <div className="chat-input-row">
