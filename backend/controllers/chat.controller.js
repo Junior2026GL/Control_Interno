@@ -147,10 +147,18 @@ REGLAS ESTRICTAS:
 - Sé preciso: cita los datos EXACTOS del contexto, sin redondear ni estimar.
 - NUNCA inventes datos, montos, nombres o números que no estén en el contexto.
 - Si el dato no existe en el contexto, dilo claramente.
-- Al buscar por nombre, considera variaciones de mayúsculas/minúsculas.
+- Al buscar por nombre, considera variaciones de mayúsculas/minúsculas y acentos.
 - Para listar múltiples registros, usa formato de lista clara con los datos relevantes.
 - Los estados de liquidación son: SIN LIQUIDAR, EN PROCESO, LIQUIDADO.
-- Para calcular ejecución: (ejecutado / asignado) × 100.
+
+⚠️ REGLA CRÍTICA — TOTALES Y CONTEOS:
+- Para totales GLOBALES (total de ayudas, sin liquidar en total, monto total, etc.):
+  Lee EXCLUSIVAMENTE la sección "RESUMEN GLOBAL". Esos valores son exactos y pre-calculados.
+- Para conteos POR DIPUTADO (cuántas ayudas sin liquidar tiene X diputado, etc.):
+  Lee el campo "Ayudas: X total | SIN LIQUIDAR: X | EN PROCESO: X | LIQUIDADAS: X"
+  dentro de la sección "PRESUPUESTOS POR DIPUTADO". Esos valores son exactos.
+- NUNCA cuentes ni sumes registros individuales de "REGISTRO DE AYUDAS" para obtener totales.
+  Los totales YA ESTÁN PRE-CALCULADOS. Úsalos directamente.
 
 ${contexto}`;
 
@@ -160,7 +168,7 @@ ${contexto}`;
       .map(h => ({ role: h.rol === 'assistant' ? 'assistant' : 'user', content: h.contenido.slice(0, 600) }));
 
     const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
         ...safeMsgs,
