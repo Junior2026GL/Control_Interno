@@ -258,8 +258,20 @@ export default function OrdenesPago() {
       });
       const blob    = new Blob([res.data], { type: 'application/pdf' });
       const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+
+      // Imprimir directo sin descargar — iframe oculto
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;';
+      document.body.appendChild(iframe);
+      iframe.src = blobUrl;
+      iframe.onload = () => {
+        try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (_) {}
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(blobUrl);
+        }, 60000);
+      };
+
       fetchOrdenes(page);
     } catch (err) {
       const msg = err.response?.data?.message
