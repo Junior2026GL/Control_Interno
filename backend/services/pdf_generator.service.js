@@ -93,7 +93,7 @@ const COORDS = {
     y: 32,    // pts desde abajo
     width: 235,
     height: 92,
-    opacity: 0.92,
+    opacity: 1.0,  // opacidad completa para impresoras de matriz de puntos
   },
 };
 
@@ -153,15 +153,24 @@ function truncate(text, maxW, size) {
  * Carga el buffer de imagen de la firma del presidente.
  * Prioridad: SVG (private/) → PNG (private/).
  * Retorna null si no se encuentra ningún archivo.
+ *
+ * Para impresoras de matriz de puntos (dot matrix) como la Epson LQ-590 II:
+ * - Se convierte a blanco/negro puro (sin grises ni anti-aliasing)
+ * - Se aplana la transparencia contra fondo blanco
+ * - Se usa alta resolución para mejor definición del trazo
  */
 async function cargarFirma() {
-  // 1. SVG vectorial → convierte con sharp (mejor calidad)
+  const sharp = require('sharp');
+
+  // 1. SVG vectorial → convierte con sharp a B&N puro
   if (fs.existsSync(FIRMA_SVG_PATH)) {
     try {
-      const sharp  = require('sharp');
       const buffer = await sharp(FIRMA_SVG_PATH)
-        .resize(600, 225, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-        .png({ compressionLevel: 9 })
+        .resize(1200, 450, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 255 } })
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .grayscale()
+        .threshold(140)
+        .png()
         .toBuffer();
       return { buffer, tipo: 'png' };
     } catch (e) {
@@ -169,9 +178,20 @@ async function cargarFirma() {
     }
   }
 
-  // 2. Fallback: PNG directo
+  // 2. Fallback: PNG directo → también se convierte a B&N puro
   if (fs.existsSync(FIRMA_PNG_PATH)) {
-    return { buffer: fs.readFileSync(FIRMA_PNG_PATH), tipo: 'png' };
+    try {
+      const buffer = await sharp(FIRMA_PNG_PATH)
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .grayscale()
+        .threshold(140)
+        .png()
+        .toBuffer();
+      return { buffer, tipo: 'png' };
+    } catch (e) {
+      console.warn('[pdf_generator] sharp falló al procesar PNG, usando archivo directo:', e.message);
+      return { buffer: fs.readFileSync(FIRMA_PNG_PATH), tipo: 'png' };
+    }
   }
 
   return null;
