@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FiPrinter, FiClock, FiUser, FiRefreshCw } from 'react-icons/fi';
 import api from '../api/axios';
-import Layout from '../components/Layout';
+import Navbar from '../components/Navbar';
 import './ImprimirFirma.css';
 
 function fmtFecha(val) {
@@ -74,7 +74,8 @@ export default function ImprimirFirma() {
   const resumenList = Object.values(resumen).sort((a, b) => b.total - a.total);
 
   return (
-    <Layout>
+    <>
+      <Navbar />
       <div className="if-container">
         {toast && <div className={`if-toast if-toast-${toast.type}`}>{toast.msg}</div>}
 
@@ -152,6 +153,6 @@ export default function ImprimirFirma() {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
