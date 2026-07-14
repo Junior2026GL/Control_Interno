@@ -87,13 +87,19 @@ const COORDS = {
   // Fecha  (Tegucigalpa, M.D.C., ____ de _____ de _____)
   fecha_texto:             { x: 249, y: 82,  size: 8 },
 
-  // Firma del presidente — imagen
-  // Calibración: x centra la imagen sobre la línea de firma del preimpreso.
-  // y es desde el borde inferior de la hoja (pdf-lib). Bajar = reducir y.
-  // Centro horizontal de la línea de firma ≈ 490 pts → x = 490 - width/2
+  // Firma del presidente — imagen (lado derecho)
   firma_presidente: {
     x: 378,   // pts desde izquierda  (ajustar ±5 para centrar horizontalmente)
     y: 15,    // pts desde abajo      (ajustar ±5 para subir/bajar)
+    width: 235,
+    height: 92,
+    opacity: 1.0,
+  },
+
+  // Segunda firma — imagen (lado izquierdo, alineada verticalmente con la del presidente)
+  firma_izquierda: {
+    x: 50,    // pts desde izquierda  (ajustar ±5)
+    y: 15,    // pts desde abajo      (mismo nivel que firma_presidente)
     width: 235,
     height: 92,
     opacity: 1.0,
@@ -110,6 +116,9 @@ const OFFSET_Y    = OFFSET_Y_MM * 2.835;
 // Prioridad: 1) private/firma_presidente.svg  2) private/firma_presidente.png
 const FIRMA_PNG_PATH  = path.join(__dirname, '../private/firma_presidente.png');
 const FIRMA_SVG_PATH  = path.join(__dirname, '../private/firma_presidente.svg');
+
+// Segunda firma (lado izquierdo) — frontend/public/firma.png
+const FIRMA_IZQ_PATH  = path.join(__dirname, '../../frontend/public/firma.png');
 
 /**
  * Aplica el offset global a las coordenadas.
@@ -216,25 +225,38 @@ async function generarOrdenPagoPDF(datos) {
 
   const page = pdfDoc.addPage([612, 792]); // Carta
 
-  // ── Firma del presidente ──────────────────────────────────────────────────
+  // ── Firma del presidente (derecha) ─────────────────────────────────────
   try {
     const firma = await cargarFirma();
     if (firma) {
       const img = await pdfDoc.embedPng(firma.buffer);
       const fc  = applyOffset(COORDS.firma_presidente);
-      page.drawImage(img, {
-        x:       fc.x,
-        y:       fc.y,
-        width:   fc.width,
-        height:  fc.height,
-        opacity: fc.opacity,
-      });
+      page.drawImage(img, { x: fc.x, y: fc.y, width: fc.width, height: fc.height, opacity: fc.opacity });
     } else {
-      console.warn('[pdf_generator] Firma del presidente no encontrada. PDF generado sin firma.');
+      console.warn('[pdf_generator] Firma del presidente no encontrada.');
     }
   } catch (err) {
-    console.error('[pdf_generator] Error al incrustar firma:', err.message);
-    // No interrumpe la generación del PDF
+    console.error('[pdf_generator] Error al incrustar firma presidente:', err.message);
+  }
+
+  // ── Firma izquierda (frontend/public/firma.png) ──────────────────────────
+  try {
+    if (fs.existsSync(FIRMA_IZQ_PATH)) {
+      const sharp  = require('sharp');
+      const buffer = await sharp(FIRMA_IZQ_PATH)
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .grayscale()
+        .threshold(140)
+        .png()
+        .toBuffer();
+      const img = await pdfDoc.embedPng(buffer);
+      const fc  = applyOffset(COORDS.firma_izquierda);
+      page.drawImage(img, { x: fc.x, y: fc.y, width: fc.width, height: fc.height, opacity: fc.opacity });
+    } else {
+      console.warn('[pdf_generator] firma.png no encontrada en frontend/public.');
+    }
+  } catch (err) {
+    console.error('[pdf_generator] Error al incrustar firma izquierda:', err.message);
   }
 
   return pdfDoc.save();
