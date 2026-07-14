@@ -90,7 +90,7 @@ const COORDS = {
   // Firma del presidente — imagen (lado derecho)
   firma_presidente: {
     x: 378,
-    y: 25,    // subida ~3.5mm
+    y: 32,    // subida ~2.5mm más
     width: 235,
     height: 92,
     opacity: 1.0,
@@ -98,8 +98,8 @@ const COORDS = {
 
   // Segunda firma — imagen (lado izquierdo, alineada verticalmente con la del presidente)
   firma_izquierda: {
-    x: 20,    // más a la izquierda
-    y: 25,    // misma altura que firma_presidente
+    x: 20,
+    y: 32,    // misma altura que firma_presidente
     width: 235,
     height: 92,
     opacity: 1.0,
