@@ -98,10 +98,10 @@ const COORDS = {
 
   // Segunda firma — imagen (lado izquierdo, alineada verticalmente con la del presidente)
   firma_izquierda: {
-    x: 25,    // pts desde izquierda  (ajustar ±5)
+    x: 50,    // pts desde izquierda  (ajustar ±5)
     y: 15,    // pts desde abajo      (mismo nivel que firma_presidente)
-    width: 195,
-    height: 76,
+    width: 235,
+    height: 92,
     opacity: 1.0,
   },
 };
@@ -246,7 +246,7 @@ async function generarOrdenPagoPDF(datos) {
       const buffer = await sharp(FIRMA_IZQ_PATH)
         .flatten({ background: { r: 255, g: 255, b: 255 } })
         .grayscale()
-        .threshold(115)
+        .threshold(140)
         .png()
         .toBuffer();
       const img = await pdfDoc.embedPng(buffer);
