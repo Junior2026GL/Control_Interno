@@ -84,6 +84,7 @@ app.use('/api/orden-checklist',  require('./routes/orden_checklist.routes'));
 app.use('/api/bodegas',          require('./routes/bodegas.routes'));
 app.use('/api/censo',                    require('./routes/censo.routes'));
 app.use('/api/ordenes-pago',             require('./routes/ordenes_pago.routes'));
+app.use('/api/firma',                    require('./routes/firma.routes'));
 app.use('/api/cumpleanos-diputados',     require('./routes/cumpleanos_diputados.routes'));
 
 module.exports = app;

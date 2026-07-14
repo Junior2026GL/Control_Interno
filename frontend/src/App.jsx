@@ -29,6 +29,7 @@ import ViaticosDiputados from './pages/ViaticosDiputados';
 import BusquedaAyudas from './pages/BusquedaAyudas';
 import OrdenesPago from './pages/OrdenesPago';
 import CumpleanosPage from './pages/CumpleanosPage';
+import ImprimirFirma from './pages/ImprimirFirma';
 import PrivateRoute from './components/PrivateRoute';
 import RoleRoute from './components/RoleRoute';
 import ModuleRoute from './components/ModuleRoute';
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="/viaticos-diputados" element={<ModuleRoute modulo="viaticos-diputados"><ViaticosDiputados /></ModuleRoute>} />
             <Route path="/busqueda-ayudas" element={<ModuleRoute modulo="busqueda-ayudas"><BusquedaAyudas /></ModuleRoute>} />
             <Route path="/ordenes-pago" element={<ModuleRoute modulo="ordenes-pago"><OrdenesPago /></ModuleRoute>} />
+            <Route path="/imprimir-firma" element={<ModuleRoute modulo="imprimir-firma"><ImprimirFirma /></ModuleRoute>} />
             <Route path="/cumpleanos-diputados" element={<ModuleRoute modulo="cumpleanos-diputados"><CumpleanosPage /></ModuleRoute>} />
           </Routes>
         </SocketProvider>

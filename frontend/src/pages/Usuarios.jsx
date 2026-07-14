@@ -44,6 +44,7 @@ const MODULOS_LABELS = {
   'alcaldes':                'Alcaldes',
   'proveedores':             'Proveedores',
   'checklist':               'Checklist',
+  'imprimir-firma':          'Imprimir Firma',
   'constancias':             'Constancias',
   'censo':                   'Censo',
   'chat':                    'Chat',

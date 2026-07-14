@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut, FiFileText, FiMessageSquare, FiShield, FiEye, FiBriefcase, FiUserCheck, FiRepeat, FiGift, FiMapPin, FiClipboard, FiPackage } from 'react-icons/fi';
+import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut, FiFileText, FiMessageSquare, FiShield, FiEye, FiBriefcase, FiUserCheck, FiRepeat, FiGift, FiMapPin, FiClipboard, FiPackage, FiPrinter } from 'react-icons/fi';
 import { AuthContext } from '../context/AuthContext';
 import './Sidebar.css';
 
@@ -31,6 +31,7 @@ export default function Sidebar() {
     { path: '/checklist',               label: 'Check List Expedientes',    icon: FiClipboard,     clave: 'checklist',                 soloSuperAdmin: false },
     { path: '/orden-checklist',          label: 'Órdenes de Checklist',       icon: FiClipboard,     clave: 'orden-checklist',           soloSuperAdmin: false },
     { path: '/bodegas',                  label: 'Control de Entrega de Canastas', icon: FiPackage,  clave: 'bodegas',                   soloSuperAdmin: false },
+    { path: '/imprimir-firma',           label: 'Imprimir Firma',            icon: FiPrinter,       clave: 'imprimir-firma',            soloSuperAdmin: false },
     { path: '/ip-whitelist',            label: 'Acceso por IP',             icon: FiShield,        clave: null,                        soloSuperAdmin: true  },
     { path: '/auditoria',               label: 'Auditoría',                 icon: FiEye,           clave: null,                        soloSuperAdmin: true  },
   ];
