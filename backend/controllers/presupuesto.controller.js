@@ -477,7 +477,9 @@ exports.patchLiquidacion = async (req, res) => {
     fechaLiq = new Date(req.body.fecha_liquidacion);
     if (isNaN(fechaLiq.getTime()))
       return res.status(400).json({ message: 'Fecha de liquidación inválida.' });
-    if (fechaLiq > new Date())
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    if (fechaLiq > endOfToday)
       return res.status(400).json({ message: 'La fecha de liquidación no puede ser en el futuro.' });
   }
 

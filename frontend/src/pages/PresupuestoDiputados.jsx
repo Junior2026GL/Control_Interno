@@ -589,13 +589,10 @@ export default function PresupuestoDiputados() {
     }
     setLiqSaving(true);
     try {
-      // Combine selected date with current system time
       let fechaLiqDatetime = null;
       if (liqForm.estado_liquidacion === 'liquido' && liqForm.fecha_liquidacion) {
-        const now = new Date();
-        const [y, m, d] = liqForm.fecha_liquidacion.split('-').map(Number);
-        const combined = new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds());
-        fechaLiqDatetime = combined.toISOString();
+        // Use noon to avoid clock-skew / timezone issues with the server
+        fechaLiqDatetime = liqForm.fecha_liquidacion + 'T12:00:00';
       }
       await api.patch(
         `/presupuesto/${presupuesto.id}/ayudas/${liqModal.id}/liquidacion`,
