@@ -201,180 +201,20 @@ async function cargarFirma() {
 }
 
 /**
- * Genera el PDF de una Orden de Pago sobre hoja en blanco.
- * El resultado se imprime sobre el papel preimpreso físico.
+ * Genera el PDF de una Orden de Pago — solo estampa la firma del presidente.
+ * El resto del contenido ya está en el papel preimpreso físico.
  *
- * @param {Object} datos - Datos completos de la orden de pago
+ * @param {Object} datos - Datos de la orden (se usa numero_orden para el título)
  * @returns {Promise<Uint8Array>} - Bytes del PDF generado
  */
 async function generarOrdenPagoPDF(datos) {
-  const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+  const { PDFDocument } = require('pdf-lib');
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.setTitle(`Orden de Pago ${datos.numero_orden || ''}`);
   pdfDoc.setCreator('Sistema Control Interno');
 
-  const page   = pdfDoc.addPage([612, 792]); // Carta
-  const font   = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontB  = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  // ── Número de orden ───────────────────────────────────────────────────────
-  if (datos.numero_orden) {
-    const c = applyOffset(COORDS.numero_orden);
-    const txt = datos.numero_orden.toUpperCase();
-    const textW = fontB.widthOfTextAtSize(txt, c.size);
-    page.drawText(txt, {
-      x: c.align === 'center' ? c.x + (c.maxW - textW) / 2 : c.x,
-      y: c.y,
-      size: c.size + 1,
-      font: fontB,
-      color: rgb(0, 0, 0),
-    });
-  }
-
-  // ── No. cheque / transferencia ────────────────────────────────────────────
-  if (datos.no_cheque_transferencia) {
-    const c = applyOffset(COORDS.no_cheque_transferencia);
-    const txt = datos.no_cheque_transferencia.toString().trim();
-    const textW = font.widthOfTextAtSize(txt, c.size);
-    page.drawText(txt, {
-      x: c.align === 'center' ? c.x + (c.maxW - textW) / 2 : c.x,
-      y: c.y,
-      size: c.size,
-      font,
-      color: rgb(0, 0, 0),
-    });
-  }
-
-  // ── Tipo de cuenta (marca X) ───────────────────────────────────────────────
-  if (datos.tipo_cuenta && COORDS.tipo_cuenta[datos.tipo_cuenta]) {
-    const tc = applyOffset(COORDS.tipo_cuenta[datos.tipo_cuenta]);
-    page.drawText('X', { x: tc.x, y: tc.y, size: 8, font: fontB, color: rgb(0, 0, 0) });
-  }
-
-  // ── Beneficiario ──────────────────────────────────────────────────────────
-  if (datos.beneficiario) {
-    const c   = applyOffset(COORDS.beneficiario);
-    const txt = truncate(datos.beneficiario.toUpperCase(), c.maxW, c.size);
-    page.drawText(txt, { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-
-  // ── Código beneficiario ───────────────────────────────────────────────────
-  if (datos.codigo_beneficiario) {
-    const c   = applyOffset(COORDS.codigo_beneficiario);
-    const txt = truncate(datos.codigo_beneficiario.trim(), c.maxW, c.size);
-    page.drawText(txt, { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-
-  // ── Monto en números ──────────────────────────────────────────────────────
-  {
-    const c   = applyOffset(COORDS.monto_numeros);
-    const txt = formatMonto(datos.monto);
-    page.drawText(txt, { x: c.x, y: c.y, size: c.size, font: fontB, color: rgb(0, 0, 0) });
-  }
-
-  // ── Monto en letras ───────────────────────────────────────────────────────
-  if (datos.monto_letras) {
-    const c   = applyOffset(COORDS.monto_letras);
-    const txt = truncate(datos.monto_letras.toUpperCase(), c.maxW, c.size);
-    page.drawText(txt, { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-
-  // ── Valor que se adeuda por ───────────────────────────────────────────────
-  if (datos.valor_adeuda_por) {
-    const c   = applyOffset(COORDS.valor_adeuda_por);
-    const txt = truncate(datos.valor_adeuda_por.toUpperCase(), c.maxW, c.size);
-    page.drawText(txt, { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-
-  // ── Tabla CARGOS — fila 1 ────────────────────────────────────────────────
-  const cr = COORDS.cargos_row1;
-  if (datos.cargo_anio) {
-    const c = applyOffset(cr.anio);
-    page.drawText(String(datos.cargo_anio), { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-  if (datos.cargo_org) {
-    const c = applyOffset(cr.org);
-    page.drawText(datos.cargo_org.trim(), { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-  if (datos.cargo_fondo) {
-    const c = applyOffset(cr.fondo);
-    page.drawText(datos.cargo_fondo.trim(), { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-  if (datos.cargo_tipo_prog) {
-    const c = applyOffset(cr.tipo_prog);
-    page.drawText(datos.cargo_tipo_prog.trim(), { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-  if (datos.cargo_sub_prog) {
-    const c = applyOffset(cr.sub_prog);
-    page.drawText(datos.cargo_sub_prog.trim(), { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-  if (datos.cargo_act) {
-    const c = applyOffset(cr.act);
-    page.drawText(datos.cargo_act.trim(), { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-  if (datos.cargo_cuenta) {
-    const c = applyOffset(cr.cuenta);
-    page.drawText(datos.cargo_cuenta.trim(), { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-  // Importe del cargo (alineado a la derecha)
-  {
-    const c   = applyOffset(cr.importe);
-    const txt = formatMonto(datos.monto);
-    const textW = font.widthOfTextAtSize(txt, c.size);
-    page.drawText(txt, { x: c.x - textW, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-
-  // ── Concepto / descripción ────────────────────────────────────────────────
-  if (datos.concepto) {
-    const c   = applyOffset(COORDS.concepto);
-    const txt = truncate(
-      (datos.cargo_cuenta ? `${datos.cargo_cuenta} ` : '') + datos.concepto.toUpperCase(),
-      c.maxW, c.size,
-    );
-    page.drawText(txt, { x: c.x, y: c.y, size: c.size, font: fontB, color: rgb(0, 0, 0) });
-  }
-
-  if (datos.descripcion_detallada) {
-    const c   = applyOffset(COORDS.descripcion_detallada);
-    const txt = truncate(datos.descripcion_detallada.toUpperCase(), c.maxW, c.size);
-    page.drawText(txt, { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-
-  // ── Importe en sección descripción ───────────────────────────────────────
-  {
-    const c   = applyOffset(COORDS.importe_descripcion);
-    const txt = formatMonto(datos.monto);
-    const textW = font.widthOfTextAtSize(txt, c.size);
-    page.drawText(txt, { x: c.x - textW, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-
-  // ── Cantidad a pagar ──────────────────────────────────────────────────────
-  {
-    const c   = applyOffset(COORDS.cantidad_a_pagar);
-    const txt = formatMonto(datos.monto);
-    const textW = fontB.widthOfTextAtSize(txt, c.size);
-    page.drawText(txt, { x: c.x - textW, y: c.y, size: c.size, font: fontB, color: rgb(0, 0, 0) });
-  }
-
-  // ── Total ─────────────────────────────────────────────────────────────────
-  {
-    const c   = applyOffset(COORDS.total);
-    const txt = formatMonto(datos.monto);
-    const textW = font.widthOfTextAtSize(txt, c.size);
-    page.drawText(txt, { x: c.x - textW, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
-
-  // ── Fecha ─────────────────────────────────────────────────────────────────
-  if (datos.fecha) {
-    const c   = applyOffset(COORDS.fecha_texto);
-    const txt = formatFecha(
-      typeof datos.fecha === 'string'
-        ? datos.fecha.slice(0, 10)
-        : datos.fecha.toISOString().slice(0, 10),
-    );
-    page.drawText(txt, { x: c.x, y: c.y, size: c.size, font, color: rgb(0, 0, 0) });
-  }
+  const page = pdfDoc.addPage([612, 792]); // Carta
 
   // ── Firma del presidente ──────────────────────────────────────────────────
   try {
