@@ -92,9 +92,9 @@ const COORDS = {
   // y es desde el borde inferior de la hoja (pdf-lib). Bajar = reducir y.
   // Centro horizontal de la línea de firma ≈ 490 pts → x = 490 - width/2
   firma_presidente: {
-    x: 358,   // pts desde izquierda  (ajustar ±5 para centrar horizontalmente)
+    x: 378,   // pts desde izquierda  (ajustar ±5 para centrar horizontalmente)
     y: 15,    // pts desde abajo      (ajustar ±5 para subir/bajar)
-    width: 260,
+    width: 235,
     height: 92,
     opacity: 1.0,
   },
