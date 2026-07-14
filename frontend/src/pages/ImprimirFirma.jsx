@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FiPrinter, FiClock, FiUser, FiRefreshCw } from 'react-icons/fi';
-import api from '../api';
+import api from '../api/axios';
 import Layout from '../components/Layout';
 import './ImprimirFirma.css';
 
