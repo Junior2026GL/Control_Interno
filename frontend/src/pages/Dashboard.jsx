@@ -5,7 +5,7 @@ import {
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
-  LuFileCheck2, LuCake,
+  LuFileCheck2, LuCake, LuPrinter,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -161,6 +161,14 @@ const ALL_MODULES = [
     description: 'Emisión, aprobación e impresión de órdenes de pago',
     icon: LuFileCheck2,
     gradient: 'linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%)',
+  },
+  {
+    path: '/imprimir-firma',
+    label: 'Imprimir Firma',
+    clave: 'imprimir-firma',
+    description: 'Impresión de firma con registro de usuario, fecha y hora',
+    icon: LuPrinter,
+    gradient: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
   },
   {
     path: '/bodegas',
