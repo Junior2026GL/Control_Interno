@@ -117,8 +117,8 @@ const OFFSET_Y    = OFFSET_Y_MM * 2.835;
 const FIRMA_PNG_PATH  = path.join(__dirname, '../private/firma_presidente.png');
 const FIRMA_SVG_PATH  = path.join(__dirname, '../private/firma_presidente.svg');
 
-// Segunda firma (lado izquierdo) — frontend/public/firma.png
-const FIRMA_IZQ_PATH  = path.join(__dirname, '../../frontend/public/firma.png');
+// Segunda firma (lado izquierdo) — backend/private/firma_izquierda.png
+const FIRMA_IZQ_PATH  = path.join(__dirname, '../private/firma_izquierda.png');
 
 /**
  * Aplica el offset global a las coordenadas.
