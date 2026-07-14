@@ -94,7 +94,7 @@ export default function ImprimirFirma() {
             disabled={printing}
           >
             <FiPrinter size={22} />
-            {printing ? 'Generando…' : 'Imprimir Firma'}
+            {printing ? 'Generando…' : 'Imprimir Orden Firma'}
           </button>
         </div>
 
@@ -134,7 +134,6 @@ export default function ImprimirFirma() {
                     <th>Usuario</th>
                     <th>Fecha y hora</th>
                     <th>IP</th>
-                    <th>Total del usuario</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -144,7 +143,6 @@ export default function ImprimirFirma() {
                       <td>{row.usuario_nombre}</td>
                       <td>{fmtFecha(row.fecha_hora)}</td>
                       <td className="if-ip">{row.ip_cliente || '—'}</td>
-                      <td className="if-total">{row.total_impresiones}</td>
                     </tr>
                   ))}
                 </tbody>
