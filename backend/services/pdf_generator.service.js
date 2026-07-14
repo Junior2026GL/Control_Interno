@@ -88,12 +88,15 @@ const COORDS = {
   fecha_texto:             { x: 249, y: 82,  size: 8 },
 
   // Firma del presidente — imagen
+  // Calibración: x centra la imagen sobre la línea de firma del preimpreso.
+  // y es desde el borde inferior de la hoja (pdf-lib). Bajar = reducir y.
+  // Centro horizontal de la línea de firma ≈ 490 pts → x = 490 - width/2
   firma_presidente: {
-    x: 372,   // pts desde izquierda
-    y: 32,    // pts desde abajo
-    width: 235,
+    x: 358,   // pts desde izquierda  (ajustar ±5 para centrar horizontalmente)
+    y: 15,    // pts desde abajo      (ajustar ±5 para subir/bajar)
+    width: 260,
     height: 92,
-    opacity: 1.0,  // opacidad completa para impresoras de matriz de puntos
+    opacity: 1.0,
   },
 };
 
