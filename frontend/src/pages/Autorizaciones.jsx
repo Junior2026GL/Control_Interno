@@ -121,8 +121,6 @@ const EMPTY_FORM = {
 };
 
 const MONTO_MAX = 99_999_999;
-const FACTURA_REGEX = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
-
 function isEmptyCreateForm(form) {
   const anioDefault = String(EMPTY_FORM.anio);
   return (
@@ -162,7 +160,6 @@ function validate(form) {
   if (form.lleva_factura) {
     const factura = (form.numero_factura || '').trim();
     if (!factura) errs.numero_factura = 'El número de factura es requerido.';
-    else if (!FACTURA_REGEX.test(factura)) errs.numero_factura = 'Formato inválido. Use 000-001-01-000037777.';
   }
   return errs;
 }
@@ -1676,15 +1673,14 @@ export default function Autorizaciones() {
                     <input
                       className={`caja-input${editErrors.numero_factura ? ' input-error' : ''}`}
                       type="text"
-                      maxLength={30}
-                      placeholder="000-001-01-000037777"
+                      maxLength={50}
+                      placeholder="Número de factura"
                       value={editForm.numero_factura || ''}
                       onChange={e => {
                         setEditForm(p => ({ ...p, numero_factura: e.target.value }));
                         setEditErrors(p => ({ ...p, numero_factura: '' }));
                       }}
                     />
-                    <small className="aut-factura-hint">Formato esperado: 000-001-01-000037777</small>
                     {editErrors.numero_factura && <span className="field-error">{editErrors.numero_factura}</span>}
                   </>
                 )}
@@ -1802,12 +1798,11 @@ export default function Autorizaciones() {
                     <input
                       className={`caja-input${formErrors.numero_factura ? ' input-error' : ''}`}
                       type="text"
-                      maxLength={30}
-                      placeholder="000-001-01-000037777"
+                      maxLength={50}
+                      placeholder="Número de factura"
                       value={form.numero_factura || ''}
                       onChange={e => { setF('numero_factura', e.target.value); clearErr('numero_factura'); }}
                     />
-                    <small className="aut-factura-hint">Formato esperado: 000-001-01-000037777</small>
                     {formErrors.numero_factura && <span className="field-error">{formErrors.numero_factura}</span>}
                   </>
                 )}
