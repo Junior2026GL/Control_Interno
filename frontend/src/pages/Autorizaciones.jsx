@@ -1902,23 +1902,11 @@ export default function Autorizaciones() {
                 <span className="aut-ver-label">Fecha creación</span>
                 <span>{fmtFecha(verItem.fecha_creacion)}</span>
               </div>
-              {verItem.estado !== 'PENDIENTE' && (
-                <>
-                  <div className="aut-ver-row">
-                    <span className="aut-ver-label">{verItem.estado === 'AUTORIZADO' ? 'Autorizado por' : 'Rechazado por'}</span>
-                    <span>{verItem.autorizado_por_nombre || '—'}</span>
-                  </div>
-                  <div className="aut-ver-row">
-                    <span className="aut-ver-label">Fecha</span>
-                    <span>{fmtFecha(verItem.fecha_autorizacion)}</span>
-                  </div>
-                  {verItem.motivo_rechazo && (
-                    <div className="aut-ver-row">
-                      <span className="aut-ver-label">Motivo rechazo</span>
-                      <span className="aut-motivo-rechazo">{verItem.motivo_rechazo}</span>
-                    </div>
-                  )}
-                </>
+              {verItem.motivo_rechazo && (
+                <div className="aut-ver-row">
+                  <span className="aut-ver-label">Motivo rechazo</span>
+                  <span className="aut-motivo-rechazo">{verItem.motivo_rechazo}</span>
+                </div>
               )}
               <div className="caja-modal-actions" style={{ marginTop: '18px' }}>
                 <button className="btn-secondary" onClick={() => setVerItem(null)}>Cerrar</button>
