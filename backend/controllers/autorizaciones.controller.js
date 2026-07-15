@@ -254,15 +254,30 @@ exports.create = (req, res) => {
 
   nextNumero((err, numero) => {
     if (err) { console.error('[autorizaciones] Error en nextNumero:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+
+    // Obtener el firmante (SUPER_ADMIN → ADMIN → creador)
     db.query(
-      `INSERT INTO autorizaciones_pago
-        (numero, tipo_pago, beneficiario, monto, monto_letras, detalle, anio, org, fondo, lleva_factura, numero_factura, creado_por)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [numero, tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, lleva_factura ? 1 : 0, numero_factura, req.user.id],
-      (err2, result) => {
-        if (err2) { console.error('[autorizaciones] Error en create INSERT:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
-        logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'autorizaciones', detalle: `Creó autorización N° ${numero} — Beneficiario: ${beneficiario}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
-        res.status(201).json({ message: 'Autorización creada.', id: result.insertId, numero });
+      `SELECT id, nombre FROM usuarios WHERE rol IN ('SUPER_ADMIN','ADMIN') AND activo = 1 ORDER BY FIELD(rol,'SUPER_ADMIN','ADMIN'), id ASC LIMIT 1`,
+      [],
+      (errAdmin, adminRows) => {
+        if (errAdmin) { console.error('[autorizaciones] Error buscando firmante:', errAdmin); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+        const firmante = adminRows.length ? adminRows[0] : { id: req.user.id, nombre: req.user.nombre || '' };
+
+        db.query(
+          `INSERT INTO autorizaciones_pago
+            (numero, tipo_pago, beneficiario, monto, monto_letras, detalle, anio, org, fondo,
+             lleva_factura, numero_factura, creado_por,
+             estado, autorizado_por, fecha_autorizacion, firma_nombre)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'AUTORIZADO',?,NOW(),?)`,
+          [numero, tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo,
+           lleva_factura ? 1 : 0, numero_factura, req.user.id,
+           firmante.id, firmante.nombre],
+          (err2, result) => {
+            if (err2) { console.error('[autorizaciones] Error en create INSERT:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+            logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'autorizaciones', detalle: `Creó autorización N° ${numero} — Beneficiario: ${beneficiario}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
+            res.status(201).json({ message: 'Autorización creada.', id: result.insertId, numero });
+          }
+        );
       }
     );
   });

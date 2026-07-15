@@ -587,7 +587,7 @@ export default function Autorizaciones() {
 
     const [logoRes, firmaRes] = await Promise.all([
       loadImg('/logo-congreso.png.png', true),
-      item.estado === 'AUTORIZADO' ? loadImg('/firma.png', false) : Promise.resolve(null),
+      loadImg('/firma.png', false),
     ]);
 
     // ── borde exterior del formulario ─────────────────────
@@ -1554,17 +1554,6 @@ export default function Autorizaciones() {
                             <button className="action-btn edit" title="Editar" onClick={() => openEditar(a)}>
                               <FiEdit2 size={14} />
                             </button>
-                          )}
-                          {/* Autorizar / Rechazar (solo admin, solo PENDIENTE) */}
-                          {esAdmin && a.estado === 'PENDIENTE' && (
-                            <>
-                              <button className="action-btn approve" title="Autorizar" onClick={() => setAutItem(a)}>
-                                <FiCheckCircle size={14} />
-                              </button>
-                              <button className="action-btn reject" title="Rechazar" onClick={() => { setRechItem(a); setMotivo(''); setMotivoErr(''); }}>
-                                <FiXCircle size={14} />
-                              </button>
-                            </>
                           )}
                           {/* Eliminar (solo SUPER_ADMIN, solo PENDIENTE) */}
                           {esSuperAdmin && a.estado === 'PENDIENTE' && (
