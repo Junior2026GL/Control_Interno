@@ -11,11 +11,15 @@ function fmtFecha(val) {
     + ' ' + d.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
 }
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+
 export default function ImprimirFirma() {
   const [historial, setHistorial]   = useState([]);
   const [loading,   setLoading]     = useState(false);
   const [printing,  setPrinting]    = useState(false);
   const [toast,     setToast]       = useState(null);
+  const [page,      setPage]        = useState(1);
+  const [pageSize,  setPageSize]    = useState(20);
 
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type });
@@ -72,6 +76,9 @@ export default function ImprimirFirma() {
     return acc;
   }, {});
   const resumenList = Object.values(resumen).sort((a, b) => b.total - a.total);
+
+  const totalPages  = Math.max(1, Math.ceil(historial.length / pageSize));
+  const paginated   = historial.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <>
@@ -137,9 +144,9 @@ export default function ImprimirFirma() {
                   </tr>
                 </thead>
                 <tbody>
-                  {historial.map((row, i) => (
+                  {paginated.map((row, i) => (
                     <tr key={row.id}>
-                      <td>{historial.length - i}</td>
+                      <td>{historial.length - ((page - 1) * pageSize) - i}</td>
                       <td>{row.usuario_nombre}</td>
                       <td>{fmtFecha(row.fecha_hora)}</td>
                       <td className="if-ip">{row.ip_cliente || '—'}</td>
@@ -148,6 +155,45 @@ export default function ImprimirFirma() {
                 </tbody>
               </table>
             </div>
+
+            {/* Paginación */}
+            {historial.length > 0 && (
+              <div className="std-pg">
+                <span className="std-pg-info">
+                  {Math.min((page - 1) * pageSize + 1, historial.length)}–{Math.min(page * pageSize, historial.length)} de <strong>{historial.length}</strong> impresiones
+                </span>
+                <div className="std-pg-controls">
+                  <select className="std-pg-size-select" value={pageSize}
+                    onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                    {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s} por pág.</option>)}
+                  </select>
+                  <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+                  <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                  {(() => {
+                    const maxBtns = 7;
+                    let start = Math.max(1, page - Math.floor(maxBtns / 2));
+                    let end   = Math.min(totalPages, start + maxBtns - 1);
+                    if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                    const nums = [];
+                    if (start > 1) {
+                      nums.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPage(1)}>1</button>);
+                      if (start > 2) nums.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                    }
+                    for (let p = start; p <= end; p++) {
+                      nums.push(<button key={p} className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`} onClick={() => setPage(p)}>{p}</button>);
+                    }
+                    if (end < totalPages) {
+                      if (end < totalPages - 1) nums.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                      nums.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
+                    }
+                    return nums;
+                  })()}
+                  <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+                  <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>»</button>
+                </div>
+                <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
+              </div>
+            )}
           )}
         </div>
       </div>
