@@ -262,6 +262,7 @@ exports.create = (req, res) => {
       (errAdmin, adminRows) => {
         if (errAdmin) { console.error('[autorizaciones] Error buscando firmante:', errAdmin); return res.status(500).json({ message: 'Error interno del servidor.' }); }
         const firmante = adminRows.length ? adminRows[0] : { id: req.user.id, nombre: req.user.nombre || '' };
+        firmante.nombre = 'CRISTIAN MORENO';
 
         db.query(
           `INSERT INTO autorizaciones_pago

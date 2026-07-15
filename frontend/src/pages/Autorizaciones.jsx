@@ -940,13 +940,13 @@ export default function Autorizaciones() {
     const sigNameMaxWidth = 86;
     const sigNameY = sigLineY + 10;
 
-    // imagen de firma (solo si AUTORIZADO y existe)
+    // imagen de firma
     if (firmaRes) {
       const aspect = firmaRes.h / firmaRes.w;
       const fw     = 124;
       const fh     = Math.min(fw * aspect, 40);
       const fw2    = fh / aspect;
-      const sigImageY = Math.max(y, sigLineY - fh - 2);
+      const sigImageY = Math.max(y, sigLineY - fh + 8);
       doc.addImage(firmaRes.data, 'PNG', sigCX - fw2 / 2, sigImageY, fw2, fh);
     }
 
@@ -977,26 +977,9 @@ export default function Autorizaciones() {
     doc.text('PAGADOR ESPECIAL', sigCX, sigRoleY, { align: 'center' });
 
     // ════════════════════════════════════════════════════
-    //  PIE DE PÁGINA (solo si AUTORIZADO o RECHAZADO)
+    //  PIE DE PÁGINA
     // ════════════════════════════════════════════════════
-    if (item.estado === 'AUTORIZADO') {
-      const fecAut = item.fecha_autorizacion
-        ? new Date(item.fecha_autorizacion)
-        : null;
-      const fechaStr = fecAut
-        ? fecAut.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        : '—';
-      const horaStr = fecAut
-        ? fecAut.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true })
-        : '';
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(8);
-      doc.setTextColor(80, 80, 80);
-      doc.text('Autorizado por: ' + sa((item.autorizado_por_nombre || '').toUpperCase()),
-        R, PH - 30, { align: 'right' });
-      doc.text('Fecha: ' + fechaStr + '  Hora: ' + horaStr,
-        R, PH - 24, { align: 'right' });
-    } else if (item.estado === 'RECHAZADO') {
+    if (item.estado === 'RECHAZADO') {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(8);
       doc.setTextColor(160, 0, 0);
