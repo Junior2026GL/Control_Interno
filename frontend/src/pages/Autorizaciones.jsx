@@ -218,6 +218,9 @@ export default function Autorizaciones() {
   const [chartAnio, setChartAnio]   = useState(new Date().getFullYear());
   const [chartMes, setChartMes]     = useState(-1); // -1 = todos los meses
 
+  // protección contra impresión concurrente
+  const [printing, setPrinting]     = useState(false);
+
   // notificaciones inline (reemplaza alert())
   const [toast, setToast]           = useState(null);
   const showToast = (msg, type = 'error') => {
@@ -1015,7 +1018,15 @@ export default function Autorizaciones() {
   };
 
   // ── Imprimir PDF directo sin descarga ─────────────────────────────────
-  const imprimirPDF = (item) => generarPDF(item, true);
+  const imprimirPDF = async (item) => {
+    if (printing) return;
+    setPrinting(true);
+    try {
+      await generarPDF(item, true);
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   // ─── render ───────────────────────────────────────────────────────────────
   return (
@@ -1529,7 +1540,7 @@ export default function Autorizaciones() {
                             <FiDownload size={14} />
                           </button>
                           {/* Imprimir */}
-                          <button className="action-btn" title="Imprimir" onClick={() => imprimirPDF(a)}>
+                          <button className="action-btn" title="Imprimir" disabled={printing} onClick={() => imprimirPDF(a)}>
                             <FiPrinter size={14} />
                           </button>
                           {/* Editar (ASISTENTE, ADMIN, SUPER_ADMIN — cualquier estado) */}
@@ -1910,8 +1921,8 @@ export default function Autorizaciones() {
               )}
               <div className="caja-modal-actions" style={{ marginTop: '18px' }}>
                 <button className="btn-secondary" onClick={() => setVerItem(null)}>Cerrar</button>
-                <button className="btn-pdf" onClick={() => imprimirPDF(verItem)}>
-                  <FiPrinter size={14} /> Imprimir
+                <button className="btn-pdf" disabled={printing} onClick={() => imprimirPDF(verItem)}>
+                  <FiPrinter size={14} /> {printing ? 'Generando…' : 'Imprimir'}
                 </button>
                 <button className="btn-pdf" onClick={() => generarPDF(verItem)}>
                   <FiDownload size={14} /> Descargar PDF
