@@ -235,6 +235,22 @@ export default function PresupuestoDiputados() {
       .filter(d => d.cuota > 0 || d.ejecutado > 0);
   }, [presupuesto]);
 
+  /* ── liquidation stats ──────────────────────────────────── */
+  const liqStats = useMemo(() => {
+    const items = [
+      { key: 'sin_liquidar',  label: 'Sin Liquidar',  cls: 'sinliq',  color: '#6b7280' },
+      { key: 'en_proceso',    label: 'En Proceso',    cls: 'proceso', color: '#1d4ed8' },
+      { key: 'plazo_vencido', label: 'Plazo Vencido', cls: 'vencido', color: '#dc2626' },
+      { key: 'liquido',       label: 'Líquido',       cls: 'liquido', color: '#15803d' },
+    ].map(i => ({ ...i, monto: 0, count: 0 }));
+    sortedAyudas.forEach(a => {
+      const est  = estadoLiquidacion(a);
+      const item = items.find(d => d.key === est);
+      if (item) { item.monto += +(a.monto || 0); item.count++; }
+    });
+    return items;
+  }, [sortedAyudas]);
+
   /* ── budget form handlers ───────────────────────────────── */
   const distribuirMeses = () => {
     const total = parseFloat(presForm.monto_asignado) || 0;
@@ -1973,6 +1989,30 @@ export default function PresupuestoDiputados() {
               <div className="ps-exhausted-banner">
                 <FiAlertCircle size={16} />
                 Presupuesto agotado para {anio} — no es posible registrar nuevas ayudas.
+              </div>
+            )}
+
+            {/* ── Estado de Liquidación de Ayudas ── */}
+            {presupuesto && ayudas.length > 0 && (
+              <div className="ps-liq-estado-card">
+                <div className="ps-liq-estado-header">Estado de Liquidación de Ayudas</div>
+                <div className="ps-liq-estado-grid">
+                  {liqStats.map(item => (
+                    <div key={item.key} className={`ps-liq-item ps-liq-item--${item.cls}`}>
+                      <div className="ps-liq-item-label" style={{ background: item.color }}>
+                        {item.label}
+                      </div>
+                      <div className="ps-liq-item-body">
+                        <span className="ps-liq-item-monto" style={{ color: item.color }}>
+                          {formatHNL(item.monto)}
+                        </span>
+                        <span className="ps-liq-item-count">
+                          {item.count} ayuda{item.count !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
