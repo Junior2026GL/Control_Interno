@@ -931,7 +931,7 @@ export default function Ayudas() {
                 <div className="ay-form-grid ay-form-grid--2">
                   <div className="ay-field">
                     <label className="ay-field__label">Fecha <span className="req">*</span></label>
-                    <input type="date" name="fecha" value={form.fecha} onChange={handleField}
+                    <input type="date" lang="es" name="fecha" value={form.fecha} onChange={handleField}
                       className={`ay-field__input${formErrors.fecha ? ' ay-field__input--err' : ''}`} />
                     {formErrors.fecha && <span className="ay-field__err">{formErrors.fecha}</span>}
                   </div>
