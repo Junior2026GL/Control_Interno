@@ -1,7 +1,7 @@
-﻿import { useEffect, useState, useCallback, useContext, useMemo } from 'react';
-import DatePicker from 'react-datepicker';
-import { es } from 'date-fns/locale';
-import 'react-datepicker/dist/react-datepicker.css';
+﻿import { useEffect, useState, useCallback, useContext, useMemo, useRef } from 'react';
+import flatpickr from 'flatpickr';
+import { Spanish } from 'flatpickr/dist/l10n/es.js';
+import 'flatpickr/dist/flatpickr.min.css';
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiDownload,
   FiGift, FiCalendar, FiUsers, FiAlertTriangle, FiEye,
@@ -115,6 +115,47 @@ function clientValidate(form) {
   if (obs.length > 500) errors.observaciones = 'Máximo 500 caracteres.';
 
   return errors;
+}
+
+function FlatpickrDate({ value, onChange, className }) {
+  const ref = useRef(null);
+  const fpRef = useRef(null);
+
+  useEffect(() => {
+    fpRef.current = flatpickr(ref.current, {
+      locale: Spanish,
+      dateFormat: 'd/m/Y',
+      allowInput: true,
+      disableMobile: true,
+      onChange: ([date]) => {
+        if (date) {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          onChange(`${y}-${m}-${d}`);
+        } else {
+          onChange('');
+        }
+      },
+    });
+    return () => { fpRef.current?.destroy(); };
+  }, []);
+
+  useEffect(() => {
+    if (fpRef.current) {
+      fpRef.current.setDate(value ? value + 'T12:00:00' : null, false);
+    }
+  }, [value]);
+
+  return (
+    <input
+      ref={ref}
+      type="text"
+      readOnly
+      placeholder="dd/mm/aaaa"
+      className={className}
+    />
+  );
 }
 
 function TipoBadge({ tipo }) {
@@ -934,20 +975,13 @@ export default function Ayudas() {
                 <div className="ay-form-grid ay-form-grid--2">
                   <div className="ay-field">
                     <label className="ay-field__label">Fecha <span className="req">*</span></label>
-                    <DatePicker
-                      locale={es}
-                      dateFormat="dd/MM/yyyy"
-                      selected={form.fecha ? new Date(form.fecha + 'T12:00:00') : null}
-                      onChange={date => {
-                        const val = date ? date.toISOString().slice(0, 10) : '';
+                    <FlatpickrDate
+                      value={form.fecha}
+                      onChange={val => {
                         setForm(prev => ({ ...prev, fecha: val }));
                         setFormErrors(prev => ({ ...prev, fecha: undefined }));
                       }}
-                      placeholderText="dd/mm/aaaa"
                       className={`ay-field__input${formErrors.fecha ? ' ay-field__input--err' : ''}`}
-                      wrapperClassName="ay-datepicker-wrapper"
-                      popperPlacement="bottom-start"
-                      autoComplete="off"
                     />
                     {formErrors.fecha && <span className="ay-field__err">{formErrors.fecha}</span>}
                   </div>
