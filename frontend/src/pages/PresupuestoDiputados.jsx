@@ -3,7 +3,7 @@ import {
   FiSearch, FiX, FiPlus, FiEdit2, FiTrash2,
   FiUser, FiAlertCircle, FiMapPin, FiCreditCard, FiFlag, FiUsers,
   FiChevronDown, FiChevronUp, FiBarChart2, FiDownload,
-  FiArrowUp, FiArrowDown, FiCheckSquare,
+  FiArrowUp, FiArrowDown, FiCheckSquare, FiPhone,
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -1906,6 +1906,12 @@ export default function PresupuestoDiputados() {
                       <span className="ps-dip-chip ps-dip-chip--id">
                         <FiCreditCard size={11} />
                         {selectedDip.identidad}
+                      </span>
+                    )}
+                    {selectedDip.telefono && (
+                      <span className="ps-dip-chip ps-dip-chip--tel">
+                        <FiPhone size={11} />
+                        {selectedDip.telefono}
                       </span>
                     )}
                   </div>

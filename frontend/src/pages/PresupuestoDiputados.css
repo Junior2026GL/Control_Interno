@@ -245,6 +245,11 @@
   border-color: #e9d5ff;
   color: #7c3aed;
 }
+.ps-dip-chip--tel {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
 .ps-change-btn {
   display: inline-flex;
   align-items: center;
