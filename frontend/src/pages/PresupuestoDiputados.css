@@ -1468,11 +1468,139 @@
 .ps-liq-item--proceso .ps-liq-item-count { background: #dbeafe; color: #1e40af; }
 .ps-liq-item--vencido .ps-liq-item-count { background: #fee2e2; color: #b91c1c; }
 .ps-liq-item--liquido .ps-liq-item-count { background: #dcfce7; color: #15803d; }
+.ps-liq-item--clickable:hover .ps-liq-item-body {
+  filter: brightness(0.96);
+}
+.ps-liq-ver-btn {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+  transition: color 0.15s;
+}
+.ps-liq-item--clickable:hover .ps-liq-ver-btn { color: #475569; }
+
+/* ── Modal detalle liquidación ──────────────────────────────── */
+.ps-liq-detail-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  animation: ps-modal-in 0.18s ease;
+}
+.ps-liq-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  color: #fff;
+}
+.ps-liq-detail-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ps-liq-detail-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  flex-shrink: 0;
+}
+.ps-liq-detail-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.ps-liq-detail-sub {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 2px;
+  font-weight: 500;
+}
+.ps-liq-detail-close {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ps-liq-detail-close:hover { background: rgba(255,255,255,0.28); }
+.ps-liq-detail-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0;
+}
+.ps-liq-detail-empty {
+  text-align: center;
+  padding: 32px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+.ps-liq-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.ps-liq-detail-table thead th {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+}
+.ps-liq-detail-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+}
+.ps-liq-detail-table tbody tr:hover { background: #f8fafc; }
+.ps-liq-detail-table td {
+  padding: 9px 12px;
+  color: #374151;
+  vertical-align: middle;
+}
+.ps-liq-td-num   { color: #94a3b8; font-weight: 700; width: 32px; text-align: center; }
+.ps-liq-td-fecha { color: #64748b; white-space: nowrap; font-size: 12px; }
+.ps-liq-td-concepto { font-weight: 600; color: #1e293b; max-width: 220px; }
+.ps-liq-th-r, .ps-liq-td-monto { text-align: right !important; }
+.ps-liq-td-monto { font-weight: 800; color: #274C8D; white-space: nowrap; }
+.ps-liq-detail-table tfoot td {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-top: 2px solid #e2e8f0;
+  font-weight: 700;
+}
+.ps-liq-tfoot-lbl   { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+.ps-liq-tfoot-total { text-align: right; color: #1e3a6e; font-size: 14px; }
 @media (max-width: 600px) {
   .ps-liq-estado-grid { grid-template-columns: repeat(2, 1fr); }
   .ps-liq-item:nth-child(2) { border-right: none; }
   .ps-liq-item:nth-child(1),
   .ps-liq-item:nth-child(2) { border-bottom: 1px solid #e8edf5; }
+  .ps-liq-detail-modal { max-width: 98vw; }
 }
 
 /* ── Inline monthly distribution chart card ─────────────────── */

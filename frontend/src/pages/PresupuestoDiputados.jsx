@@ -98,10 +98,11 @@ export default function PresupuestoDiputados() {
   const [montoFocused, setMontoFocused] = useState(false);
 
   /* ── liquidar modal ─────────────────────────────────────── */
-  const [liqModal,  setLiqModal]  = useState(null);
-  const [liqForm,   setLiqForm]   = useState({ estado_liquidacion: 'sin_liquidar', fecha_liquidacion: '' });
-  const [liqErr,    setLiqErr]    = useState('');
-  const [liqSaving, setLiqSaving] = useState(false);
+  const [liqModal,     setLiqModal]     = useState(null);
+  const [liqForm,      setLiqForm]      = useState({ estado_liquidacion: 'sin_liquidar', fecha_liquidacion: '' });
+  const [liqErr,       setLiqErr]       = useState('');
+  const [liqSaving,    setLiqSaving]    = useState(false);
+  const [liqModalItem, setLiqModalItem] = useState(null); // modal detalle por estado
 
   /* ── mini-modal número de orden ──────────────────────────── */
   const [ordenModal, setOrdenModal] = useState(null); // ayuda obj
@@ -2011,7 +2012,13 @@ export default function PresupuestoDiputados() {
                   <div className="ps-liq-estado-header">Estado de Liquidación de Ayudas</div>
                   <div className="ps-liq-estado-grid">
                     {liqStats.map(item => (
-                      <div key={item.key} className={`ps-liq-item ps-liq-item--${item.cls}`}>
+                      <div
+                        key={item.key}
+                        className={`ps-liq-item ps-liq-item--${item.cls} ps-liq-item--clickable`}
+                        onClick={() => item.count > 0 && setLiqModalItem(item)}
+                        title={item.count > 0 ? `Ver ${item.count} ayuda${item.count !== 1 ? 's' : ''} — ${item.label}` : ''}
+                        style={{ cursor: item.count > 0 ? 'pointer' : 'default' }}
+                      >
                         <div className="ps-liq-item-label">
                           <span className="ps-liq-item-icon">{LIQ_ICONS[item.key]}</span>
                           {item.label}
@@ -2023,6 +2030,7 @@ export default function PresupuestoDiputados() {
                           <span className="ps-liq-item-count">
                             {item.count} ayuda{item.count !== 1 ? 's' : ''}
                           </span>
+                          {item.count > 0 && <span className="ps-liq-ver-btn">Ver detalle ›</span>}
                         </div>
                       </div>
                     ))}
@@ -3101,6 +3109,72 @@ export default function PresupuestoDiputados() {
           </div>
         </div>
       )}
+
+      {/* ── Modal: Detalle de ayudas por estado de liquidación ── */}
+      {liqModalItem && (() => {
+        const LIQ_ICONS_MOD = {
+          sin_liquidar:  <FiClock size={16} />,
+          en_proceso:    <FiRefreshCw size={16} />,
+          plazo_vencido: <FiAlertTriangle size={16} />,
+          liquido:       <FiCheckCircle size={16} />,
+        };
+        const ayudasFiltradas = sortedAyudas.filter(a => estadoLiquidacion(a) === liqModalItem.key);
+        const totalMonto = ayudasFiltradas.reduce((s, a) => s + +(a.monto || 0), 0);
+        return (
+          <div className="ps-overlay" onClick={() => setLiqModalItem(null)}>
+            <div className="ps-liq-detail-modal" onClick={e => e.stopPropagation()}>
+
+              {/* Header */}
+              <div className="ps-liq-detail-header" style={{ background: liqModalItem.color }}>
+                <div className="ps-liq-detail-header-left">
+                  <span className="ps-liq-detail-icon">{LIQ_ICONS_MOD[liqModalItem.key]}</span>
+                  <div>
+                    <div className="ps-liq-detail-title">{liqModalItem.label}</div>
+                    <div className="ps-liq-detail-sub">{ayudasFiltradas.length} ayuda{ayudasFiltradas.length !== 1 ? 's' : ''} · {formatHNL(totalMonto)}</div>
+                  </div>
+                </div>
+                <button className="ps-liq-detail-close" onClick={() => setLiqModalItem(null)}><FiX size={18} /></button>
+              </div>
+
+              {/* Tabla */}
+              <div className="ps-liq-detail-body">
+                {ayudasFiltradas.length === 0 ? (
+                  <div className="ps-liq-detail-empty">No hay ayudas en este estado.</div>
+                ) : (
+                  <table className="ps-liq-detail-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Fecha</th>
+                        <th>Concepto</th>
+                        <th>Beneficiario</th>
+                        <th className="ps-liq-th-r">Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ayudasFiltradas.map((a, i) => (
+                        <tr key={a.id}>
+                          <td className="ps-liq-td-num">{i + 1}</td>
+                          <td className="ps-liq-td-fecha">{formatFecha(a.fecha)}</td>
+                          <td className="ps-liq-td-concepto">{a.concepto}</td>
+                          <td>{a.beneficiario || '—'}</td>
+                          <td className="ps-liq-td-monto">{formatHNL(a.monto)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={4} className="ps-liq-tfoot-lbl">Total</td>
+                        <td className="ps-liq-tfoot-total">{formatHNL(totalMonto)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
