@@ -1,4 +1,8 @@
 ﻿import { useEffect, useState, useCallback, useContext, useMemo } from 'react';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import { es } from 'date-fns/locale/es';
+import 'react-datepicker/dist/react-datepicker.css';
+registerLocale('es', es);
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiDownload,
   FiGift, FiCalendar, FiUsers, FiAlertTriangle, FiEye,
@@ -931,8 +935,21 @@ export default function Ayudas() {
                 <div className="ay-form-grid ay-form-grid--2">
                   <div className="ay-field">
                     <label className="ay-field__label">Fecha <span className="req">*</span></label>
-                    <input type="date" lang="es" name="fecha" value={form.fecha} onChange={handleField}
-                      className={`ay-field__input${formErrors.fecha ? ' ay-field__input--err' : ''}`} />
+                    <DatePicker
+                      locale="es"
+                      dateFormat="dd/MM/yyyy"
+                      selected={form.fecha ? new Date(form.fecha + 'T12:00:00') : null}
+                      onChange={date => {
+                        const val = date ? date.toISOString().slice(0, 10) : '';
+                        setForm(prev => ({ ...prev, fecha: val }));
+                        setFormErrors(prev => ({ ...prev, fecha: undefined }));
+                      }}
+                      placeholderText="dd/mm/aaaa"
+                      className={`ay-field__input${formErrors.fecha ? ' ay-field__input--err' : ''}`}
+                      wrapperClassName="ay-datepicker-wrapper"
+                      popperPlacement="bottom-start"
+                      autoComplete="off"
+                    />
                     {formErrors.fecha && <span className="ay-field__err">{formErrors.fecha}</span>}
                   </div>
                   <div className="ay-field">

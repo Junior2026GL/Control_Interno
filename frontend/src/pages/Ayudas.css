@@ -382,6 +382,10 @@
 .ay-field__input:focus { outline: none; border-color: #274C8D; box-shadow: 0 0 0 3px rgba(39,76,141,.12); }
 .ay-field__input--err { border-color: #dc2626 !important; }
 .ay-field__select { appearance: none; cursor: pointer; background: #fff; }
+.ay-datepicker-wrapper { width: 100%; }
+.ay-datepicker-wrapper .react-datepicker__input-container { width: 100%; }
+.react-datepicker__day--selected { background-color: #274C8D !important; }
+.react-datepicker__day--keyboard-selected { background-color: #274C8D !important; }
 .ay-field__textarea { resize: vertical; min-height: 80px; }
 .ay-field__err { font-size: .76rem; color: #dc2626; margin-top: -.1rem; }
 .ay-field__counter { font-size: .73rem; color: #9ca3af; text-align: right; }
