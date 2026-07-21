@@ -4,6 +4,7 @@ import {
   FiUser, FiAlertCircle, FiMapPin, FiCreditCard, FiFlag, FiUsers,
   FiChevronDown, FiChevronUp, FiBarChart2, FiDownload,
   FiArrowUp, FiArrowDown, FiCheckSquare, FiPhone,
+  FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle,
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -1888,30 +1889,30 @@ export default function PresupuestoDiputados() {
                 <div className="ps-dip-text">
                   <h2>{selectedDip.nombre}</h2>
                   <div className="ps-dip-chips">
-                    <span className="ps-dip-chip">
-                      <FiMapPin size={11} />
-                      {selectedDip.departamento}
+                    <span className="ps-dip-chip ps-dip-chip--depto">
+                      <span className="ps-dip-chip-icon"><FiMapPin size={12} /></span>
+                      <span className="ps-dip-chip-text">{selectedDip.departamento}</span>
                     </span>
                     <span className={`ps-dip-chip ps-dip-chip--tipo ${selectedDip.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
-                      <FiUsers size={11} />
-                      {selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                      <span className="ps-dip-chip-icon"><FiUsers size={12} /></span>
+                      <span className="ps-dip-chip-text">{selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}</span>
                     </span>
                     {selectedDip.partido && (
-                      <span className="ps-dip-chip">
-                        <FiFlag size={11} />
-                        {selectedDip.partido}
+                      <span className="ps-dip-chip ps-dip-chip--partido">
+                        <span className="ps-dip-chip-icon"><FiFlag size={12} /></span>
+                        <span className="ps-dip-chip-text">{selectedDip.partido}</span>
                       </span>
                     )}
                     {selectedDip.identidad && (
                       <span className="ps-dip-chip ps-dip-chip--id">
-                        <FiCreditCard size={11} />
-                        {selectedDip.identidad}
+                        <span className="ps-dip-chip-icon"><FiCreditCard size={12} /></span>
+                        <span className="ps-dip-chip-text">{selectedDip.identidad}</span>
                       </span>
                     )}
                     {selectedDip.telefono && (
                       <span className="ps-dip-chip ps-dip-chip--tel">
-                        <FiPhone size={11} />
-                        {selectedDip.telefono}
+                        <span className="ps-dip-chip-icon"><FiPhone size={12} /></span>
+                        <span className="ps-dip-chip-text">{selectedDip.telefono}</span>
                       </span>
                     )}
                   </div>
@@ -1998,28 +1999,37 @@ export default function PresupuestoDiputados() {
             )}
 
             {/* ── Estado de Liquidación de Ayudas ── */}
-            {presupuesto && ayudas.length > 0 && (
-              <div className="ps-liq-estado-card">
-                <div className="ps-liq-estado-header">Estado de Liquidación de Ayudas</div>
-                <div className="ps-liq-estado-grid">
-                  {liqStats.map(item => (
-                    <div key={item.key} className={`ps-liq-item ps-liq-item--${item.cls}`}>
-                      <div className="ps-liq-item-label" style={{ background: item.color }}>
-                        {item.label}
+            {presupuesto && ayudas.length > 0 && (() => {
+              const LIQ_ICONS = {
+                sin_liquidar:  <FiClock size={20} />,
+                en_proceso:    <FiRefreshCw size={20} />,
+                plazo_vencido: <FiAlertTriangle size={20} />,
+                liquido:       <FiCheckCircle size={20} />,
+              };
+              return (
+                <div className="ps-liq-estado-card">
+                  <div className="ps-liq-estado-header">Estado de Liquidación de Ayudas</div>
+                  <div className="ps-liq-estado-grid">
+                    {liqStats.map(item => (
+                      <div key={item.key} className={`ps-liq-item ps-liq-item--${item.cls}`}>
+                        <div className="ps-liq-item-label">
+                          <span className="ps-liq-item-icon">{LIQ_ICONS[item.key]}</span>
+                          {item.label}
+                        </div>
+                        <div className="ps-liq-item-body">
+                          <span className="ps-liq-item-monto">
+                            {formatHNL(item.monto)}
+                          </span>
+                          <span className="ps-liq-item-count">
+                            {item.count} ayuda{item.count !== 1 ? 's' : ''}
+                          </span>
+                        </div>
                       </div>
-                      <div className="ps-liq-item-body">
-                        <span className="ps-liq-item-monto" style={{ color: item.color }}>
-                          {formatHNL(item.monto)}
-                        </span>
-                        <span className="ps-liq-item-count">
-                          {item.count} ayuda{item.count !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* ── Monthly distribution chart (horizontal progress bars) ── */}
             {presupuesto?.meses?.some(m => m.monto_asignado > 0) && monthlyChartData?.length > 0 && (

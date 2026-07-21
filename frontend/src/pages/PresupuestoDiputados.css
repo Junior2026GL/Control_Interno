@@ -215,41 +215,66 @@
 .ps-dip-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 7px;
+  margin-top: 2px;
 }
 .ps-dip-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  gap: 0;
+  padding: 0;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
-  color: #475569;
+  font-weight: 600;
+  color: #374151;
   white-space: nowrap;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  transition: box-shadow 0.15s, transform 0.12s;
 }
-.ps-dip-chip--tipo.prop {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
+.ps-dip-chip:hover {
+  box-shadow: 0 3px 10px rgba(0,0,0,.12);
+  transform: translateY(-1px);
 }
-.ps-dip-chip--tipo.sup {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
-  color: #059669;
+.ps-dip-chip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 20px 0 0 20px;
+  flex-shrink: 0;
 }
-.ps-dip-chip--id {
-  background: #faf5ff;
-  border-color: #e9d5ff;
-  color: #7c3aed;
+.ps-dip-chip-text {
+  padding: 0 10px 0 6px;
+  line-height: 26px;
 }
-.ps-dip-chip--tel {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #15803d;
-}
+/* Departamento — azul pizarra */
+.ps-dip-chip--depto { border-color: #bfdbfe; }
+.ps-dip-chip--depto .ps-dip-chip-icon { background: #1d4ed8; color: #fff; }
+.ps-dip-chip--depto .ps-dip-chip-text { color: #1e40af; }
+/* Tipo propietario */
+.ps-dip-chip--tipo.prop { border-color: #a5b4fc; }
+.ps-dip-chip--tipo.prop .ps-dip-chip-icon { background: #4f46e5; color: #fff; }
+.ps-dip-chip--tipo.prop .ps-dip-chip-text { color: #3730a3; }
+/* Tipo suplente */
+.ps-dip-chip--tipo.sup { border-color: #6ee7b7; }
+.ps-dip-chip--tipo.sup .ps-dip-chip-icon { background: #059669; color: #fff; }
+.ps-dip-chip--tipo.sup .ps-dip-chip-text { color: #065f46; }
+/* Partido — ámbar */
+.ps-dip-chip--partido { border-color: #fde68a; }
+.ps-dip-chip--partido .ps-dip-chip-icon { background: #d97706; color: #fff; }
+.ps-dip-chip--partido .ps-dip-chip-text { color: #92400e; }
+/* Identidad — violeta */
+.ps-dip-chip--id { border-color: #ddd6fe; }
+.ps-dip-chip--id .ps-dip-chip-icon { background: #7c3aed; color: #fff; }
+.ps-dip-chip--id .ps-dip-chip-text { color: #5b21b6; }
+/* Teléfono — verde */
+.ps-dip-chip--tel { border-color: #bbf7d0; }
+.ps-dip-chip--tel .ps-dip-chip-icon { background: #15803d; color: #fff; }
+.ps-dip-chip--tel .ps-dip-chip-text { color: #14532d; }
 .ps-change-btn {
   display: inline-flex;
   align-items: center;
@@ -1386,7 +1411,22 @@
   letter-spacing: 0.8px;
   text-transform: uppercase;
   text-align: center;
-  padding: 8px 6px;
+  padding: 10px 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.ps-liq-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(4px);
+  border: 1.5px solid rgba(255,255,255,0.3);
 }
 .ps-liq-item--sinliq  .ps-liq-item-label { background: #6b7280; }
 .ps-liq-item--proceso .ps-liq-item-label { background: linear-gradient(135deg,#1d4ed8,#2563eb); }
