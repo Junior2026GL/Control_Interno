@@ -2030,7 +2030,7 @@ export default function PresupuestoDiputados() {
                           <span className="ps-liq-item-count">
                             {item.count} ayuda{item.count !== 1 ? 's' : ''}
                           </span>
-                          {item.count > 0 && <span className="ps-liq-ver-btn">Ver detalle ›</span>}
+                          <span className="ps-liq-ver-btn">Ver detalle ›</span>
                         </div>
                       </div>
                     ))}
