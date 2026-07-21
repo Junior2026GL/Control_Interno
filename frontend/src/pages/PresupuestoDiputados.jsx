@@ -2015,9 +2015,9 @@ export default function PresupuestoDiputados() {
                       <div
                         key={item.key}
                         className={`ps-liq-item ps-liq-item--${item.cls} ps-liq-item--clickable`}
-                        onClick={() => item.count > 0 && setLiqModalItem(item)}
-                        title={item.count > 0 ? `Ver ${item.count} ayuda${item.count !== 1 ? 's' : ''} — ${item.label}` : ''}
-                        style={{ cursor: item.count > 0 ? 'pointer' : 'default' }}
+                        onClick={() => setLiqModalItem(item)}
+                        title={`Ver detalle — ${item.label}`}
+                        style={{ cursor: 'pointer' }}
                       >
                         <div className="ps-liq-item-label">
                           <span className="ps-liq-item-icon">{LIQ_ICONS[item.key]}</span>
@@ -3121,7 +3121,7 @@ export default function PresupuestoDiputados() {
         const ayudasFiltradas = sortedAyudas.filter(a => estadoLiquidacion(a) === liqModalItem.key);
         const totalMonto = ayudasFiltradas.reduce((s, a) => s + +(a.monto || 0), 0);
         return (
-          <div className="ps-overlay" onClick={() => setLiqModalItem(null)}>
+          <div className="ps-overlay">
             <div className="ps-liq-detail-modal" onClick={e => e.stopPropagation()}>
 
               {/* Header */}
