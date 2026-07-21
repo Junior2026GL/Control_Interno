@@ -235,22 +235,6 @@ export default function PresupuestoDiputados() {
       .filter(d => d.cuota > 0 || d.ejecutado > 0);
   }, [presupuesto]);
 
-  /* ── liquidation stats ──────────────────────────────────── */
-  const liqStats = useMemo(() => {
-    const items = [
-      { key: 'sin_liquidar',  label: 'Sin Liquidar',  cls: 'sinliq',  color: '#6b7280' },
-      { key: 'en_proceso',    label: 'En Proceso',    cls: 'proceso', color: '#1d4ed8' },
-      { key: 'plazo_vencido', label: 'Plazo Vencido', cls: 'vencido', color: '#dc2626' },
-      { key: 'liquido',       label: 'Líquido',       cls: 'liquido', color: '#15803d' },
-    ].map(i => ({ ...i, monto: 0, count: 0 }));
-    sortedAyudas.forEach(a => {
-      const est  = estadoLiquidacion(a);
-      const item = items.find(d => d.key === est);
-      if (item) { item.monto += +(a.monto || 0); item.count++; }
-    });
-    return items;
-  }, [sortedAyudas]);
-
   /* ── budget form handlers ───────────────────────────────── */
   const distribuirMeses = () => {
     const total = parseFloat(presForm.monto_asignado) || 0;
@@ -479,6 +463,21 @@ export default function PresupuestoDiputados() {
     });
     return arr;
   }, [ayudas, sortField, sortDir]);
+
+  const liqStats = useMemo(() => {
+    const items = [
+      { key: 'sin_liquidar',  label: 'Sin Liquidar',  cls: 'sinliq',  color: '#6b7280' },
+      { key: 'en_proceso',    label: 'En Proceso',    cls: 'proceso', color: '#1d4ed8' },
+      { key: 'plazo_vencido', label: 'Plazo Vencido', cls: 'vencido', color: '#dc2626' },
+      { key: 'liquido',       label: 'Líquido',       cls: 'liquido', color: '#15803d' },
+    ].map(i => ({ ...i, monto: 0, count: 0 }));
+    sortedAyudas.forEach(a => {
+      const est  = estadoLiquidacion(a);
+      const item = items.find(d => d.key === est);
+      if (item) { item.monto += +(a.monto || 0); item.count++; }
+    });
+    return items;
+  }, [sortedAyudas]);
 
   // Reset página al cambiar orden o datos
   useEffect(() => { setAyudasPage(1); }, [sortField, sortDir, ayudas]);
