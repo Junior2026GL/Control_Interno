@@ -1,8 +1,7 @@
 ﻿import { useEffect, useState, useCallback, useContext, useMemo } from 'react';
-import DatePicker, { registerLocale } from 'react-datepicker';
-import { es } from 'date-fns/locale/es';
+import DatePicker from 'react-datepicker';
+import { es } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
-registerLocale('es', es);
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiDownload,
   FiGift, FiCalendar, FiUsers, FiAlertTriangle, FiEye,
@@ -936,7 +935,7 @@ export default function Ayudas() {
                   <div className="ay-field">
                     <label className="ay-field__label">Fecha <span className="req">*</span></label>
                     <DatePicker
-                      locale="es"
+                      locale={es}
                       dateFormat="dd/MM/yyyy"
                       selected={form.fecha ? new Date(form.fecha + 'T12:00:00') : null}
                       onChange={date => {
