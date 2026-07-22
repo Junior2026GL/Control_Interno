@@ -1480,22 +1480,24 @@
 .ps-liq-item--vencido .ps-liq-item-body { background: #fff5f5; }
 .ps-liq-item--liquido .ps-liq-item-body { background: #f0fdf4; }
 .ps-liq-item-monto {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.8px;
   line-height: 1.1;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 .ps-liq-item--sinliq  .ps-liq-item-monto { color: #374151; }
 .ps-liq-item--proceso .ps-liq-item-monto { color: #1d4ed8; }
 .ps-liq-item--vencido .ps-liq-item-monto { color: #dc2626; }
 .ps-liq-item--liquido .ps-liq-item-monto { color: #15803d; }
 .ps-liq-item-count {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 3px 13px;
   border-radius: 20px;
-  margin-top: 2px;
+  margin-top: 4px;
+  letter-spacing: 0.1px;
 }
 .ps-liq-item--sinliq  .ps-liq-item-count { background: #e5e7eb; color: #4b5563; }
 .ps-liq-item--proceso .ps-liq-item-count { background: #dbeafe; color: #1e40af; }
