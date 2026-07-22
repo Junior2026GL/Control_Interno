@@ -522,10 +522,16 @@ export default function CajaChica() {
           if (row.section !== 'body') return;
           const isTotal = row.index === egresos.length;
           if (isTotal) {
-            cell.styles.fontStyle = 'bold';
-            cell.styles.fillColor = AZUL;
-            cell.styles.textColor = BLANCO;
-            if (column.index === 4) cell.styles.halign = 'right';
+            cell.styles.fontStyle  = 'bold';
+            cell.styles.fontSize   = 10;
+            cell.styles.fillColor  = [39, 76, 141];
+            cell.styles.textColor  = [255, 255, 255];
+            cell.styles.cellPadding = { top: 5, bottom: 5, left: 4, right: 4 };
+            if (column.index === 3) cell.styles.halign = 'right';
+            if (column.index === 4) {
+              cell.styles.halign   = 'right';
+              cell.styles.fontSize = 11;
+            }
           } else if (column.index === 4) {
             cell.styles.textColor = C_ROJO;
           }
@@ -912,7 +918,7 @@ export default function CajaChica() {
                       step="0.01"
                       min="0.01"
                       max={MONTO_MAX}
-                      className={`caja-input${formErrors.monto ? ' input-error' : ''}`}
+                      className={`caja-input caja-input-monto${formErrors.monto ? ' input-error' : ''}`}
                       placeholder="0.00"
                       value={form.monto}
                       onChange={e => { setForm({ ...form, monto: e.target.value }); setFormErrors(p => ({ ...p, monto: '' })); }}
@@ -989,7 +995,7 @@ export default function CajaChica() {
                       step="0.01"
                       min="0.01"
                       max={MONTO_MAX}
-                      className={`caja-input${formErrors.monto ? ' input-error' : ''}`}
+                      className={`caja-input caja-input-monto${formErrors.monto ? ' input-error' : ''}`}
                       placeholder="0.00"
                       value={form.monto}
                       onChange={e => { setForm({ ...form, monto: e.target.value }); setFormErrors(p => ({ ...p, monto: '' })); }}
@@ -1091,7 +1097,7 @@ export default function CajaChica() {
                       step="0.01"
                       min="0.01"
                       max={MONTO_MAX}
-                      className={`caja-input${formErrors.monto ? ' input-error' : ''}`}
+                      className={`caja-input caja-input-monto${formErrors.monto ? ' input-error' : ''}`}
                       placeholder="0.00"
                       value={form.monto}
                       onChange={e => { setForm({ ...form, monto: e.target.value }); setFormErrors(p => ({ ...p, monto: '' })); }}
