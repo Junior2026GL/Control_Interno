@@ -306,16 +306,7 @@ export default function CajaChica() {
         return;
       }
 
-      const totalRecargas = data
-        .filter(m => m.tipo !== 'EGRESO')
-        .reduce((s, m) => s + parseFloat(m.monto), 0);
-      const totalEgresos = data
-        .filter(m => m.tipo === 'EGRESO')
-        .reduce((s, m) => s + parseFloat(m.monto), 0);
-      const saldoPeriodo = totalRecargas - totalEgresos;
-
       // ── Logo: fetch as blob then canvas resize ──────
-      let logoDataUrl = null;
       try {
         const resp = await fetch('/logo-congreso.png.png');
         if (resp.ok) {
@@ -480,44 +471,28 @@ export default function CajaChica() {
       doc.setTextColor(...BLANCO);
       doc.text('REPORTE DE CAJA CHICA', L + CW / 2, y + 7.5, { align: 'center' });
 
-      // ════ SUMMARY CARDS ════
-      y += TBAR_H + 6;
-      const cardH = 20;
-      const cardW = (CW - 12) / 3;
-      const cards = [
-        { label: 'TOTAL RECARGAS', value: fmt(totalRecargas), color: C_VERDE  },
-        { label: 'TOTAL EGRESOS',  value: fmt(totalEgresos),  color: C_ROJO   },
-        { label: 'SALDO PERÍODO',  value: fmt(saldoPeriodo),  color: saldoPeriodo >= 0 ? C_VERDE : C_ROJO },
-      ];
-      cards.forEach((card, i) => {
-        const cx = L + i * (cardW + 6);
-        doc.setFillColor(...GBKG);
-        doc.setDrawColor(200, 210, 228);
-        doc.setLineWidth(0.3);
-        doc.rect(cx, y, cardW, cardH, 'FD');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        doc.setTextColor(100, 120, 160);
-        doc.text(card.label, cx + cardW / 2, y + 7, { align: 'center' });
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(...card.color);
-        doc.text(card.value, cx + cardW / 2, y + 15.5, { align: 'center' });
-      });
-
       // ════ TABLE ════
+      const egresos = data.filter(m => m.tipo === 'EGRESO');
+      if (egresos.length === 0) {
+        showToast('No hay egresos en el rango de fechas seleccionado.', 'warn');
+        return;
+      }
+      const totalMonto = egresos.reduce((s, m) => s + parseFloat(m.monto), 0);
+
       autoTable(doc, {
-        startY: y + cardH + 6,
-        head: [['Fecha', 'Facturas', 'Concepto', 'Beneficiario', 'Tipo', 'Monto', 'Saldo Acum.']],
-        body: data.map(m => [
-          fmtFecha(m.fecha).replace(/[^\x00-\xFF]/g, ''),
-          sa(m.factura      || '-'),
-          sa(m.descripcion  || ''),
-          sa(m.beneficiario || '-'),
-          m.tipo,
-          (isPositive(m.tipo) ? '+' : '-') + fmt(m.monto),
-          fmt(m.saldo_acum),
-        ]),
+        startY: y + TBAR_H + 6,
+        head: [['No.', 'Fecha', 'Facturas', 'Concepto', 'Monto', 'Beneficiario']],
+        body: [
+          ...egresos.map((m, i) => [
+            i + 1,
+            fmtFecha(m.fecha).replace(/[^\x00-\xFF]/g, ''),
+            sa(m.factura      || '-'),
+            sa(m.descripcion  || ''),
+            fmt(m.monto),
+            sa(m.beneficiario || '-'),
+          ]),
+          ['', '', '', 'TOTAL', fmt(totalMonto), ''],
+        ],
         styles: {
           fontSize: 8,
           cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
@@ -534,27 +509,24 @@ export default function CajaChica() {
         },
         alternateRowStyles: { fillColor: GBKG },
         columnStyles: {
-          0: { cellWidth: 24 },
-          1: { cellWidth: 32 },
-          2: { cellWidth: 'auto' },
-          3: { cellWidth: 28 },
-          4: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
-          5: { cellWidth: 28, halign: 'right', fontStyle: 'bold' },
-          6: { cellWidth: 28, halign: 'right', fontStyle: 'bold' },
+          0: { cellWidth: 12, halign: 'center' },
+          1: { cellWidth: 26 },
+          2: { cellWidth: 36 },
+          3: { cellWidth: 'auto' },
+          4: { cellWidth: 30, halign: 'right', fontStyle: 'bold' },
+          5: { cellWidth: 32 },
         },
         margin: { left: L, right: 14 },
         didParseCell: ({ row, cell, column }) => {
           if (row.section !== 'body') return;
-          const rawTipo = row.cells[4]?.raw || '';
-          const isPos = rawTipo === 'RECARGA';
-          if (column.index === 4) {
-            cell.styles.textColor = isPos ? C_VERDE : C_ROJO;
-          }
-          if (column.index === 5) {
-            cell.styles.textColor = isPos ? C_VERDE : C_ROJO;
-          }
-          if (column.index === 6) {
-            cell.styles.textColor = [22, 51, 110];
+          const isTotal = row.index === egresos.length;
+          if (isTotal) {
+            cell.styles.fontStyle = 'bold';
+            cell.styles.fillColor = AZUL;
+            cell.styles.textColor = BLANCO;
+            if (column.index === 4) cell.styles.halign = 'right';
+          } else if (column.index === 4) {
+            cell.styles.textColor = C_ROJO;
           }
         },
       });
