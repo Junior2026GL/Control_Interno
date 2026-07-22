@@ -2,10 +2,6 @@ const db = require('../db');
 const { logEvent, getClientIP } = require('../middleware/audit');
 
 const VALID_TIPOS = ['RECARGA', 'EGRESO', 'INGRESO'];
-const VALID_CATEGORIAS = [
-  'Papelería / Útiles', 'Transporte / Viáticos', 'Limpieza',
-  'Mantenimiento', 'Servicios', 'Alimentación', 'Otros',
-];
 const MONTO_MAX  = 9_999_999;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -89,16 +85,6 @@ exports.createMovimiento = (req, res) => {
     return res.status(400).json({ message: `El monto no puede superar Lps. ${MONTO_MAX.toLocaleString()}.` });
   const montoFinal = Math.round(montoNum * 100) / 100;
 
-  // ── categoria (solo EGRESO) ───────────────────────
-  let categoria = null;
-  if (tipo === 'EGRESO') {
-    const cat = (rawCat || '').toString().trim();
-    if (!cat || !VALID_CATEGORIAS.includes(cat)) {
-      return res.status(400).json({ message: 'Categoría de egreso inválida.' });
-    }
-    categoria = cat;
-  }
-
   // ── factura ───────────────────────────────────────
   let factura = null;
   if (tipo === 'EGRESO' && rawFactura !== undefined && rawFactura !== null) {
@@ -123,8 +109,8 @@ exports.createMovimiento = (req, res) => {
   }
 
   db.query(
-    'INSERT INTO caja_chica (fecha, descripcion, tipo, monto, categoria, factura, beneficiario, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [fecha, descripcion, tipo, montoFinal, categoria, factura, beneficiario, uid],
+    'INSERT INTO caja_chica (fecha, descripcion, tipo, monto, factura, beneficiario, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [fecha, descripcion, tipo, montoFinal, factura, beneficiario, uid],
     (err, result) => {
       if (err) {
         console.error('[caja] Error en createMovimiento:', err);
@@ -209,22 +195,17 @@ exports.updateMovimiento = (req, res) => {
     if (rows.length === 0) return res.status(404).json({ message: 'Movimiento no encontrado.' });
 
     const existing = rows[0];
-    let categoria    = existing.categoria;
     let factura      = existing.factura      ?? null;
     let beneficiario = existing.beneficiario ?? null;
 
     if (existing.tipo === 'EGRESO') {
-      const cat = (rawCat || '').toString().trim();
-      if (!cat || !VALID_CATEGORIAS.includes(cat))
-        return res.status(400).json({ message: 'Categoría de egreso inválida.' });
-      categoria = cat;
       factura      = rawFactura      !== undefined ? ((rawFactura      || '').toString().trim().substring(0, 100) || null) : factura;
       beneficiario = rawBeneficiario !== undefined ? ((rawBeneficiario || '').toString().trim().substring(0, 150) || null) : beneficiario;
     }
 
     db.query(
-      'UPDATE caja_chica SET fecha = ?, descripcion = ?, monto = ?, categoria = ?, factura = ?, beneficiario = ? WHERE id = ?',
-      [fecha, descripcion, montoFinal, categoria, factura, beneficiario, id],
+      'UPDATE caja_chica SET fecha = ?, descripcion = ?, monto = ?, factura = ?, beneficiario = ? WHERE id = ?',
+      [fecha, descripcion, montoFinal, factura, beneficiario, id],
       (updateErr) => {
         if (updateErr) {
           console.error('[caja] Error en updateMovimiento (update):', updateErr);

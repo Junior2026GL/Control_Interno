@@ -4,22 +4,13 @@ import autoTable from 'jspdf-autotable';
 import {
   FiPlus, FiTrendingUp, FiTrendingDown,
   FiList, FiX, FiCalendar,
-  FiFileText, FiTag, FiTrash2, FiAlertTriangle, FiDownload, FiUser, FiEdit2, FiBriefcase, FiHash,
+  FiFileText, FiTrash2, FiAlertTriangle, FiDownload, FiUser, FiEdit2, FiBriefcase, FiHash,
 } from 'react-icons/fi';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import './CajaChica.css';
 
-const CATEGORIAS_EGRESO = [
-  'Papelería / Útiles',
-  'Transporte / Viáticos',
-  'Limpieza',
-  'Mantenimiento',
-  'Servicios',
-  'Alimentación',
-  'Otros',
-];
 
 function today() {
   return new Date().toISOString().split('T')[0];
@@ -43,7 +34,7 @@ function authHeaders() {
 }
 
 const EMPTY_RECARGA = { fecha: today(), descripcion: '', monto: '' };
-const EMPTY_EGRESO  = { fecha: today(), descripcion: '', categoria: 'Papelería / Útiles', monto: '', factura: '', beneficiario: '' };
+const EMPTY_EGRESO  = { fecha: today(), descripcion: '', monto: '', factura: '', beneficiario: '' };
 
 const MONTO_MAX = 9_999_999;
 
@@ -85,11 +76,6 @@ function clientValidate(form, tipo) {
     errors.descripcion = 'Mínimo 3 caracteres.';
   } else if (desc.length > 200) {
     errors.descripcion = 'Máximo 200 caracteres.';
-  }
-
-  // categoria (solo egreso)
-  if (tipo === 'egreso' && !CATEGORIAS_EGRESO.includes(form.categoria)) {
-    errors.categoria = 'Categoría inválida.';
   }
 
   // factura (opcional, max 100)
@@ -197,7 +183,6 @@ export default function CajaChica() {
     const q = busqueda.trim().toLowerCase();
     if (q) f = f.filter(m =>
       (m.descripcion   || '').toLowerCase().includes(q) ||
-      (m.categoria     || '').toLowerCase().includes(q) ||
       (m.factura       || '').toLowerCase().includes(q) ||
       (m.beneficiario  || '').toLowerCase().includes(q)
     );
@@ -225,7 +210,6 @@ export default function CajaChica() {
       fecha:        String(m.fecha).split('T')[0],
       descripcion:  m.descripcion   || '',
       monto:        parseFloat(m.monto).toFixed(2),
-      categoria:    m.categoria     || CATEGORIAS_EGRESO[0],
       factura:      m.factura       || '',
       beneficiario: m.beneficiario  || '',
       _id:          m.id,
@@ -252,7 +236,6 @@ export default function CajaChica() {
           descripcion: form.descripcion.trim(),
           monto:       parseFloat(parseFloat(form.monto).toFixed(2)),
           ...(form._tipo === 'EGRESO' ? {
-            categoria:    form.categoria,
             factura:      form.factura      ? form.factura.trim()      : null,
             beneficiario: form.beneficiario ? form.beneficiario.trim() : null,
           } : {}),
@@ -269,7 +252,6 @@ export default function CajaChica() {
           monto:       parseFloat(parseFloat(form.monto).toFixed(2)),
           tipo,
           ...(modal === 'egreso' ? {
-            categoria:    form.categoria,
             factura:      form.factura      ? form.factura.trim()      : null,
             beneficiario: form.beneficiario ? form.beneficiario.trim() : null,
           } : {}),
@@ -1033,24 +1015,11 @@ export default function CajaChica() {
                   </div>
                 </div>
                 <div className="caja-form-group">
-                  <label><FiTag size={12} /> Categoría</label>
-                  <select
-                    className={`caja-input${formErrors.categoria ? ' input-error' : ''}`}
-                    value={form.categoria}
-                    onChange={e => { setForm({ ...form, categoria: e.target.value }); setFormErrors(p => ({ ...p, categoria: '' })); }}
-                  >
-                    {CATEGORIAS_EGRESO.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  {formErrors.categoria && <span className="field-error">{formErrors.categoria}</span>}
-                </div>
-                <div className="caja-form-group">
                   <label><FiHash size={12} /> Factura</label>
                   <input
                     type="text"
                     className={`caja-input${formErrors.factura ? ' input-error' : ''}`}
-                    placeholder="Ej. 000-005-01-03308605"
+                    placeholder="Ingrese el número o código de la factura"
                     maxLength={100}
                     value={form.factura}
                     onChange={e => { setForm({ ...form, factura: e.target.value }); setFormErrors(p => ({ ...p, factura: '' })); }}
@@ -1059,8 +1028,8 @@ export default function CajaChica() {
                 </div>
                 <div className="caja-form-group">
                   <label><FiFileText size={12} /> Concepto</label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={3}
                     className={`caja-input${formErrors.descripcion ? ' input-error' : ''}`}
                     placeholder="Describe el gasto realizado"
                     maxLength={200}
@@ -1146,26 +1115,11 @@ export default function CajaChica() {
                 </div>
                 {form._tipo === 'EGRESO' && (
                   <div className="caja-form-group">
-                    <label><FiTag size={12} /> Categoría</label>
-                    <select
-                      className={`caja-input${formErrors.categoria ? ' input-error' : ''}`}
-                      value={form.categoria}
-                      onChange={e => { setForm({ ...form, categoria: e.target.value }); setFormErrors(p => ({ ...p, categoria: '' })); }}
-                    >
-                      {CATEGORIAS_EGRESO.map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                    {formErrors.categoria && <span className="field-error">{formErrors.categoria}</span>}
-                  </div>
-                )}
-                {form._tipo === 'EGRESO' && (
-                  <div className="caja-form-group">
                     <label><FiHash size={12} /> Factura</label>
                     <input
                       type="text"
                       className={`caja-input${formErrors.factura ? ' input-error' : ''}`}
-                      placeholder="Ej. 000-005-01-03308605"
+                      placeholder="Ingrese el número o código de la factura"
                       maxLength={100}
                       value={form.factura || ''}
                       onChange={e => { setForm({ ...form, factura: e.target.value }); setFormErrors(p => ({ ...p, factura: '' })); }}
@@ -1175,8 +1129,8 @@ export default function CajaChica() {
                 )}
                 <div className="caja-form-group">
                   <label><FiFileText size={12} /> Concepto</label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={3}
                     className={`caja-input${formErrors.descripcion ? ' input-error' : ''}`}
                     placeholder="Descripción del movimiento"
                     maxLength={200}
