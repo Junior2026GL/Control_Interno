@@ -7,7 +7,7 @@ import {
   FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle,
 } from 'react-icons/fi';
 import {
-  HiOutlineMapPin, HiOutlineBadgeCheck, HiOutlineUsers,
+  HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
   HiOutlineIdentification, HiOutlinePhone,
 } from 'react-icons/hi2';
 import {
@@ -1922,7 +1922,7 @@ export default function PresupuestoDiputados() {
                     <span className={`ps-dip-chip ps-dip-chip--tipo ${selectedDip.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
                       <span className="ps-dip-chip-icon">
                         {selectedDip.tipo === 'PROPIETARIO'
-                          ? <HiOutlineBadgeCheck size={18} />
+                          ? <HiOutlineCheckBadge size={18} />
                           : <HiOutlineUsers size={18} />}
                       </span>
                       <span className="ps-dip-chip-body">
