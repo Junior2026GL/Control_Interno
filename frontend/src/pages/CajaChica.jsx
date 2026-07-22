@@ -586,7 +586,12 @@ export default function CajaChica() {
             <button className="btn-success" onClick={openRecarga}>
               <FiTrendingUp size={15} /> Recargar Caja
             </button>
-            <button className="btn-primary" onClick={openEgreso}>
+            <button
+              className="btn-primary"
+              onClick={openEgreso}
+              disabled={parseFloat(stats.saldo) <= 0}
+              title={parseFloat(stats.saldo) <= 0 ? 'Sin saldo disponible para registrar egresos' : ''}
+            >
               <FiPlus size={15} /> Registrar Egreso
             </button>
           </div>
@@ -960,6 +965,11 @@ export default function CajaChica() {
               </div>
 
               <form onSubmit={handleSave} className="caja-form">
+                {/* Saldo disponible */}
+                <div className={`caja-saldo-info ${parseFloat(stats.saldo) <= 0 ? 'caja-saldo-info--agotado' : ''}`}>
+                  <FiAlertTriangle size={13} />
+                  <span>Saldo disponible: <strong>{fmt(stats.saldo)}</strong></span>
+                </div>
                 <div className="caja-form-row">
                   <div className="caja-form-group">
                     <label><FiCalendar size={12} /> Fecha</label>
@@ -984,6 +994,9 @@ export default function CajaChica() {
                       onChange={e => { setForm({ ...form, monto: e.target.value }); setFormErrors(p => ({ ...p, monto: '' })); }}
                     />
                     {formErrors.monto && <span className="field-error">{formErrors.monto}</span>}
+                    {!formErrors.monto && parseFloat(form.monto) > parseFloat(stats.saldo) && parseFloat(form.monto) > 0 && (
+                      <span className="field-error">El monto supera el saldo disponible ({fmt(stats.saldo)}).</span>
+                    )}
                   </div>
                 </div>
                 <div className="caja-form-group">

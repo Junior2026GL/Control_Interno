@@ -502,6 +502,27 @@
   border: 1px solid #fecdd3;
 }
 
+/* ── Saldo disponible en modal egreso ─────────────────── */
+.caja-saldo-info {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #15803d;
+  margin-bottom: 4px;
+}
+
+.caja-saldo-info--agotado {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #e11d48;
+}
+
+
 .caja-modal-actions {
   display: flex;
   justify-content: flex-end;

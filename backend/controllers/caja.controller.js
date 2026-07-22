@@ -30,7 +30,7 @@ exports.getMovimientos = (req, res) => {
   );
 };
 
-exports.createMovimiento = (req, res) => {
+exports.createMovimiento = async (req, res) => {
   const {
     fecha,
     descripcion: rawDesc,
@@ -106,6 +106,30 @@ exports.createMovimiento = (req, res) => {
       return res.status(400).json({ message: 'usuario_id inválido.' });
     }
     uid = parsedUid;
+  }
+
+  // ── Si es EGRESO, verificar saldo suficiente ─────
+  if (tipo === 'EGRESO') {
+    const saldoSql = `
+      SELECT
+        IFNULL(SUM(CASE WHEN tipo IN ('INGRESO','RECARGA') THEN monto ELSE 0 END), 0) -
+        IFNULL(SUM(CASE WHEN tipo = 'EGRESO'              THEN monto ELSE 0 END), 0) AS saldo
+      FROM caja_chica WHERE usuario_id = ?`;
+    const saldoCheck = await new Promise((resolve, reject) =>
+      db.query(saldoSql, [uid], (err, rows) => err ? reject(err) : resolve(rows[0]))
+    ).catch(err => {
+      console.error('[caja] Error verificando saldo:', err);
+      return null;
+    });
+
+    if (saldoCheck !== null) {
+      const saldoActual = parseFloat(saldoCheck.saldo);
+      if (montoFinal > saldoActual) {
+        return res.status(400).json({
+          message: `Saldo insuficiente. Disponible: Lps. ${saldoActual.toLocaleString('es-HN', { minimumFractionDigits: 2 })}`,
+        });
+      }
+    }
   }
 
   db.query(
