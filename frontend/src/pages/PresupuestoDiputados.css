@@ -308,11 +308,6 @@
 .ps-dip-chip--tel .ps-dip-chip-icon { background: linear-gradient(135deg,#15803d,#16a34a); color: #fff; }
 .ps-dip-chip--tel .ps-dip-chip-label { color: #166534; }
 .ps-dip-chip--tel .ps-dip-chip-value { color: #14532d; }
-/* Cumpleaños — rosa */
-.ps-dip-chip--bday { border-color: #fda4af; background: #fff1f2; }
-.ps-dip-chip--bday .ps-dip-chip-icon { background: linear-gradient(135deg,#e11d48,#f43f5e); color: #fff; }
-.ps-dip-chip--bday .ps-dip-chip-label { color: #be123c; }
-.ps-dip-chip--bday .ps-dip-chip-value { color: #9f1239; }
 .ps-change-btn {
   display: inline-flex;
   align-items: center;
