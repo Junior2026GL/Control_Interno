@@ -307,6 +307,7 @@ export default function CajaChica() {
       }
 
       // ── Logo: fetch as blob then canvas resize ──────
+      let logoDataUrl = null;
       try {
         const resp = await fetch('/logo-congreso.png.png');
         if (resp.ok) {
