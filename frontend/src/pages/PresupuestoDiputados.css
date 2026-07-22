@@ -189,9 +189,15 @@
   align-items: center;
   gap: 14px;
 }
+.ps-dip-avatars {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .ps-dip-avatar {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   border-radius: 12px;
   border: 2px solid #e0e7ff;
   background: #eef2ff;
@@ -205,6 +211,21 @@
   object-fit: contain;
   padding: 5px;
   box-sizing: border-box;
+}
+.ps-dip-flag {
+  width: 80px;
+  height: 64px;
+  border-radius: 10px;
+  border: 2px solid #e0e7ff;
+  background: #eef2ff;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(39,76,141,.12);
+}
+.ps-dip-flag img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .ps-dip-text h2 {
   margin: 0 0 8px;

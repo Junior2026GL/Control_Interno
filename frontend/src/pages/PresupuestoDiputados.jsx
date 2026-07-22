@@ -19,6 +19,13 @@ import './PresupuestoDiputados.css';
 
 const CURRENT_YEAR     = new Date().getFullYear();
 const YEARS            = [2026, 2027, 2028, 2029, 2030];
+const PARTIDO_LOGO = {
+  'NACIONAL': '/nacional.JPG',
+  'LIBERAL':  '/liberal.JPG',
+  'LIBRE':    '/libre.JPG',
+  'PINU':     '/pinu.JPG',
+  'DC':       '/dc.JPG',
+};
 const RESUMEN_PAGE_SIZE = 10;
 const AYUDAS_PAGE_SIZE  = 30;
 const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -1884,8 +1891,19 @@ export default function PresupuestoDiputados() {
             {/* ── Selected deputy card ── */}
             <div className="ps-dip-card">
               <div className="ps-dip-info">
-                <div className="ps-dip-avatar">
-                  <img src="/logo-congreso.png.png" alt="" />
+                <div className="ps-dip-avatars">
+                  <div className="ps-dip-avatar">
+                    <img src="/logo-congreso.png.png" alt="" />
+                  </div>
+                  {selectedDip.partido && PARTIDO_LOGO[selectedDip.partido] && (
+                    <div className="ps-dip-flag">
+                      <img
+                        src={PARTIDO_LOGO[selectedDip.partido]}
+                        alt={selectedDip.partido}
+                        onError={e => { e.currentTarget.parentElement.style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="ps-dip-text">
                   <h2>{selectedDip.nombre}</h2>
