@@ -508,6 +508,18 @@
   font-size: 18px;
 }
 
+/* ── Preview contable bajo el input de monto ─────────── */
+.monto-preview {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: #274C8D;
+  letter-spacing: 0.3px;
+  margin-top: 3px;
+  opacity: 0.75;
+}
+
 
 .field-error {
   display: block;

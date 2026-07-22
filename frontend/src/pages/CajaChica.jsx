@@ -522,16 +522,15 @@ export default function CajaChica() {
           if (row.section !== 'body') return;
           const isTotal = row.index === egresos.length;
           if (isTotal) {
-            cell.styles.fontStyle  = 'bold';
-            cell.styles.fontSize   = 10;
-            cell.styles.fillColor  = [39, 76, 141];
-            cell.styles.textColor  = [255, 255, 255];
-            cell.styles.cellPadding = { top: 5, bottom: 5, left: 4, right: 4 };
-            if (column.index === 3) cell.styles.halign = 'right';
-            if (column.index === 4) {
-              cell.styles.halign   = 'right';
-              cell.styles.fontSize = 11;
-            }
+            cell.styles.fillColor   = [235, 242, 255];
+            cell.styles.textColor   = [25, 55, 115];
+            cell.styles.fontStyle   = 'bold';
+            cell.styles.fontSize    = 9;
+            cell.styles.cellPadding = { top: 4, bottom: 4, left: 4, right: 4 };
+            cell.styles.lineColor   = [39, 76, 141];
+            cell.styles.lineWidth   = { top: 1.2, bottom: 0.2, left: 0.2, right: 0.2 };
+            if (column.index === 3) { cell.styles.halign = 'right'; cell.styles.fontSize = 9; }
+            if (column.index === 4) { cell.styles.halign = 'right'; cell.styles.fontSize = 11; cell.styles.textColor = [25, 55, 115]; }
           } else if (column.index === 4) {
             cell.styles.textColor = C_ROJO;
           }
@@ -923,6 +922,11 @@ export default function CajaChica() {
                       value={form.monto}
                       onChange={e => { setForm({ ...form, monto: e.target.value }); setFormErrors(p => ({ ...p, monto: '' })); }}
                     />
+                    {parseFloat(form.monto) > 0 && (
+                      <span className="monto-preview">
+                        {new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL', currencyDisplay: 'symbol' }).format(parseFloat(form.monto) || 0).replace('HNL', 'L.')}
+                      </span>
+                    )}
                     {formErrors.monto && <span className="field-error">{formErrors.monto}</span>}
                   </div>
                 </div>
@@ -1000,6 +1004,11 @@ export default function CajaChica() {
                       value={form.monto}
                       onChange={e => { setForm({ ...form, monto: e.target.value }); setFormErrors(p => ({ ...p, monto: '' })); }}
                     />
+                    {parseFloat(form.monto) > 0 && (
+                      <span className="monto-preview">
+                        {new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL', currencyDisplay: 'symbol' }).format(parseFloat(form.monto) || 0).replace('HNL', 'L.')}
+                      </span>
+                    )}
                     {formErrors.monto && <span className="field-error">{formErrors.monto}</span>}
                     {!formErrors.monto && parseFloat(form.monto) > parseFloat(stats.saldo) && parseFloat(form.monto) > 0 && (
                       <span className="field-error">El monto supera el saldo disponible ({fmt(stats.saldo)}).</span>
@@ -1102,6 +1111,11 @@ export default function CajaChica() {
                       value={form.monto}
                       onChange={e => { setForm({ ...form, monto: e.target.value }); setFormErrors(p => ({ ...p, monto: '' })); }}
                     />
+                    {parseFloat(form.monto) > 0 && (
+                      <span className="monto-preview">
+                        {new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL', currencyDisplay: 'symbol' }).format(parseFloat(form.monto) || 0).replace('HNL', 'L.')}
+                      </span>
+                    )}
                     {formErrors.monto && <span className="field-error">{formErrors.monto}</span>}
                   </div>
                 </div>
