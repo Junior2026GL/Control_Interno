@@ -1,11 +1,15 @@
 import { useEffect, useState, useContext, useRef, useMemo } from 'react';
 import {
   FiSearch, FiX, FiPlus, FiEdit2, FiTrash2,
-  FiUser, FiAlertCircle, FiMapPin, FiCreditCard, FiFlag, FiUsers,
+  FiUser, FiAlertCircle, FiCreditCard,
   FiChevronDown, FiChevronUp, FiBarChart2, FiDownload,
-  FiArrowUp, FiArrowDown, FiCheckSquare, FiPhone,
+  FiArrowUp, FiArrowDown, FiCheckSquare,
   FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle,
 } from 'react-icons/fi';
+import {
+  HiOutlineMapPin, HiOutlineBadgeCheck, HiOutlineUsers,
+  HiOutlineIdentification, HiOutlinePhone,
+} from 'react-icons/hi2';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
@@ -1909,23 +1913,39 @@ export default function PresupuestoDiputados() {
                   <h2>{selectedDip.nombre}</h2>
                   <div className="ps-dip-chips">
                     <span className="ps-dip-chip ps-dip-chip--depto">
-                      <span className="ps-dip-chip-icon"><FiMapPin size={12} /></span>
-                      <span className="ps-dip-chip-text">{selectedDip.departamento}</span>
+                      <span className="ps-dip-chip-icon"><HiOutlineMapPin size={18} /></span>
+                      <span className="ps-dip-chip-body">
+                        <span className="ps-dip-chip-label">Departamento</span>
+                        <span className="ps-dip-chip-value">{selectedDip.departamento}</span>
+                      </span>
                     </span>
                     <span className={`ps-dip-chip ps-dip-chip--tipo ${selectedDip.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
-                      <span className="ps-dip-chip-icon"><FiUsers size={12} /></span>
-                      <span className="ps-dip-chip-text">{selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}</span>
+                      <span className="ps-dip-chip-icon">
+                        {selectedDip.tipo === 'PROPIETARIO'
+                          ? <HiOutlineBadgeCheck size={18} />
+                          : <HiOutlineUsers size={18} />}
+                      </span>
+                      <span className="ps-dip-chip-body">
+                        <span className="ps-dip-chip-label">Tipo</span>
+                        <span className="ps-dip-chip-value">{selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}</span>
+                      </span>
                     </span>
                     {selectedDip.identidad && (
                       <span className="ps-dip-chip ps-dip-chip--id">
-                        <span className="ps-dip-chip-icon"><FiCreditCard size={12} /></span>
-                        <span className="ps-dip-chip-text">{selectedDip.identidad}</span>
+                        <span className="ps-dip-chip-icon"><HiOutlineIdentification size={18} /></span>
+                        <span className="ps-dip-chip-body">
+                          <span className="ps-dip-chip-label">Identidad</span>
+                          <span className="ps-dip-chip-value">{selectedDip.identidad}</span>
+                        </span>
                       </span>
                     )}
                     {selectedDip.telefono && (
                       <span className="ps-dip-chip ps-dip-chip--tel">
-                        <span className="ps-dip-chip-icon"><FiPhone size={12} /></span>
-                        <span className="ps-dip-chip-text">{selectedDip.telefono}</span>
+                        <span className="ps-dip-chip-icon"><HiOutlinePhone size={18} /></span>
+                        <span className="ps-dip-chip-body">
+                          <span className="ps-dip-chip-label">Teléfono</span>
+                          <span className="ps-dip-chip-value">{selectedDip.telefono}</span>
+                        </span>
                       </span>
                     )}
                   </div>
