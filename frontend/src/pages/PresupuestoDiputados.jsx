@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fi';
 import {
   HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
-  HiOutlineIdentification, HiOutlinePhone,
+  HiOutlineIdentification, HiOutlinePhone, HiOutlineCalendarDays,
 } from 'react-icons/hi2';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -1945,6 +1945,15 @@ export default function PresupuestoDiputados() {
                         <span className="ps-dip-chip-body">
                           <span className="ps-dip-chip-label">Teléfono</span>
                           <span className="ps-dip-chip-value">{selectedDip.telefono}</span>
+                        </span>
+                      </span>
+                    )}
+                    {selectedDip.fecha_nacimiento && (
+                      <span className="ps-dip-chip ps-dip-chip--bday">
+                        <span className="ps-dip-chip-icon"><HiOutlineCalendarDays size={18} /></span>
+                        <span className="ps-dip-chip-body">
+                          <span className="ps-dip-chip-label">Cumpleaños</span>
+                          <span className="ps-dip-chip-value">{selectedDip.fecha_nacimiento}</span>
                         </span>
                       </span>
                     )}

@@ -24,13 +24,32 @@ function validateFields({ departamento, tipo, nombre, correo, identidad, telefon
 
 // GET /api/diputados
 exports.getAll = (req, res) => {
-  db.query(
-    'SELECT * FROM diputados ORDER BY departamento ASC, numero ASC, nombre ASC LIMIT 1000',
-    (err, results) => {
-      if (err) { console.error('[diputados] Error en getAll:', err); return res.status(500).json({ message: 'Error al obtener diputados.' }); }
-      res.json(results);
-    }
-  );
+  const sql = `
+    SELECT d.*,
+      c.FECHA_NACIMIENTO AS fecha_nacimiento_raw
+    FROM diputados d
+    LEFT JOIN censo_nacional c
+      ON d.identidad IS NOT NULL
+      AND d.identidad <> ''
+      AND REPLACE(d.identidad, '-', '') = c.NUMERO_IDENTIDAD
+    ORDER BY d.departamento ASC, d.numero ASC, d.nombre ASC
+    LIMIT 1000
+  `;
+  db.query(sql, (err, results) => {
+    if (err) { console.error('[diputados] Error en getAll:', err); return res.status(500).json({ message: 'Error al obtener diputados.' }); }
+    const data = results.map(r => {
+      const raw = r.fecha_nacimiento_raw;
+      let fecha_nacimiento = null;
+      if (raw) {
+        const s = String(raw).trim();
+        const m = s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+        if (m) fecha_nacimiento = `${m[3]}/${m[2]}/${m[1]}`;
+      }
+      const { fecha_nacimiento_raw: _raw, ...rest } = r;
+      return { ...rest, fecha_nacimiento };
+    });
+    res.json(data);
+  });
 };
 
 // POST /api/diputados
