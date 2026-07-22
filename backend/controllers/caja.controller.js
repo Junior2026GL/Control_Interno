@@ -41,6 +41,8 @@ exports.createMovimiento = (req, res) => {
     tipo,
     monto,
     categoria: rawCat,
+    factura:    rawFactura,
+    beneficiario: rawBeneficiario,
     usuario_id: bodyUid,
   } = req.body;
 
@@ -97,6 +99,18 @@ exports.createMovimiento = (req, res) => {
     categoria = cat;
   }
 
+  // ── factura ───────────────────────────────────────
+  let factura = null;
+  if (tipo === 'EGRESO' && rawFactura !== undefined && rawFactura !== null) {
+    factura = (rawFactura || '').toString().trim().substring(0, 100) || null;
+  }
+
+  // ── beneficiario ──────────────────────────────────
+  let beneficiario = null;
+  if (tipo === 'EGRESO' && rawBeneficiario !== undefined && rawBeneficiario !== null) {
+    beneficiario = (rawBeneficiario || '').toString().trim().substring(0, 150) || null;
+  }
+
   // ── usuario_id ────────────────────────────────────
   const canActForOthers = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol);
   let uid = req.user.id;
@@ -109,8 +123,8 @@ exports.createMovimiento = (req, res) => {
   }
 
   db.query(
-    'INSERT INTO caja_chica (fecha, descripcion, tipo, monto, categoria, usuario_id) VALUES (?, ?, ?, ?, ?, ?)',
-    [fecha, descripcion, tipo, montoFinal, categoria, uid],
+    'INSERT INTO caja_chica (fecha, descripcion, tipo, monto, categoria, factura, beneficiario, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [fecha, descripcion, tipo, montoFinal, categoria, factura, beneficiario, uid],
     (err, result) => {
       if (err) {
         console.error('[caja] Error en createMovimiento:', err);
@@ -147,7 +161,7 @@ exports.updateMovimiento = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
 
-  const { fecha, descripcion: rawDesc, monto, categoria: rawCat } = req.body;
+  const { fecha, descripcion: rawDesc, monto, categoria: rawCat, factura: rawFactura, beneficiario: rawBeneficiario } = req.body;
 
   if (!fecha || !DATE_REGEX.test(fecha))
     return res.status(400).json({ message: 'La fecha no tiene un formato válido.' });
@@ -195,18 +209,22 @@ exports.updateMovimiento = (req, res) => {
     if (rows.length === 0) return res.status(404).json({ message: 'Movimiento no encontrado.' });
 
     const existing = rows[0];
-    let categoria = existing.categoria;
+    let categoria    = existing.categoria;
+    let factura      = existing.factura      ?? null;
+    let beneficiario = existing.beneficiario ?? null;
 
     if (existing.tipo === 'EGRESO') {
       const cat = (rawCat || '').toString().trim();
       if (!cat || !VALID_CATEGORIAS.includes(cat))
         return res.status(400).json({ message: 'Categoría de egreso inválida.' });
       categoria = cat;
+      factura      = rawFactura      !== undefined ? ((rawFactura      || '').toString().trim().substring(0, 100) || null) : factura;
+      beneficiario = rawBeneficiario !== undefined ? ((rawBeneficiario || '').toString().trim().substring(0, 150) || null) : beneficiario;
     }
 
     db.query(
-      'UPDATE caja_chica SET fecha = ?, descripcion = ?, monto = ?, categoria = ? WHERE id = ?',
-      [fecha, descripcion, montoFinal, categoria, id],
+      'UPDATE caja_chica SET fecha = ?, descripcion = ?, monto = ?, categoria = ?, factura = ?, beneficiario = ? WHERE id = ?',
+      [fecha, descripcion, montoFinal, categoria, factura, beneficiario, id],
       (updateErr) => {
         if (updateErr) {
           console.error('[caja] Error en updateMovimiento (update):', updateErr);

@@ -4,7 +4,7 @@ import autoTable from 'jspdf-autotable';
 import {
   FiPlus, FiTrendingUp, FiTrendingDown,
   FiList, FiX, FiCalendar,
-  FiFileText, FiTag, FiTrash2, FiAlertTriangle, FiDownload, FiUser, FiEdit2, FiBriefcase,
+  FiFileText, FiTag, FiTrash2, FiAlertTriangle, FiDownload, FiUser, FiEdit2, FiBriefcase, FiHash,
 } from 'react-icons/fi';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -43,7 +43,7 @@ function authHeaders() {
 }
 
 const EMPTY_RECARGA = { fecha: today(), descripcion: '', monto: '' };
-const EMPTY_EGRESO  = { fecha: today(), descripcion: '', categoria: 'Papelería / Útiles', monto: '' };
+const EMPTY_EGRESO  = { fecha: today(), descripcion: '', categoria: 'Papelería / Útiles', monto: '', factura: '', beneficiario: '' };
 
 const MONTO_MAX = 9_999_999;
 
@@ -90,6 +90,18 @@ function clientValidate(form, tipo) {
   // categoria (solo egreso)
   if (tipo === 'egreso' && !CATEGORIAS_EGRESO.includes(form.categoria)) {
     errors.categoria = 'Categoría inválida.';
+  }
+
+  // factura (opcional, max 100)
+  if (tipo === 'egreso') {
+    const fac = (form.factura || '').trim();
+    if (fac.length > 100) errors.factura = 'Máximo 100 caracteres.';
+  }
+
+  // beneficiario (opcional, max 150)
+  if (tipo === 'egreso') {
+    const ben = (form.beneficiario || '').trim();
+    if (ben.length > 150) errors.beneficiario = 'Máximo 150 caracteres.';
   }
 
   return errors;
@@ -184,8 +196,10 @@ export default function CajaChica() {
     let f = filter === 'TODOS' ? movimientosConSaldo : movimientosConSaldo.filter(m => m.tipo === filter);
     const q = busqueda.trim().toLowerCase();
     if (q) f = f.filter(m =>
-      (m.descripcion || '').toLowerCase().includes(q) ||
-      (m.categoria || '').toLowerCase().includes(q)
+      (m.descripcion   || '').toLowerCase().includes(q) ||
+      (m.categoria     || '').toLowerCase().includes(q) ||
+      (m.factura       || '').toLowerCase().includes(q) ||
+      (m.beneficiario  || '').toLowerCase().includes(q)
     );
     if (filtroDesde) {
       const desde = new Date(filtroDesde + 'T00:00:00');
@@ -208,12 +222,14 @@ export default function CajaChica() {
   const openEgreso  = () => { setForm({ ...EMPTY_EGRESO  }); setFormErrors({}); setModal('egreso'); };
   const openEditar  = (m) => {
     setForm({
-      fecha:       String(m.fecha).split('T')[0],
-      descripcion: m.descripcion || '',
-      monto:       parseFloat(m.monto).toFixed(2),
-      categoria:   m.categoria || CATEGORIAS_EGRESO[0],
-      _id:         m.id,
-      _tipo:       m.tipo,
+      fecha:        String(m.fecha).split('T')[0],
+      descripcion:  m.descripcion   || '',
+      monto:        parseFloat(m.monto).toFixed(2),
+      categoria:    m.categoria     || CATEGORIAS_EGRESO[0],
+      factura:      m.factura       || '',
+      beneficiario: m.beneficiario  || '',
+      _id:          m.id,
+      _tipo:        m.tipo,
     });
     setFormErrors({});
     setModal('editar');
@@ -235,7 +251,11 @@ export default function CajaChica() {
           fecha:       form.fecha,
           descripcion: form.descripcion.trim(),
           monto:       parseFloat(parseFloat(form.monto).toFixed(2)),
-          ...(form._tipo === 'EGRESO' ? { categoria: form.categoria } : {}),
+          ...(form._tipo === 'EGRESO' ? {
+            categoria:    form.categoria,
+            factura:      form.factura      ? form.factura.trim()      : null,
+            beneficiario: form.beneficiario ? form.beneficiario.trim() : null,
+          } : {}),
         };
         await api.put(`/caja/${form._id}`, payload, { headers: authHeaders() });
         closeModal();
@@ -248,7 +268,11 @@ export default function CajaChica() {
           descripcion: form.descripcion.trim(),
           monto:       parseFloat(parseFloat(form.monto).toFixed(2)),
           tipo,
-          ...(modal === 'egreso' ? { categoria: form.categoria } : {}),
+          ...(modal === 'egreso' ? {
+            categoria:    form.categoria,
+            factura:      form.factura      ? form.factura.trim()      : null,
+            beneficiario: form.beneficiario ? form.beneficiario.trim() : null,
+          } : {}),
           ...(uidForPost ? { usuario_id: uidForPost } : {}),
         };
         await api.post('/caja', payload, { headers: authHeaders() });
@@ -502,11 +526,12 @@ export default function CajaChica() {
       // ════ TABLE ════
       autoTable(doc, {
         startY: y + cardH + 6,
-        head: [['Fecha', 'Descripción', 'Categoría', 'Tipo', 'Monto', 'Saldo Acum.']],
+        head: [['Fecha', 'Facturas', 'Concepto', 'Beneficiario', 'Tipo', 'Monto', 'Saldo Acum.']],
         body: data.map(m => [
           fmtFecha(m.fecha).replace(/[^\x00-\xFF]/g, ''),
-          sa(m.descripcion || ''),
-          sa(m.categoria  || '-'),
+          sa(m.factura      || '-'),
+          sa(m.descripcion  || ''),
+          sa(m.beneficiario || '-'),
           m.tipo,
           (isPositive(m.tipo) ? '+' : '-') + fmt(m.monto),
           fmt(m.saldo_acum),
@@ -527,25 +552,26 @@ export default function CajaChica() {
         },
         alternateRowStyles: { fillColor: GBKG },
         columnStyles: {
-          0: { cellWidth: 26 },
-          1: { cellWidth: 'auto' },
-          2: { cellWidth: 28 },
-          3: { cellWidth: 26, halign: 'center', fontStyle: 'bold' },
-          4: { cellWidth: 30, halign: 'right', fontStyle: 'bold' },
-          5: { cellWidth: 30, halign: 'right', fontStyle: 'bold' },
+          0: { cellWidth: 24 },
+          1: { cellWidth: 32 },
+          2: { cellWidth: 'auto' },
+          3: { cellWidth: 28 },
+          4: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
+          5: { cellWidth: 28, halign: 'right', fontStyle: 'bold' },
+          6: { cellWidth: 28, halign: 'right', fontStyle: 'bold' },
         },
         margin: { left: L, right: 14 },
         didParseCell: ({ row, cell, column }) => {
           if (row.section !== 'body') return;
-          const rawTipo = row.cells[3]?.raw || '';
+          const rawTipo = row.cells[4]?.raw || '';
           const isPos = rawTipo === 'RECARGA';
-          if (column.index === 3) {
-            cell.styles.textColor = isPos ? C_VERDE : C_ROJO;
-          }
           if (column.index === 4) {
             cell.styles.textColor = isPos ? C_VERDE : C_ROJO;
           }
           if (column.index === 5) {
+            cell.styles.textColor = isPos ? C_VERDE : C_ROJO;
+          }
+          if (column.index === 6) {
             cell.styles.textColor = [22, 51, 110];
           }
         },
@@ -791,8 +817,9 @@ export default function CajaChica() {
                 <tr>
                   <th>#</th>
                   <th>Fecha</th>
-                  <th>Descripción</th>
-                  <th>Categoría</th>
+                  <th>Facturas</th>
+                  <th>Concepto</th>
+                  <th>Beneficiario</th>
                   <th>Tipo</th>
                   <th style={{ textAlign: 'right' }}>Monto</th>
                   <th style={{ textAlign: 'right' }}>Saldo Acum.</th>
@@ -804,12 +831,9 @@ export default function CajaChica() {
                   <tr key={m.id}>
                     <td className="caja-id">#{m.id}</td>
                     <td className="caja-fecha">{fmtFecha(m.fecha)}</td>
+                    <td>{m.factura ? <span className="caja-categoria">{m.factura}</span> : <span className="caja-no-cat">—</span>}</td>
                     <td>{m.descripcion}</td>
-                    <td>
-                      {m.categoria
-                        ? <span className="caja-categoria">{m.categoria}</span>
-                        : <span className="caja-no-cat">—</span>}
-                    </td>
+                    <td>{m.beneficiario || <span className="caja-no-cat">—</span>}</td>
                     <td>
                       <span className={`tipo-badge tipo-${m.tipo.toLowerCase()}`}>
                         {m.tipo}
@@ -1022,7 +1046,19 @@ export default function CajaChica() {
                   {formErrors.categoria && <span className="field-error">{formErrors.categoria}</span>}
                 </div>
                 <div className="caja-form-group">
-                  <label><FiFileText size={12} /> Descripción</label>
+                  <label><FiHash size={12} /> Factura</label>
+                  <input
+                    type="text"
+                    className={`caja-input${formErrors.factura ? ' input-error' : ''}`}
+                    placeholder="Ej. 000-005-01-03308605"
+                    maxLength={100}
+                    value={form.factura}
+                    onChange={e => { setForm({ ...form, factura: e.target.value }); setFormErrors(p => ({ ...p, factura: '' })); }}
+                  />
+                  {formErrors.factura && <span className="field-error">{formErrors.factura}</span>}
+                </div>
+                <div className="caja-form-group">
+                  <label><FiFileText size={12} /> Concepto</label>
                   <input
                     type="text"
                     className={`caja-input${formErrors.descripcion ? ' input-error' : ''}`}
@@ -1032,6 +1068,18 @@ export default function CajaChica() {
                     onChange={e => { setForm({ ...form, descripcion: e.target.value }); setFormErrors(p => ({ ...p, descripcion: '' })); }}
                   />
                   {formErrors.descripcion && <span className="field-error">{formErrors.descripcion}</span>}
+                </div>
+                <div className="caja-form-group">
+                  <label><FiUser size={12} /> Beneficiario</label>
+                  <input
+                    type="text"
+                    className={`caja-input${formErrors.beneficiario ? ' input-error' : ''}`}
+                    placeholder="Ej. PAGADURÍA"
+                    maxLength={150}
+                    value={form.beneficiario}
+                    onChange={e => { setForm({ ...form, beneficiario: e.target.value }); setFormErrors(p => ({ ...p, beneficiario: '' })); }}
+                  />
+                  {formErrors.beneficiario && <span className="field-error">{formErrors.beneficiario}</span>}
                 </div>
 
                 {formErrors._server && <div className="caja-form-error">{formErrors._server}</div>}
@@ -1111,8 +1159,22 @@ export default function CajaChica() {
                     {formErrors.categoria && <span className="field-error">{formErrors.categoria}</span>}
                   </div>
                 )}
+                {form._tipo === 'EGRESO' && (
+                  <div className="caja-form-group">
+                    <label><FiHash size={12} /> Factura</label>
+                    <input
+                      type="text"
+                      className={`caja-input${formErrors.factura ? ' input-error' : ''}`}
+                      placeholder="Ej. 000-005-01-03308605"
+                      maxLength={100}
+                      value={form.factura || ''}
+                      onChange={e => { setForm({ ...form, factura: e.target.value }); setFormErrors(p => ({ ...p, factura: '' })); }}
+                    />
+                    {formErrors.factura && <span className="field-error">{formErrors.factura}</span>}
+                  </div>
+                )}
                 <div className="caja-form-group">
-                  <label><FiFileText size={12} /> Descripción</label>
+                  <label><FiFileText size={12} /> Concepto</label>
                   <input
                     type="text"
                     className={`caja-input${formErrors.descripcion ? ' input-error' : ''}`}
@@ -1123,6 +1185,20 @@ export default function CajaChica() {
                   />
                   {formErrors.descripcion && <span className="field-error">{formErrors.descripcion}</span>}
                 </div>
+                {form._tipo === 'EGRESO' && (
+                  <div className="caja-form-group">
+                    <label><FiUser size={12} /> Beneficiario</label>
+                    <input
+                      type="text"
+                      className={`caja-input${formErrors.beneficiario ? ' input-error' : ''}`}
+                      placeholder="Ej. PAGADURÍA"
+                      maxLength={150}
+                      value={form.beneficiario || ''}
+                      onChange={e => { setForm({ ...form, beneficiario: e.target.value }); setFormErrors(p => ({ ...p, beneficiario: '' })); }}
+                    />
+                    {formErrors.beneficiario && <span className="field-error">{formErrors.beneficiario}</span>}
+                  </div>
+                )}
 
                 {formErrors._server && <div className="caja-form-error">{formErrors._server}</div>}
 
