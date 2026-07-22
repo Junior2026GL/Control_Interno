@@ -1916,12 +1916,6 @@ export default function PresupuestoDiputados() {
                       <span className="ps-dip-chip-icon"><FiUsers size={12} /></span>
                       <span className="ps-dip-chip-text">{selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}</span>
                     </span>
-                    {selectedDip.partido && (
-                      <span className="ps-dip-chip ps-dip-chip--partido">
-                        <span className="ps-dip-chip-icon"><FiFlag size={12} /></span>
-                        <span className="ps-dip-chip-text">{selectedDip.partido}</span>
-                      </span>
-                    )}
                     {selectedDip.identidad && (
                       <span className="ps-dip-chip ps-dip-chip--id">
                         <span className="ps-dip-chip-icon"><FiCreditCard size={12} /></span>
