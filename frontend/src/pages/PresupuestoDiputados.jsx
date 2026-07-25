@@ -87,6 +87,7 @@ export default function PresupuestoDiputados() {
   const [dipSearch, setDipSearch]     = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedDip, setSelectedDip] = useState(null);
+  const [dipBirthday, setDipBirthday] = useState(null); // 'YYYY-MM-DD' | null
   const searchRef    = useRef(null);
   const exportMenuRef = useRef(null);
 
@@ -196,6 +197,7 @@ export default function PresupuestoDiputados() {
       );
       setPresupuesto(r.data.presupuesto);
       setAyudas(r.data.ayudas);
+      setDipBirthday(r.data.diputado?.fecha_nacimiento || null);
     } catch {
       showToast('Error al cargar el presupuesto.');
     } finally {
@@ -214,6 +216,7 @@ export default function PresupuestoDiputados() {
     setSelectedDip(null);
     setPresupuesto(null);
     setAyudas([]);
+    setDipBirthday(null);
     setShowAnalytics(false);
   };
 
@@ -1951,6 +1954,15 @@ export default function PresupuestoDiputados() {
                   </div>
                 </div>
               </div>
+              {dipBirthday && (() => {
+                const [, mo, dy] = dipBirthday.split('-');
+                return (
+                  <div className="ps-dip-birthday">
+                    <span className="ps-dip-birthday-icon">🎂</span>
+                    Cumpleaños — {parseInt(dy, 10)} de {MESES_LARGOS[parseInt(mo, 10) - 1]}
+                  </div>
+                );
+              })()}
               <button className="ps-change-btn" onClick={clearSelection}>
                 <FiX size={14} /> Cambiar
               </button>

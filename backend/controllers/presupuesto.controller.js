@@ -15,9 +15,17 @@ exports.getByDiputado = async (req, res) => {
 
   try {
     const [dipRows] = await db.promise().query(
-      'SELECT id, nombre, departamento, tipo, partido, identidad, activo FROM diputados WHERE id = ?',
+      `SELECT d.id, d.nombre, d.departamento, d.tipo, d.partido, d.identidad, d.activo,
+              dc.fecha_nacimiento
+       FROM diputados d
+       LEFT JOIN diputados_cumpleanos dc ON dc.diputado_id = d.id
+       WHERE d.id = ?`,
       [diputadoId]
     );
+    if (dipRows.length && dipRows[0].fecha_nacimiento) {
+      const fn = new Date(dipRows[0].fecha_nacimiento);
+      dipRows[0].fecha_nacimiento = fn.toISOString().slice(0, 10); // YYYY-MM-DD
+    }
     if (!dipRows.length) return res.status(404).json({ message: 'Diputado no encontrado.' });
 
     const [presRows] = await db.promise().query(

@@ -326,6 +326,18 @@
 }
 .ps-change-btn:hover { background: #fff1f2; border-color: #fecdd3; color: #e11d48; }
 
+/* ── Birthday badge ──────────────────────────────────────── */
+.ps-dip-birthday {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a3a52;
+}
+.ps-dip-birthday-icon { font-size: 15px; }
+
 /* ── Budget card ─────────────────────────────────────────── */
 .ps-budget-card {
   background: white;
