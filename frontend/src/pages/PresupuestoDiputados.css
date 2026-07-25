@@ -308,6 +308,11 @@
 .ps-dip-chip--tel .ps-dip-chip-icon { background: linear-gradient(135deg,#15803d,#16a34a); color: #fff; }
 .ps-dip-chip--tel .ps-dip-chip-label { color: #166534; }
 .ps-dip-chip--tel .ps-dip-chip-value { color: #14532d; }
+
+.ps-dip-chip--bday { border-color: #fbcfe8; background: #fdf2f8; }
+.ps-dip-chip--bday .ps-dip-chip-icon { background: linear-gradient(135deg,#be185d,#ec4899); color: #fff; }
+.ps-dip-chip--bday .ps-dip-chip-label { color: #9d174d; }
+.ps-dip-chip--bday .ps-dip-chip-value { color: #831843; }
 .ps-change-btn {
   display: inline-flex;
   align-items: center;
@@ -325,18 +330,6 @@
   flex-shrink: 0;
 }
 .ps-change-btn:hover { background: #fff1f2; border-color: #fecdd3; color: #e11d48; }
-
-/* ── Birthday badge ──────────────────────────────────────── */
-.ps-dip-birthday {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1a3a52;
-}
-.ps-dip-birthday-icon { font-size: 15px; }
 
 /* ── Budget card ─────────────────────────────────────────── */
 .ps-budget-card {

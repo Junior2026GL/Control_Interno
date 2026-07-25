@@ -4,7 +4,7 @@ import {
   FiUser, FiAlertCircle, FiCreditCard,
   FiChevronDown, FiChevronUp, FiBarChart2, FiDownload,
   FiArrowUp, FiArrowDown, FiCheckSquare,
-  FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle,
+  FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle, FiGift,
 } from 'react-icons/fi';
 import {
   HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
@@ -1951,18 +1951,21 @@ export default function PresupuestoDiputados() {
                         </span>
                       </span>
                     )}
+                    {dipBirthday && (() => {
+                      const [, mo, dy] = dipBirthday.split('-');
+                      return (
+                        <span className="ps-dip-chip ps-dip-chip--bday">
+                          <span className="ps-dip-chip-icon"><FiGift size={16} /></span>
+                          <span className="ps-dip-chip-body">
+                            <span className="ps-dip-chip-label">Cumpleaños</span>
+                            <span className="ps-dip-chip-value">{parseInt(dy, 10)} {MESES_CORTOS[parseInt(mo, 10) - 1]}</span>
+                          </span>
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
-              {dipBirthday && (() => {
-                const [, mo, dy] = dipBirthday.split('-');
-                return (
-                  <div className="ps-dip-birthday">
-                    <span className="ps-dip-birthday-icon">🎂</span>
-                    Cumpleaños — {parseInt(dy, 10)} de {MESES_LARGOS[parseInt(mo, 10) - 1]}
-                  </div>
-                );
-              })()}
               <button className="ps-change-btn" onClick={clearSelection}>
                 <FiX size={14} /> Cambiar
               </button>
