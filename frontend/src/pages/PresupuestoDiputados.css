@@ -173,9 +173,9 @@
 
 /* ── Selected deputy card ────────────────────────────────── */
 .ps-dip-card {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   background: white;
   border: 1.5px solid #e8ecf4;
@@ -314,20 +314,22 @@
 .ps-dip-chip--bday .ps-dip-chip-label { color: #9d174d; }
 .ps-dip-chip--bday .ps-dip-chip-value { color: #831843; }
 .ps-change-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 6px 13px;
   background: #f8fafc;
   border: 1.5px solid #e8ecf4;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #64748b;
   cursor: pointer;
   transition: all .2s;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 .ps-change-btn:hover { background: #fff1f2; border-color: #fecdd3; color: #e11d48; }
 
