@@ -410,6 +410,7 @@ export default function CumpleanosPage() {
               {loadingList ? (
                 <div className="cb-loading"><div className="cb-spinner" /><p>Cargando listado…</p></div>
               ) : (
+                <>
                 <div className="cb-table-wrap">
                   <table className="cb-table">
                     <thead>
@@ -523,6 +524,7 @@ export default function CumpleanosPage() {
                   <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
                 </div>
               )}
+                </>
               )}
             </div>
           );
