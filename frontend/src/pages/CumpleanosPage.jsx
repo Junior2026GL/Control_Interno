@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { FiChevronLeft, FiChevronRight, FiDownload, FiX, FiCalendar, FiRefreshCw, FiPhone, FiGift } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiDownload, FiX, FiCalendar, FiRefreshCw, FiPhone, FiGift, FiList, FiEdit2, FiTrash2, FiPlus, FiSearch } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -57,8 +57,11 @@ function exportToExcel(list, day, month, year) {
   XLSX.writeFile(wb, `Cumpleanos_${String(day).padStart(2,'0')}_${MESES[month-1]}_${year}.xlsx`);
 }
 
+const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
 export default function CumpleanosPage() {
   const today = new Date();
+  const [tab,       setTab]       = useState('calendario'); // 'calendario' | 'gestion'
   const [viewYear,  setViewYear]  = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth() + 1); // 1-12
   const [birthdays, setBirthdays] = useState([]);
@@ -67,6 +70,16 @@ export default function CumpleanosPage() {
   const [modal,     setModal]     = useState(null); // { day, list }
   const [toast,     setToast]     = useState(null);
   const [telStats,  setTelStats]  = useState({ con_telefono: null, sin_telefono: null });
+
+  // Gestión (tab listado)
+  const [listado,      setListado]      = useState([]);
+  const [loadingList,  setLoadingList]  = useState(false);
+  const [filtroList,   setFiltroList]   = useState('todos'); // 'todos' | 'con' | 'sin'
+  const [busqueda,     setBusqueda]     = useState('');
+  const [editModal,    setEditModal]    = useState(null); // { diputado } null=cerrado
+  const [editFecha,    setEditFecha]    = useState('');
+  const [savingEdit,   setSavingEdit]   = useState(false);
+  const [confirmDel,   setConfirmDel]   = useState(null); // diputado a eliminar
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -91,7 +104,56 @@ export default function CumpleanosPage() {
     }
   }, []);
 
+  const fetchListado = useCallback(async () => {
+    try {
+      setLoadingList(true);
+      const res = await api.get('/cumpleanos-diputados/listado');
+      setListado(res.data);
+    } catch {
+      showToast('Error al cargar el listado.');
+    } finally {
+      setLoadingList(false);
+    }
+  }, []);
+
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (tab === 'gestion') fetchListado(); }, [tab, fetchListado]);
+
+  const openEdit = (diputado) => {
+    setEditFecha(diputado.fecha_nacimiento || '');
+    setEditModal(diputado);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editFecha) return showToast('Seleccione una fecha.');
+    try {
+      setSavingEdit(true);
+      await api.post('/cumpleanos-diputados', {
+        diputado_id:      editModal.id,
+        fecha_nacimiento: editFecha,
+      });
+      showToast('Fecha guardada correctamente.', 'ok');
+      setEditModal(null);
+      fetchListado();
+      fetchData();
+    } catch (e) {
+      showToast(e?.response?.data?.message || 'Error al guardar.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async (diputado) => {
+    try {
+      await api.delete(`/cumpleanos-diputados/${diputado.id}`);
+      showToast('Fecha eliminada.', 'ok');
+      setConfirmDel(null);
+      fetchListado();
+      fetchData();
+    } catch (e) {
+      showToast(e?.response?.data?.message || 'Error al eliminar.');
+    }
+  };
 
   const prevMonth = () => {
     if (viewMonth === 1) { setViewMonth(12); setViewYear(y => y - 1); }
@@ -142,14 +204,34 @@ export default function CumpleanosPage() {
               <p>Fechas de nacimiento registradas en el censo nacional</p>
             </div>
           </div>
-          <button className="cb-btn-refresh" onClick={fetchData} title="Recargar datos">
+          <button
+            className="cb-btn-refresh"
+            onClick={() => { fetchData(); if (tab === 'gestion') fetchListado(); }}
+            title="Recargar datos"
+          >
             <FiRefreshCw size={15} />
             Actualizar
           </button>
         </div>
 
-        {/* Stats bar */}
-        {!loading && !error && (
+        {/* Tabs */}
+        <div className="cb-tabs">
+          <button
+            className={`cb-tab${tab === 'calendario' ? ' cb-tab--active' : ''}`}
+            onClick={() => setTab('calendario')}
+          >
+            <FiCalendar size={15} /> Calendario
+          </button>
+          <button
+            className={`cb-tab${tab === 'gestion' ? ' cb-tab--active' : ''}`}
+            onClick={() => setTab('gestion')}
+          >
+            <FiList size={15} /> Gestión
+          </button>
+        </div>
+
+        {/* Stats bar — solo en calendario */}
+        {tab === 'calendario' && !loading && !error && (
           <div className="cb-stats">
             {/* Destacado: cumpleaños del mes */}
             <div className="cb-stat-featured">
@@ -179,7 +261,8 @@ export default function CumpleanosPage() {
           </div>
         )}
 
-        {/* Calendar card */}
+        {/* ── TAB: CALENDARIO ───────────────────────────────── */}
+        {tab === 'calendario' && (
         <div className="cb-card">
           {/* Month navigation */}
           <div className="cb-nav">
@@ -273,6 +356,128 @@ export default function CumpleanosPage() {
             </>
           )}
         </div>
+        )} {/* fin tab calendario */}
+
+        {/* ── TAB: GESTIÓN ───────────────────────────────── */}
+        {tab === 'gestion' && (() => {
+          const sinFecha   = listado.filter(d => !d.fecha_nacimiento).length;
+          const filtrados  = listado
+            .filter(d => {
+              if (filtroList === 'con')  return !!d.fecha_nacimiento;
+              if (filtroList === 'sin')  return !d.fecha_nacimiento;
+              return true;
+            })
+            .filter(d => !busqueda || d.nombre.toLowerCase().includes(busqueda.toLowerCase()));
+
+          return (
+            <div className="cb-gestion-card">
+              {/* Barra de herramientas */}
+              <div className="cb-gestion-toolbar">
+                <div className="cb-gestion-filters">
+                  {[['todos','Todos'],['con','Con fecha'],['sin','Sin fecha']].map(([v, lbl]) => (
+                    <button
+                      key={v}
+                      className={`cb-filter-btn${filtroList === v ? ' cb-filter-btn--active' : ''}`}
+                      onClick={() => setFiltroList(v)}
+                    >
+                      {lbl}
+                      {v === 'sin' && sinFecha > 0 && (
+                        <span className="cb-filter-badge">{sinFecha}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="cb-gestion-search">
+                  <FiSearch size={14} className="cb-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Buscar diputado..."
+                    value={busqueda}
+                    onChange={e => setBusqueda(e.target.value)}
+                    className="cb-search-input"
+                  />
+                </div>
+              </div>
+
+              {/* Tabla */}
+              {loadingList ? (
+                <div className="cb-loading"><div className="cb-spinner" /><p>Cargando listado…</p></div>
+              ) : (
+                <div className="cb-table-wrap">
+                  <table className="cb-table">
+                    <thead>
+                      <tr>
+                        <th>Diputado</th>
+                        <th>Tipo</th>
+                        <th>Departamento</th>
+                        <th>Fecha Nacimiento</th>
+                        <th>Fuente</th>
+                        <th style={{textAlign:'center'}}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtrados.length === 0 && (
+                        <tr><td colSpan={6} className="cb-table-empty">Sin resultados.</td></tr>
+                      )}
+                      {filtrados.map(d => {
+                        const meta = TIPO_META[d.tipo] || TIPO_META.PROPIETARIO;
+                        const [yr, mo, dy] = d.fecha_nacimiento ? d.fecha_nacimiento.split('-') : [];
+                        const fechaDisplay = d.fecha_nacimiento
+                          ? `${dy}/${mo}/${yr} — ${MESES_CORTOS[parseInt(mo,10)-1]}`
+                          : null;
+                        return (
+                          <tr key={d.id} className={!d.activo ? 'cb-row--inactivo' : ''}>
+                            <td>
+                              <div className="cb-table-nombre">{d.nombre}</div>
+                              {!d.activo && <span className="cb-inactivo-badge">Inactivo</span>}
+                            </td>
+                            <td>
+                              <span className="cb-badge" style={{ color: meta.color, background: meta.bg, borderColor: meta.color + '33' }}>
+                                {meta.label}
+                              </span>
+                            </td>
+                            <td className="cb-table-dept">{d.departamento}</td>
+                            <td>
+                              {fechaDisplay
+                                ? <span className="cb-fecha-ok">{fechaDisplay}</span>
+                                : <span className="cb-fecha-missing">Sin fecha</span>
+                              }
+                            </td>
+                            <td>
+                              {d.fuente && (
+                                <span className={`cb-fuente-badge cb-fuente-badge--${d.fuente}`}>
+                                  {d.fuente === 'censo' ? 'Censo' : 'Manual'}
+                                </span>
+                              )}
+                            </td>
+                            <td className="cb-table-actions">
+                              <button
+                                className="cb-action-btn cb-action-btn--edit"
+                                title={d.fecha_nacimiento ? 'Editar fecha' : 'Agregar fecha'}
+                                onClick={() => openEdit(d)}
+                              >
+                                {d.fecha_nacimiento ? <FiEdit2 size={14} /> : <FiPlus size={14} />}
+                              </button>
+                              {d.fecha_nacimiento && (
+                                <button
+                                  className="cb-action-btn cb-action-btn--del"
+                                  title="Eliminar fecha"
+                                  onClick={() => setConfirmDel(d)}
+                                >
+                                  <FiTrash2 size={14} />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Modal */}
@@ -344,6 +549,67 @@ export default function CumpleanosPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Editar / Agregar fecha ────────────────── */}
+      {editModal && (
+        <div className="cb-modal-backdrop" onClick={() => setEditModal(null)}>
+          <div className="cb-modal cb-modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="cb-modal-header">
+              <div className="cb-modal-title">
+                <FiCalendar size={18} />
+                <span>{editModal.fecha_nacimiento ? 'Editar' : 'Agregar'} fecha — {editModal.nombre}</span>
+              </div>
+              <button className="cb-modal-close" onClick={() => setEditModal(null)}>
+                <FiX size={18} />
+              </button>
+            </div>
+            <div className="cb-modal-body cb-modal-body--form">
+              <label className="cb-form-label">Fecha de nacimiento</label>
+              <input
+                type="date"
+                className="cb-form-input"
+                value={editFecha}
+                onChange={e => setEditFecha(e.target.value)}
+                max={new Date().toISOString().slice(0,10)}
+              />
+              <div className="cb-form-hint">Formato: día/mes/año. Se guardará con fuente <strong>manual</strong>.</div>
+              <div className="cb-form-actions">
+                <button className="cb-btn-cancel" onClick={() => setEditModal(null)}>Cancelar</button>
+                <button className="cb-btn-save" onClick={handleSaveEdit} disabled={savingEdit}>
+                  {savingEdit ? 'Guardando…' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Confirmar Eliminar ─────────────────────── */}
+      {confirmDel && (
+        <div className="cb-modal-backdrop" onClick={() => setConfirmDel(null)}>
+          <div className="cb-modal cb-modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="cb-modal-header">
+              <div className="cb-modal-title">
+                <FiTrash2 size={18} style={{ color: '#dc2626' }} />
+                <span>Eliminar fecha de nacimiento</span>
+              </div>
+              <button className="cb-modal-close" onClick={() => setConfirmDel(null)}>
+                <FiX size={18} />
+              </button>
+            </div>
+            <div className="cb-modal-body cb-modal-body--form">
+              <p className="cb-confirm-text">
+                ¿Eliminar la fecha de nacimiento de <strong>{confirmDel.nombre}</strong>?
+                Esta acción no se puede deshacer.
+              </p>
+              <div className="cb-form-actions">
+                <button className="cb-btn-cancel" onClick={() => setConfirmDel(null)}>Cancelar</button>
+                <button className="cb-btn-del" onClick={() => handleDelete(confirmDel)}>Eliminar</button>
+              </div>
             </div>
           </div>
         </div>

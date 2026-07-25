@@ -63,7 +63,6 @@ function parseFecha(str) {
 
 // GET /api/cumpleanos-diputados
 exports.getAll = (req, res) => {
-  // Servir desde caché si está vigente
   if (cacheValid()) {
     return res.json(cache.data);
   }
@@ -77,16 +76,10 @@ exports.getAll = (req, res) => {
       d.departamento,
       d.telefono,
       d.activo,
-      c.FECHA_NACIMIENTO
+      dc.fecha_nacimiento
     FROM diputados d
-    INNER JOIN censo_nacional c
-      ON REPLACE(d.identidad, '-', '') = c.NUMERO_IDENTIDAD
-    WHERE d.identidad IS NOT NULL
-      AND d.identidad <> ''
-      AND c.FECHA_NACIMIENTO IS NOT NULL
-      AND c.FECHA_NACIMIENTO <> ''
+    INNER JOIN diputados_cumpleanos dc ON dc.diputado_id = d.id
     ORDER BY d.nombre ASC
-    LIMIT 500
   `;
 
   db.query(sql, (err, rows) => {
@@ -97,33 +90,33 @@ exports.getAll = (req, res) => {
 
     const data = rows
       .map(r => {
-        const fecha = parseFecha(r.FECHA_NACIMIENTO);
-        if (!fecha || fecha.mes < 1 || fecha.mes > 12 || fecha.dia < 1 || fecha.dia > 31) {
-          return null;
-        }
+        if (!r.fecha_nacimiento) return null;
+        const dt  = new Date(r.fecha_nacimiento);
+        const mes = dt.getUTCMonth() + 1;
+        const dia = dt.getUTCDate();
+        const anio = dt.getUTCFullYear();
+        if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
         return {
-          id:           r.id,
-          nombre:       r.nombre,
-          partido:      r.partido || '—',
-          tipo:         r.tipo,
-          departamento: r.departamento,
-          telefono:     r.telefono || null,
-          activo:       r.activo === 1 || r.activo === true,
-          mes:          fecha.mes,
-          dia:          fecha.dia,
-          anio:        fecha.anio,
-          fecha_nacimiento: fecha.formateada,
+          id:              r.id,
+          nombre:          r.nombre,
+          partido:         r.partido || '—',
+          tipo:            r.tipo,
+          departamento:    r.departamento,
+          telefono:        r.telefono || null,
+          activo:          r.activo === 1 || r.activo === true,
+          mes,
+          dia,
+          anio,
+          fecha_nacimiento: `${String(dia).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${anio}`,
         };
       })
       .filter(Boolean);
 
     res.json(data);
 
-    // Guardar en caché
     cache.data = data;
     cache.ts   = Date.now();
 
-    // Auditoría — registro de consulta a datos personales del censo
     logEvent({
       usuario_id:     req.user?.id,
       usuario_nombre: req.user?.nombre || null,
@@ -136,6 +129,121 @@ exports.getAll = (req, res) => {
       resultado:      'EXITO',
     });
   });
+};
+
+// GET /api/cumpleanos-diputados/listado — todos los diputados con/sin fecha (para gestión CRUD)
+exports.getListado = (req, res) => {
+  const sql = `
+    SELECT
+      d.id,
+      d.nombre,
+      d.partido,
+      d.tipo,
+      d.departamento,
+      d.telefono,
+      d.activo,
+      dc.id              AS cumple_id,
+      dc.fecha_nacimiento,
+      dc.fuente
+    FROM diputados d
+    LEFT JOIN diputados_cumpleanos dc ON dc.diputado_id = d.id
+    ORDER BY d.nombre ASC
+  `;
+  db.query(sql, (err, rows) => {
+    if (err) {
+      console.error('[cumpleanos_diputados] Error en getListado:', err);
+      return res.status(500).json({ message: 'Error al obtener listado.' });
+    }
+    res.json(rows.map(r => ({
+      id:              r.id,
+      nombre:          r.nombre,
+      partido:         r.partido || '—',
+      tipo:            r.tipo,
+      departamento:    r.departamento,
+      telefono:        r.telefono || null,
+      activo:          r.activo === 1 || r.activo === true,
+      cumple_id:       r.cumple_id || null,
+      fecha_nacimiento: r.fecha_nacimiento
+        ? new Date(r.fecha_nacimiento).toISOString().slice(0, 10)
+        : null,
+      fuente: r.fuente || null,
+    })));
+  });
+};
+
+// POST /api/cumpleanos-diputados — crear o actualizar fecha de nacimiento
+exports.upsert = (req, res) => {
+  const diputadoId = parseInt(req.body.diputado_id, 10);
+  const fecha      = req.body.fecha_nacimiento;
+
+  if (!diputadoId || !fecha)
+    return res.status(400).json({ message: 'diputado_id y fecha_nacimiento son requeridos.' });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha))
+    return res.status(400).json({ message: 'Formato de fecha inválido. Use YYYY-MM-DD.' });
+
+  const sql = `
+    INSERT INTO diputados_cumpleanos (diputado_id, fecha_nacimiento, fuente, editado_por)
+    VALUES (?, ?, 'manual', ?)
+    ON DUPLICATE KEY UPDATE
+      fecha_nacimiento = VALUES(fecha_nacimiento),
+      fuente           = 'manual',
+      editado_por      = VALUES(editado_por),
+      actualizado_at   = NOW()
+  `;
+  db.query(sql, [diputadoId, fecha, req.user?.id || null], (err) => {
+    if (err) {
+      console.error('[cumpleanos_diputados] Error en upsert:', err);
+      return res.status(500).json({ message: 'Error al guardar la fecha.' });
+    }
+    cache.data = null;
+    cache.ts   = 0;
+    logEvent({
+      usuario_id:     req.user?.id,
+      usuario_nombre: req.user?.nombre || null,
+      accion:         'GUARDAR',
+      modulo:         'cumpleanos-diputados',
+      detalle:        `Guardó fecha de nacimiento para diputado ID ${diputadoId}: ${fecha}`,
+      ip:             getClientIP(req),
+      metodo:         req.method,
+      ruta:           req.originalUrl,
+      resultado:      'EXITO',
+    });
+    res.json({ message: 'Fecha guardada correctamente.' });
+  });
+};
+
+// DELETE /api/cumpleanos-diputados/:diputadoId — eliminar fecha de nacimiento
+exports.remove = (req, res) => {
+  const diputadoId = parseInt(req.params.diputadoId, 10);
+  if (!diputadoId)
+    return res.status(400).json({ message: 'ID de diputado inválido.' });
+
+  db.query(
+    'DELETE FROM diputados_cumpleanos WHERE diputado_id = ?',
+    [diputadoId],
+    (err, result) => {
+      if (err) {
+        console.error('[cumpleanos_diputados] Error en remove:', err);
+        return res.status(500).json({ message: 'Error al eliminar la fecha.' });
+      }
+      if (result.affectedRows === 0)
+        return res.status(404).json({ message: 'Registro no encontrado.' });
+      cache.data = null;
+      cache.ts   = 0;
+      logEvent({
+        usuario_id:     req.user?.id,
+        usuario_nombre: req.user?.nombre || null,
+        accion:         'ELIMINAR',
+        modulo:         'cumpleanos-diputados',
+        detalle:        `Eliminó fecha de nacimiento del diputado ID ${diputadoId}`,
+        ip:             getClientIP(req),
+        metodo:         req.method,
+        ruta:           req.originalUrl,
+        resultado:      'EXITO',
+      });
+      res.json({ message: 'Fecha eliminada correctamente.' });
+    }
+  );
 };
 
 // GET /api/cumpleanos-diputados/stats — totales de teléfono sobre todos los diputados activos
