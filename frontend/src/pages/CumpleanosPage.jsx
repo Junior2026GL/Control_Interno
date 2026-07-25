@@ -80,6 +80,9 @@ export default function CumpleanosPage() {
   const [editFecha,    setEditFecha]    = useState('');
   const [savingEdit,   setSavingEdit]   = useState(false);
   const [confirmDel,   setConfirmDel]   = useState(null); // diputado a eliminar
+  const [page,         setPage]         = useState(1);
+  const [pageSize,     setPageSize]     = useState(10);
+  const PAGE_SIZE_OPTIONS               = [10, 25, 50, 100];
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -369,6 +372,10 @@ export default function CumpleanosPage() {
             })
             .filter(d => !busqueda || d.nombre.toLowerCase().includes(busqueda.toLowerCase()));
 
+          const totalFiltered = filtrados.length;
+          const totalPages    = Math.max(1, Math.ceil(totalFiltered / pageSize));
+          const listaPaginada = filtrados.slice((page - 1) * pageSize, page * pageSize);
+
           return (
             <div className="cb-gestion-card">
               {/* Barra de herramientas */}
@@ -378,7 +385,7 @@ export default function CumpleanosPage() {
                     <button
                       key={v}
                       className={`cb-filter-btn${filtroList === v ? ' cb-filter-btn--active' : ''}`}
-                      onClick={() => setFiltroList(v)}
+                      onClick={() => { setFiltroList(v); setPage(1); }}
                     >
                       {lbl}
                       {v === 'sin' && sinFecha > 0 && (
@@ -393,7 +400,7 @@ export default function CumpleanosPage() {
                     type="text"
                     placeholder="Buscar diputado..."
                     value={busqueda}
-                    onChange={e => setBusqueda(e.target.value)}
+                    onChange={e => { setBusqueda(e.target.value); setPage(1); }}
                     className="cb-search-input"
                   />
                 </div>
@@ -416,10 +423,10 @@ export default function CumpleanosPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filtrados.length === 0 && (
+                      {listaPaginada.length === 0 && (
                         <tr><td colSpan={6} className="cb-table-empty">Sin resultados.</td></tr>
                       )}
-                      {filtrados.map(d => {
+                      {listaPaginada.map(d => {
                         const meta = TIPO_META[d.tipo] || TIPO_META.PROPIETARIO;
                         const [yr, mo, dy] = d.fecha_nacimiento ? d.fecha_nacimiento.split('-') : [];
                         const fechaDisplay = d.fecha_nacimiento
@@ -474,6 +481,48 @@ export default function CumpleanosPage() {
                     </tbody>
                   </table>
                 </div>
+
+              {/* Paginación */}
+              {totalFiltered > 0 && (
+                <div className="std-pg">
+                  <span className="std-pg-info">
+                    {Math.min((page - 1) * pageSize + 1, totalFiltered)}–{Math.min(page * pageSize, totalFiltered)} de <strong>{totalFiltered}</strong> diputados
+                  </span>
+                  <div className="std-pg-controls">
+                    <select
+                      className="std-pg-size-select"
+                      value={pageSize}
+                      onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
+                    >
+                      {PAGE_SIZE_OPTIONS.map(s => <option key={s} value={s}>{s} por pág.</option>)}
+                    </select>
+                    <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+                    <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                    {(() => {
+                      const maxBtns = 7;
+                      let start = Math.max(1, page - Math.floor(maxBtns / 2));
+                      let end   = Math.min(totalPages, start + maxBtns - 1);
+                      if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                      const nums = [];
+                      if (start > 1) {
+                        nums.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPage(1)}>1</button>);
+                        if (start > 2) nums.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                      }
+                      for (let p = start; p <= end; p++) {
+                        nums.push(<button key={p} className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`} onClick={() => setPage(p)}>{p}</button>);
+                      }
+                      if (end < totalPages) {
+                        if (end < totalPages - 1) nums.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                        nums.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
+                      }
+                      return nums;
+                    })()}
+                    <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+                    <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>»</button>
+                  </div>
+                  <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
+                </div>
+              )}
               )}
             </div>
           );
