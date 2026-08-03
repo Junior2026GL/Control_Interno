@@ -254,19 +254,25 @@ export default function EstadoLiquidacion() {
                 )}
                 <div className="el-dip-info">
                   <h2 className="el-dip-name">{selectedDip.nombre}</h2>
-                  <div className="el-dip-pills">
-                    <span className="el-pill el-pill--depto">
-                      <HiOutlineMapPin size={13} /> {selectedDip.departamento}
+                  <div className="ps-dip-chips">
+                    <span className="ps-dip-chip ps-dip-chip--depto">
+                      <span className="ps-dip-chip-icon"><HiOutlineMapPin size={18} /></span>
+                      <span className="ps-dip-chip-body">
+                        <span className="ps-dip-chip-label">Departamento</span>
+                        <span className="ps-dip-chip-value">{selectedDip.departamento}</span>
+                      </span>
                     </span>
-                    <span className={`el-pill ${selectedDip.tipo === 'PROPIETARIO' ? 'el-pill--prop' : 'el-pill--sup'}`}>
-                      {selectedDip.tipo === 'PROPIETARIO'
-                        ? <HiOutlineCheckBadge size={13} />
-                        : <HiOutlineUsers size={13} />}
-                      {selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                    <span className={`ps-dip-chip ps-dip-chip--tipo ${selectedDip.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
+                      <span className="ps-dip-chip-icon">
+                        {selectedDip.tipo === 'PROPIETARIO'
+                          ? <HiOutlineCheckBadge size={18} />
+                          : <HiOutlineUsers size={18} />}
+                      </span>
+                      <span className="ps-dip-chip-body">
+                        <span className="ps-dip-chip-label">Tipo</span>
+                        <span className="ps-dip-chip-value">{selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}</span>
+                      </span>
                     </span>
-                    {selectedDip.partido && (
-                      <span className="el-pill el-pill--partido">{selectedDip.partido}</span>
-                    )}
                   </div>
                 </div>
               </div>
