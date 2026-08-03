@@ -177,6 +177,218 @@ export default function EstadoLiquidacion() {
     <div className="page-shell">
       <Navbar />
 
+      <div className="page-content el-page">
+
+        {/* ── Page header ── */}
+        <div className="el-header">
+          <div className="el-header-left">
+            <span className="el-header-badge">Pagaduría Especial</span>
+            <h1 className="el-header-title">Estado de Liquidación</h1>
+            <p className="el-header-sub">Consulta y seguimiento por diputado</p>
+          </div>
+          <div className="el-header-year-wrap">
+            <span className="el-year-label">Año fiscal</span>
+            <select
+              className="el-year-select"
+              value={anio}
+              onChange={e => setAnio(+e.target.value)}
+            >
+              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* ── Search state ── */}
+        {!selectedDip ? (
+          <div className="el-hero">
+            <div className="el-hero-inner">
+              <div className="el-hero-icon"><FiUser size={28} /></div>
+              <h2 className="el-hero-title">Seleccionar Diputado</h2>
+              <p className="el-hero-desc">Busca por nombre, departamento o partido político</p>
+              <div className="el-hero-search" ref={searchRef}>
+                <FiSearch className="el-hero-search-ico" size={18} />
+                <input
+                  className="el-hero-input"
+                  placeholder={loadingDips ? 'Cargando diputados…' : 'Escribe el nombre, departamento o partido…'}
+                  value={dipSearch}
+                  onChange={e => { setDipSearch(e.target.value); setShowDropdown(true); }}
+                  onFocus={() => dipSearch && setShowDropdown(true)}
+                  disabled={loadingDips}
+                  autoComplete="off"
+                />
+                {dipSearch && (
+                  <button className="el-hero-clear" onClick={() => { setDipSearch(''); setShowDropdown(false); }}>
+                    <FiX size={15} />
+                  </button>
+                )}
+                {showDropdown && dipSearch && (
+                  <div className="el-dropdown">
+                    {dipResults.length > 0 ? dipResults.map(d => (
+                      <div key={d.id} className="el-dd-item" onClick={() => selectDip(d)}>
+                        <div className="el-dd-avatar"><FiUser size={14} /></div>
+                        <div className="el-dd-info">
+                          <div className="el-dd-nombre">{d.nombre}</div>
+                          <div className="el-dd-meta">
+                            {d.departamento} · {d.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                            {d.partido ? ` · ${d.partido}` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="el-dd-empty">No se encontraron diputados activos.</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ── Deputy banner ── */}
+            <div className="el-dip-banner">
+              <div className="el-dip-banner-left">
+                <div className="el-dip-logo">
+                  <img src="/logo-congreso.png.png" alt="" />
+                </div>
+                {selectedDip.partido && PARTIDO_LOGO[selectedDip.partido] && (
+                  <div className="el-dip-flag">
+                    <img
+                      src={PARTIDO_LOGO[selectedDip.partido]}
+                      alt={selectedDip.partido}
+                      onError={e => { e.currentTarget.parentElement.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+                <div className="el-dip-info">
+                  <h2 className="el-dip-name">{selectedDip.nombre}</h2>
+                  <div className="el-dip-pills">
+                    <span className="el-pill el-pill--depto">
+                      <HiOutlineMapPin size={13} /> {selectedDip.departamento}
+                    </span>
+                    <span className={`el-pill ${selectedDip.tipo === 'PROPIETARIO' ? 'el-pill--prop' : 'el-pill--sup'}`}>
+                      {selectedDip.tipo === 'PROPIETARIO'
+                        ? <HiOutlineCheckBadge size={13} />
+                        : <HiOutlineUsers size={13} />}
+                      {selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                    </span>
+                    {selectedDip.partido && (
+                      <span className="el-pill el-pill--partido">{selectedDip.partido}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button className="el-change-btn" onClick={clearSelection}>
+                <FiX size={13} /> Cambiar
+              </button>
+            </div>
+
+            {/* ── Estado de Liquidación ── */}
+            {loading ? (
+              <div className="el-state-msg">
+                <span className="el-spinner" /> Cargando datos…
+              </div>
+            ) : noData ? (
+              <div className="el-state-msg el-state-msg--empty">
+                Sin presupuesto registrado para <strong>{selectedDip.nombre}</strong> en {anio}.
+              </div>
+            ) : (
+              <>
+                <div className="el-section-label">
+                  <span className="el-section-dot" />
+                  Estado de Liquidación de Ayudas · {anio}
+                </div>
+                <div className="el-liq-grid">
+                  {liqStats.map(item => (
+                    <div
+                      key={item.key}
+                      className={`el-liq-card el-liq-card--${item.cls}`}
+                      onClick={() => setDetailItem(item)}
+                    >
+                      <div className="el-liq-card-header">
+                        <span className="el-liq-card-icon">{LIQ_ICONS[item.key]}</span>
+                        <span className="el-liq-card-label">{item.label}</span>
+                      </div>
+                      <div className="el-liq-card-body">
+                        <span className="el-liq-card-count">{item.count}</span>
+                        <span className="el-liq-card-unit">ayuda{item.count !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="el-liq-card-footer">Ver detalle →</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Detail modal ── */}
+      {detailItem && (
+        <div className="ps-overlay" onClick={() => setDetailItem(null)}>
+          <div className="ps-liq-detail-modal" onClick={e => e.stopPropagation()}>
+            <div
+              className="ps-liq-detail-header"
+              style={{
+                background: detailItem.cls === 'sinliq'  ? '#6b7280'
+                          : detailItem.cls === 'proceso' ? 'linear-gradient(135deg,#1d4ed8,#2563eb)'
+                          : detailItem.cls === 'vencido' ? 'linear-gradient(135deg,#b91c1c,#dc2626)'
+                          : 'linear-gradient(135deg,#15803d,#16a34a)',
+              }}
+            >
+              <div className="ps-liq-detail-header-left">
+                <span className="ps-liq-detail-icon">{LIQ_ICONS[detailItem.key]}</span>
+                <div>
+                  <div className="ps-liq-detail-title">{detailItem.label}</div>
+                  <div className="ps-liq-detail-sub">{selectedDip?.nombre} · {anio}</div>
+                </div>
+              </div>
+              <button className="ps-liq-detail-close" onClick={() => setDetailItem(null)}>
+                <FiX size={16} />
+              </button>
+            </div>
+            <div className="ps-liq-detail-body">
+              {detailAyudas.length === 0 ? (
+                <div className="ps-liq-detail-empty">No hay ayudas en este estado.</div>
+              ) : (
+                <table className="ps-liq-detail-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Fecha</th>
+                      <th>Concepto</th>
+                      <th>Beneficiario</th>
+                      <th className="ps-liq-th-r">Monto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detailAyudas.map((a, i) => (
+                      <tr key={a.id}>
+                        <td className="ps-liq-td-num">{i + 1}</td>
+                        <td className="ps-liq-td-fecha">{formatFecha(a.fecha)}</td>
+                        <td className="ps-liq-td-concepto">{a.concepto}</td>
+                        <td>{a.beneficiario || '—'}</td>
+                        <td className="ps-liq-td-monto">{formatHNL(a.monto)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={4} className="ps-liq-tfoot-lbl">Total</td>
+                      <td className="ps-liq-tfoot-total">
+                        {formatHNL(detailAyudas.reduce((s, a) => s + +(a.monto || 0), 0))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
       <div className="page-content" style={{ maxWidth: 1100 }}>
 
         {/* ── Page header ── */}
@@ -202,24 +414,29 @@ export default function EstadoLiquidacion() {
 
         {/* ── Search / Deputy card ── */}
         {!selectedDip ? (
-          <div className="ps-search-card">
-            <div className="ps-search-card-title">
-              <FiUser size={17} />
-              <span>Seleccionar Diputado</span>
+          <div className="el-search-card">
+            <div className="el-search-card-top">
+              <div className="el-search-icon-wrap">
+                <FiUser size={22} />
+              </div>
+              <div>
+                <div className="el-search-card-title">Seleccionar Diputado</div>
+                <div className="el-search-card-sub">Busca por nombre, departamento o partido político</div>
+              </div>
             </div>
-            <div className="ps-search-wrap" ref={searchRef}>
-              <FiSearch className="ps-search-icon" size={14} />
+            <div className="el-search-wrap" ref={searchRef}>
+              <FiSearch className="el-search-ico" size={16} />
               <input
-                className="ps-search-input"
-                placeholder={loadingDips ? 'Cargando diputados…' : 'Buscar por nombre, departamento o partido…'}
+                className="el-search-input"
+                placeholder={loadingDips ? 'Cargando diputados…' : 'Nombre, departamento o partido…'}
                 value={dipSearch}
                 onChange={e => { setDipSearch(e.target.value); setShowDropdown(true); }}
                 onFocus={() => dipSearch && setShowDropdown(true)}
                 disabled={loadingDips}
               />
               {dipSearch && (
-                <button className="ps-search-clear" onClick={() => { setDipSearch(''); setShowDropdown(false); }}>
-                  <FiX size={13} />
+                <button className="el-search-clear" onClick={() => { setDipSearch(''); setShowDropdown(false); }}>
+                  <FiX size={14} />
                 </button>
               )}
               {showDropdown && dipSearch && (
@@ -245,9 +462,9 @@ export default function EstadoLiquidacion() {
                 </div>
               )}
               {!dipSearch && (
-                <div className="el-search-hint">
-                  <FiUser size={38} className="el-search-hint-icon" />
-                  <p>Busque un diputado por nombre, departamento o partido para ver su estado de liquidación</p>
+                <div className="el-search-empty">
+                  <FiSearch size={32} className="el-search-empty-icon" />
+                  <p>Escriba el nombre del diputado para comenzar</p>
                 </div>
               )}
             </div>
