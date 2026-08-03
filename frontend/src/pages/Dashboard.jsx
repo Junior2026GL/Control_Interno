@@ -5,7 +5,7 @@ import {
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
-  LuFileCheck2, LuCake, LuPrinter,
+  LuFileCheck2, LuCake, LuPrinter, LuReceiptText,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -185,6 +185,14 @@ const ALL_MODULES = [
     description: 'Calendario de fechas de nacimiento de diputados según el censo nacional',
     icon: LuCake,
     gradient: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
+  },
+  {
+    path: '/estado-liquidacion',
+    label: 'Estado de Liquidación',
+    clave: 'estado-liquidacion',
+    description: 'Consulta el estado de liquidación de ayudas sociales por diputado',
+    icon: LuReceiptText,
+    gradient: 'linear-gradient(135deg, #1e3a6e 0%, #274C8D 100%)',
   },
   {
     path: '/ip-whitelist',
