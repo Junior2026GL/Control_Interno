@@ -49,6 +49,7 @@ const MODULOS_LABELS = {
   'censo':                   'Censo',
   'chat':                    'Chat',
   'cumpleanos-diputados':    'Cumpleaños de Diputados',
+  'estado-liquidacion':      'Estado de Liquidación',
 };
 
 const ROL_META = {

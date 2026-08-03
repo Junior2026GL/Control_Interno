@@ -28,6 +28,7 @@ import Bodegas from './pages/Bodegas';
 import ViaticosDiputados from './pages/ViaticosDiputados';
 import BusquedaAyudas from './pages/BusquedaAyudas';
 import OrdenesPago from './pages/OrdenesPago';
+import EstadoLiquidacion from './pages/EstadoLiquidacion';
 import CumpleanosPage from './pages/CumpleanosPage';
 import ImprimirFirma from './pages/ImprimirFirma';
 import PrivateRoute from './components/PrivateRoute';
@@ -70,6 +71,7 @@ export default function App() {
             <Route path="/ordenes-pago" element={<ModuleRoute modulo="ordenes-pago"><OrdenesPago /></ModuleRoute>} />
             <Route path="/imprimir-firma" element={<ModuleRoute modulo="imprimir-firma"><ImprimirFirma /></ModuleRoute>} />
             <Route path="/cumpleanos-diputados" element={<ModuleRoute modulo="cumpleanos-diputados"><CumpleanosPage /></ModuleRoute>} />
+            <Route path="/estado-liquidacion" element={<ModuleRoute modulo="estado-liquidacion"><EstadoLiquidacion /></ModuleRoute>} />
           </Routes>
         </SocketProvider>
         </BrowserRouter>

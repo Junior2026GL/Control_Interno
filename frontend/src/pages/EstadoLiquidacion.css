@@ -1,0 +1,44 @@
+/* ============================================================
+   Estado de Liquidación — estilos específicos del módulo
+   (los estilos compartidos vienen de PresupuestoDiputados.css)
+   ============================================================ */
+
+.el-page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a3a52;
+  letter-spacing: -0.4px;
+  margin: 0 0 4px;
+}
+
+/* ── Search hint ─────────────────────────────────────────── */
+.el-search-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 0 10px;
+  color: #94a3b8;
+  text-align: center;
+}
+.el-search-hint-icon { color: #cbd5e1; }
+.el-search-hint p {
+  margin: 0;
+  font-size: 13px;
+  color: #e11d48;
+  font-weight: 500;
+}
+
+/* ── Loading / no-data states ────────────────────────────── */
+.el-loading,
+.el-no-data {
+  background: white;
+  border: 1.5px solid #e8ecf4;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+.el-no-data strong { color: #1a3a52; }
