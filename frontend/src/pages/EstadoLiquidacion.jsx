@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext, useRef, useMemo } from 'react';
+﻿import { useEffect, useState, useContext, useRef, useMemo } from 'react';
 import {
   FiSearch, FiX, FiUser, FiCreditCard,
   FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle,
@@ -26,7 +26,7 @@ function formatHNL(v) {
   return `L ${(+(v || 0)).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 function formatFecha(str) {
-  if (!str) return 'â€”';
+  if (!str) return '-';
   const s = str.slice(0, 10);
   const [y, m, d] = s.split('-');
   return new Date(+y, +m - 1, +d).toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -55,34 +55,24 @@ const LIQ_META = [
   { key: 'sin_liquidar',  label: 'Sin Liquidar',  cls: 'sinliq'  },
   { key: 'en_proceso',    label: 'En Proceso',    cls: 'proceso' },
   { key: 'plazo_vencido', label: 'Plazo Vencido', cls: 'vencido' },
-  { key: 'liquido',       label: 'LÃ­quido',       cls: 'liquido' },
+  { key: 'liquido',       label: 'Liquido',        cls: 'liquido' },
 ];
 
 export default function EstadoLiquidacion() {
   const { user: me } = useContext(AuthContext);
 
-  /* â”€â”€ diputados list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  const [datos, setDatos]           = useState([]);
+  const [datos, setDatos]             = useState([]);
   const [loadingDips, setLoadingDips] = useState(true);
-
-  /* â”€â”€ search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  const [dipSearch, setDipSearch]       = useState('');
+  const [dipSearch, setDipSearch]     = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedDip, setSelectedDip]   = useState(null);
+  const [selectedDip, setSelectedDip] = useState(null);
   const searchRef = useRef(null);
-
-  /* â”€â”€ year â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  const [anio, setAnio] = useState(CURRENT_YEAR);
-
-  /* â”€â”€ data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  const [ayudas, setAyudas]         = useState([]);
-  const [loading, setLoading]       = useState(false);
-  const [noData, setNoData]         = useState(false);
-
-  /* â”€â”€ detail modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  const [anio, setAnio]     = useState(CURRENT_YEAR);
+  const [ayudas, setAyudas] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [noData, setNoData]   = useState(false);
   const [detailItem, setDetailItem] = useState(null);
 
-  /* â”€â”€ load all deputies â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   useEffect(() => {
     api.get('/diputados', { headers: authHeaders() })
       .then(r => setDatos(r.data))
@@ -90,7 +80,6 @@ export default function EstadoLiquidacion() {
       .finally(() => setLoadingDips(false));
   }, []);
 
-  /* â”€â”€ close dropdown on outside click â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   useEffect(() => {
     const handler = e => {
       if (searchRef.current && !searchRef.current.contains(e.target))
@@ -100,7 +89,6 @@ export default function EstadoLiquidacion() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  /* â”€â”€ filtered dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const dipResults = useMemo(() => {
     if (!dipSearch.trim()) return [];
     const q = dipSearch.toLowerCase();
@@ -113,7 +101,6 @@ export default function EstadoLiquidacion() {
       .slice(0, 12);
   }, [datos, dipSearch]);
 
-  /* â”€â”€ load data when deputy/year changes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   useEffect(() => {
     if (!selectedDip) return;
     loadData();
@@ -153,7 +140,6 @@ export default function EstadoLiquidacion() {
     setNoData(false);
   };
 
-  /* â”€â”€ liquidation stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const liqStats = useMemo(() => {
     return LIQ_META.map(meta => {
       let monto = 0, count = 0;
@@ -167,7 +153,6 @@ export default function EstadoLiquidacion() {
     });
   }, [ayudas]);
 
-  /* â”€â”€ ayudas for detail modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const detailAyudas = useMemo(() => {
     if (!detailItem) return [];
     return ayudas.filter(a => computeEstado(a) === detailItem.key);
@@ -179,15 +164,15 @@ export default function EstadoLiquidacion() {
 
       <div className="page-content el-page">
 
-        {/* â”€â”€ Page header â”€â”€ */}
+        {/* Page header */}
         <div className="el-header">
           <div className="el-header-left">
-            <span className="el-header-badge">PagadurÃ­a Especial</span>
-            <h1 className="el-header-title">Estado de LiquidaciÃ³n</h1>
+            <span className="el-header-badge">Pagaduria Especial</span>
+            <h1 className="el-header-title">Estado de Liquidacion</h1>
             <p className="el-header-sub">Consulta y seguimiento por diputado</p>
           </div>
           <div className="el-header-year-wrap">
-            <span className="el-year-label">AÃ±o fiscal</span>
+            <span className="el-year-label">Año fiscal</span>
             <select
               className="el-year-select"
               value={anio}
@@ -198,53 +183,61 @@ export default function EstadoLiquidacion() {
           </div>
         </div>
 
-        {/* â”€â”€ Search state â”€â”€ */}
+        {/* Search / Deputy */}
         {!selectedDip ? (
-          <div className="el-hero">
-            <div className="el-hero-inner">
-              <div className="el-hero-icon"><FiUser size={28} /></div>
-              <h2 className="el-hero-title">Seleccionar Diputado</h2>
-              <p className="el-hero-desc">Busca por nombre, departamento o partido polÃ­tico</p>
-              <div className="el-hero-search" ref={searchRef}>
-                <FiSearch className="el-hero-search-ico" size={18} />
-                <input
-                  className="el-hero-input"
-                  placeholder={loadingDips ? 'Cargando diputadosâ€¦' : 'Escribe el nombre, departamento o partidoâ€¦'}
-                  value={dipSearch}
-                  onChange={e => { setDipSearch(e.target.value); setShowDropdown(true); }}
-                  onFocus={() => dipSearch && setShowDropdown(true)}
-                  disabled={loadingDips}
-                  autoComplete="off"
-                />
-                {dipSearch && (
-                  <button className="el-hero-clear" onClick={() => { setDipSearch(''); setShowDropdown(false); }}>
-                    <FiX size={15} />
-                  </button>
-                )}
-                {showDropdown && dipSearch && (
-                  <div className="el-dropdown">
-                    {dipResults.length > 0 ? dipResults.map(d => (
-                      <div key={d.id} className="el-dd-item" onClick={() => selectDip(d)}>
-                        <div className="el-dd-avatar"><FiUser size={14} /></div>
-                        <div className="el-dd-info">
-                          <div className="el-dd-nombre">{d.nombre}</div>
-                          <div className="el-dd-meta">
-                            {d.departamento} Â· {d.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
-                            {d.partido ? ` Â· ${d.partido}` : ''}
-                          </div>
-                        </div>
-                      </div>
-                    )) : (
-                      <div className="el-dd-empty">No se encontraron diputados activos.</div>
-                    )}
-                  </div>
-                )}
+          <div className="el-search-card" ref={searchRef}>
+            <div className="el-search-card-top">
+              <div className="el-search-icon-wrap"><FiUser size={20} /></div>
+              <div>
+                <div className="el-search-card-title">Seleccionar Diputado</div>
+                <div className="el-search-card-sub">Busca por nombre, departamento o partido</div>
               </div>
             </div>
+            <div className="el-search-input-wrap">
+              <FiSearch className="el-search-ico" size={16} />
+              <input
+                className="el-search-input"
+                placeholder={loadingDips ? 'Cargando diputados...' : 'Nombre, departamento o partido...'}
+                value={dipSearch}
+                onChange={e => { setDipSearch(e.target.value); setShowDropdown(true); }}
+                onFocus={() => dipSearch && setShowDropdown(true)}
+                disabled={loadingDips}
+                autoComplete="off"
+              />
+              {dipSearch && (
+                <button className="el-search-clear" onClick={() => { setDipSearch(''); setShowDropdown(false); }}>
+                  <FiX size={14} />
+                </button>
+              )}
+            </div>
+            {showDropdown && dipSearch && (
+              <div className="el-dropdown">
+                {dipResults.length > 0 ? dipResults.map(d => (
+                  <div key={d.id} className="el-dd-item" onClick={() => selectDip(d)}>
+                    <div className="el-dd-avatar"><FiUser size={14} /></div>
+                    <div className="el-dd-info">
+                      <div className="el-dd-nombre">{d.nombre}</div>
+                      <div className="el-dd-meta">
+                        {d.departamento} &middot; {d.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                        {d.partido ? ` · ${d.partido}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="el-dd-empty">No se encontraron diputados activos.</div>
+                )}
+              </div>
+            )}
+            {!dipSearch && (
+              <div className="el-search-hint-wrap">
+                <FiSearch size={28} className="el-search-hint-icon" />
+                <p>Escribe para buscar un diputado</p>
+              </div>
+            )}
           </div>
         ) : (
           <>
-            {/* â”€â”€ Deputy banner â”€â”€ */}
+            {/* Deputy banner */}
             <div className="el-dip-banner">
               <div className="el-dip-banner-left">
                 <div className="el-dip-logo">
@@ -282,10 +275,10 @@ export default function EstadoLiquidacion() {
               </button>
             </div>
 
-            {/* â”€â”€ Estado de LiquidaciÃ³n â”€â”€ */}
+            {/* Liquidation stats */}
             {loading ? (
               <div className="el-state-msg">
-                <span className="el-spinner" /> Cargando datosâ€¦
+                <span className="el-spinner" /> Cargando datos...
               </div>
             ) : noData ? (
               <div className="el-state-msg el-state-msg--empty">
@@ -295,7 +288,7 @@ export default function EstadoLiquidacion() {
               <>
                 <div className="el-section-label">
                   <span className="el-section-dot" />
-                  Estado de LiquidaciÃ³n de Ayudas Â· {anio}
+                  Estado de Liquidacion de Ayudas &middot; {anio}
                 </div>
                 <div className="el-liq-grid">
                   {liqStats.map(item => (
@@ -312,7 +305,7 @@ export default function EstadoLiquidacion() {
                         <span className="el-liq-card-count">{item.count}</span>
                         <span className="el-liq-card-unit">ayuda{item.count !== 1 ? 's' : ''}</span>
                       </div>
-                      <div className="el-liq-card-footer">Ver detalle â†’</div>
+                      <div className="el-liq-card-footer">Ver detalle</div>
                     </div>
                   ))}
                 </div>
@@ -322,7 +315,7 @@ export default function EstadoLiquidacion() {
         )}
       </div>
 
-      {/* â”€â”€ Detail modal â”€â”€ */}
+      {/* Detail modal */}
       {detailItem && (
         <div className="ps-overlay" onClick={() => setDetailItem(null)}>
           <div className="ps-liq-detail-modal" onClick={e => e.stopPropagation()}>
@@ -339,7 +332,7 @@ export default function EstadoLiquidacion() {
                 <span className="ps-liq-detail-icon">{LIQ_ICONS[detailItem.key]}</span>
                 <div>
                   <div className="ps-liq-detail-title">{detailItem.label}</div>
-                  <div className="ps-liq-detail-sub">{selectedDip?.nombre} Â· {anio}</div>
+                  <div className="ps-liq-detail-sub">{selectedDip?.nombre} &middot; {anio}</div>
                 </div>
               </div>
               <button className="ps-liq-detail-close" onClick={() => setDetailItem(null)}>
@@ -366,7 +359,7 @@ export default function EstadoLiquidacion() {
                         <td className="ps-liq-td-num">{i + 1}</td>
                         <td className="ps-liq-td-fecha">{formatFecha(a.fecha)}</td>
                         <td className="ps-liq-td-concepto">{a.concepto}</td>
-                        <td>{a.beneficiario || 'â€”'}</td>
+                        <td>{a.beneficiario || '-'}</td>
                         <td className="ps-liq-td-monto">{formatHNL(a.monto)}</td>
                       </tr>
                     ))}
@@ -388,4 +381,3 @@ export default function EstadoLiquidacion() {
     </div>
   );
 }
-
