@@ -1,11 +1,10 @@
 import { useEffect, useState, useContext, useRef, useMemo } from 'react';
 import {
   FiSearch, FiX, FiUser, FiCreditCard,
-  FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle, FiGift,
+  FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle,
 } from 'react-icons/fi';
 import {
   HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
-  HiOutlineIdentification, HiOutlinePhone,
 } from 'react-icons/hi2';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -15,7 +14,6 @@ import './EstadoLiquidacion.css';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = [2026, 2027, 2028, 2029, 2030];
-const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const PARTIDO_LOGO = {
   NACIONAL: '/nacional.JPG',
   LIBERAL:  '/liberal.JPG',
@@ -71,7 +69,6 @@ export default function EstadoLiquidacion() {
   const [dipSearch, setDipSearch]       = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedDip, setSelectedDip]   = useState(null);
-  const [dipBirthday, setDipBirthday]   = useState(null);
   const searchRef = useRef(null);
 
   /* ── year ───────────────────────────────────────────────── */
@@ -131,7 +128,6 @@ export default function EstadoLiquidacion() {
         `/presupuesto/diputado/${selectedDip.id}?anio=${anio}`,
         { headers: authHeaders() }
       );
-      setDipBirthday(r.data.diputado?.fecha_nacimiento || null);
       if (!r.data.presupuesto) {
         setNoData(true);
       } else {
@@ -154,7 +150,6 @@ export default function EstadoLiquidacion() {
   const clearSelection = () => {
     setSelectedDip(null);
     setAyudas([]);
-    setDipBirthday(null);
     setNoData(false);
   };
 
@@ -297,36 +292,7 @@ export default function EstadoLiquidacion() {
                         <span className="ps-dip-chip-value">{selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}</span>
                       </span>
                     </span>
-                    {selectedDip.identidad && (
-                      <span className="ps-dip-chip ps-dip-chip--id">
-                        <span className="ps-dip-chip-icon"><HiOutlineIdentification size={18} /></span>
-                        <span className="ps-dip-chip-body">
-                          <span className="ps-dip-chip-label">Identidad</span>
-                          <span className="ps-dip-chip-value">{selectedDip.identidad}</span>
-                        </span>
-                      </span>
-                    )}
-                    {selectedDip.telefono && (
-                      <span className="ps-dip-chip ps-dip-chip--tel">
-                        <span className="ps-dip-chip-icon"><HiOutlinePhone size={18} /></span>
-                        <span className="ps-dip-chip-body">
-                          <span className="ps-dip-chip-label">Teléfono</span>
-                          <span className="ps-dip-chip-value">{selectedDip.telefono}</span>
-                        </span>
-                      </span>
-                    )}
-                    {dipBirthday && (() => {
-                      const [, mo, dy] = dipBirthday.split('-');
-                      return (
-                        <span className="ps-dip-chip ps-dip-chip--bday">
-                          <span className="ps-dip-chip-icon"><FiGift size={16} /></span>
-                          <span className="ps-dip-chip-body">
-                            <span className="ps-dip-chip-label">Cumpleaños</span>
-                            <span className="ps-dip-chip-value">{parseInt(dy, 10)} {MESES_CORTOS[parseInt(mo, 10) - 1]}</span>
-                          </span>
-                        </span>
-                      );
-                    })()}
+
                   </div>
                 </div>
               </div>
@@ -359,10 +325,8 @@ export default function EstadoLiquidacion() {
                         {item.label}
                       </div>
                       <div className="ps-liq-item-body">
-                        <span className="ps-liq-item-monto">{formatHNL(item.monto)}</span>
-                        <span className="ps-liq-item-count">
-                          {item.count} ayuda{item.count !== 1 ? 's' : ''}
-                        </span>
+                          <span className="el-liq-count">{item.count}</span>
+                          <span className="el-liq-label">ayuda{item.count !== 1 ? 's' : ''}</span>
                         <span className="ps-liq-ver-btn">Ver detalle ›</span>
                       </div>
                     </div>
