@@ -367,10 +367,10 @@
 .el-liq-card--liquido .el-liq-card-body { background: #f0fdf4; }
 
 .el-liq-card-count {
-  font-size: 64px;
+  font-size: 80px;
   font-weight: 900;
   line-height: 1;
-  letter-spacing: -3px;
+  letter-spacing: -4px;
   font-variant-numeric: tabular-nums;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
@@ -380,13 +380,15 @@
 .el-liq-card--liquido .el-liq-card-count { color: #15803d; }
 
 .el-liq-card-unit {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
-.el-liq-card--sinliq  .el-liq-card-unit { color: #9ca3af; }
-.el-liq-card--proceso .el-liq-card-unit { color: #3b82f6; }
-.el-liq-card--vencido .el-liq-card-unit { color: #f87171; }
-.el-liq-card--liquido .el-liq-card-unit { color: #4ade80; }
+.el-liq-card--sinliq  .el-liq-card-unit { color: #6b7280; }
+.el-liq-card--proceso .el-liq-card-unit { color: #1d4ed8; }
+.el-liq-card--vencido .el-liq-card-unit { color: #dc2626; }
+.el-liq-card--liquido .el-liq-card-unit { color: #15803d; }
 
 .el-liq-card-footer {
   text-align: center;
@@ -435,6 +437,6 @@
 }
 @media (max-width: 480px) {
   .el-liq-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .el-liq-card-count { font-size: 48px; }
+  .el-liq-card-count { font-size: 60px; }
   .el-dip-flag { display: none; }
 }
