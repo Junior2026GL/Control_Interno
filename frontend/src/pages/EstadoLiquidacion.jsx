@@ -1,5 +1,4 @@
-import { useEffect, useState, useContext, useRef, useMemo } from 'react';
-import {
+﻿import {
   FiSearch, FiX, FiUser, FiCreditCard,
   FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle,
 } from 'react-icons/fi';
@@ -26,7 +25,7 @@ function formatHNL(v) {
   return `L ${(+(v || 0)).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 function formatFecha(str) {
-  if (!str) return '—';
+  if (!str) return 'â€”';
   const s = str.slice(0, 10);
   const [y, m, d] = s.split('-');
   return new Date(+y, +m - 1, +d).toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -55,34 +54,34 @@ const LIQ_META = [
   { key: 'sin_liquidar',  label: 'Sin Liquidar',  cls: 'sinliq'  },
   { key: 'en_proceso',    label: 'En Proceso',    cls: 'proceso' },
   { key: 'plazo_vencido', label: 'Plazo Vencido', cls: 'vencido' },
-  { key: 'liquido',       label: 'Líquido',       cls: 'liquido' },
+  { key: 'liquido',       label: 'LÃ­quido',       cls: 'liquido' },
 ];
 
 export default function EstadoLiquidacion() {
   const { user: me } = useContext(AuthContext);
 
-  /* ── diputados list ─────────────────────────────────────── */
+  /* â”€â”€ diputados list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const [datos, setDatos]           = useState([]);
   const [loadingDips, setLoadingDips] = useState(true);
 
-  /* ── search ─────────────────────────────────────────────── */
+  /* â”€â”€ search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const [dipSearch, setDipSearch]       = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedDip, setSelectedDip]   = useState(null);
   const searchRef = useRef(null);
 
-  /* ── year ───────────────────────────────────────────────── */
+  /* â”€â”€ year â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const [anio, setAnio] = useState(CURRENT_YEAR);
 
-  /* ── data ───────────────────────────────────────────────── */
+  /* â”€â”€ data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const [ayudas, setAyudas]         = useState([]);
   const [loading, setLoading]       = useState(false);
   const [noData, setNoData]         = useState(false);
 
-  /* ── detail modal ───────────────────────────────────────── */
+  /* â”€â”€ detail modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const [detailItem, setDetailItem] = useState(null);
 
-  /* ── load all deputies ──────────────────────────────────── */
+  /* â”€â”€ load all deputies â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   useEffect(() => {
     api.get('/diputados', { headers: authHeaders() })
       .then(r => setDatos(r.data))
@@ -90,7 +89,7 @@ export default function EstadoLiquidacion() {
       .finally(() => setLoadingDips(false));
   }, []);
 
-  /* ── close dropdown on outside click ───────────────────── */
+  /* â”€â”€ close dropdown on outside click â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   useEffect(() => {
     const handler = e => {
       if (searchRef.current && !searchRef.current.contains(e.target))
@@ -100,7 +99,7 @@ export default function EstadoLiquidacion() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  /* ── filtered dropdown ──────────────────────────────────── */
+  /* â”€â”€ filtered dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const dipResults = useMemo(() => {
     if (!dipSearch.trim()) return [];
     const q = dipSearch.toLowerCase();
@@ -113,7 +112,7 @@ export default function EstadoLiquidacion() {
       .slice(0, 12);
   }, [datos, dipSearch]);
 
-  /* ── load data when deputy/year changes ─────────────────── */
+  /* â”€â”€ load data when deputy/year changes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   useEffect(() => {
     if (!selectedDip) return;
     loadData();
@@ -153,7 +152,7 @@ export default function EstadoLiquidacion() {
     setNoData(false);
   };
 
-  /* ── liquidation stats ──────────────────────────────────── */
+  /* â”€â”€ liquidation stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const liqStats = useMemo(() => {
     return LIQ_META.map(meta => {
       let monto = 0, count = 0;
@@ -167,7 +166,7 @@ export default function EstadoLiquidacion() {
     });
   }, [ayudas]);
 
-  /* ── ayudas for detail modal ────────────────────────────── */
+  /* â”€â”€ ayudas for detail modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const detailAyudas = useMemo(() => {
     if (!detailItem) return [];
     return ayudas.filter(a => computeEstado(a) === detailItem.key);
@@ -179,15 +178,15 @@ export default function EstadoLiquidacion() {
 
       <div className="page-content el-page">
 
-        {/* ── Page header ── */}
+        {/* â”€â”€ Page header â”€â”€ */}
         <div className="el-header">
           <div className="el-header-left">
-            <span className="el-header-badge">Pagaduría Especial</span>
-            <h1 className="el-header-title">Estado de Liquidación</h1>
+            <span className="el-header-badge">PagadurÃ­a Especial</span>
+            <h1 className="el-header-title">Estado de LiquidaciÃ³n</h1>
             <p className="el-header-sub">Consulta y seguimiento por diputado</p>
           </div>
           <div className="el-header-year-wrap">
-            <span className="el-year-label">Año fiscal</span>
+            <span className="el-year-label">AÃ±o fiscal</span>
             <select
               className="el-year-select"
               value={anio}
@@ -198,18 +197,18 @@ export default function EstadoLiquidacion() {
           </div>
         </div>
 
-        {/* ── Search state ── */}
+        {/* â”€â”€ Search state â”€â”€ */}
         {!selectedDip ? (
           <div className="el-hero">
             <div className="el-hero-inner">
               <div className="el-hero-icon"><FiUser size={28} /></div>
               <h2 className="el-hero-title">Seleccionar Diputado</h2>
-              <p className="el-hero-desc">Busca por nombre, departamento o partido político</p>
+              <p className="el-hero-desc">Busca por nombre, departamento o partido polÃ­tico</p>
               <div className="el-hero-search" ref={searchRef}>
                 <FiSearch className="el-hero-search-ico" size={18} />
                 <input
                   className="el-hero-input"
-                  placeholder={loadingDips ? 'Cargando diputados…' : 'Escribe el nombre, departamento o partido…'}
+                  placeholder={loadingDips ? 'Cargando diputadosâ€¦' : 'Escribe el nombre, departamento o partidoâ€¦'}
                   value={dipSearch}
                   onChange={e => { setDipSearch(e.target.value); setShowDropdown(true); }}
                   onFocus={() => dipSearch && setShowDropdown(true)}
@@ -229,8 +228,8 @@ export default function EstadoLiquidacion() {
                         <div className="el-dd-info">
                           <div className="el-dd-nombre">{d.nombre}</div>
                           <div className="el-dd-meta">
-                            {d.departamento} · {d.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
-                            {d.partido ? ` · ${d.partido}` : ''}
+                            {d.departamento} Â· {d.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
+                            {d.partido ? ` Â· ${d.partido}` : ''}
                           </div>
                         </div>
                       </div>
@@ -244,7 +243,7 @@ export default function EstadoLiquidacion() {
           </div>
         ) : (
           <>
-            {/* ── Deputy banner ── */}
+            {/* â”€â”€ Deputy banner â”€â”€ */}
             <div className="el-dip-banner">
               <div className="el-dip-banner-left">
                 <div className="el-dip-logo">
@@ -282,10 +281,10 @@ export default function EstadoLiquidacion() {
               </button>
             </div>
 
-            {/* ── Estado de Liquidación ── */}
+            {/* â”€â”€ Estado de LiquidaciÃ³n â”€â”€ */}
             {loading ? (
               <div className="el-state-msg">
-                <span className="el-spinner" /> Cargando datos…
+                <span className="el-spinner" /> Cargando datosâ€¦
               </div>
             ) : noData ? (
               <div className="el-state-msg el-state-msg--empty">
@@ -295,7 +294,7 @@ export default function EstadoLiquidacion() {
               <>
                 <div className="el-section-label">
                   <span className="el-section-dot" />
-                  Estado de Liquidación de Ayudas · {anio}
+                  Estado de LiquidaciÃ³n de Ayudas Â· {anio}
                 </div>
                 <div className="el-liq-grid">
                   {liqStats.map(item => (
@@ -312,7 +311,7 @@ export default function EstadoLiquidacion() {
                         <span className="el-liq-card-count">{item.count}</span>
                         <span className="el-liq-card-unit">ayuda{item.count !== 1 ? 's' : ''}</span>
                       </div>
-                      <div className="el-liq-card-footer">Ver detalle →</div>
+                      <div className="el-liq-card-footer">Ver detalle â†’</div>
                     </div>
                   ))}
                 </div>
@@ -322,7 +321,7 @@ export default function EstadoLiquidacion() {
         )}
       </div>
 
-      {/* ── Detail modal ── */}
+      {/* â”€â”€ Detail modal â”€â”€ */}
       {detailItem && (
         <div className="ps-overlay" onClick={() => setDetailItem(null)}>
           <div className="ps-liq-detail-modal" onClick={e => e.stopPropagation()}>
@@ -339,7 +338,7 @@ export default function EstadoLiquidacion() {
                 <span className="ps-liq-detail-icon">{LIQ_ICONS[detailItem.key]}</span>
                 <div>
                   <div className="ps-liq-detail-title">{detailItem.label}</div>
-                  <div className="ps-liq-detail-sub">{selectedDip?.nombre} · {anio}</div>
+                  <div className="ps-liq-detail-sub">{selectedDip?.nombre} Â· {anio}</div>
                 </div>
               </div>
               <button className="ps-liq-detail-close" onClick={() => setDetailItem(null)}>
@@ -366,7 +365,7 @@ export default function EstadoLiquidacion() {
                         <td className="ps-liq-td-num">{i + 1}</td>
                         <td className="ps-liq-td-fecha">{formatFecha(a.fecha)}</td>
                         <td className="ps-liq-td-concepto">{a.concepto}</td>
-                        <td>{a.beneficiario || '—'}</td>
+                        <td>{a.beneficiario || 'â€”'}</td>
                         <td className="ps-liq-td-monto">{formatHNL(a.monto)}</td>
                       </tr>
                     ))}
@@ -389,240 +388,3 @@ export default function EstadoLiquidacion() {
   );
 }
 
-      <div className="page-content" style={{ maxWidth: 1100 }}>
-
-        {/* ── Page header ── */}
-        <div className="ps-page-header">
-          <div>
-            <h1 className="el-page-title">Estado de Liquidación</h1>
-            <p>Consulta el estado de liquidación de ayudas sociales por diputado</p>
-          </div>
-          <div className="ps-header-controls">
-            <div className="ps-header-year">
-              <label htmlFor="el-year-sel">Año</label>
-              <select
-                id="el-year-sel"
-                className="ps-year-select"
-                value={anio}
-                onChange={e => setAnio(+e.target.value)}
-              >
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Search / Deputy card ── */}
-        {!selectedDip ? (
-          <div className="el-search-card">
-            <div className="el-search-card-top">
-              <div className="el-search-icon-wrap">
-                <FiUser size={22} />
-              </div>
-              <div>
-                <div className="el-search-card-title">Seleccionar Diputado</div>
-                <div className="el-search-card-sub">Busca por nombre, departamento o partido político</div>
-              </div>
-            </div>
-            <div className="el-search-wrap" ref={searchRef}>
-              <FiSearch className="el-search-ico" size={16} />
-              <input
-                className="el-search-input"
-                placeholder={loadingDips ? 'Cargando diputados…' : 'Nombre, departamento o partido…'}
-                value={dipSearch}
-                onChange={e => { setDipSearch(e.target.value); setShowDropdown(true); }}
-                onFocus={() => dipSearch && setShowDropdown(true)}
-                disabled={loadingDips}
-              />
-              {dipSearch && (
-                <button className="el-search-clear" onClick={() => { setDipSearch(''); setShowDropdown(false); }}>
-                  <FiX size={14} />
-                </button>
-              )}
-              {showDropdown && dipSearch && (
-                <div className="ps-dropdown">
-                  {dipResults.length > 0 ? dipResults.map(d => (
-                    <div key={d.id} className="ps-dropdown-item" onClick={() => selectDip(d)}>
-                      <div className="ps-dd-nombre">{d.nombre}</div>
-                      <div className="ps-dd-meta">
-                        {d.departamento}
-                        {' · '}
-                        {d.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}
-                        {d.partido ? ` · ${d.partido}` : ''}
-                      </div>
-                      {d.identidad && (
-                        <div className="ps-dd-meta" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <FiCreditCard size={11} /> {d.identidad}
-                        </div>
-                      )}
-                    </div>
-                  )) : (
-                    <div className="ps-dd-empty">No se encontraron diputados activos.</div>
-                  )}
-                </div>
-              )}
-              {!dipSearch && (
-                <div className="el-search-empty">
-                  <FiSearch size={32} className="el-search-empty-icon" />
-                  <p>Escriba el nombre del diputado para comenzar</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* ── Deputy info card ── */}
-            <div className="ps-dip-card">
-              <div className="ps-dip-info">
-                <div className="ps-dip-avatars">
-                  <div className="ps-dip-avatar">
-                    <img src="/logo-congreso.png.png" alt="" />
-                  </div>
-                  {selectedDip.partido && PARTIDO_LOGO[selectedDip.partido] && (
-                    <div className="ps-dip-flag">
-                      <img
-                        src={PARTIDO_LOGO[selectedDip.partido]}
-                        alt={selectedDip.partido}
-                        onError={e => { e.currentTarget.parentElement.style.display = 'none'; }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="ps-dip-text">
-                  <h2>{selectedDip.nombre}</h2>
-                  <div className="ps-dip-chips">
-                    <span className="ps-dip-chip ps-dip-chip--depto">
-                      <span className="ps-dip-chip-icon"><HiOutlineMapPin size={18} /></span>
-                      <span className="ps-dip-chip-body">
-                        <span className="ps-dip-chip-label">Departamento</span>
-                        <span className="ps-dip-chip-value">{selectedDip.departamento}</span>
-                      </span>
-                    </span>
-                    <span className={`ps-dip-chip ps-dip-chip--tipo ${selectedDip.tipo === 'PROPIETARIO' ? 'prop' : 'sup'}`}>
-                      <span className="ps-dip-chip-icon">
-                        {selectedDip.tipo === 'PROPIETARIO'
-                          ? <HiOutlineCheckBadge size={18} />
-                          : <HiOutlineUsers size={18} />}
-                      </span>
-                      <span className="ps-dip-chip-body">
-                        <span className="ps-dip-chip-label">Tipo</span>
-                        <span className="ps-dip-chip-value">{selectedDip.tipo === 'PROPIETARIO' ? 'Propietario' : 'Suplente'}</span>
-                      </span>
-                    </span>
-
-                  </div>
-                </div>
-              </div>
-              <button className="ps-change-btn" onClick={clearSelection}>
-                <FiX size={14} /> Cambiar
-              </button>
-            </div>
-
-            {/* ── Estado de Liquidación ── */}
-            {loading ? (
-              <div className="el-loading">Cargando datos…</div>
-            ) : noData ? (
-              <div className="el-no-data">
-                No hay presupuesto registrado para <strong>{selectedDip.nombre}</strong> en {anio}.
-              </div>
-            ) : (
-              <div className="ps-liq-estado-card">
-                <div className="ps-liq-estado-header">Estado de Liquidación de Ayudas</div>
-                <div className="ps-liq-estado-grid">
-                  {liqStats.map(item => (
-                    <div
-                      key={item.key}
-                      className={`ps-liq-item ps-liq-item--${item.cls} ps-liq-item--clickable`}
-                      onClick={() => setDetailItem(item)}
-                      title={`Ver detalle — ${item.label}`}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="ps-liq-item-label">
-                        <span className="ps-liq-item-icon">{LIQ_ICONS[item.key]}</span>
-                        {item.label}
-                      </div>
-                      <div className="ps-liq-item-body">
-                          <span className="el-liq-count">{item.count}</span>
-                          <span className="el-liq-label">ayuda{item.count !== 1 ? 's' : ''}</span>
-                        <span className="ps-liq-ver-btn">Ver detalle ›</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* ── Detail modal ── */}
-      {detailItem && (
-        <div className="ps-overlay" onClick={() => setDetailItem(null)}>
-          <div
-            className="ps-liq-detail-modal"
-            onClick={e => e.stopPropagation()}
-          >
-            <div
-              className="ps-liq-detail-header"
-              style={{
-                background: detailItem.cls === 'sinliq'  ? '#6b7280'
-                          : detailItem.cls === 'proceso' ? 'linear-gradient(135deg,#1d4ed8,#2563eb)'
-                          : detailItem.cls === 'vencido' ? 'linear-gradient(135deg,#b91c1c,#dc2626)'
-                          : 'linear-gradient(135deg,#15803d,#16a34a)',
-              }}
-            >
-              <div className="ps-liq-detail-header-left">
-                <span className="ps-liq-detail-icon">{LIQ_ICONS[detailItem.key]}</span>
-                <div>
-                  <div className="ps-liq-detail-title">{detailItem.label}</div>
-                  <div className="ps-liq-detail-sub">
-                    {selectedDip?.nombre} · {anio}
-                  </div>
-                </div>
-              </div>
-              <button className="ps-liq-detail-close" onClick={() => setDetailItem(null)}>
-                <FiX size={16} />
-              </button>
-            </div>
-            <div className="ps-liq-detail-body">
-              {detailAyudas.length === 0 ? (
-                <div className="ps-liq-detail-empty">No hay ayudas en este estado.</div>
-              ) : (
-                <table className="ps-liq-detail-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Fecha</th>
-                      <th>Concepto</th>
-                      <th>Beneficiario</th>
-                      <th className="ps-liq-th-r">Monto</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detailAyudas.map((a, i) => (
-                      <tr key={a.id}>
-                        <td className="ps-liq-td-num">{i + 1}</td>
-                        <td className="ps-liq-td-fecha">{formatFecha(a.fecha)}</td>
-                        <td className="ps-liq-td-concepto">{a.concepto}</td>
-                        <td>{a.beneficiario || '—'}</td>
-                        <td className="ps-liq-td-monto">{formatHNL(a.monto)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td colSpan={4} className="ps-liq-tfoot-lbl">Total</td>
-                      <td className="ps-liq-tfoot-total">
-                        {formatHNL(detailAyudas.reduce((s, a) => s + +(a.monto || 0), 0))}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
