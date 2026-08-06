@@ -118,7 +118,8 @@
 }
 .vt-modal {
   background: white; border-radius: 18px;
-  width: min(1040px, 96vw);
+  width: calc(100vw - 32px);
+  max-width: 1220px;
   max-height: 92vh;
   display: flex; flex-direction: column;
   box-shadow: 0 20px 60px rgba(0,0,0,0.18);
