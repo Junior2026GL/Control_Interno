@@ -3,12 +3,6 @@ const http   = require('http');
 const { Server } = require('socket.io');
 const app    = require('./app');
 const jwt    = require('jsonwebtoken');
-const db     = require('./db');
-
-// Migraciones automáticas al arrancar
-db.query(`ALTER TABLE viaticos ADD COLUMN IF NOT EXISTS obs_detalle TEXT NULL`, (e) => {
-  if (e && e.code !== 'ER_DUP_FIELDNAME') console.warn('[migrate] obs_detalle:', e.message);
-});
 
 const PORT   = process.env.PORT || 4000;
 const server = http.createServer(app);
