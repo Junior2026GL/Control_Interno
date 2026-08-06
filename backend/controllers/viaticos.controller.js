@@ -73,7 +73,7 @@ exports.getOne = (req, res) => {
 
   db.query(
     `SELECT v.*, d.nombre AS diputado_nombre, d.tipo AS diputado_tipo,
-            d.identidad, d.departamento, d.partido,
+            d.identidad, d.departamento, d.partido, d.telefono,
             u.nombre AS elaborado_por_nombre
      FROM viaticos v
      JOIN diputados d ON v.diputado_id = d.id
@@ -109,6 +109,7 @@ exports.create = (req, res) => {
   const tasa_cambio   = parseFloat(req.body.tasa_cambio) || 1;
   const nota1         = sanitize(req.body.nota1);
   const nota2         = sanitize(req.body.nota2);
+  const obs_detalle   = sanitize(req.body.obs_detalle);
   const detalle       = Array.isArray(req.body.detalle) ? req.body.detalle : [];
   const dias          = Array.isArray(req.body.dias)    ? req.body.dias    : [];
 
@@ -121,11 +122,11 @@ exports.create = (req, res) => {
 
   db.query(
     `INSERT INTO viaticos (motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
-       cargo, tasa_cambio, nota1, nota2, creado_por)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+       cargo, tasa_cambio, nota1, nota2, obs_detalle, creado_por)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
 
     [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
-     cargo, tasa_cambio, nota1, nota2, req.user.id],
+     cargo, tasa_cambio, nota1, nota2, obs_detalle, req.user.id],
     (err, result) => {
       if (err) return res.status(500).json({ message: 'Error al crear viático.' });
       const vId = result.insertId;
@@ -180,6 +181,7 @@ exports.update = (req, res) => {
   const tasa_cambio  = parseFloat(req.body.tasa_cambio) || 1;
   const nota1        = sanitize(req.body.nota1);
   const nota2        = sanitize(req.body.nota2);
+  const obs_detalle  = sanitize(req.body.obs_detalle);
   const detalle      = Array.isArray(req.body.detalle) ? req.body.detalle : [];
   const dias         = Array.isArray(req.body.dias)    ? req.body.dias    : [];
 
@@ -192,11 +194,11 @@ exports.update = (req, res) => {
 
   db.query(
     `UPDATE viaticos SET motivo_viaje=?, lugar=?, diputado_id=?, periodo_dias=?,
-       fecha_inicio=?, fecha_fin=?, cargo=?, tasa_cambio=?, nota1=?, nota2=?
+       fecha_inicio=?, fecha_fin=?, cargo=?, tasa_cambio=?, nota1=?, nota2=?, obs_detalle=?
      WHERE id=?`,
 
     [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
-     cargo, tasa_cambio, nota1, nota2, id],
+     cargo, tasa_cambio, nota1, nota2, obs_detalle, id],
     (err, r) => {
       if (err) return res.status(500).json({ message: 'Error al actualizar viático.' });
       if (!r.affectedRows) return res.status(404).json({ message: 'Viático no encontrado.' });

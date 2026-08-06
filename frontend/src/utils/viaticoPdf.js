@@ -124,17 +124,17 @@ export async function generarPdfViatico(v, nombreUsuario) {
   doc.setTextColor(...C_AZUL_OSC);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
-  doc.text('REPÚBLICA DE HONDURAS', hCX, y + 11, { align: 'center' });
+  doc.text('REPÚBLICA DE HONDURAS', hCX, y + 9, { align: 'center' });
   doc.setFontSize(10);
-  doc.text('CONGRESO NACIONAL', hCX, y + 18, { align: 'center' });
+  doc.text('CONGRESO NACIONAL', hCX, y + 15, { align: 'center' });
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
-  doc.text('PAGADURÍA ESPECIAL', hCX, y + 27, { align: 'center' });
+  doc.text('PAGADURÍA ESPECIAL', hCX, y + 22, { align: 'center' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...C_AZUL);
-  doc.text('CUADRO DE CALCULOS DE VIÁTICOS', hCX, y + 35, { align: 'center' });
-  doc.text('DETALLE DE CALCULO DE VIATICOS AL EXTERIOR', hCX, y + 41, { align: 'center' });
+  doc.text('CUADRO DE CALCULOS DE VIÁTICOS', hCX, y + 28, { align: 'center' });
+  doc.text('DETALLE DE CALCULO DE VIATICOS AL EXTERIOR', hCX, y + 34, { align: 'center' });
 
   y += HH + 1;
 
@@ -361,12 +361,12 @@ export async function generarPdfViatico(v, nombreUsuario) {
   const tcw_each = Math.floor((TOT_W - 5) / 4);
   const tcw_arr  = [tcw_each, tcw_each, tcw_each, tcw_each];
   const PILL_LABELS = ['DOLARES', 'TASA DE CAMBIO', 'LEMPIRAS', 'DETALLE'];
-  const lpsDetalle  = totalUSD_detalle * tasa;
+  const obsDetalle  = (v.obs_detalle || '').toUpperCase();
   const PILL_VALS   = [
     '$' + totalUSD.toFixed(2),
     tasa.toFixed(2),
     'L ' + lps.toLocaleString('es-HN', { minimumFractionDigits: 2 }),
-    'L ' + lpsDetalle.toLocaleString('es-HN', { minimumFractionDigits: 2 }),
+    obsDetalle,
   ];
 
   autoTable(doc, {
@@ -400,13 +400,19 @@ export async function generarPdfViatico(v, nombreUsuario) {
           doc.setFontSize(6);
           doc.text(PILL_LABELS[i], px + tw / 2, cy + 5.8, { align: 'center' });
         });
-        // Valores
+        // Valores — el último (DETALLE) puede ser texto largo, se envuelve
         tcw_arr.forEach((tw, i) => {
           const px = cx + 1 + i * (tw + 1);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8);
+          doc.setFont('helvetica', i === 3 ? 'normal' : 'bold');
+          doc.setFontSize(i === 3 ? 6 : 8);
           doc.setTextColor(...C_AZUL_OSC);
-          doc.text(PILL_VALS[i], px + tw / 2, cy + ch / 2 + 5, { align: 'center' });
+          if (i === 3) {
+            const lines = doc.splitTextToSize(PILL_VALS[i], tw - 2);
+            const startY = cy + 10;
+            lines.forEach((line, li) => doc.text(line, px + tw / 2, startY + li * 3.5, { align: 'center' }));
+          } else {
+            doc.text(PILL_VALS[i], px + tw / 2, cy + ch / 2 + 5, { align: 'center' });
+          }
         });
       } else {
         // Header NOTAS azul
@@ -439,7 +445,7 @@ export async function generarPdfViatico(v, nombreUsuario) {
     (v.diputado_nombre || '').toUpperCase(),
     v.identidad || '',
     '',
-    '',
+    v.telefono || '',
   ];
   const FIRMA_ROW_H  = 6;
   const FIRMA_HALF   = CW * 0.50;

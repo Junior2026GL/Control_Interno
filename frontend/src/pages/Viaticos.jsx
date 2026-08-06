@@ -67,6 +67,7 @@ function buildEmptyForm(userName) {
     dias_viaje:   [],  // [{ fecha, monto }] – usados en RESUMEN
     dias_estadia: [],  // [{ fecha, monto }] – usados en DETALLE
     montoDefault: '',
+    obs_detalle:  '',
   };
 }
 
@@ -220,6 +221,7 @@ export default function Viaticos() {
       nota1:        form.nota1,
       nota2:        form.nota2,
       periodo_dias: parseFloat(form.periodo_dias) || 1,
+      obs_detalle:  form.obs_detalle,
       detalle:      form.detalle,
       dias: [
         ...form.dias_viaje.map(d => ({ fecha: d.fecha, monto: parseFloat(d.monto) || 0, tipo: 'viaje' })),
@@ -287,7 +289,7 @@ export default function Viaticos() {
   const totalLPS  = totalUSD * (parseFloat(form.tasa_cambio) || 0);
 
   const openModal = () => {
-    setForm(buildEmptyForm(me?.nombre));
+    setForm({ ...buildEmptyForm(me?.nombre), tasa_cambio: tipoCambio ? tipoCambio.toFixed(2) : '' });
     setEditingId(null);
     setDniError(''); setFormErr('');
     setModal(true);
@@ -321,6 +323,7 @@ export default function Viaticos() {
         dias_viaje:   diasViaje.map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
         dias_estadia: diasEstadia.map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
         montoDefault: '',
+        obs_detalle:  v.obs_detalle || '',
       });
       setEditingId(id);
       setDniError(''); setFormErr('');
@@ -568,221 +571,236 @@ export default function Viaticos() {
             </div>
 
             <form className="vt-form" onSubmit={handleSave}>
+              <div className="vt-form-cols">
 
-              {/* ── Sección 1: Info del viaje ── */}
-              <div className="vt-section-title"><FiMapPin size={13} /> Información del Viaje</div>
-              <div className="vt-grid-2">
-                <div className="vt-field vt-col-2">
-                  <label>MOTIVO DEL VIAJE *</label>
-                  <input value={form.motivo_viaje} onChange={e => setForm({...form, motivo_viaje: e.target.value})}
-                    placeholder="Ej: DIPLOMADO INTERNACIONAL EN DIRECCIÓN DE EMPRESA…" />
-                </div>
-                <div className="vt-field">
-                  <label>LUGAR *</label>
-                  <input value={form.lugar} onChange={e => setForm({...form, lugar: e.target.value})}
-                    placeholder="Ej: ANDALUCÍA, ESPAÑA" />
-                </div>
-              </div>
+                {/* ══ Columna izquierda ══ */}
+                <div className="vt-form-col">
 
-              {/* ── Sección 2: Diputado ── */}
-              <div className="vt-section-title"><FiUser size={13} /> Datos del Diputado</div>
-              <div className="vt-grid-2">
-                <div className="vt-field">
-                  <label>DNI / IDENTIDAD</label>
-                  <div className="vt-dni-row">
-                    <input value={form.dni} onChange={e => setForm({...form, dni: e.target.value})}
-                      placeholder="Número de identidad…"
-                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleDniSearch())} />
-                    <button type="button" className="vt-btn-search" onClick={handleDniSearch} disabled={dniLoading}>
-                      {dniLoading ? '…' : <FiSearch size={14} />}
-                    </button>
+                  <div className="vt-card">
+                    <div className="vt-section-title"><FiMapPin size={14} /> Información del Viaje</div>
+                    <div className="vt-field">
+                      <label>Motivo del Viaje <span className="vt-req">*</span></label>
+                      <input value={form.motivo_viaje} onChange={e => setForm({...form, motivo_viaje: e.target.value})}
+                        placeholder="Ej: DIPLOMADO INTERNACIONAL EN DIRECCIÓN DE EMPRESA…" />
+                    </div>
+                    <div className="vt-field">
+                      <label>Lugar <span className="vt-req">*</span></label>
+                      <input value={form.lugar} onChange={e => setForm({...form, lugar: e.target.value})}
+                        placeholder="Ej: ANDALUCÍA, ESPAÑA" />
+                    </div>
                   </div>
-                  {dniError && <span className="vt-field-err">{dniError}</span>}
-                </div>
-                <div className="vt-field">
-                  <label>NOMBRE COMPLETO</label>
-                  <input readOnly value={form.diputado_nombre} className="vt-readonly"
-                    placeholder="Se llena automáticamente al buscar DNI" />
-                </div>
-                <div className="vt-field">
-                  <label>CARGO</label>
-                  <input readOnly value={form.cargo} className="vt-readonly"
-                    placeholder="DIPUTADO PROPIETARIO / SUPLENTE" />
-                </div>
-              </div>
 
-              {/* ── Sección 3: Días de Viaje (RESUMEN) ── */}
-              <div className="vt-section-title"><FiCalendar size={13} /> Días de Viaje — Tabla RESUMEN</div>
-              <div className="vt-grid-2">
-                <div className="vt-field">
-                  <label>FECHA INICIO VIAJE *</label>
-                  <input type="date" value={form.fecha_inicio}
-                    onChange={e => setForm({...form, fecha_inicio: e.target.value})} />
-                </div>
-                <div className="vt-field">
-                  <label>FECHA FIN VIAJE *</label>
-                  <input type="date" value={form.fecha_fin}
-                    onChange={e => setForm({...form, fecha_fin: e.target.value})} />
-                </div>
-                <div className="vt-field">
-                  <label>PERÍODO DE TIEMPO *</label>
-                  <input type="number" step="0.5" min="0.5" value={form.periodo_dias}
-                    onChange={e => setForm({...form, periodo_dias: e.target.value})}
-                    placeholder="Ej: 3.5" />
-                </div>
-                <div className="vt-field">
-                  <label>TASA DE CAMBIO (L por $1) *</label>
-                  <div className="vt-input-icon">
-                    <FiDollarSign size={13} />
-                    <input type="number" step="0.01" min="0" value={form.tasa_cambio}
-                      onChange={e => setForm({...form, tasa_cambio: e.target.value})}
-                      placeholder="Ej: 26.63" />
+                  <div className="vt-card">
+                    <div className="vt-section-title"><FiUser size={14} /> Datos del Diputado</div>
+                    <div className="vt-grid-2">
+                      <div className="vt-field">
+                        <label>DNI / Identidad</label>
+                        <div className="vt-dni-row">
+                          <input value={form.dni} onChange={e => setForm({...form, dni: e.target.value})}
+                            placeholder="Número de identidad…"
+                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleDniSearch())} />
+                          <button type="button" className="vt-btn-search" onClick={handleDniSearch} disabled={dniLoading}>
+                            {dniLoading ? '…' : <FiSearch size={14} />}
+                          </button>
+                        </div>
+                        {dniError && <span className="vt-field-err">{dniError}</span>}
+                      </div>
+                      <div className="vt-field">
+                        <label>Nombre Completo</label>
+                        <input readOnly value={form.diputado_nombre} className="vt-readonly"
+                          placeholder="Se llena al buscar DNI" />
+                      </div>
+                      <div className="vt-field vt-col-2">
+                        <label>Cargo</label>
+                        <input readOnly value={form.cargo} className="vt-readonly"
+                          placeholder="DIPUTADO PROPIETARIO / SUPLENTE" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="vt-field">
-                  <label>MONTO POR DÍA (USD)</label>
-                  <div className="vt-input-icon">
-                    <FiDollarSign size={13} />
-                    <input type="number" step="0.01" min="0" value={form.montoDefault}
-                      onChange={e => setForm({...form, montoDefault: e.target.value})}
-                      placeholder="Ej: 120.00" />
-                  </div>
-                </div>
-                <div className="vt-field vt-field-center">
-                  <label>&nbsp;</label>
-                  <button type="button" className="vt-btn-apply" onClick={applyDefaultMonto}
-                    disabled={!form.montoDefault || (form.dias_viaje.length === 0 && form.dias_estadia.length === 0)}>
-                    Aplicar a todos los días
-                  </button>
-                </div>
-              </div>
 
-              {/* Días de viaje */}
-              {form.dias_viaje.length > 0 && (
-                <div className="vt-dias-wrap">
-                  <div className="vt-dias-header">
-                    <span>Días de viaje ({form.dias_viaje.length} días)</span>
-                    <span className="vt-dias-total">
-                      Total: <strong>${totalUSD.toFixed(2)}</strong>
-                      {form.tasa_cambio ? <> = <strong>L {totalLPS.toLocaleString('es-HN', {minimumFractionDigits:2})}</strong></> : null}
-                    </span>
-                  </div>
-                  <div className="vt-dias-grid">
-                    {form.dias_viaje.map((d, idx) => (
-                      <div key={d.fecha} className="vt-dia-cell">
-                        <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
-                        <div className="vt-input-icon small">
-                          <span>$</span>
-                          <input
-                            type="number" step="0.01" min="0"
-                            value={d.monto}
+                  <div className="vt-card">
+                    <div className="vt-section-title">
+                      <FiEdit3 size={14} /> Detalle — Resumen de Viáticos
+                      <button type="button" className="vt-add-row" onClick={() =>
+                        setForm(f => ({...f, detalle: [...f.detalle, { ...EMPTY_DETALLE }]}))}>
+                        <FiPlus size={12} /> Agregar fila
+                      </button>
+                    </div>
+                    <div className="vt-detalle-table">
+                      <div className="vt-det-head">
+                        <span>#</span><span>Nombre</span><span>Cargo</span><span>Detalle</span><span></span>
+                      </div>
+                      {form.detalle.map((row, idx) => (
+                        <div key={idx} className="vt-det-row">
+                          <span className="vt-det-num">{idx + 1}</span>
+                          <input value={row.nombre} placeholder="Nombre completo"
                             onChange={e => {
-                              const arr = [...form.dias_viaje];
-                              arr[idx] = { ...d, monto: e.target.value };
-                              setForm(f => ({...f, dias_viaje: arr}));
-                            }}
-                          />
+                              const d = [...form.detalle]; d[idx] = {...d[idx], nombre: e.target.value};
+                              setForm(f => ({...f, detalle: d}));
+                            }} />
+                          <input value={row.cargo} placeholder="Cargo"
+                            onChange={e => {
+                              const d = [...form.detalle]; d[idx] = {...d[idx], cargo: e.target.value};
+                              setForm(f => ({...f, detalle: d}));
+                            }} />
+                          <input value={row.detalle} placeholder="Detalle"
+                            onChange={e => {
+                              const d = [...form.detalle]; d[idx] = {...d[idx], detalle: e.target.value};
+                              setForm(f => ({...f, detalle: d}));
+                            }} />
+                          <button type="button" className="vt-del-row" onClick={() =>
+                            setForm(f => ({...f, detalle: f.detalle.filter((_, i) => i !== idx)}))}>
+                            <FiX size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="vt-field">
+                      <label>Observación (aparece en sección DETALLE del PDF)</label>
+                      <textarea rows={2} value={form.obs_detalle}
+                        placeholder="Texto libre de observación…"
+                        onChange={e => setForm({...form, obs_detalle: e.target.value})} />
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* ══ Columna derecha ══ */}
+                <div className="vt-form-col">
+
+                  <div className="vt-card">
+                    <div className="vt-section-title"><FiCalendar size={14} /> Viaje — Tabla RESUMEN</div>
+                    <div className="vt-grid-2">
+                      <div className="vt-field">
+                        <label>Fecha Inicio <span className="vt-req">*</span></label>
+                        <input type="date" value={form.fecha_inicio}
+                          onChange={e => setForm({...form, fecha_inicio: e.target.value})} />
+                      </div>
+                      <div className="vt-field">
+                        <label>Fecha Fin <span className="vt-req">*</span></label>
+                        <input type="date" value={form.fecha_fin}
+                          onChange={e => setForm({...form, fecha_fin: e.target.value})} />
+                      </div>
+                      <div className="vt-field">
+                        <label>Período de Tiempo (días) <span className="vt-req">*</span></label>
+                        <input type="number" step="0.5" min="0.5" value={form.periodo_dias}
+                          onChange={e => setForm({...form, periodo_dias: e.target.value})}
+                          placeholder="Ej: 3.5" />
+                      </div>
+                      <div className="vt-field">
+                        <label>Tasa de Cambio (L por $1) <span className="vt-req">*</span></label>
+                        <div className="vt-input-icon">
+                          <FiDollarSign size={13} />
+                          <input type="number" step="0.01" min="0" value={form.tasa_cambio}
+                            onChange={e => setForm({...form, tasa_cambio: e.target.value})}
+                            placeholder="Ej: 26.63" />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Sección 4: Días de Estadía (DETALLE) ── */}
-              <div className="vt-section-title"><FiCalendar size={13} /> Días de Estadía — Tabla DETALLE</div>
-              <div className="vt-grid-2">
-                <div className="vt-field">
-                  <label>FECHA INICIO ESTADÍA</label>
-                  <input type="date" value={form.fecha_inicio_estadia}
-                    onChange={e => setForm({...form, fecha_inicio_estadia: e.target.value})} />
-                </div>
-                <div className="vt-field">
-                  <label>FECHA FIN ESTADÍA</label>
-                  <input type="date" value={form.fecha_fin_estadia}
-                    onChange={e => setForm({...form, fecha_fin_estadia: e.target.value})} />
-                </div>
-              </div>
-
-              {/* Días de estadía */}
-              {form.dias_estadia.length > 0 && (
-                <div className="vt-dias-wrap">
-                  <div className="vt-dias-header">
-                    <span>Días de estadía ({form.dias_estadia.length} días)</span>
-                    <span className="vt-dias-total">
-                      Total: <strong>${form.dias_estadia.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0).toFixed(2)}</strong>
-                    </span>
-                  </div>
-                  <div className="vt-dias-grid">
-                    {form.dias_estadia.map((d, idx) => (
-                      <div key={d.fecha} className="vt-dia-cell">
-                        <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
-                        <div className="vt-input-icon small">
-                          <span>$</span>
-                          <input
-                            type="number" step="0.01" min="0"
-                            value={d.monto}
-                            onChange={e => {
-                              const arr = [...form.dias_estadia];
-                              arr[idx] = { ...d, monto: e.target.value };
-                              setForm(f => ({...f, dias_estadia: arr}));
-                            }}
-                          />
+                      <div className="vt-field">
+                        <label>Monto por Día (USD)</label>
+                        <div className="vt-input-icon">
+                          <FiDollarSign size={13} />
+                          <input type="number" step="0.01" min="0" value={form.montoDefault}
+                            onChange={e => setForm({...form, montoDefault: e.target.value})}
+                            placeholder="Ej: 120.00" />
                         </div>
                       </div>
-                    ))}
+                      <div className="vt-field vt-field-center">
+                        <label>&nbsp;</label>
+                        <button type="button" className="vt-btn-apply" onClick={applyDefaultMonto}
+                          disabled={!form.montoDefault || (form.dias_viaje.length === 0 && form.dias_estadia.length === 0)}>
+                          Aplicar a todos los días
+                        </button>
+                      </div>
+                    </div>
+                    {form.dias_viaje.length > 0 && (
+                      <div className="vt-dias-wrap">
+                        <div className="vt-dias-header">
+                          <span>Días de viaje — {form.dias_viaje.length} días</span>
+                          <span className="vt-dias-total">
+                            <strong>${totalUSD.toFixed(2)}</strong>
+                            {form.tasa_cambio ? <> = <strong>L {totalLPS.toLocaleString('es-HN', {minimumFractionDigits:2})}</strong></> : null}
+                          </span>
+                        </div>
+                        <div className="vt-dias-grid">
+                          {form.dias_viaje.map((d, idx) => (
+                            <div key={d.fecha} className="vt-dia-cell">
+                              <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
+                              <div className="vt-input-icon small">
+                                <span>$</span>
+                                <input type="number" step="0.01" min="0" value={d.monto}
+                                  onChange={e => {
+                                    const arr = [...form.dias_viaje];
+                                    arr[idx] = { ...d, monto: e.target.value };
+                                    setForm(f => ({...f, dias_viaje: arr}));
+                                  }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
 
-              {/* ── Sección 4: Detalle de personas ── */}
-              <div className="vt-section-title">
-                <FiEdit3 size={13} /> Detalle (Resumen de Viáticos)
-                <button type="button" className="vt-add-row" onClick={() =>
-                  setForm(f => ({...f, detalle: [...f.detalle, { ...EMPTY_DETALLE }]}))}>
-                  <FiPlus size={12} /> Agregar fila
-                </button>
-              </div>
-              <div className="vt-detalle-table">
-                <div className="vt-det-head">
-                  <span>#</span><span>Nombre</span><span>Cargo</span><span>Detalle</span><span></span>
-                </div>
-                {form.detalle.map((row, idx) => (
-                  <div key={idx} className="vt-det-row">
-                    <span className="vt-det-num">{idx + 1}</span>
-                    <input value={row.nombre} placeholder="Nombre completo"
-                      onChange={e => {
-                        const d = [...form.detalle]; d[idx] = {...d[idx], nombre: e.target.value};
-                        setForm(f => ({...f, detalle: d}));
-                      }} />
-                    <input value={row.cargo} placeholder="Cargo"
-                      onChange={e => {
-                        const d = [...form.detalle]; d[idx] = {...d[idx], cargo: e.target.value};
-                        setForm(f => ({...f, detalle: d}));
-                      }} />
-                    <input value={row.detalle} placeholder="Detalle"
-                      onChange={e => {
-                        const d = [...form.detalle]; d[idx] = {...d[idx], detalle: e.target.value};
-                        setForm(f => ({...f, detalle: d}));
-                      }} />
-                    <button type="button" className="vt-del-row" onClick={() =>
-                      setForm(f => ({...f, detalle: f.detalle.filter((_, i) => i !== idx)}))}>
-                      <FiX size={13} />
-                    </button>
+                  <div className="vt-card">
+                    <div className="vt-section-title"><FiCalendar size={14} /> Estadía — Tabla DETALLE</div>
+                    <div className="vt-grid-2">
+                      <div className="vt-field">
+                        <label>Fecha Inicio Estadía</label>
+                        <input type="date" value={form.fecha_inicio_estadia}
+                          onChange={e => setForm({...form, fecha_inicio_estadia: e.target.value})} />
+                      </div>
+                      <div className="vt-field">
+                        <label>Fecha Fin Estadía</label>
+                        <input type="date" value={form.fecha_fin_estadia}
+                          onChange={e => setForm({...form, fecha_fin_estadia: e.target.value})} />
+                      </div>
+                    </div>
+                    {form.dias_estadia.length > 0 && (
+                      <div className="vt-dias-wrap">
+                        <div className="vt-dias-header">
+                          <span>Días de estadía — {form.dias_estadia.length} días</span>
+                          <span className="vt-dias-total">
+                            <strong>${form.dias_estadia.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0).toFixed(2)}</strong>
+                          </span>
+                        </div>
+                        <div className="vt-dias-grid">
+                          {form.dias_estadia.map((d, idx) => (
+                            <div key={d.fecha} className="vt-dia-cell">
+                              <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
+                              <div className="vt-input-icon small">
+                                <span>$</span>
+                                <input type="number" step="0.01" min="0" value={d.monto}
+                                  onChange={e => {
+                                    const arr = [...form.dias_estadia];
+                                    arr[idx] = { ...d, monto: e.target.value };
+                                    setForm(f => ({...f, dias_estadia: arr}));
+                                  }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
 
-              {/* ── Sección 5: Notas ── */}
-              <div className="vt-section-title"><FiEdit3 size={13} /> Notas (editables)</div>
-              <div className="vt-field">
-                <textarea rows={3} value={form.nota1}
-                  onChange={e => setForm({...form, nota1: e.target.value})} />
-              </div>
-              <div className="vt-field">
-                <textarea rows={3} value={form.nota2}
-                  onChange={e => setForm({...form, nota2: e.target.value})} />
-              </div>
+                  <div className="vt-card">
+                    <div className="vt-section-title"><FiEdit3 size={14} /> Notas del Cuadro</div>
+                    <div className="vt-field">
+                      <label>Nota 1</label>
+                      <textarea rows={3} value={form.nota1}
+                        onChange={e => setForm({...form, nota1: e.target.value})} />
+                    </div>
+                    <div className="vt-field">
+                      <label>Nota 2</label>
+                      <textarea rows={3} value={form.nota2}
+                        onChange={e => setForm({...form, nota2: e.target.value})} />
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>{/* fin vt-form-cols */}
 
               {formErr && <div className="vt-form-err">{formErr}</div>}
 
