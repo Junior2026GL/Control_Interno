@@ -134,6 +134,7 @@ export async function generarPdfViatico(v, nombreUsuario) {
   doc.setFontSize(8);
   doc.setTextColor(...C_AZUL);
   doc.text('CUADRO DE CALCULOS DE VIÁTICOS', hCX, y + 35, { align: 'center' });
+  doc.text('DETALLE DE CALCULO DE VIATICOS AL EXTERIOR', hCX, y + 41, { align: 'center' });
 
   y += HH + 1;
 
@@ -245,7 +246,14 @@ export async function generarPdfViatico(v, nombreUsuario) {
     const nombre = idx === 0 ? nombrePrincipal.toUpperCase() : '';
     return [String(idx + 1), nombre, detalleLabel, ...montos, tot];
   });
-  resumenBody.push(['', 'TOTAL:', '', ...colFechasViaje.map(() => ''), '$' + totalUSD.toFixed(2)]);
+  resumenBody.push([
+    '', 'TOTAL:', '',
+    ...diasViaje.slice(0, maxDaysViaje).map(d => {
+      const m = parseFloat(d.monto) || 0;
+      return m > 0 ? '$' + m.toFixed(2) : '';
+    }),
+    '$' + totalUSD.toFixed(2),
+  ]);
 
   autoTable(doc, {
     startY: y,
@@ -296,7 +304,14 @@ export async function generarPdfViatico(v, nombreUsuario) {
     const cargo  = (row.cargo  || (idx === 0 ? v.cargo || '' : '')).toUpperCase();
     return [String(idx + 1), nombre, cargo, ...montos, tot];
   });
-  detalleBody.push(['', 'TOTAL:', '', ...colFechasDetalle.map(() => ''), '$' + totalUSD_detalle.toFixed(2)]);
+  detalleBody.push([
+    '', 'TOTAL:', '',
+    ...diasDetalle.slice(0, maxDaysDetalle).map(d => {
+      const m = parseFloat(d.monto) || 0;
+      return m > 0 ? '$' + m.toFixed(2) : '';
+    }),
+    '$' + totalUSD_detalle.toFixed(2),
+  ]);
 
   autoTable(doc, {
     startY: y,
@@ -343,13 +358,15 @@ export async function generarPdfViatico(v, nombreUsuario) {
   const notaLinesH = (n1.length + (n2.length ? n2.length + 0.5 : 0)) * NOTE_LINE_H;
   const BLOQUE_H   = Math.max(22, 10 + notaLinesH + NOTE_PAD_BOT);
 
-  const tcw_each = Math.floor((TOT_W - 4) / 3);
-  const tcw_arr  = [tcw_each, tcw_each, tcw_each];
-  const PILL_LABELS = ['DOLARES', 'TASA DE CAMBIO', 'LEMPIRAS'];
+  const tcw_each = Math.floor((TOT_W - 5) / 4);
+  const tcw_arr  = [tcw_each, tcw_each, tcw_each, tcw_each];
+  const PILL_LABELS = ['DOLARES', 'TASA DE CAMBIO', 'LEMPIRAS', 'DETALLE'];
+  const lpsDetalle  = totalUSD_detalle * tasa;
   const PILL_VALS   = [
     '$' + totalUSD.toFixed(2),
     tasa.toFixed(2),
     'L ' + lps.toLocaleString('es-HN', { minimumFractionDigits: 2 }),
+    'L ' + lpsDetalle.toLocaleString('es-HN', { minimumFractionDigits: 2 }),
   ];
 
   autoTable(doc, {
