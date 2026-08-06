@@ -120,17 +120,7 @@ exports.create = (req, res) => {
   if (isNaN(periodo_dias) || periodo_dias <= 0)
     return res.status(400).json({ message: 'El período de tiempo es requerido.' });
 
-  db.query(
-    `INSERT INTO viaticos (motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
-       cargo, tasa_cambio, nota1, nota2, obs_detalle, creado_por)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-
-    [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
-     cargo, tasa_cambio, nota1, nota2, obs_detalle, req.user.id],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'Error al crear viático.' });
-      const vId = result.insertId;
-
+  const afterInsert = (vId) => {
       // Insertar filas de detalle
       const detallePromises = detalle.map(row => new Promise((resolve, reject) => {
         db.query(
@@ -139,18 +129,38 @@ exports.create = (req, res) => {
           (e) => e ? reject(e) : resolve()
         );
       }));
-
-      // Insertar días
       const diasPromises = dias.map(d => new Promise((resolve, reject) =>
         insertDia(vId, d, (e) => e ? reject(e) : resolve())
       ));
-
       Promise.all([...detallePromises, ...diasPromises])
         .then(() => {
           logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'viaticos', detalle: `Creó viático — ${motivo_viaje}, ${lugar}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
           res.status(201).json({ message: 'Viático creado.', id: vId });
         })
-        .catch((e) => { console.error('[viaticos] Error al guardar detalles al crear:', e); res.status(500).json({ message: 'Error al guardar detalles.' }); });
+        .catch((e) => { console.error('[viaticos] Error al guardar detalles al crear:', e); res.status(500).json({ message: e.message }); });
+  };
+
+  db.query(
+    `INSERT INTO viaticos (motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
+       cargo, tasa_cambio, nota1, nota2, obs_detalle, creado_por)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
+     cargo, tasa_cambio, nota1, nota2, obs_detalle, req.user.id],
+    (err, result) => {
+      if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+        // columna obs_detalle aún no existe en producción → reintentar sin ella
+        db.query(
+          `INSERT INTO viaticos (motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
+             cargo, tasa_cambio, nota1, nota2, creado_por)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+          [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
+           cargo, tasa_cambio, nota1, nota2, req.user.id],
+          (e2, r2) => { if (e2) return res.status(500).json({ message: e2.message }); afterInsert(r2.insertId); }
+        );
+        return;
+      }
+      if (err) return res.status(500).json({ message: err.message });
+      afterInsert(result.insertId);
     }
   );
 };
@@ -196,11 +206,27 @@ exports.update = (req, res) => {
     `UPDATE viaticos SET motivo_viaje=?, lugar=?, diputado_id=?, periodo_dias=?,
        fecha_inicio=?, fecha_fin=?, cargo=?, tasa_cambio=?, nota1=?, nota2=?, obs_detalle=?
      WHERE id=?`,
-
     [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
      cargo, tasa_cambio, nota1, nota2, obs_detalle, id],
     (err, r) => {
+      if (err && err.code === 'ER_BAD_FIELD_ERROR') {
+        // columna obs_detalle aún no existe en producción → reintentar sin ella
+        db.query(
+          `UPDATE viaticos SET motivo_viaje=?, lugar=?, diputado_id=?, periodo_dias=?,
+             fecha_inicio=?, fecha_fin=?, cargo=?, tasa_cambio=?, nota1=?, nota2=?
+           WHERE id=?`,
+          [motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
+           cargo, tasa_cambio, nota1, nota2, id],
+          (e2, r2) => { if (e2) return res.status(500).json({ message: e2.message }); continueUpdate(r2); }
+        );
+        return;
+      }
       if (err) return res.status(500).json({ message: 'Error al actualizar viático.' });
+      continueUpdate(r);
+    }
+  );
+
+  function continueUpdate(r) {
       if (!r.affectedRows) return res.status(404).json({ message: 'Viático no encontrado.' });
 
       // Reemplazar detalle y días
@@ -228,6 +254,5 @@ exports.update = (req, res) => {
             .catch((e) => { console.error('[viaticos] Error al guardar detalles al actualizar:', e); res.status(500).json({ message: 'Error al guardar detalles.' }); });
         });
       });
-    }
-  );
+  }
 };

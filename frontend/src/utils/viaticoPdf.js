@@ -99,8 +99,8 @@ export async function generarPdfViatico(v, nombreUsuario) {
   // -------------------------------------------------------
   // ENCABEZADO  (más compacto)
   // -------------------------------------------------------
-  const HH     = 42;
-  const LOGO_W = 50;
+  const HH     = 30;
+  const LOGO_W = 38;
 
   // Caja del encabezado
   doc.setFillColor(255, 255, 255);
@@ -123,18 +123,18 @@ export async function generarPdfViatico(v, nombreUsuario) {
   const hCX = M + LOGO_W + (CW - LOGO_W) / 2;
   doc.setTextColor(...C_AZUL_OSC);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text('REPÚBLICA DE HONDURAS', hCX, y + 9, { align: 'center' });
-  doc.setFontSize(10);
-  doc.text('CONGRESO NACIONAL', hCX, y + 15, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('REPÚBLICA DE HONDURAS', hCX, y + 7, { align: 'center' });
+  doc.setFontSize(9);
+  doc.text('CONGRESO NACIONAL', hCX, y + 12, { align: 'center' });
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text('PAGADURÍA ESPECIAL', hCX, y + 22, { align: 'center' });
+  doc.setFontSize(11);
+  doc.text('PAGADURÍA ESPECIAL', hCX, y + 18, { align: 'center' });
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(...C_AZUL);
-  doc.text('CUADRO DE CALCULOS DE VIÁTICOS', hCX, y + 28, { align: 'center' });
-  doc.text('DETALLE DE CALCULO DE VIATICOS AL EXTERIOR', hCX, y + 34, { align: 'center' });
+  doc.text('CUADRO DE CALCULOS DE VIÁTICOS', hCX, y + 23, { align: 'center' });
+  doc.text('DETALLE DE CALCULO DE VIATICOS AL EXTERIOR', hCX, y + 28, { align: 'center' });
 
   y += HH + 1;
 
