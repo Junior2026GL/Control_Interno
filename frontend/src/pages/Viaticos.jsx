@@ -165,6 +165,7 @@ export default function Viaticos() {
     const monto = parseFloat(form.montoDefault) || 0;
     setForm(f => ({
       ...f,
+      periodo_dias: String(fechas.length),
       dias_viaje: fechas.map(fecha => {
         const existing = f.dias_viaje.find(d => d.fecha === fecha);
         return existing || { fecha, monto };
