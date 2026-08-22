@@ -1,11 +1,13 @@
 ﻿import { useEffect, useState, useContext, useRef, useMemo } from 'react';
 import {
   FiSearch, FiX, FiUser, FiCreditCard,
-  FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle,
+  FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle, FiPrinter,
 } from 'react-icons/fi';
 import {
   HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
 } from 'react-icons/hi2';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -157,6 +159,155 @@ export default function EstadoLiquidacion() {
     if (!detailItem) return [];
     return ayudas.filter(a => computeEstado(a) === detailItem.key);
   }, [detailItem, ayudas]);
+
+  const handlePrintPDF = async () => {
+    const C_AZUL_OSC = [22,  51, 110];
+    const C_AZUL     = [39,  76, 141];
+    const C_GRIS     = [235, 242, 255];
+    const C_ROJO     = [185, 28,  28];
+    const C_ROJO_OSC = [127, 11,  11];
+    const C_BLANCO   = [255, 255, 255];
+    const C_NEGRO    = [30,  30,  30];
+
+    const isVencido = detailItem?.cls === 'vencido';
+    const C_HEADER  = isVencido ? C_ROJO : C_AZUL;
+    const C_HDR_OSC = isVencido ? C_ROJO_OSC : C_AZUL_OSC;
+
+    const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+    const W   = doc.internal.pageSize.getWidth();
+    const BM  = 5;
+    const P   = 5;
+    const x0  = BM + P;
+    const CW  = W - 2 * (BM + P);
+    let   y   = BM + P;
+
+    // Logo institucional
+    const logoData = await new Promise(resolve => {
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve(c.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(null);
+      img.src = '/logo-congreso.png.png';
+    });
+
+    const LOGO_W = 50;
+    const INFO_W = 62;
+    const CENT_W = CW - LOGO_W - INFO_W;
+    const HDR_H  = 42;
+
+    doc.setFillColor(...C_BLANCO);
+    doc.setDrawColor(...C_AZUL);
+    doc.setLineWidth(0.5);
+    doc.rect(x0, y, CW, HDR_H, 'FD');
+
+    if (logoData) {
+      const lSize = HDR_H - 6;
+      doc.addImage(logoData, 'PNG', x0 + (LOGO_W - lSize) / 2, y + 3, lSize, lSize);
+    }
+
+    doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
+    doc.line(x0 + LOGO_W, y + 4, x0 + LOGO_W, y + HDR_H - 4);
+
+    const instCX = x0 + LOGO_W + CENT_W / 2;
+    doc.setTextColor(...C_AZUL);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+    doc.text('REPÚBLICA DE HONDURAS', instCX, y + 11, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text('CONGRESO NACIONAL', instCX, y + 18, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+    doc.text('PAGADURÍA ESPECIAL', instCX, y + 28, { align: 'center' });
+
+    doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
+    doc.line(x0 + LOGO_W + CENT_W, y + 4, x0 + LOGO_W + CENT_W, y + HDR_H - 4);
+
+    const infoX   = x0 + LOGO_W + CENT_W;
+    const infoMid = infoX + INFO_W / 2;
+    const fechaGen = new Date().toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const horaGen  = new Date().toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(100, 120, 160);
+    doc.text('AÑO', infoMid, y + 7, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C_AZUL);
+    doc.text(String(anio), infoMid, y + 14, { align: 'center' });
+    doc.setDrawColor(210, 220, 235); doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 16, infoX + INFO_W - 3, y + 16);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(100, 120, 160);
+    doc.text('Generado:', infoMid, y + 21, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...C_AZUL_OSC);
+    doc.text(fechaGen, infoMid, y + 26, { align: 'center' });
+    doc.text(horaGen,  infoMid, y + 31, { align: 'center' });
+
+    y += HDR_H + 6;
+
+    // Banda de estado (color según tipo)
+    doc.setFillColor(...C_HEADER);
+    doc.roundedRect(x0, y, CW, 11, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C_BLANCO);
+    doc.text(`ESTADO: ${detailItem?.label?.toUpperCase()}`, x0 + CW / 2, y + 7.5, { align: 'center' });
+    y += 15;
+
+    // Datos del diputado
+    doc.setFillColor(...C_GRIS);
+    doc.setDrawColor(...C_AZUL); doc.setLineWidth(0.3);
+    doc.rect(x0, y, CW, 16, 'FD');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(100, 120, 160);
+    doc.text('DIPUTADO', x0 + 4, y + 6);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...C_AZUL_OSC);
+    doc.text(selectedDip?.nombre?.toUpperCase() || '', x0 + 4, y + 13);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...C_AZUL);
+    doc.text(`${selectedDip?.departamento || ''} · Año ${anio}`, x0 + CW - 4, y + 13, { align: 'right' });
+    y += 22;
+
+    // Tabla de ayudas
+    const total = detailAyudas.reduce((s, a) => s + +(a.monto || 0), 0);
+    const rows  = detailAyudas.map((a, i) => [
+      i + 1,
+      formatFecha(a.fecha),
+      a.concepto || '',
+      a.beneficiario || '-',
+      formatHNL(a.monto),
+    ]);
+
+    autoTable(doc, {
+      startY: y,
+      margin: { left: x0, right: BM + P },
+      head: [['#', 'Fecha', 'Concepto', 'Beneficiario', 'Monto']],
+      body: rows,
+      foot: [['', '', '', 'TOTAL', formatHNL(total)]],
+      theme: 'grid',
+      styles:     { fontSize: 8, cellPadding: 2.5, textColor: C_NEGRO, lineColor: [200, 210, 230] },
+      headStyles: { fillColor: C_HEADER, textColor: C_BLANCO, fontStyle: 'bold', fontSize: 8.5 },
+      footStyles: { fillColor: C_HDR_OSC, textColor: C_BLANCO, fontStyle: 'bold', fontSize: 9 },
+      alternateRowStyles: { fillColor: C_GRIS },
+      columnStyles: {
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 'auto' },
+        3: { cellWidth: 50 },
+        4: { cellWidth: 32, halign: 'right', fontStyle: 'bold', textColor: C_HDR_OSC },
+      },
+    });
+
+    // Footer de página
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      const pH = doc.internal.pageSize.getHeight();
+      doc.setDrawColor(...C_AZUL); doc.setLineWidth(1.2);
+      doc.line(x0, pH - BM - 8, x0 + CW, pH - BM - 8);
+      doc.setFillColor(...C_AZUL);
+      doc.rect(x0, pH - BM - 8, CW, 8, 'F');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...C_BLANCO);
+      doc.text('CONGRESO NACIONAL · PAGADURÍA ESPECIAL · DOCUMENTO GENERADO AUTOMÁTICAMENTE', x0 + CW / 2, pH - BM - 3.5, { align: 'center' });
+    }
+
+    const safeName = (selectedDip?.nombre || 'diputado').replace(/\s+/g, '_');
+    doc.save(`plazo_vencido_${safeName}_${anio}.pdf`);
+  };
 
   return (
     <div className="page-shell">
@@ -341,9 +492,17 @@ export default function EstadoLiquidacion() {
                   <div className="ps-liq-detail-sub">{selectedDip?.nombre} &middot; {anio}</div>
                 </div>
               </div>
-              <button className="ps-liq-detail-close" onClick={() => setDetailItem(null)}>
-                <FiX size={16} />
-              </button>
+              <div className="ps-liq-detail-header-actions">
+                {detailAyudas.length > 0 && (
+                  <button className="ps-liq-detail-print" onClick={handlePrintPDF} title="Imprimir / Exportar PDF">
+                    <FiPrinter size={15} />
+                    <span>Imprimir</span>
+                  </button>
+                )}
+                <button className="ps-liq-detail-close" onClick={() => setDetailItem(null)}>
+                  <FiX size={16} />
+                </button>
+              </div>
             </div>
             <div className="ps-liq-detail-body">
               {detailAyudas.length === 0 ? (
