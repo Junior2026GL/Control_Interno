@@ -197,7 +197,8 @@ export default function EstadoLiquidacion() {
     const LOGO_W = 50;
     const INFO_W = 62;
     const CENT_W = CW - LOGO_W - INFO_W;
-    const HDR_H  = 42;
+    const HDR_H  = 48;
+    const LOGO_S = 36; // tamaño fijo del logo independiente de HDR_H
 
     doc.setFillColor(...C_BLANCO);
     doc.setDrawColor(...C_AZUL);
@@ -205,8 +206,7 @@ export default function EstadoLiquidacion() {
     doc.rect(x0, y, CW, HDR_H, 'FD');
 
     if (logoData) {
-      const lSize = HDR_H - 6;
-      doc.addImage(logoData, 'PNG', x0 + (LOGO_W - lSize) / 2, y + 3, lSize, lSize);
+      doc.addImage(logoData, 'PNG', x0 + (LOGO_W - LOGO_S) / 2, y + (HDR_H - LOGO_S) / 2, LOGO_S, LOGO_S);
     }
 
     doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
@@ -228,6 +228,7 @@ export default function EstadoLiquidacion() {
     const infoMid = infoX + INFO_W / 2;
     const fechaGen = new Date().toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const horaGen  = new Date().toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const generadoPor = (me?.nombre || 'Sistema').replace(/[^\x00-\xFF]/g, c => ({'á':'a','é':'e','í':'i','ó':'o','ú':'u','ñ':'n','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','Ñ':'N'}[c] || ''));
 
     doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(100, 120, 160);
     doc.text('AÑO', infoMid, y + 7, { align: 'center' });
@@ -240,6 +241,12 @@ export default function EstadoLiquidacion() {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...C_AZUL_OSC);
     doc.text(fechaGen, infoMid, y + 26, { align: 'center' });
     doc.text(horaGen,  infoMid, y + 31, { align: 'center' });
+    doc.setDrawColor(210, 220, 235); doc.setLineWidth(0.2);
+    doc.line(infoX + 3, y + 33, infoX + INFO_W - 3, y + 33);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(5.5); doc.setTextColor(100, 120, 160);
+    doc.text('Por:', infoMid, y + 37, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.setTextColor(...C_AZUL_OSC);
+    doc.text(generadoPor.toUpperCase(), infoMid, y + 41, { align: 'center' });
 
     y += HDR_H + 6;
 
