@@ -300,9 +300,9 @@ export default function EstadoLiquidacion() {
       // Marco de página
       doc.setDrawColor(...C_AZUL); doc.setLineWidth(1.2);
       doc.rect(x0 - 4, 5, CW + 8, pH - 10, 'S');
-      doc.line(x0, pH - BM - 8, x0 + CW, pH - BM - 8);
+      // Pie de página alineado al marco
       doc.setFillColor(...C_AZUL);
-      doc.rect(x0, pH - BM - 8, CW, 8, 'F');
+      doc.rect(x0 - 4, pH - BM - 8, CW + 8, BM + 3, 'F');
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...C_BLANCO);
       doc.text('CONGRESO NACIONAL · PAGADURÍA ESPECIAL · DOCUMENTO GENERADO AUTOMÁTICAMENTE', x0 + CW / 2, pH - BM - 3.5, { align: 'center' });
     }
