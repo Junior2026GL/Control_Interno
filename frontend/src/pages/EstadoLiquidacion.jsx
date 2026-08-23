@@ -278,6 +278,8 @@ export default function EstadoLiquidacion() {
       head: [['#', 'Fecha', 'Concepto', 'Beneficiario', 'Monto']],
       body: rows,
       foot: [['', '', '', 'TOTAL', formatHNL(total)]],
+      showHead: 'everyPage',
+      showFoot: 'lastPage',
       theme: 'grid',
       styles:     { fontSize: 8, cellPadding: 2.5, textColor: C_NEGRO, lineColor: [200, 210, 230] },
       headStyles: { fillColor: C_HEADER, textColor: C_BLANCO, fontStyle: 'bold', fontSize: 8.5 },
