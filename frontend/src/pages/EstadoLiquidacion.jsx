@@ -297,7 +297,9 @@ export default function EstadoLiquidacion() {
     for (let p = 1; p <= pageCount; p++) {
       doc.setPage(p);
       const pH = doc.internal.pageSize.getHeight();
+      // Marco de página
       doc.setDrawColor(...C_AZUL); doc.setLineWidth(1.2);
+      doc.rect(x0 - 4, 5, CW + 8, pH - 10, 'S');
       doc.line(x0, pH - BM - 8, x0 + CW, pH - BM - 8);
       doc.setFillColor(...C_AZUL);
       doc.rect(x0, pH - BM - 8, CW, 8, 'F');
