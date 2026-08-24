@@ -318,10 +318,8 @@ export default function PresupuestoDiputados() {
       tipoFinal  = presForm.tipo_distribucion;
       if (presForm.tipo_distribucion === 'personalizada') {
         const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
-        if (Math.abs(suma - monto) > 0.02) {
-          setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
-          return;
-        }
+        if (suma <= 0) { setFormErr('La suma de los meses debe ser mayor a 0.'); return; }
+        montoFinal = +suma.toFixed(2);
         mesesFinal = presForm.meses;
       } else {
         // auto: calcular distribución usando mes_inicio
@@ -375,10 +373,8 @@ export default function PresupuestoDiputados() {
       tipoFinal  = presForm.tipo_distribucion;
       if (presForm.tipo_distribucion === 'personalizada') {
         const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
-        if (Math.abs(suma - monto) > 0.02) {
-          setFormErr(`La suma de los meses (${formatHNL(suma)}) debe ser igual al monto anual (${formatHNL(monto)}).`);
-          return;
-        }
+        if (suma <= 0) { setFormErr('La suma de los meses debe ser mayor a 0.'); return; }
+        montoFinal = +suma.toFixed(2);
         mesesFinal = presForm.meses;
       } else {
         // auto: calcular distribución usando mes_inicio
@@ -2642,10 +2638,7 @@ export default function PresupuestoDiputados() {
 
               {/* ── Mes a mes (personalizada) ── */}
               {presForm.tipo_distribucion === 'personalizada' && (() => {
-                const total = parseFloat(presForm.monto_asignado) || 0;
                 const suma  = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
-                const diff  = +(suma - total).toFixed(2);
-                const ok    = Math.abs(diff) <= 0.02;
                 return (
                   <div className="ps-form-group">
                     <div className="ps-meses-header">
@@ -2680,14 +2673,9 @@ export default function PresupuestoDiputados() {
                         </div>
                       ))}
                     </div>
-                    <div className={`ps-meses-sum${ok ? ' ok' : ' err'}`}>
-                      <span>Total distribuido: <strong>{formatHNL(suma)}</strong></span>
-                      {ok
-                        ? <span className="ps-meses-check">✓ Correcto</span>
-                        : <span className="ps-meses-diff">
-                            {diff > 0 ? `+${formatHNL(diff)} de más` : `${formatHNL(Math.abs(diff))} faltante`}
-                          </span>
-                      }
+                    <div className="ps-meses-sum ok">
+                      <span>Monto anual resultante: <strong>{formatHNL(suma)}</strong></span>
+                      <span className="ps-meses-check">✓ Se actualizará al guardar</span>
                     </div>
                   </div>
                 );

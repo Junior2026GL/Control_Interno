@@ -119,7 +119,7 @@ exports.getByDiputado = async (req, res) => {
 exports.createPresupuesto = async (req, res) => {
   const diputadoId    = parseInt(req.body.diputado_id, 10);
   const anio          = parseInt(req.body.anio, 10);
-  const monto         = parseFloat(req.body.monto_asignado);
+  let   monto         = parseFloat(req.body.monto_asignado);
   const observaciones = sanitize(req.body.observaciones) || null;
   const tipoDist      = ['auto', 'personalizada'].includes(req.body.tipo_distribucion)
     ? req.body.tipo_distribucion : 'auto';
@@ -135,10 +135,8 @@ exports.createPresupuesto = async (req, res) => {
 
   if (mesesInput.length === 12) {
     const sumaMeses = mesesInput.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
-    if (Math.abs(sumaMeses - monto) > 0.02)
-      return res.status(400).json({
-        message: `La suma de los meses (L ${sumaMeses.toFixed(2)}) debe ser igual al monto anual (L ${monto.toFixed(2)}).`,
-      });
+    // en modo personalizada el monto anual es la suma de los meses
+    if (tipoDist === 'personalizada') monto = +sumaMeses.toFixed(2);
     for (const m of mesesInput) {
       const mes = parseInt(m.mes, 10);
       const montoM = parseFloat(m.monto_asignado);
@@ -199,7 +197,7 @@ exports.createPresupuesto = async (req, res) => {
 // ──────────────────────────────────────────────────────────────
 exports.updatePresupuesto = async (req, res) => {
   const id            = parseInt(req.params.id, 10);
-  const monto         = parseFloat(req.body.monto_asignado);
+  let   monto         = parseFloat(req.body.monto_asignado);
   const observaciones = sanitize(req.body.observaciones) || null;
   const tipoDist      = ['auto', 'personalizada'].includes(req.body.tipo_distribucion)
     ? req.body.tipo_distribucion : 'auto';
@@ -215,10 +213,8 @@ exports.updatePresupuesto = async (req, res) => {
     if (mesesInput.length !== 12)
       return res.status(400).json({ message: 'Se requieren los 12 meses para distribución personalizada.' });
     const sumaMeses = mesesInput.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
-    if (Math.abs(sumaMeses - monto) > 0.02)
-      return res.status(400).json({
-        message: `La suma de los meses (L ${sumaMeses.toFixed(2)}) debe ser igual al monto anual (L ${monto.toFixed(2)}).`,
-      });
+    // en modo personalizada el monto anual es la suma de los meses
+    monto = +sumaMeses.toFixed(2);
     for (const m of mesesInput) {
       const mes = parseInt(m.mes, 10);
       const montoM = parseFloat(m.monto_asignado);
