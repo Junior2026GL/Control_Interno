@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import printJS from 'print-js';
 
 async function loadImg(url) {
   return new Promise((resolve) => {
@@ -371,9 +372,8 @@ export async function generarConstanciaPdf(data, printMode = false) {
 
   const nombreFile = (data.nombre || 'constancia').replace(/\s+/g, '_');
   if (printMode) {
-    doc.autoPrint();
-    const blobUrl = doc.output('bloburl');
-    window.open(blobUrl, '_blank');
+    const base64 = doc.output('datauristring').split(',')[1];
+    printJS({ printable: base64, type: 'pdf', base64: true });
   } else {
     doc.save(`Constancia_Transferencia_${nombreFile}.pdf`);
   }
