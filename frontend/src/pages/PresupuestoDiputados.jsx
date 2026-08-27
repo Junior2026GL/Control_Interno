@@ -618,8 +618,8 @@ export default function PresupuestoDiputados() {
     try {
       let fechaLiqDatetime = null;
       if (liqForm.estado_liquidacion === 'liquido' && liqForm.fecha_liquidacion) {
-        // Use noon to avoid clock-skew / timezone issues with the server
-        fechaLiqDatetime = liqForm.fecha_liquidacion + 'T12:00:00';
+        // Honduras es UTC-6; especificar offset evita que el servidor interprete como UTC
+        fechaLiqDatetime = liqForm.fecha_liquidacion + 'T12:00:00-06:00';
       }
       await api.patch(
         `/presupuesto/${presupuesto.id}/ayudas/${liqModal.id}/liquidacion`,
