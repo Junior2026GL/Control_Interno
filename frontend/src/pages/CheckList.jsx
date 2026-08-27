@@ -5,6 +5,7 @@ import {
   FiChevronLeft, FiChevronRight,
 } from 'react-icons/fi';
 import { jsPDF } from 'jspdf';
+import printJS from 'print-js';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -644,9 +645,8 @@ export default function CheckList() {
     }
 
     if (print) {
-      doc.autoPrint();
-      const blobUrl = doc.output('bloburl');
-      window.open(blobUrl, '_blank');
+      const base64 = doc.output('datauristring').split(',')[1];
+      printJS({ printable: base64, type: 'pdf', base64: true });
     } else {
       doc.save(`checklist-${cl.numero}.pdf`);
     }

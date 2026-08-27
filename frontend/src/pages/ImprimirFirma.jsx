@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FiPrinter, FiClock, FiUser, FiRefreshCw } from 'react-icons/fi';
+import printJS from 'print-js';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import './ImprimirFirma.css';
@@ -44,21 +45,13 @@ export default function ImprimirFirma() {
     setPrinting(true);
     try {
       const res = await api.post('/firma/imprimir', {}, { responseType: 'blob' });
-      const blob    = new Blob([res.data], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Imprimir directo sin descargar — iframe oculto
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;';
-      document.body.appendChild(iframe);
-      iframe.src = blobUrl;
-      iframe.onload = () => {
-        try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (_) {}
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          URL.revokeObjectURL(blobUrl);
-        }, 60000);
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1];
+        printJS({ printable: base64, type: 'pdf', base64: true });
       };
+      reader.readAsDataURL(blob);
 
       fetchHistorial();
     } catch {

@@ -4,6 +4,7 @@ import {
   FiEye, FiRefreshCw, FiFileText, FiSend, FiAlertTriangle,
   FiXCircle,
 } from 'react-icons/fi';
+import printJS from 'print-js';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -256,21 +257,13 @@ export default function OrdenesPago() {
         params,
         responseType: 'blob',
       });
-      const blob    = new Blob([res.data], { type: 'application/pdf' });
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Imprimir directo sin descargar — iframe oculto
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;';
-      document.body.appendChild(iframe);
-      iframe.src = blobUrl;
-      iframe.onload = () => {
-        try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (_) {}
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          URL.revokeObjectURL(blobUrl);
-        }, 60000);
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1];
+        printJS({ printable: base64, type: 'pdf', base64: true });
       };
+      reader.readAsDataURL(blob);
 
       fetchOrdenes(page);
     } catch (err) {
