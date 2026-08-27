@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import printJS from 'print-js';
 import {
   FiPlus, FiX, FiCheckCircle, FiXCircle, FiEye,
   FiAlertTriangle, FiFileText, FiLock, FiTrash2, FiDownload, FiEdit2, FiPrinter,
@@ -1009,9 +1010,8 @@ export default function Autorizaciones() {
     }
 
     if (printMode) {
-      doc.autoPrint();
-      const blobUrl = doc.output('bloburl');
-      window.open(blobUrl, '_blank');
+      const base64 = doc.output('datauristring').split(',')[1];
+      printJS({ printable: base64, type: 'pdf', base64: true });
     } else {
       doc.save(`autorizacion-${String(item.numero || 0).padStart(4, '0')}.pdf`);
     }
