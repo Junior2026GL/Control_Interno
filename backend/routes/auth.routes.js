@@ -168,7 +168,7 @@ router.post('/refresh', (req, res) => {
   }
 
   db.query(
-    `SELECT rt.*, u.rol, u.nombre, u.activo
+    `SELECT rt.*, u.rol, u.nombre, u.activo, u.cargo, u.dependencia
      FROM refresh_tokens rt
      JOIN usuarios u ON u.id = rt.usuario_id
      WHERE rt.token = ? AND rt.revoked = 0`,
@@ -205,9 +205,9 @@ router.post('/refresh', (req, res) => {
             if (e2) { console.error('[auth] Error guardando nuevo refresh token:', e2); return res.status(500).json({ message: 'Error en el servidor' }); }
 
             const newAccessToken = jwt.sign(
-              { id: rt.usuario_id, rol: rt.rol, nombre: rt.nombre },
+              { id: rt.usuario_id, rol: rt.rol, nombre: rt.nombre, cargo: rt.cargo || null, dependencia: rt.dependencia || null },
               process.env.JWT_SECRET,
-              { expiresIn: '15m' }
+              { expiresIn: '8h' }
             );
 
             res.json({ token: newAccessToken, refreshToken: newRefreshToken });
