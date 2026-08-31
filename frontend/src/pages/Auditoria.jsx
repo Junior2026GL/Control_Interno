@@ -25,10 +25,11 @@ const ACCION_LABELS = {
 };
 
 const MODULOS = [
-  'auth', 'BASE_DATOS', 'caja', 'diputados', 'alcaldes',
+  'auth', 'BASE_DATOS', 'caja', 'diputados', 'alcaldes', 'proveedores',
   'ayudas', 'ayudas_alcaldias', 'autorizaciones', 'constancias',
-  'presupuesto', 'viaticos', 'auditoria', 'users', 'modulos', 'chat',
-  'bodegas', 'fardos-confites',
+  'presupuesto', 'viaticos', 'viaticos-diputados', 'ordenes-pago',
+  'checklist', 'orden-checklist', 'bodegas', 'fardos-confites',
+  'auditoria', 'users', 'modulos', 'chat',
 ];
 
 const RESULTADO_COLORS = { EXITO: 'success', FALLO: 'danger', BLOQUEADO: 'blocked' };

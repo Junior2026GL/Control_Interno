@@ -382,7 +382,7 @@ export default function FardosConfites() {
     y += HDR_H;
     const TBAR_H = 11;
     doc.setFillColor(...AZUL); doc.setDrawColor(...AZUL); doc.setLineWidth(0); doc.rect(L, y, CW, TBAR_H, 'FD');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...BLANCO); doc.text('ENTREGA DE FARDOS DE CONFITES — DÍA DEL NIÑO', L + CW / 2, y + 7.5, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...BLANCO); doc.text(`ENTREGA DE FARDOS DE CONFITES — DÍA DEL NIÑO${filtroAnio ? ` (${filtroAnio})` : ''}`, L + CW / 2, y + 7.5, { align: 'center' });
     y += TBAR_H + 4;
 
     const TOTAL_ALIAS = '{total_pages}';
