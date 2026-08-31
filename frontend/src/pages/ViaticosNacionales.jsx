@@ -117,7 +117,7 @@ async function generarReciboViatico(rec, logoDataUrl) {
   let y=M;
 
   /* ─ ENCABEZADO ─ */
-  const HH=26, LW=30, TW=90, MIDW=CW-LW-TW;
+  const HH=20, LW=30, TW=88, MIDW=CW-LW-TW;
   doc.setFillColor(255,255,255); doc.setDrawColor(...AZUL); doc.setLineWidth(0.6);
   doc.rect(M,y,CW,HH,'FD');
   if (logoDataUrl) doc.addImage(logoDataUrl,'PNG',M+1,y+1,LW-2,HH-2);
@@ -125,17 +125,17 @@ async function generarReciboViatico(rec, logoDataUrl) {
   doc.line(M+LW,y+2,M+LW,y+HH-2);
   doc.line(M+LW+MIDW,y+2,M+LW+MIDW,y+HH-2);
   const mX=M+LW+MIDW/2;
-  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...AZUL);
-  doc.text('REPUBLICA DE HONDURAS',mX,y+8,{align:'center'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
-  doc.text('CONGRESO NACIONAL DE HONDURAS',mX,y+14,{align:'center'});
-  doc.setFont('helvetica','bold'); doc.setFontSize(10);
-  doc.text('PAGADURIA ESPECIAL',mX,y+20,{align:'center'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...AZUL);
+  doc.text('REPUBLICA DE HONDURAS',mX,y+7,{align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('CONGRESO NACIONAL DE HONDURAS',mX,y+12,{align:'center'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('PAGADURIA ESPECIAL',mX,y+17,{align:'center'});
   const tX=M+LW+MIDW;
   doc.setFillColor(...AZUL); doc.rect(tX,y,TW,HH,'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...BLANCO);
-  doc.text('RECIBO DE',tX+TW/2,y+10,{align:'center'});
-  doc.setFontSize(17); doc.text('VIATICOS',tX+TW/2,y+20,{align:'center'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...BLANCO);
+  doc.text('RECIBO DE',tX+TW/2,y+8,{align:'center'});
+  doc.setFontSize(15); doc.text('VIATICOS',tX+TW/2,y+17,{align:'center'});
   y+=HH;
 
   /* ─ "RECIBI DE LA PAGADURIA..." ─ */
@@ -143,17 +143,17 @@ async function generarReciboViatico(rec, logoDataUrl) {
   const montoStr=`(L${montoVal.toLocaleString('es-HN',{minimumFractionDigits:2})})`;
   const letras=sa(numeroALetras(montoVal));
   doc.setFillColor(...GRIS2); doc.setDrawColor(...AZUL); doc.setLineWidth(0.4);
-  doc.rect(M,y,CW,11,'FD');
-  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(70,70,70);
-  doc.text('Recibi de la Pagaduria Especial, la cantidad de:',M+2,y+4.5);
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...AZUL);
-  doc.text((doc.splitTextToSize(letras,CW-55)[0]||letras),M+2,y+9.5);
-  doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...AZUL);
-  doc.text(montoStr,M+CW-1,y+9.5,{align:'right'});
-  y+=12;
+  doc.rect(M,y,CW,9,'FD');
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(70,70,70);
+  doc.text('Recibi de la Pagaduria Especial, la cantidad de:',M+2,y+3.5);
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...AZUL);
+  doc.text((doc.splitTextToSize(letras,CW-55)[0]||letras),M+2,y+7.5);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...AZUL);
+  doc.text(montoStr,M+CW-1,y+7.5,{align:'right'});
+  y+=10;
 
   /* ─ CAMPOS ─ */
-  const RH=5.8, LBL=40;
+  const RH=5, LBL=40;
   const cell=(lbl,val,ox,w,h=RH,bigVal=false)=>{
     doc.setFillColor(...GRIS); doc.rect(M+ox,y,LBL,h,'F');
     doc.setFillColor(255,255,255); doc.rect(M+ox+LBL,y,w-LBL,h,'F');
@@ -179,15 +179,15 @@ async function generarReciboViatico(rec, logoDataUrl) {
   doc.text('NOMBRE DE QUIEN RECIBE:',M+1.5,y+RH*0.73); y+=RH;
   // Nombre — valor grande centrado
   doc.setFillColor(255,255,255); doc.setDrawColor(...AZUL); doc.setLineWidth(0.5);
-  doc.rect(M,y,CW,9,'FD');
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...AZUL);
-  doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()),M+CW/2,y+6,{align:'center'}); y+=9;
+  doc.rect(M,y,CW,7,'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...AZUL);
+  doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()),M+CW/2,y+5,{align:'center'}); y+=7;
   cell('CARGO',rec.cargo||'',0,CW/2); cell('ENCARGADO DE LA MISION',rec.encargado_mision||'',CW/2,CW/2); y+=RH;
   // Período 3 columnas
   const P3=CW/3;
   cell('PERIODO DE TIEMPO',`DESDE: ${fmtFecha(rec.periodo_desde)}  HASTA: ${fmtFecha(rec.periodo_hasta)}${rec.sabado?' | SABADO: [X]':''}`,0,P3);
   cell('HORA DE SALIDA',rec.hora_salida||'—',P3,P3);
-  cell('HORA DE REGRESO',rec.hora_regreso||'—',P3*2,P3); y+=RH+3;
+  cell('HORA DE REGRESO',rec.hora_regreso||'—',P3*2,P3); y+=RH+1;
 
   /* ─ TABLA GASTOS ─ */
   autoTable(doc,{
@@ -205,14 +205,14 @@ async function generarReciboViatico(rec, logoDataUrl) {
       {content:'GRAN TOTAL:',styles:{halign:'right',fontStyle:'bold',fontSize:9}},
       {content:fmt(rec.gran_total),styles:{fontStyle:'bold',halign:'right',fontSize:9.5,textColor:AZUL}},
     ]],
-    headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:8,cellPadding:{top:2.5,bottom:2.5,left:3,right:3}},
-    bodyStyles:{fontSize:8,textColor:NEGRO,cellPadding:{top:2,bottom:2,left:3,right:3}},
-    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:8},
+    headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:7.5,cellPadding:{top:1.5,bottom:1.5,left:2.5,right:2.5}},
+    bodyStyles:{fontSize:7.5,textColor:NEGRO,cellPadding:{top:1.5,bottom:1.5,left:2.5,right:2.5}},
+    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:7.5},
     alternateRowStyles:{fillColor:GRIS2},
     styles:{lineColor:AZUL_L,lineWidth:0.2},
     columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:40,halign:'right'}},
   });
-  y=doc.lastAutoTable.finalY+3;
+  y=doc.lastAutoTable.finalY+2;
 
   /* ─ DETALLE ALIMENTACION HOSPEDAJE ─ */
   const dias=rec.dias_detalle||[], nDias=Math.min(dias.length,12);
@@ -221,7 +221,7 @@ async function generarReciboViatico(rec, logoDataUrl) {
     startY:y, margin:{left:M,right:M},
     head:[
       [{content:'DETALLE DE ALIMENTACIO HOSPEDAJE',colSpan:4+nDias,
-        styles:{fillColor:[40,40,40],textColor:BLANCO,fontStyle:'bold',fontSize:8.5,cellPadding:{top:3,bottom:3,left:3,right:3}}}],
+        styles:{fillColor:[40,40,40],textColor:BLANCO,fontStyle:'bold',fontSize:8,cellPadding:{top:2,bottom:2,left:3,right:3}}}],
       ['#','Nombre','Cargo',
         ...dias.slice(0,nDias).map(d=>{const[yy,mm,dd]=String(d.fecha).split('-');return `${getDayName(d.fecha)}\n${parseInt(dd)}/${parseInt(mm)}/${yy}`;}),
         'TOTAL'],
@@ -235,38 +235,37 @@ async function generarReciboViatico(rec, logoDataUrl) {
       ...dias.slice(0,nDias).map(d=>d.monto>0?`L ${parseFloat(d.monto).toFixed(2)}`:''),
       '',
     ]],
-    headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:7,halign:'center',cellPadding:{top:2,bottom:2,left:1.5,right:1.5}},
-    bodyStyles:{fontSize:7,textColor:NEGRO,cellPadding:{top:2,bottom:2,left:1.5,right:1.5}},
-    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:7,fontStyle:'bold'},
+    headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:6.5,halign:'center',cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
+    bodyStyles:{fontSize:6.5,textColor:NEGRO,cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
+    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:6.5,fontStyle:'bold'},
     alternateRowStyles:{fillColor:GRIS2},
     styles:{lineColor:AZUL_L,lineWidth:0.2,overflow:'linebreak'},
-    columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:52},2:{cellWidth:32},
+    columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:48},2:{cellWidth:30},
       ...Object.fromEntries(dias.slice(0,nDias).map((_,i)=>[i+3,{cellWidth:fw,halign:'center'}])),
       [3+nDias]:{cellWidth:28,halign:'right'}},
   });
-  y=doc.lastAutoTable.finalY+3;
+  y=doc.lastAutoTable.finalY+2;
 
   /* ─ DETALLE COMBUSTIBLE ─ */
   autoTable(doc,{
     startY:y, margin:{left:M,right:M},
     head:[
       [{content:'DETALLE DE COMBUSTIBLE',colSpan:4,
-        styles:{fillColor:[40,40,40],textColor:BLANCO,fontStyle:'bold',fontSize:8.5,cellPadding:{top:3,bottom:3,left:3,right:3}}}],
+        styles:{fillColor:[40,40,40],textColor:BLANCO,fontStyle:'bold',fontSize:8,cellPadding:{top:2,bottom:2,left:3,right:3}}}],
       ['#','Nombre','DETALLE/VEHICULOS','TOTAL'],
     ],
     body:[
       ['1',sa(rec.nombre_beneficiario||''),'',rec.monto_combustible>0?fmt(rec.monto_combustible):''],
-      ['2','','',''],
     ],
     foot:[['','TOTAL:','',rec.monto_combustible>0?fmt(rec.monto_combustible):'-']],
-    headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:7,cellPadding:{top:2,bottom:2,left:1.5,right:1.5}},
-    bodyStyles:{fontSize:7,textColor:NEGRO,cellPadding:{top:2,bottom:2,left:1.5,right:1.5}},
-    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:7,fontStyle:'bold'},
+    headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:6.5,cellPadding:{top:1.5,bottom:1.5,left:1.5,right:1.5}},
+    bodyStyles:{fontSize:6.5,textColor:NEGRO,cellPadding:{top:1.5,bottom:1.5,left:1.5,right:1.5}},
+    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:6.5,fontStyle:'bold'},
     styles:{lineColor:AZUL_L,lineWidth:0.2},
     alternateRowStyles:{fillColor:GRIS2},
-    columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:80},3:{cellWidth:32,halign:'right'}},
+    columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:80},3:{cellWidth:30,halign:'right'}},
   });
-  y=doc.lastAutoTable.finalY+7;
+  y=doc.lastAutoTable.finalY+4;
 
   /* ─ FIRMA ─ */
   if(y>H-18){doc.addPage();y=M;}
