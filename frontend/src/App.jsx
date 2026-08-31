@@ -25,6 +25,7 @@ import Proveedores from './pages/Proveedores';
 import CheckList from './pages/CheckList';
 import OrdenChecklist from './pages/OrdenChecklist';
 import Bodegas from './pages/Bodegas';
+import FardosConfites from './pages/FardosConfites';
 import ViaticosDiputados from './pages/ViaticosDiputados';
 import BusquedaAyudas from './pages/BusquedaAyudas';
 import OrdenesPago from './pages/OrdenesPago';
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="/checklist" element={<ModuleRoute modulo="checklist"><CheckList /></ModuleRoute>} />
             <Route path="/orden-checklist" element={<ModuleRoute modulo="orden-checklist"><OrdenChecklist /></ModuleRoute>} />
             <Route path="/bodegas" element={<ModuleRoute modulo="bodegas"><Bodegas /></ModuleRoute>} />
+            <Route path="/fardos-confites" element={<ModuleRoute modulo="fardos-confites"><FardosConfites /></ModuleRoute>} />
             <Route path="/viaticos-diputados" element={<ModuleRoute modulo="viaticos-diputados"><ViaticosDiputados /></ModuleRoute>} />
             <Route path="/busqueda-ayudas" element={<ModuleRoute modulo="busqueda-ayudas"><BusquedaAyudas /></ModuleRoute>} />
             <Route path="/ordenes-pago" element={<ModuleRoute modulo="ordenes-pago"><OrdenesPago /></ModuleRoute>} />

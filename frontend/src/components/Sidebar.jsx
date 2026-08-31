@@ -31,6 +31,7 @@ export default function Sidebar() {
     { path: '/checklist',               label: 'Check List Expedientes',    icon: FiClipboard,     clave: 'checklist',                 soloSuperAdmin: false },
     { path: '/orden-checklist',          label: 'Órdenes de Checklist',       icon: FiClipboard,     clave: 'orden-checklist',           soloSuperAdmin: false },
     { path: '/bodegas',                  label: 'Control de Entrega de Canastas', icon: FiPackage,  clave: 'bodegas',                   soloSuperAdmin: false },
+    { path: '/fardos-confites',           label: 'Entrega de Fardos de Confites',  icon: FiPackage,  clave: 'fardos-confites',           soloSuperAdmin: false },
     { path: '/imprimir-firma',           label: 'Imprimir Firma',            icon: FiPrinter,       clave: 'imprimir-firma',            soloSuperAdmin: false },
     { path: '/ip-whitelist',            label: 'Acceso por IP',             icon: FiShield,        clave: null,                        soloSuperAdmin: true  },
     { path: '/auditoria',               label: 'Auditoría',                 icon: FiEye,           clave: null,                        soloSuperAdmin: true  },
