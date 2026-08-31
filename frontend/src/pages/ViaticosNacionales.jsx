@@ -134,216 +134,204 @@ function clientValidate(form) {
   return e;
 }
 
-/* ── Generador PDF Recibo de Viáticos ───────────────────── */
+/* ── Generador PDF Recibo de Viáticos (landscape, 1 página) ── */
 async function generarReciboViatico(rec, logoDataUrl) {
-  const doc  = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-  const W    = doc.internal.pageSize.getWidth();
-  const H    = doc.internal.pageSize.getHeight();
-  const M    = 12;
-  const CW   = W - M * 2;
+  const doc  = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const W    = doc.internal.pageSize.getWidth();   // 279.4 mm
+  const H    = doc.internal.pageSize.getHeight();  // 215.9 mm
+  const M    = 10;
+  const CW   = W - M * 2;                          // 259.4 mm
   const AZUL = [39,76,141]; const NEGRO = [20,20,20]; const BLANCO = [255,255,255];
-  const GRIS_CLR = [245,247,252]; const AZUL_CLR = [220,230,248];
+  const GRIS_CLR = [245,247,252]; const AZUL_CLR = [218,230,248];
   const sa   = s => (s||'').replace(/[ÁÉÍÓÚÑáéíóúñ]/g, c=>({Á:'A',É:'E',Í:'I',Ó:'O',Ú:'U',Ñ:'N',á:'a',é:'e',í:'i',ó:'o',ú:'u',ñ:'n'}[c]||c));
 
   let y = M;
 
-  /* ── ENCABEZADO ── */
-  const HH = 28; const LOGO_W = 36;
+  /* ── ENCABEZADO ─────────────────────────────────────────── */
+  const HH = 22; const LOGO_W = 30; const TITLE_W = 90;
+  const MID_W = CW - LOGO_W - TITLE_W;
+
   doc.setFillColor(255,255,255); doc.setDrawColor(...AZUL); doc.setLineWidth(0.5);
   doc.rect(M, y, CW, HH, 'FD');
+
   if (logoDataUrl) {
-    const ls = HH - 6;
-    doc.addImage(logoDataUrl, 'PNG', M + (LOGO_W-ls)/2, y+3, ls, ls);
+    const ls = HH - 4;
+    doc.addImage(logoDataUrl, 'PNG', M + (LOGO_W - ls)/2, y + 2, ls, ls);
   }
   doc.setDrawColor(180,200,235); doc.setLineWidth(0.3);
-  doc.line(M+LOGO_W, y+4, M+LOGO_W, y+HH-4);
-  const hCX = M + LOGO_W + (CW-LOGO_W)/2;
-  doc.setTextColor(...AZUL); doc.setFont('helvetica','bold'); doc.setFontSize(10);
-  doc.text('REPÚBLICA DE HONDURAS', hCX, y+7, {align:'center'});
+  doc.line(M+LOGO_W, y+3, M+LOGO_W, y+HH-3);
+  doc.line(M+LOGO_W+MID_W, y+3, M+LOGO_W+MID_W, y+HH-3);
+
+  const midCX = M + LOGO_W + MID_W/2;
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...AZUL);
+  doc.text('REPÚBLICA DE HONDURAS', midCX, y+7, {align:'center'});
   doc.setFont('helvetica','normal'); doc.setFontSize(8);
-  doc.text('CONGRESO NACIONAL DE HONDURAS', hCX, y+12, {align:'center'});
-  doc.setFontSize(8);
-  doc.text('PAGADURÍA ESPECIAL', hCX, y+17, {align:'center'});
-  doc.setFillColor(...AZUL); doc.setLineWidth(0);
-  doc.rect(M+LOGO_W, y+20, CW-LOGO_W, 8, 'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...BLANCO);
-  doc.text('RECIBO DE VIÁTICOS', hCX, y+25.5, {align:'center'});
-  y += HH + 3;
+  doc.text('CONGRESO NACIONAL DE HONDURAS', midCX, y+12, {align:'center'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('PAGADURÍA ESPECIAL', midCX, y+18, {align:'center'});
 
-  /* ── RECIBÍ LA CANTIDAD DE ── */
-  const montoLetras = sa(numeroALetras(rec.gran_total || 0).toUpperCase());
+  const titleX = M + LOGO_W + MID_W;
+  doc.setFillColor(...AZUL); doc.rect(titleX, y, TITLE_W, HH, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...BLANCO);
+  doc.text('RECIBO DE', titleX + TITLE_W/2, y+9, {align:'center'});
+  doc.setFontSize(15);
+  doc.text('VIÁTICOS', titleX + TITLE_W/2, y+18, {align:'center'});
+
+  y += HH + 2;
+
+  /* ── LÍNEA "RECIBÍ DE LA PAGADURÍA…" ───────────────────── */
+  const montoLetras = sa(numeroALetras(rec.gran_total || 0));
   const montoNum    = `(L${parseFloat(rec.gran_total||0).toLocaleString('es-HN',{minimumFractionDigits:2})})`;
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...NEGRO);
-  doc.text('Recibí de la Pagaduría Especial, la cantidad de', M, y+4);
+  doc.setFillColor(...GRIS_CLR); doc.rect(M, y, CW, 10, 'F');
+  doc.setDrawColor(...AZUL_CLR); doc.setLineWidth(0.2); doc.rect(M, y, CW, 10, 'S');
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(90,90,90);
+  doc.text('Recibí de la Pagaduría Especial, la cantidad de:', M+2, y+4);
   doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...AZUL);
-  const lines = doc.splitTextToSize(montoLetras, CW - 40);
-  doc.text(lines, M, y+9);
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(39,76,141);
-  doc.text(montoNum, M+CW, y+9, {align:'right'});
-  doc.setDrawColor(...AZUL_CLR); doc.setLineWidth(0.3);
-  doc.line(M, y+12, M+CW, y+12);
-  y += 16;
+  const letrasLine = doc.splitTextToSize(montoLetras, CW - 55)[0] || montoLetras.slice(0,90);
+  doc.text(letrasLine, M+2, y+8.5);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...AZUL);
+  doc.text(montoNum, M+CW-1, y+8.5, {align:'right'});
+  y += 12;
 
-  /* ── CAMPOS DE DATOS ── */
-  const rowH = 6;
-  function drawRow(label, value, fullWidth = false, bold = false) {
-    doc.setFillColor(...GRIS_CLR); doc.rect(M, y, CW, rowH, 'F');
-    doc.setDrawColor(...AZUL_CLR); doc.setLineWidth(0.2);
-    doc.rect(M, y, CW, rowH, 'S');
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...AZUL);
-    doc.text(sa(label), M+2, y+rowH*0.7);
-    const lw = doc.getTextWidth(sa(label)) + 4;
-    doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(bold ? 9 : 8);
-    doc.setTextColor(...NEGRO);
-    const maxW = CW - lw - 2;
-    const val  = doc.splitTextToSize(sa(value||''), maxW)[0] || '';
-    doc.text(val, M+lw, y+rowH*0.7);
-    y += rowH;
-  }
-  function drawTwoCol(lbl1, val1, lbl2, val2) {
-    const half = CW/2;
-    doc.setFillColor(...GRIS_CLR); doc.rect(M, y, CW, rowH, 'F');
-    doc.setDrawColor(...AZUL_CLR); doc.setLineWidth(0.2);
-    doc.rect(M, y, half, rowH, 'S'); doc.rect(M+half, y, half, rowH, 'S');
-    const draw = (label, value, ox) => {
-      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...AZUL);
-      doc.text(sa(label), M+ox+2, y+rowH*0.7);
-      const lw = doc.getTextWidth(sa(label)) + 4;
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...NEGRO);
-      const v = doc.splitTextToSize(sa(value||''), half-lw-2)[0] || '';
-      doc.text(v, M+ox+lw, y+rowH*0.7);
-    };
-    draw(lbl1, val1, 0); draw(lbl2, val2, half);
-    y += rowH;
-  }
+  /* ── CAMPOS DE DATOS ────────────────────────────────────── */
+  const ROW_H = 5.5; const HALF = CW/2;
 
-  drawRow('MISIÓN:', rec.mision||'', true);
-  drawTwoCol('LUGAR:', rec.lugar||'', 'DEPENDENCIA:', rec.dependencia||'');
-  drawRow('NOMBRE DE QUIEN RECIBE:', rec.nombre_beneficiario||'', false, true);
-  drawTwoCol('CARGO:', rec.cargo||'', 'ENCARGADO DE LA MISIÓN:', rec.encargado_mision||'');
+  const drawCell = (lbl, val, ox, w, bold=false) => {
+    doc.setFillColor(...GRIS_CLR); doc.rect(M+ox, y, w, ROW_H, 'F');
+    doc.setDrawColor(...AZUL_CLR); doc.setLineWidth(0.2); doc.rect(M+ox, y, w, ROW_H, 'S');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(80,105,150);
+    doc.text(sa(lbl+':'), M+ox+1.5, y+ROW_H*0.72);
+    const lw = doc.getTextWidth(sa(lbl+':')) + 2.5;
+    doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(bold?9:8); doc.setTextColor(...NEGRO);
+    const v = doc.splitTextToSize(sa(val||''), w-lw-2)[0] || '';
+    doc.text(v, M+ox+lw, y+ROW_H*0.72);
+  };
 
-  // Período + horas
-  const periodoStr = `DESDE: ${fmtFecha(rec.periodo_desde)}   HASTA: ${fmtFecha(rec.periodo_hasta)}${rec.sabado ? '   SÁBADO: ✓' : ''}`;
-  drawTwoCol('PERÍODO DE TIEMPO:', periodoStr, 'HORA DE SALIDA:', rec.hora_salida||'—');
-  // last row: hora regreso
-  doc.setFillColor(...GRIS_CLR); doc.rect(M, y, CW, rowH, 'F');
-  doc.setDrawColor(...AZUL_CLR); doc.setLineWidth(0.2); doc.rect(M, y, CW, rowH, 'S');
-  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...AZUL);
-  doc.text('HORA DE REGRESO:', M+2, y+rowH*0.7);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...NEGRO);
-  doc.text(sa(rec.hora_regreso||'—'), M+42, y+rowH*0.7);
-  y += rowH + 4;
+  // Fila 1: MISIÓN (full)
+  drawCell('MISIÓN', rec.mision||'', 0, CW); y += ROW_H;
+  // Fila 2: LUGAR | DEPENDENCIA
+  drawCell('LUGAR', rec.lugar||'', 0, HALF);
+  drawCell('DEPENDENCIA', rec.dependencia||'', HALF, HALF); y += ROW_H;
+  // Fila 3: NOMBRE (full, negrita)
+  drawCell('NOMBRE DE QUIEN RECIBE', rec.nombre_beneficiario||'', 0, CW, true); y += ROW_H;
+  // Fila 4: CARGO | ENCARGADO
+  drawCell('CARGO', rec.cargo||'', 0, HALF);
+  drawCell('ENCARGADO DE LA MISIÓN', rec.encargado_mision||'', HALF, HALF); y += ROW_H;
+  // Fila 5: PERÍODO | HORA SALIDA | HORA REGRESO  (3 columnas)
+  const COL3 = CW/3;
+  const periodoStr = `DESDE: ${fmtFecha(rec.periodo_desde)}  HASTA: ${fmtFecha(rec.periodo_hasta)}${rec.sabado?' ✓ SÁBADO':''}`;
+  drawCell('PERÍODO DE TIEMPO', periodoStr, 0, COL3);
+  drawCell('HORA DE SALIDA', rec.hora_salida||'—', COL3, COL3);
+  drawCell('HORA DE REGRESO', rec.hora_regreso||'—', COL3*2, COL3); y += ROW_H + 3;
 
-  /* ── TABLA DE GASTOS ── */
-  const gastos = [
-    ['1', 'HOSPEDAJE Y ALIMENTACIÓN', rec.monto_hospedaje > 0 ? `L ${parseFloat(rec.monto_hospedaje).toFixed(2)}` : '—'],
-    ['2', 'COMBUSTIBLE',              rec.monto_combustible > 0 ? `L ${parseFloat(rec.monto_combustible).toFixed(2)}` : '—'],
-    ['3', 'DEPRECIACIÓN',             rec.monto_depreciacion > 0 ? `L ${parseFloat(rec.monto_depreciacion).toFixed(2)}` : '—'],
-    ['4', 'IMPREVISTOS',              rec.monto_imprevistos > 0 ? `L ${parseFloat(rec.monto_imprevistos).toFixed(2)}` : '—'],
-    ['5', rec.otros_descripcion ? `OTROS — ${sa(rec.otros_descripcion.toUpperCase())}` : 'OTROS', rec.monto_otros > 0 ? `L ${parseFloat(rec.monto_otros).toFixed(2)}` : '—'],
-  ];
-
+  /* ── TABLA DE GASTOS ────────────────────────────────────── */
   autoTable(doc, {
     startY: y,
-    margin: { left: M, right: M },
-    head: [['No.', 'Detalle', 'Total']],
-    body: gastos,
-    foot: [['', {content:'GRAN TOTAL:', styles:{halign:'right', fontStyle:'bold'}}, {content:`L ${parseFloat(rec.gran_total||0).toFixed(2)}`, styles:{fontStyle:'bold', textColor:AZUL}}]],
-    headStyles: { fillColor:AZUL, textColor:BLANCO, fontStyle:'bold', fontSize:8, halign:'left', cellPadding:{top:3,bottom:3,left:3,right:3} },
-    bodyStyles: { fontSize:8, textColor:NEGRO, cellPadding:{top:2.5,bottom:2.5,left:3,right:3} },
-    footStyles: { fillColor:AZUL_CLR, textColor:NEGRO, fontSize:8.5, fontStyle:'bold' },
-    alternateRowStyles: { fillColor:GRIS_CLR },
-    styles: { lineColor:AZUL_CLR, lineWidth:0.2 },
-    columnStyles: { 0:{cellWidth:10,halign:'center'}, 1:{cellWidth:'auto'}, 2:{cellWidth:35,halign:'right'} },
-    didDrawPage: () => {},
+    margin: {left: M, right: M},
+    head: [['No.','Detalle','Total']],
+    body: [
+      ['1','HOSPEDAJE Y ALIMENTACIÓN', rec.monto_hospedaje>0?`L ${parseFloat(rec.monto_hospedaje).toFixed(2)}`:'—'],
+      ['2','COMBUSTIBLE',              rec.monto_combustible>0?`L ${parseFloat(rec.monto_combustible).toFixed(2)}`:'—'],
+      ['3','DEPRECIACIÓN',             rec.monto_depreciacion>0?`L ${parseFloat(rec.monto_depreciacion).toFixed(2)}`:'—'],
+      ['4','IMPREVISTOS',              rec.monto_imprevistos>0?`L ${parseFloat(rec.monto_imprevistos).toFixed(2)}`:'—'],
+      ['5', rec.otros_descripcion?`OTROS — ${sa(rec.otros_descripcion.toUpperCase())}`:'OTROS', rec.monto_otros>0?`L ${parseFloat(rec.monto_otros).toFixed(2)}`:'—'],
+    ],
+    foot: [['',{content:'GRAN TOTAL:',styles:{halign:'right',fontStyle:'bold'}},{content:`L ${parseFloat(rec.gran_total||0).toFixed(2)}`,styles:{fontStyle:'bold',halign:'right',textColor:AZUL}}]],
+    headStyles: {fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:7.5,cellPadding:{top:2.5,bottom:2.5,left:2.5,right:2.5}},
+    bodyStyles: {fontSize:7.5,textColor:NEGRO,cellPadding:{top:2,bottom:2,left:2.5,right:2.5}},
+    footStyles: {fillColor:AZUL_CLR,textColor:NEGRO,fontSize:8,fontStyle:'bold'},
+    alternateRowStyles: {fillColor:GRIS_CLR},
+    styles: {lineColor:AZUL_CLR,lineWidth:0.2},
+    columnStyles: {0:{cellWidth:10,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:40,halign:'right'}},
   });
-  y = doc.lastAutoTable.finalY + 5;
+  y = doc.lastAutoTable.finalY + 4;
 
-  /* ── DETALLE DE ALIMENTACIÓN HOSPEDAJE ── */
-  const dias   = rec.dias_detalle || [];
-  const maxDias = Math.min(dias.length, 10);
+  /* ── DETALLE DE ALIMENTACIÓN HOSPEDAJE ─────────────────── */
+  const dias    = rec.dias_detalle || [];
+  const maxDias = Math.min(dias.length, 12);
+  const fechaW  = maxDias > 0 ? Math.max(15, Math.floor((CW - 10 - 55 - 35 - 32) / maxDias)) : 0;
 
-  const detHead = [['#', 'Nombre', 'Cargo', ...dias.slice(0,maxDias).map(d => {
-    const [yy,mm,dd] = String(d.fecha).split('-');
-    return `${getDayName(d.fecha)}\n${parseInt(dd)}/${parseInt(mm)}/${yy}`;
-  }), 'TOTAL']];
-  const detBody = [[
+  const detColHeaders = ['#','Nombre','Cargo',
+    ...dias.slice(0,maxDias).map(d => {
+      const [yy,mm,dd] = String(d.fecha).split('-');
+      return `${getDayName(d.fecha)}\n${parseInt(dd)}/${parseInt(mm)}`;
+    }),
+    'TOTAL',
+  ];
+  const detDataRow = [
     '1',
     sa((rec.nombre_beneficiario||'').toUpperCase()),
     sa((rec.cargo||'').toUpperCase()),
-    ...dias.slice(0,maxDias).map(d => d.monto > 0 ? `L ${parseFloat(d.monto).toFixed(2)}` : '—'),
+    ...dias.slice(0,maxDias).map(d => d.monto>0?`L ${parseFloat(d.monto).toFixed(2)}`:'—'),
     `L ${parseFloat(rec.monto_hospedaje||0).toFixed(2)}`,
-  ]];
-  const detFoot = [['', 'TOTAL:', '', ...dias.slice(0,maxDias).map(d => d.monto > 0 ? `L ${parseFloat(d.monto).toFixed(2)}` : '—'), '']];
-
-  const fechaW = dias.length > 0 ? Math.min(22, Math.floor((CW - 10 - 50 - 35 - 28) / maxDias)) : 0;
+  ];
+  const detColStyles = {
+    0:{cellWidth:10,halign:'center'},
+    1:{cellWidth:55},
+    2:{cellWidth:35},
+    ...Object.fromEntries(dias.slice(0,maxDias).map((_,i)=>[i+3,{cellWidth:fechaW,halign:'center'}])),
+    [3+maxDias]:{cellWidth:32,halign:'right'},
+  };
 
   autoTable(doc, {
     startY: y,
-    margin: { left: M, right: M },
-    head: [['DETALLE DE ALIMENTACIÓN HOSPEDAJE', '', '', ...Array(maxDias).fill(''), '']],
-    body: detHead[0] ? [detHead[0], ...detBody] : detBody,
-    foot: detFoot,
-    headStyles: { fillColor:[50,50,50], textColor:BLANCO, fontStyle:'bold', fontSize:8.5, halign:'left', colSpan:100 },
-    bodyStyles: { fontSize:7, textColor:NEGRO, cellPadding:{top:2,bottom:2,left:2,right:2}, valign:'middle' },
-    footStyles: { fillColor:AZUL_CLR, fontSize:7, fontStyle:'bold' },
-    alternateRowStyles: { fillColor:GRIS_CLR },
-    styles: { lineColor:AZUL_CLR, lineWidth:0.2, overflow:'linebreak' },
-    didParseCell: (data) => {
-      if (data.row.index === 0 && data.section === 'body') {
-        data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.fillColor = AZUL;
-        data.cell.styles.textColor = BLANCO;
-        data.cell.styles.fontSize  = 7.5;
-        data.cell.styles.halign    = 'center';
-      }
-    },
+    margin: {left: M, right: M},
+    head: [
+      [{content:'DETALLE DE ALIMENTACIÓN HOSPEDAJE',colSpan:detColHeaders.length,styles:{fillColor:[50,50,50],textColor:BLANCO,fontStyle:'bold',fontSize:8,halign:'left',cellPadding:{top:2.5,bottom:2.5,left:2.5,right:2.5}}}],
+      detColHeaders,
+    ],
+    body: [detDataRow],
+    headStyles: {fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:7,halign:'center',cellPadding:{top:2,bottom:2,left:1.5,right:1.5}},
+    bodyStyles: {fontSize:7,textColor:NEGRO,cellPadding:{top:2,bottom:2,left:1.5,right:1.5}},
+    alternateRowStyles: {fillColor:GRIS_CLR},
+    styles: {lineColor:AZUL_CLR,lineWidth:0.2,overflow:'linebreak'},
+    columnStyles: detColStyles,
   });
-  y = doc.lastAutoTable.finalY + 5;
+  y = doc.lastAutoTable.finalY + 4;
 
-  /* ── DETALLE DE COMBUSTIBLE ── */
+  /* ── DETALLE DE COMBUSTIBLE ─────────────────────────────── */
   autoTable(doc, {
     startY: y,
-    margin: { left: M, right: M },
-    head: [['DETALLE DE COMBUSTIBLE', '', '']],
-    body: [['#', 'Nombre', 'DETALLE/VEHÍCULOS', 'TOTAL'],
-           ['1', sa(rec.nombre_beneficiario||''), sa(rec.otros_descripcion||''), rec.monto_combustible > 0 ? `L ${parseFloat(rec.monto_combustible).toFixed(2)}` : '—'],
-           ['', 'TOTAL:', '', rec.monto_combustible > 0 ? `L ${parseFloat(rec.monto_combustible).toFixed(2)}` : '—']],
-    headStyles: { fillColor:[50,50,50], textColor:BLANCO, fontStyle:'bold', fontSize:8.5, colSpan:4 },
-    bodyStyles: { fontSize:7, textColor:NEGRO, cellPadding:{top:2,bottom:2,left:2,right:2} },
-    styles: { lineColor:AZUL_CLR, lineWidth:0.2 },
-    alternateRowStyles: { fillColor:GRIS_CLR },
-    didParseCell: (data) => {
-      if (data.row.index === 0 && data.section === 'body') {
-        data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.fillColor = AZUL;
-        data.cell.styles.textColor = BLANCO;
-        data.cell.styles.fontSize  = 7.5;
-        data.cell.styles.halign    = 'center';
-      }
-    },
+    margin: {left: M, right: M},
+    head: [
+      [{content:'DETALLE DE COMBUSTIBLE',colSpan:4,styles:{fillColor:[50,50,50],textColor:BLANCO,fontStyle:'bold',fontSize:8,halign:'left',cellPadding:{top:2.5,bottom:2.5,left:2.5,right:2.5}}}],
+      ['#','Nombre','Detalle / Vehículos','Total'],
+    ],
+    body: [
+      ['1', sa(rec.nombre_beneficiario||''), '', rec.monto_combustible>0?`L ${parseFloat(rec.monto_combustible).toFixed(2)}`:'—'],
+      ['','TOTAL:','', rec.monto_combustible>0?`L ${parseFloat(rec.monto_combustible).toFixed(2)}`:'—'],
+    ],
+    headStyles: {fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:7,cellPadding:{top:2,bottom:2,left:1.5,right:1.5}},
+    bodyStyles: {fontSize:7,textColor:NEGRO,cellPadding:{top:2,bottom:2,left:1.5,right:1.5}},
+    styles: {lineColor:AZUL_CLR,lineWidth:0.2},
+    alternateRowStyles: {fillColor:GRIS_CLR},
+    columnStyles: {0:{cellWidth:10,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:80},3:{cellWidth:35,halign:'right'}},
   });
-  y = doc.lastAutoTable.finalY + 10;
+  y = doc.lastAutoTable.finalY + 6;
 
-  /* ── SECCIÓN FIRMA ── */
-  if (y > H - 40) { doc.addPage(); y = M; }
-  const lineW = 65;
-  doc.setDrawColor(...NEGRO); doc.setLineWidth(0.4);
-  doc.line(M,        y+8, M+lineW,       y+8);
-  doc.line(M+CW/2-lineW/2, y+8, M+CW/2+lineW/2, y+8);
-  doc.line(M+CW-lineW, y+8, M+CW,        y+8);
+  /* ── SECCIÓN FIRMA ──────────────────────────────────────── */
+  if (y > H - 22) { doc.addPage(); y = M; }
+  const lineW = 72;
+  const gap   = (CW - 3*lineW) / 2;
+  doc.setDrawColor(...NEGRO); doc.setLineWidth(0.5);
+  doc.line(M,               y+10, M+lineW,               y+10);
+  doc.line(M+lineW+gap,     y+10, M+lineW+gap+lineW,     y+10);
+  doc.line(M+2*lineW+2*gap, y+10, M+3*lineW+2*gap,       y+10);
+
   doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...NEGRO);
-  doc.text('IDENTIDAD:', M, y+13);
+  doc.text('IDENTIDAD:', M, y+14);
   doc.setFont('helvetica','normal');
-  doc.text(sa(rec.numero_identidad||''), M+24, y+13);
-  doc.setFont('helvetica','bold');
-  doc.text('FIRMA', M+CW/2, y+13, {align:'center'});
-  doc.setFont('helvetica','bold');
-  doc.text('NOMBRE:', M+CW-lineW, y+13);
-  doc.setFont('helvetica','normal');
-  doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()), M+CW-lineW+18, y+13);
+  doc.text(sa(rec.numero_identidad||''), M+22, y+14);
 
-  doc.save(`recibo_viaticos_${(rec.numero_identidad||'').slice(-6)}_${String(rec.periodo_desde).slice(0,10)}.pdf`);
+  doc.setFont('helvetica','bold');
+  doc.text('FIRMA', M+lineW+gap+lineW/2, y+14, {align:'center'});
+
+  doc.setFont('helvetica','bold');
+  doc.text('NOMBRE:', M+2*lineW+2*gap, y+14);
+  doc.setFont('helvetica','normal');
+  doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()), M+2*lineW+2*gap+19, y+14);
+
+  doc.save(`recibo_viaticos_${(rec.numero_identidad||'').slice(-6)}_${String(rec.periodo_desde||'').slice(0,10)}.pdf`);
 }
 
 /* ══════════════════════════════════════════════════════════
