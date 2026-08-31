@@ -179,6 +179,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #92400e 0%, #b45309 100%)',
   },
   {
+    path: '/fardos-confites',
+    label: 'Entrega de Fardos de Confites',
+    clave: 'fardos-confites',
+    description: 'Actividad del Día del Niño — Registro por diputado responsable',
+    icon: LuBell,
+    gradient: 'linear-gradient(135deg, #be185d 0%, #f472b6 100%)',
+  },
+  {
     path: '/cumpleanos-diputados',
     label: 'Cumpleaños de Diputados',
     clave: 'cumpleanos-diputados',
