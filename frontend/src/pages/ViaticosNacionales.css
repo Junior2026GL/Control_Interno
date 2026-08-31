@@ -1,0 +1,105 @@
+/* ── ViaticosNacionales — estilos específicos del módulo ── */
+
+/* Sección DNI */
+.vn-dni-section {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #f0f5ff, #e8f0fe);
+  border: 1.5px solid #b8d0f0;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin-bottom: .5rem;
+}
+.vn-dni-title {
+  font-size: .72rem; font-weight: 800; color: #274C8D;
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: .7rem;
+}
+.vn-dni-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 600px) { .vn-dni-row { grid-template-columns: 1fr; } }
+
+.vn-dni-input-wrap {
+  display: flex; gap: .5rem; align-items: center;
+}
+.vn-dni-input { flex: 1; font-size: .9rem; letter-spacing: .05em; }
+.vn-btn-buscar { white-space: nowrap; }
+
+.vn-nombre-display {
+  min-height: 38px;
+  padding: .55rem .9rem;
+  border: 1.5px dashed #b8d0f0;
+  border-radius: 9px;
+  font-size: .85rem; color: #9ca3af;
+  display: flex; align-items: center;
+  background: #fff;
+}
+.vn-nombre-display--found {
+  color: #1f2937; font-weight: 700; font-size: .95rem;
+  border: 1.5px solid #274C8D; border-style: solid;
+  background: #f0f5ff;
+  text-transform: uppercase;
+}
+
+/* Títulos de sección dentro del form */
+.vn-section-title {
+  grid-column: 1 / -1;
+  font-size: .72rem; font-weight: 800; color: #274C8D;
+  text-transform: uppercase; letter-spacing: .06em;
+  padding: .4rem .6rem;
+  background: linear-gradient(to right, #dce8f8, #f0f5ff);
+  border-left: 3px solid #274C8D;
+  border-radius: 4px;
+  margin: .3rem 0 .2rem;
+}
+
+/* Checkbox Sábado */
+.vn-sabado-field { align-self: flex-end; padding-bottom: .3rem; }
+.vn-check-label {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .85rem; font-weight: 600; color: #374151;
+  cursor: pointer;
+}
+.vn-check-label input { width: 16px; height: 16px; cursor: pointer; }
+
+/* Gran Total */
+.vn-gran-total {
+  display: flex !important; align-items: center; justify-content: flex-end;
+  gap: 1rem;
+  background: linear-gradient(135deg, #274C8D, #3a6bbf);
+  border-radius: 10px;
+  padding: .75rem 1.2rem !important;
+}
+.vn-gran-total__label { font-size: .85rem; font-weight: 800; color: rgba(255,255,255,.85); text-transform: uppercase; }
+.vn-gran-total__value { font-size: 1.35rem; font-weight: 800; color: #fff; }
+
+/* Tabla días detalle */
+.vn-dias-table { display: flex; flex-direction: column; gap: 2px; margin-top: .4rem; }
+.vn-dias-header {
+  display: grid; grid-template-columns: 100px 100px 1fr;
+  gap: .5rem; padding: .4rem .7rem;
+  background: #274C8D; border-radius: 7px 7px 0 0;
+  font-size: .72rem; font-weight: 800; color: #fff;
+  text-transform: uppercase;
+}
+.vn-dias-row {
+  display: grid; grid-template-columns: 100px 100px 1fr;
+  gap: .5rem; padding: .35rem .7rem;
+  background: #f5f8fd; border: 1px solid #dce8f8; border-radius: 4px;
+  align-items: center;
+}
+.vn-dias-row:nth-child(even) { background: #fff; }
+.vn-dias-day  { font-size: .78rem; font-weight: 700; color: #274C8D; }
+.vn-dias-fecha{ font-size: .78rem; color: #6b7280; }
+.vn-dias-monto{ padding: .3rem .5rem !important; height: 30px; font-size: .83rem; }
+
+/* Modal más ancho para el form largo */
+.vn-modal { max-width: 760px !important; width: 96vw !important; }
+
+/* Tabla lista — campos especiales */
+.vn-dni  { font-family: monospace; font-size: .83rem; color: #374151; letter-spacing: .04em; }
+.vn-mision { font-size: .78rem; color: #6b7280; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vn-sep  { margin: 0 .3rem; color: #9ca3af; font-size: .7rem; }
+.vn-total{ font-weight: 700; color: #16a34a; font-size: .9rem; }

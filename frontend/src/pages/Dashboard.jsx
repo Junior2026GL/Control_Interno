@@ -187,6 +187,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #be185d 0%, #f472b6 100%)',
   },
   {
+    path: '/viaticos-nacionales',
+    label: 'Viáticos Nacionales',
+    clave: 'viaticos-nacionales',
+    description: 'Recibos de viáticos para empleados con consulta al censo nacional',
+    icon: LuFileSpreadsheet,
+    gradient: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+  },
+  {
     path: '/cumpleanos-diputados',
     label: 'Cumpleaños de Diputados',
     clave: 'cumpleanos-diputados',

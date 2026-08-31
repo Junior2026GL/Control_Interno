@@ -58,6 +58,8 @@ const MODULOS_LABELS = {
   'chat':                    'Asistente IA (Chat)',
   'cumpleanos-diputados':    'Cumpleaños de Diputados',
   'estado-liquidacion':      'Estado de Liquidación',
+  'fardos-confites':         'Entrega de Fardos de Confites',
+  'viaticos-nacionales':     'Viáticos Nacionales',
 };
 
 const ROL_META = {

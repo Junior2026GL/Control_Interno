@@ -83,6 +83,7 @@ app.use('/api/checklist',        require('./routes/checklist.routes'));
 app.use('/api/orden-checklist',  require('./routes/orden_checklist.routes'));
 app.use('/api/bodegas',          require('./routes/bodegas.routes'));
 app.use('/api/fardos-confites',  require('./routes/fardos_confites.routes'));
+app.use('/api/viaticos-nacionales', require('./routes/viaticos_nacionales.routes'));
 app.use('/api/censo',                    require('./routes/censo.routes'));
 app.use('/api/ordenes-pago',             require('./routes/ordenes_pago.routes'));
 app.use('/api/firma',                    require('./routes/firma.routes'));
