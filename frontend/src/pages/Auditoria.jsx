@@ -28,6 +28,7 @@ const MODULOS = [
   'auth', 'BASE_DATOS', 'caja', 'diputados', 'alcaldes',
   'ayudas', 'ayudas_alcaldias', 'autorizaciones', 'constancias',
   'presupuesto', 'viaticos', 'auditoria', 'users', 'modulos', 'chat',
+  'bodegas', 'fardos-confites',
 ];
 
 const RESULTADO_COLORS = { EXITO: 'success', FALLO: 'danger', BLOQUEADO: 'blocked' };

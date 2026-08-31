@@ -50,6 +50,7 @@ const MODULOS_LABELS = {
   'chat':                    'Chat',
   'cumpleanos-diputados':    'Cumpleaños de Diputados',
   'estado-liquidacion':      'Estado de Liquidación',
+  'fardos-confites':         'Entrega de Fardos de Confites',
 };
 
 const ROL_META = {

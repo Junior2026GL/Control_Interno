@@ -107,6 +107,7 @@ export default function FardosConfites() {
   const [busqueda, setBusqueda]         = useState('');
   const [filtroDesde, setFiltroDesde]   = useState('');
   const [filtroHasta, setFiltroHasta]   = useState('');
+  const [filtroAnio, setFiltroAnio]     = useState(String(new Date().getFullYear()));
   const [page, setPage]                 = useState(1);
   const [showStats, setShowStats]       = useState(false);
   const [showPartidoStats, setShowPartidoStats] = useState(false);
@@ -144,7 +145,7 @@ export default function FardosConfites() {
   }, []);
 
   useEffect(() => { fetchRegistros(); fetchDiputados(); }, [fetchRegistros, fetchDiputados]);
-  useEffect(() => { setPage(1); }, [busqueda, filtroDesde, filtroHasta]);
+  useEffect(() => { setPage(1); }, [busqueda, filtroDesde, filtroHasta, filtroAnio]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -187,8 +188,20 @@ export default function FardosConfites() {
     setFormErrors(prev => ({ ...prev, diputado_nombre: undefined }));
   };
 
+  const availableYears = useMemo(() => {
+    const years = new Set(registros.map(r => String(r.fecha_entrega).slice(0, 4)));
+    return [...years].sort((a, b) => b - a);
+  }, [registros]);
+
+  const anioActual = String(new Date().getFullYear());
+  const statsAnio = useMemo(() => {
+    const f = registros.filter(r => String(r.fecha_entrega).slice(0, 4) === anioActual);
+    return { registros: f.length, cantidad: f.reduce((s, r) => s + (r.cantidad_recibida || 0), 0) };
+  }, [registros, anioActual]);
+
   const filtered = useMemo(() => {
     let f = [...registros];
+    if (filtroAnio) f = f.filter(r => String(r.fecha_entrega).slice(0, 4) === filtroAnio);
     const q = busqueda.trim().toLowerCase();
     if (q) f = f.filter(r =>
       r.diputado_nombre.toLowerCase().includes(q) ||
@@ -211,8 +224,8 @@ export default function FardosConfites() {
   const totalPages    = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated     = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const totalCantidad = registros.reduce((s, r) => s + (r.cantidad_recibida || 0), 0);
-  const hayFiltros    = busqueda || filtroDesde || filtroHasta;
-  const limpiarFiltros = () => { setBusqueda(''); setFiltroDesde(''); setFiltroHasta(''); setPage(1); };
+  const hayFiltros    = busqueda || filtroDesde || filtroHasta || filtroAnio;
+  const limpiarFiltros = () => { setBusqueda(''); setFiltroDesde(''); setFiltroHasta(''); setFiltroAnio(''); setPage(1); };
 
   const deptoStats = useMemo(() => {
     const map = {};
@@ -467,6 +480,20 @@ export default function FardosConfites() {
               <span className="bod-stat__value bod-stat__value--green">{totalCantidad.toLocaleString('es-HN')}</span>
             </div>
           </div>
+          <div className="bod-stat">
+            <div className="bod-stat__icon bod-stat__icon--amber"><FiCalendar size={20} /></div>
+            <div className="bod-stat__body">
+              <span className="bod-stat__label">Registros {anioActual}</span>
+              <span className="bod-stat__value">{statsAnio.registros}</span>
+            </div>
+          </div>
+          <div className="bod-stat">
+            <div className="bod-stat__icon bod-stat__icon--amber"><FiPackage size={20} /></div>
+            <div className="bod-stat__body">
+              <span className="bod-stat__label">Fardos {anioActual}</span>
+              <span className="bod-stat__value bod-stat__value--green">{statsAnio.cantidad.toLocaleString('es-HN')}</span>
+            </div>
+          </div>
         </div>
 
         {showPartidoStats && (
@@ -541,6 +568,14 @@ export default function FardosConfites() {
                 value={busqueda} onChange={e => setBusqueda(e.target.value)} />
             </div>
             <div className="bod-filter-dates">
+              <div className="bod-filter-date-group">
+                <FiCalendar size={13} className="bod-filter-date-icon" />
+                <span className="bod-filter-date-label">Año</span>
+                <select className="bod-filter-date-input" value={filtroAnio} onChange={e => setFiltroAnio(e.target.value)} style={{ width: 80 }}>
+                  <option value="">Todos</option>
+                  {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
               <div className="bod-filter-date-group">
                 <FiCalendar size={13} className="bod-filter-date-icon" />
                 <span className="bod-filter-date-label">Desde</span>
