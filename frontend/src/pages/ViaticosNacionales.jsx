@@ -220,7 +220,7 @@ async function generarReciboViatico(rec, logoDataUrl) {
     ]],
     headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:7.5,cellPadding:{top:1.5,bottom:1.5,left:2.5,right:2.5}},
     bodyStyles:{fontSize:7.5,textColor:NEGRO,cellPadding:{top:1.5,bottom:1.5,left:2.5,right:2.5}},
-    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:7.5},
+    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:7.5,cellPadding:{top:1.5,bottom:1.5,left:2.5,right:2.5}},
     alternateRowStyles:{fillColor:GRIS2},
     styles:{lineColor:AZUL_L,lineWidth:0.2},
     columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:40,halign:'right'}},
@@ -250,7 +250,7 @@ async function generarReciboViatico(rec, logoDataUrl) {
     ]],
     headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:6.5,halign:'center',cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
     bodyStyles:{fontSize:6.5,textColor:NEGRO,cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
-    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:6.5,fontStyle:'bold'},
+    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:6.5,fontStyle:'bold',cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
     alternateRowStyles:{fillColor:GRIS2},
     styles:{lineColor:AZUL_L,lineWidth:0.2,overflow:'linebreak'},
     columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:48},2:{cellWidth:30},
@@ -274,26 +274,26 @@ async function generarReciboViatico(rec, logoDataUrl) {
     foot:[['','TOTAL:','',rec.monto_combustible>0?fmt(rec.monto_combustible):'-']],
     headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:6.5,cellPadding:{top:1.5,bottom:1.5,left:1.5,right:1.5}},
     bodyStyles:{fontSize:6.5,textColor:NEGRO,cellPadding:{top:1.5,bottom:1.5,left:1.5,right:1.5}},
-    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:6.5,fontStyle:'bold'},
+    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:6.5,fontStyle:'bold',cellPadding:{top:1.5,bottom:1.5,left:1.5,right:1.5}},
     styles:{lineColor:AZUL_L,lineWidth:0.2},
     alternateRowStyles:{fillColor:GRIS2},
     columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:80},3:{cellWidth:30,halign:'right'}},
   });
-  y=doc.lastAutoTable.finalY+4;
+  y=doc.lastAutoTable.finalY+3;
 
   /* ─ FIRMA (IDENTIDAD / NOMBRE / FIRMA apiladas, como el formato fisico) ─ */
-  if(y>H-26){doc.addPage();y=M;}
+  if(y>H-24){doc.addPage();y=M;}
   const lineEnd=M+CW-2, lblW=24;
   doc.setDrawColor(0,0,0); doc.setLineWidth(0.3);
   doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...NEGRO);
-  doc.text('IDENTIDAD:',M,y+4);
-  doc.setFont('helvetica','normal'); doc.text(sa(rec.numero_identidad||''),M+lblW,y+4);
-  doc.line(M+lblW,y+5.5,lineEnd,y+5.5); y+=9;
-  doc.setFont('helvetica','bold'); doc.text('NOMBRE:',M,y+4);
-  doc.setFont('helvetica','normal'); doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()),M+lblW,y+4);
-  doc.line(M+lblW,y+5.5,lineEnd,y+5.5); y+=9;
-  doc.setFont('helvetica','bold'); doc.text('FIRMA:',M,y+4);
-  doc.line(M+lblW,y+5.5,lineEnd,y+5.5);
+  doc.text('IDENTIDAD:',M,y+3.5);
+  doc.setFont('helvetica','normal'); doc.text(sa(rec.numero_identidad||''),M+lblW,y+3.5);
+  doc.line(M+lblW,y+5,lineEnd,y+5); y+=8;
+  doc.setFont('helvetica','bold'); doc.text('NOMBRE:',M,y+3.5);
+  doc.setFont('helvetica','normal'); doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()),M+lblW,y+3.5);
+  doc.line(M+lblW,y+5,lineEnd,y+5); y+=8;
+  doc.setFont('helvetica','bold'); doc.text('FIRMA:',M,y+3.5);
+  doc.line(M+lblW,y+5,lineEnd,y+5);
 
   doc.save(`recibo_viaticos_${(rec.numero_identidad||'').slice(-6)}_${String(rec.periodo_desde||'').slice(0,10)}.pdf`);
 }
