@@ -183,11 +183,24 @@ async function generarReciboViatico(rec, logoDataUrl) {
   doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...AZUL);
   doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()),M+CW/2,y+5,{align:'center'}); y+=7;
   cell('CARGO',rec.cargo||'',0,CW/2); cell('ENCARGADO DE LA MISION',rec.encargado_mision||'',CW/2,CW/2); y+=RH;
-  // Período 3 columnas
-  const P3=CW/3;
-  cell('PERIODO DE TIEMPO',`DESDE: ${fmtFecha(rec.periodo_desde)}  HASTA: ${fmtFecha(rec.periodo_hasta)}${rec.sabado?' | SABADO: [X]':''}`,0,P3);
-  cell('HORA DE SALIDA',rec.hora_salida||'—',P3,P3);
-  cell('HORA DE REGRESO',rec.hora_regreso||'—',P3*2,P3); y+=RH+1;
+  // Período: 2 filas (DESDE/HASTA y HORA SALIDA/REGRESO) + columna SABADO que abarca ambas
+  const PLBL=38, SABW=24, restW=CW-PLBL-SABW, halfW=restW/2, rowsH=RH*2;
+  doc.setFillColor(...GRIS); doc.rect(M,y,PLBL,rowsH,'F');
+  doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.2); doc.rect(M,y,PLBL,rowsH,'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(55,85,145);
+  doc.text('PERIODO DE',M+1.5,y+rowsH/2-1); doc.text('TIEMPO:',M+1.5,y+rowsH/2+3);
+  doc.setFillColor(...GRIS); doc.rect(M+PLBL+restW,y,SABW,rowsH,'F');
+  doc.rect(M+PLBL+restW,y,SABW,rowsH,'S');
+  doc.text('SABADO',M+PLBL+restW+SABW/2,y+4,{align:'center'});
+  doc.setDrawColor(0,0,0); doc.setLineWidth(0.3);
+  doc.setFillColor(rec.sabado?0:255,rec.sabado?0:255,rec.sabado?0:255);
+  doc.rect(M+PLBL+restW+SABW/2-2,y+rowsH/2,4,4,rec.sabado?'FD':'S');
+  cell('DESDE',fmtFecha(rec.periodo_desde),PLBL,halfW);
+  cell('HASTA',fmtFecha(rec.periodo_hasta),PLBL+halfW,halfW);
+  y+=RH;
+  cell('HORA DE SALIDA',rec.hora_salida||'—',PLBL,halfW);
+  cell('HORA DE REGRESO',rec.hora_regreso||'—',PLBL+halfW,halfW);
+  y+=RH+1;
 
   /* ─ TABLA GASTOS ─ */
   autoTable(doc,{
@@ -256,6 +269,7 @@ async function generarReciboViatico(rec, logoDataUrl) {
     ],
     body:[
       ['1',sa(rec.nombre_beneficiario||''),'',rec.monto_combustible>0?fmt(rec.monto_combustible):''],
+      ['2','','',''],
     ],
     foot:[['','TOTAL:','',rec.monto_combustible>0?fmt(rec.monto_combustible):'-']],
     headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:6.5,cellPadding:{top:1.5,bottom:1.5,left:1.5,right:1.5}},
@@ -267,19 +281,19 @@ async function generarReciboViatico(rec, logoDataUrl) {
   });
   y=doc.lastAutoTable.finalY+4;
 
-  /* ─ FIRMA ─ */
-  if(y>H-18){doc.addPage();y=M;}
-  const lw=72, gap=(CW-3*lw)/2;
-  doc.setDrawColor(0,0,0); doc.setLineWidth(0.5);
-  doc.line(M,y+10,M+lw,y+10);
-  doc.line(M+lw+gap,y+10,M+2*lw+gap,y+10);
-  doc.line(M+2*lw+2*gap,y+10,M+3*lw+2*gap,y+10);
+  /* ─ FIRMA (IDENTIDAD / NOMBRE / FIRMA apiladas, como el formato fisico) ─ */
+  if(y>H-26){doc.addPage();y=M;}
+  const lineEnd=M+CW-2, lblW=24;
+  doc.setDrawColor(0,0,0); doc.setLineWidth(0.3);
   doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...NEGRO);
-  doc.text('IDENTIDAD:',M,y+14.5);
-  doc.setFont('helvetica','normal'); doc.text(sa(rec.numero_identidad||''),M+23,y+14.5);
-  doc.setFont('helvetica','bold'); doc.text('FIRMA',M+lw+gap+lw/2,y+14.5,{align:'center'});
-  doc.setFont('helvetica','bold'); doc.text('NOMBRE:',M+2*lw+2*gap,y+14.5);
-  doc.setFont('helvetica','normal'); doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()),M+2*lw+2*gap+20,y+14.5);
+  doc.text('IDENTIDAD:',M,y+4);
+  doc.setFont('helvetica','normal'); doc.text(sa(rec.numero_identidad||''),M+lblW,y+4);
+  doc.line(M+lblW,y+5.5,lineEnd,y+5.5); y+=9;
+  doc.setFont('helvetica','bold'); doc.text('NOMBRE:',M,y+4);
+  doc.setFont('helvetica','normal'); doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()),M+lblW,y+4);
+  doc.line(M+lblW,y+5.5,lineEnd,y+5.5); y+=9;
+  doc.setFont('helvetica','bold'); doc.text('FIRMA:',M,y+4);
+  doc.line(M+lblW,y+5.5,lineEnd,y+5.5);
 
   doc.save(`recibo_viaticos_${(rec.numero_identidad||'').slice(-6)}_${String(rec.periodo_desde||'').slice(0,10)}.pdf`);
 }
