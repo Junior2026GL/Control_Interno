@@ -229,7 +229,7 @@ async function generarReciboViatico(rec, logoDataUrl) {
 
   /* ─ DETALLE ALIMENTACION HOSPEDAJE ─ */
   const dias=rec.dias_detalle||[], nDias=Math.min(dias.length,12);
-  const fw=nDias>0?Math.max(14,Math.floor((CW-12-52-32-28)/nDias)):0;
+  const fw=nDias>0?Math.max(14,Math.floor((CW-10-48-30-28)/nDias)):0;
   autoTable(doc,{
     startY:y, margin:{left:M,right:M},
     head:[
@@ -245,7 +245,7 @@ async function generarReciboViatico(rec, logoDataUrl) {
       fmt(rec.monto_hospedaje),
     ]],
     foot:[['','TOTAL:','',
-      ...dias.slice(0,nDias).map(d=>d.monto>0?`L ${parseFloat(d.monto).toFixed(2)}`:''),
+      ...dias.slice(0,nDias).map(d=>({content:d.monto>0?`L ${parseFloat(d.monto).toFixed(2)}`:'',styles:{halign:'center'}})),
       '',
     ]],
     headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:6.5,halign:'center',cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
@@ -281,19 +281,20 @@ async function generarReciboViatico(rec, logoDataUrl) {
   });
   y=doc.lastAutoTable.finalY+3;
 
-  /* ─ FIRMA (IDENTIDAD / NOMBRE / FIRMA apiladas, como el formato fisico) ─ */
+  /* ─ FIRMA: IDENTIDAD/NOMBRE a la izquierda, recuadro de FIRMA a la derecha (usa el espacio libre) ─ */
   if(y>H-24){doc.addPage();y=M;}
-  const lineEnd=M+CW-2, lblW=24;
+  const gapFirma=8, boxW=60, leftW=CW-boxW-gapFirma, lblW=24, boxH=14, fbX=M+leftW+gapFirma;
   doc.setDrawColor(0,0,0); doc.setLineWidth(0.3);
   doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...NEGRO);
   doc.text('IDENTIDAD:',M,y+3.5);
   doc.setFont('helvetica','normal'); doc.text(sa(rec.numero_identidad||''),M+lblW,y+3.5);
-  doc.line(M+lblW,y+5,lineEnd,y+5); y+=8;
+  doc.line(M+lblW,y+5,M+leftW,y+5);
+  doc.rect(fbX,y-2,boxW,boxH);
+  doc.setFont('helvetica','bold'); doc.text('FIRMA',fbX+boxW/2,y-2+boxH+4,{align:'center'});
+  y+=8;
   doc.setFont('helvetica','bold'); doc.text('NOMBRE:',M,y+3.5);
   doc.setFont('helvetica','normal'); doc.text(sa((rec.nombre_beneficiario||'').toUpperCase()),M+lblW,y+3.5);
-  doc.line(M+lblW,y+5,lineEnd,y+5); y+=8;
-  doc.setFont('helvetica','bold'); doc.text('FIRMA:',M,y+3.5);
-  doc.line(M+lblW,y+5,lineEnd,y+5);
+  doc.line(M+lblW,y+5,M+leftW,y+5);
 
   doc.save(`recibo_viaticos_${(rec.numero_identidad||'').slice(-6)}_${String(rec.periodo_desde||'').slice(0,10)}.pdf`);
 }
