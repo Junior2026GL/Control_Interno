@@ -227,14 +227,18 @@ async function generarReciboViatico(rec, logoDataUrl) {
   });
   y=doc.lastAutoTable.finalY+2;
 
-  /* ─ DETALLE ALIMENTACION HOSPEDAJE ─ */
+  /* ─ DETALLE ALIMENTACION Y HOSPEDAJE ─ */
   const dias=rec.dias_detalle||[], nDias=Math.min(dias.length,12);
   const fw=nDias>0?Math.max(14,Math.floor((CW-10-48-30-28)/nDias)):0;
+  const fwSobrante=nDias>0?Math.max(0,CW-10-48-30-28-fw*nDias):0;
+  const AZUL_OSC=[24,48,92], FINDE=[255,241,209];
+  const esFinde=dias.slice(0,nDias).map(d=>{const[yy,mm,dd]=String(d.fecha).split('-');const dow=new Date(+yy,+mm-1,+dd).getDay();return dow===0||dow===6;});
+  const totalCol=3+nDias;
   autoTable(doc,{
     startY:y, margin:{left:M,right:M},
     head:[
-      [{content:'DETALLE DE ALIMENTACIO HOSPEDAJE',colSpan:4+nDias,
-        styles:{fillColor:[40,40,40],textColor:BLANCO,fontStyle:'bold',fontSize:8,cellPadding:{top:2,bottom:2,left:3,right:3}}}],
+      [{content:'DETALLE DE ALIMENTACION Y HOSPEDAJE',colSpan:4+nDias,
+        styles:{fillColor:AZUL_OSC,textColor:BLANCO,fontStyle:'bold',fontSize:8.5,cellPadding:{top:2.2,bottom:2.2,left:3,right:3}}}],
       ['#','Nombre','Cargo',
         ...dias.slice(0,nDias).map(d=>{const[yy,mm,dd]=String(d.fecha).split('-');return `${getDayName(d.fecha)}\n${parseInt(dd)}/${parseInt(mm)}/${yy}`;}),
         'TOTAL'],
@@ -242,20 +246,26 @@ async function generarReciboViatico(rec, logoDataUrl) {
     body:[[
       '1',sa((rec.nombre_beneficiario||'').toUpperCase()),sa((rec.cargo||'').toUpperCase()),
       ...dias.slice(0,nDias).map(d=>d.monto>0?`L ${parseFloat(d.monto).toFixed(2)}`:''),
-      fmt(rec.monto_hospedaje),
+      {content:fmt(rec.monto_hospedaje),styles:{fontStyle:'bold',textColor:AZUL}},
     ]],
     foot:[['','TOTAL:','',
       ...dias.slice(0,nDias).map(d=>({content:d.monto>0?`L ${parseFloat(d.monto).toFixed(2)}`:'',styles:{halign:'center'}})),
       '',
     ]],
-    headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:6.5,halign:'center',cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
-    bodyStyles:{fontSize:6.5,textColor:NEGRO,cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
-    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:6.5,fontStyle:'bold',cellPadding:{top:1.5,bottom:1.5,left:1,right:1}},
+    headStyles:{fillColor:AZUL,textColor:BLANCO,fontStyle:'bold',fontSize:6.8,halign:'center',cellPadding:{top:2,bottom:2,left:1,right:1}},
+    bodyStyles:{fontSize:6.8,textColor:NEGRO,cellPadding:{top:2,bottom:2,left:1,right:1}},
+    footStyles:{fillColor:GRIS,textColor:NEGRO,fontSize:6.8,fontStyle:'bold',cellPadding:{top:2,bottom:2,left:1,right:1}},
     alternateRowStyles:{fillColor:GRIS2},
     styles:{lineColor:AZUL_L,lineWidth:0.2,overflow:'linebreak'},
+    tableLineColor:AZUL, tableLineWidth:0.35,
     columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:48},2:{cellWidth:30},
-      ...Object.fromEntries(dias.slice(0,nDias).map((_,i)=>[i+3,{cellWidth:fw,halign:'center'}])),
-      [3+nDias]:{cellWidth:28,halign:'right'}},
+      ...Object.fromEntries(dias.slice(0,nDias).map((_,i)=>[i+3,{cellWidth:i===nDias-1?fw+fwSobrante:fw,halign:'center'}])),
+      [totalCol]:{cellWidth:28,halign:'right'}},
+    didParseCell(data){
+      const ci=data.column.index;
+      if(data.section!=='head' && ci>=3 && ci<totalCol && esFinde[ci-3]) data.cell.styles.fillColor=FINDE;
+      if(ci===totalCol && data.section==='foot') data.cell.styles.textColor=AZUL;
+    },
   });
   y=doc.lastAutoTable.finalY+2;
 
