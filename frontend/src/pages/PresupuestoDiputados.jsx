@@ -2677,6 +2677,7 @@ export default function PresupuestoDiputados() {
                               placeholder="0.00"
                               value={m.monto_asignado}
                               className={bajoEjecutado ? 'ps-input-error' : ''}
+                              onFocus={e => e.target.select()}
                               onChange={e => {
                                 const val = e.target.value;
                                 setPresForm(f => ({
