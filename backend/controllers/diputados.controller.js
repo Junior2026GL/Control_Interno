@@ -1,5 +1,6 @@
 const db = require('../db');
 const { logEvent, getClientIP } = require('../middleware/audit');
+const { syncFromCenso } = require('./cumpleanos_diputados.controller');
 
 function sanitize(str) { return (str || '').toString().trim(); }
 
@@ -58,6 +59,7 @@ exports.create = (req, res) => {
     [departamento, numero, tipo, nombre, identidad, partido, telefono, correo],
     (dbErr, result) => {
       if (dbErr) { console.error('[diputados] Error en create:', dbErr); return res.status(500).json({ message: 'Error al crear diputado.' }); }
+      if (identidad) syncFromCenso(result.insertId, identidad);
       logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'diputados', detalle: `Registró diputado: ${nombre} — ${tipo}, ${departamento}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.status(201).json({ message: 'Diputado creado correctamente.', id: result.insertId });
     }
@@ -93,6 +95,7 @@ exports.update = (req, res) => {
     (dbErr, result) => {
       if (dbErr) { console.error('[diputados] Error en update:', dbErr); return res.status(500).json({ message: 'Error al actualizar diputado.' }); }
       if (result.affectedRows === 0) return res.status(404).json({ message: 'Diputado no encontrado.' });
+      if (identidad) syncFromCenso(targetId, identidad);
       logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'diputados', detalle: `Actualizó diputado ID #${targetId}: ${nombre}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
       res.json({ message: 'Diputado actualizado correctamente.' });
     }

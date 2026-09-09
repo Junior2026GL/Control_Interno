@@ -274,3 +274,37 @@ exports.getStats = (req, res) => {
     }
   );
 };
+
+// Busca la fecha de nacimiento en el censo nacional por identidad y la sincroniza
+// en diputados_cumpleanos. No sobrescribe fechas cargadas manualmente ('manual').
+exports.syncFromCenso = (diputadoId, identidad) => {
+  const dni = (identidad || '').replace(/\D/g, '');
+  if (!/^\d{13}$/.test(dni)) return;
+
+  db.query(
+    'SELECT FECHA_NACIMIENTO FROM censo_nacional WHERE NUMERO_IDENTIDAD = ? LIMIT 1',
+    [dni],
+    (err, rows) => {
+      if (err) return console.error('[cumpleanos_diputados] Error consultando censo:', err.message);
+      if (!rows.length || !rows[0].FECHA_NACIMIENTO) return;
+
+      const parsed = parseFecha(rows[0].FECHA_NACIMIENTO);
+      if (!parsed) return;
+      const fechaISO = `${parsed.anio}-${String(parsed.mes).padStart(2, '0')}-${String(parsed.dia).padStart(2, '0')}`;
+
+      db.query(
+        `INSERT INTO diputados_cumpleanos (diputado_id, fecha_nacimiento, fuente)
+         VALUES (?, ?, 'censo')
+         ON DUPLICATE KEY UPDATE
+           fecha_nacimiento = IF(fuente = 'manual', fecha_nacimiento, VALUES(fecha_nacimiento)),
+           fuente           = IF(fuente = 'manual', fuente, VALUES(fuente))`,
+        [diputadoId, fechaISO],
+        (err2) => {
+          if (err2) return console.error('[cumpleanos_diputados] Error sincronizando desde censo:', err2.message);
+          cache.data = null;
+          cache.ts   = 0;
+        }
+      );
+    }
+  );
+};
