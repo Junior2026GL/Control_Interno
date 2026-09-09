@@ -223,9 +223,6 @@ exports.updatePresupuesto = async (req, res) => {
     }
   }
 
-  const MESES_NOMBRES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                         'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
   const conn = await db.promise().getConnection();
   try {
     await conn.beginTransaction();
@@ -243,26 +240,9 @@ exports.updatePresupuesto = async (req, res) => {
       });
     }
 
-    // Si personalizada: validar que cada mes >= lo ejecutado en ese mes
-    if (tipoDist === 'personalizada') {
-      const [execMes] = await conn.query(
-        `SELECT MONTH(fecha) AS mes, COALESCE(SUM(monto), 0) AS ejecutado
-         FROM ayudas_sociales WHERE presupuesto_id = ?
-         GROUP BY MONTH(fecha)`,
-        [id]
-      );
-      for (const m of mesesInput) {
-        const mesNum  = parseInt(m.mes, 10);
-        const montoM  = parseFloat(m.monto_asignado);
-        const execRow = execMes.find(r => r.mes === mesNum);
-        if (execRow && montoM < parseFloat(execRow.ejecutado)) {
-          await conn.rollback();
-          return res.status(400).json({
-            message: `El monto de ${MESES_NOMBRES[mesNum - 1]} no puede ser menor al ya ejecutado (L ${parseFloat(execRow.ejecutado).toLocaleString('es-HN', { minimumFractionDigits: 2 })}).`,
-          });
-        }
-      }
-    }
+    // Nota: la cuota mensual es una meta de planificación, no un tope duro.
+    // Se permite que un mes quede con cuota menor a lo ya ejecutado (sobregiro mensual),
+    // siempre que el monto anual total cubra lo ejecutado en el año (validado arriba).
 
     const [result] = await conn.query(
       'UPDATE presupuesto_diputados SET monto_asignado = ?, tipo_distribucion = ?, observaciones = ? WHERE id = ?',
