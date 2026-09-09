@@ -8,6 +8,20 @@ const ANIO_REGEX  = /^\d{4}$/; // valida año de 4 dígitos
 const FACTURA_REGEX = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
 const CORRELATIVO_ID = 1;
 
+// Verifica que numero_factura no esté ya usado en otra autorización activa
+// (RECHAZADO libera el número). excludeId se usa al editar para no chocar consigo misma.
+function checkFacturaDuplicada(numero_factura, excludeId, cb) {
+  if (!numero_factura) return cb(null, null);
+  const sql = excludeId
+    ? `SELECT numero FROM autorizaciones_pago WHERE numero_factura = ? AND estado != 'RECHAZADO' AND id != ? LIMIT 1`
+    : `SELECT numero FROM autorizaciones_pago WHERE numero_factura = ? AND estado != 'RECHAZADO' LIMIT 1`;
+  const params = excludeId ? [numero_factura, excludeId] : [numero_factura];
+  db.query(sql, params, (err, rows) => {
+    if (err) return cb(err);
+    cb(null, rows.length ? rows[0].numero : null);
+  });
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 // nextNumero usa transacción para evitar race condition en folios duplicados
@@ -252,6 +266,11 @@ exports.create = (req, res) => {
       return res.status(400).json({ message: 'Número de factura inválido. Use el formato 000-001-01-000037777.' });
   }
 
+  checkFacturaDuplicada(numero_factura, null, (errDup, dupNumero) => {
+    if (errDup) { console.error('[autorizaciones] Error validando factura duplicada:', errDup); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+    if (dupNumero)
+      return res.status(409).json({ message: `El número de factura ya fue registrado en la autorización N° ${dupNumero}.` });
+
   nextNumero((err, numero) => {
     if (err) { console.error('[autorizaciones] Error en nextNumero:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
 
@@ -281,6 +300,7 @@ exports.create = (req, res) => {
         );
       }
     );
+  });
   });
 };
 
@@ -348,6 +368,11 @@ exports.update = (req, res) => {
     if (err) { console.error('[autorizaciones] Error en update SELECT:', err); return res.status(500).json({ message: 'Error interno del servidor.' }); }
     if (!rows.length) return res.status(404).json({ message: 'Autorización no encontrada o ya procesada.' });
 
+    checkFacturaDuplicada(numero_factura, id, (errDup, dupNumero) => {
+      if (errDup) { console.error('[autorizaciones] Error validando factura duplicada:', errDup); return res.status(500).json({ message: 'Error interno del servidor.' }); }
+      if (dupNumero)
+        return res.status(409).json({ message: `El número de factura ya fue registrado en la autorización N° ${dupNumero}.` });
+
     db.query(
       `UPDATE autorizaciones_pago
          SET tipo_pago = ?, beneficiario = ?, monto = ?, monto_letras = ?,
@@ -360,6 +385,7 @@ exports.update = (req, res) => {
         res.json({ message: 'Autorización actualizada correctamente.' });
       }
     );
+    });
   });
 };
 
