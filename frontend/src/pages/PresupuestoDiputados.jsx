@@ -50,7 +50,7 @@ const EMPTY_PRES  = {
   cuota_mensual:     '',
   num_meses:         8,
   mes_inicio:        new Date().getMonth() + 1,
-  meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, monto_asignado: '' })),
+  meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, monto_asignado: '', ejecutado: 0 })),
 };
 const EMPTY_AYUDA = {
   fecha: new Date().toISOString().slice(0, 10),
@@ -261,11 +261,13 @@ export default function PresupuestoDiputados() {
     const remainder = +(total - base * (numMeses - 1)).toFixed(2);
     setPresForm(f => ({
       ...f,
+      // nunca bajar un mes por debajo de lo ya ejecutado, aunque quede antes del mes de inicio
       meses: f.meses.map((m, i) => {
         const mesNum = i + 1;
-        if (mesNum < mesInicio) return { ...m, monto_asignado: '0' };
+        if (mesNum < mesInicio) return { ...m, monto_asignado: (m.ejecutado || 0).toString() };
         const isLast = mesNum === 12;                         // Dic siempre lleva el residuo
-        return { ...m, monto_asignado: (isLast ? remainder : base).toString() };
+        const valor  = isLast ? remainder : base;
+        return { ...m, monto_asignado: Math.max(valor, m.ejecutado || 0).toString() };
       }),
     }));
   };
@@ -289,7 +291,7 @@ export default function PresupuestoDiputados() {
         tipo_distribucion: 'personalizada',
         meses: f.meses.map((m, i) => ({
           ...m,
-          monto_asignado: total > 0 ? (i === 11 ? remainder : base).toString() : '',
+          monto_asignado: total > 0 ? Math.max(i === 11 ? remainder : base, m.ejecutado || 0).toString() : '',
         })),
       }));
     } else if (tipo === 'cuota') {
@@ -372,6 +374,11 @@ export default function PresupuestoDiputados() {
       montoFinal = monto;
       tipoFinal  = presForm.tipo_distribucion;
       if (presForm.tipo_distribucion === 'personalizada') {
+        const mesInvalido = presForm.meses.find(m => parseFloat(m.monto_asignado || 0) < (m.ejecutado || 0));
+        if (mesInvalido) {
+          setFormErr(`El monto de ${MESES_LARGOS[mesInvalido.mes - 1]} no puede ser menor al ya ejecutado (${formatHNL(mesInvalido.ejecutado)}).`);
+          return;
+        }
         const suma = presForm.meses.reduce((s, m) => s + parseFloat(m.monto_asignado || 0), 0);
         if (suma <= 0) { setFormErr('La suma de los meses debe ser mayor a 0.'); return; }
         montoFinal = +suma.toFixed(2);
@@ -415,8 +422,13 @@ export default function PresupuestoDiputados() {
       mes_inicio:        presupuesto.mes_inicio || 1,
       cuota_mensual:     '',
       num_meses:         8,
+      // precargar cada mes con al menos lo ya ejecutado: evita que meses no tocados por el usuario bloqueen el guardado
       meses: presupuesto.meses?.length === 12
-        ? presupuesto.meses.map(m => ({ mes: m.mes, monto_asignado: m.monto_asignado.toString() }))
+        ? presupuesto.meses.map(m => ({
+            mes: m.mes,
+            monto_asignado: Math.max(parseFloat(m.monto_asignado) || 0, parseFloat(m.ejecutado) || 0).toString(),
+            ejecutado: m.ejecutado || 0,
+          }))
         : EMPTY_PRES.meses,
     });
     setFormErr('');
@@ -2653,25 +2665,34 @@ export default function PresupuestoDiputados() {
                       </button>
                     </div>
                     <div className="ps-meses-grid">
-                      {presForm.meses.map((m, i) => (
-                        <div key={m.mes} className="ps-mes-input-group">
-                          <label>{MESES_LARGOS[i]}</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                            value={m.monto_asignado}
-                            onChange={e => {
-                              const val = e.target.value;
-                              setPresForm(f => ({
-                                ...f,
-                                meses: f.meses.map((mm, ii) => ii === i ? { ...mm, monto_asignado: val } : mm),
-                              }));
-                            }}
-                          />
-                        </div>
-                      ))}
+                      {presForm.meses.map((m, i) => {
+                        const bajoEjecutado = (m.ejecutado || 0) > 0 && parseFloat(m.monto_asignado || 0) < m.ejecutado;
+                        return (
+                          <div key={m.mes} className="ps-mes-input-group">
+                            <label>{MESES_LARGOS[i]}</label>
+                            <input
+                              type="number"
+                              min={m.ejecutado || 0}
+                              step="0.01"
+                              placeholder="0.00"
+                              value={m.monto_asignado}
+                              className={bajoEjecutado ? 'ps-input-error' : ''}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setPresForm(f => ({
+                                  ...f,
+                                  meses: f.meses.map((mm, ii) => ii === i ? { ...mm, monto_asignado: val } : mm),
+                                }));
+                              }}
+                            />
+                            {m.ejecutado > 0 && (
+                              <small className={bajoEjecutado ? 'ps-mes-ejec-warn' : 'ps-mes-ejec-hint'}>
+                                Ejecutado: {formatHNL(m.ejecutado)}
+                              </small>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                     <div className="ps-meses-sum ok">
                       <span>Monto anual resultante: <strong>{formatHNL(suma)}</strong></span>

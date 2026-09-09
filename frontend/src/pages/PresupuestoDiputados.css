@@ -1342,6 +1342,18 @@
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
+.ps-mes-input-group input.ps-input-error {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+.ps-mes-ejec-hint, .ps-mes-ejec-warn {
+  font-size: 10px;
+  color: #6b7a99;
+}
+.ps-mes-ejec-warn {
+  color: #dc2626;
+  font-weight: 600;
+}
 
 .ps-meses-sum {
   margin-top: 8px;
