@@ -47,6 +47,14 @@ exports.imprimir = async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 exports.historial = async (req, res) => {
   try {
+    const esSuperAdmin = req.user.rol === 'SUPER_ADMIN';
+    const params = [];
+    let where = '';
+    if (!esSuperAdmin) {
+      where = 'WHERE fi.usuario_id = ?';
+      params.push(req.user.id);
+    }
+
     const [rows] = await db.promise().query(
       `SELECT
          fi.id,
@@ -61,8 +69,10 @@ exports.historial = async (req, res) => {
          FROM firma_impresiones
          GROUP BY usuario_id
        ) totales ON totales.usuario_id = fi.usuario_id
+       ${where}
        ORDER BY fi.fecha_hora DESC
        LIMIT 500`,
+      params,
     );
     return res.json(rows);
   } catch (err) {
