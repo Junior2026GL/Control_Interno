@@ -602,7 +602,8 @@
   background: white;
   border: 1.5px solid #e8edf7;
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   box-shadow: 0 2px 12px rgba(39,76,141,0.06);
 }
 
@@ -679,8 +680,9 @@
 .ct-hist-btn--dl:hover:not(:disabled) { background: #274C8D; color: white; transform: scale(1.08); }
 
 .ct-hist-btn--del {
-  background: #fff0f0;
-  color: #e53e3e;
+  background: #fde2e2;
+  color: #c81e1e;
+  border: 1px solid #f8b4b4;
 }
 .ct-hist-btn--del:hover:not(:disabled) { background: #e53e3e; color: white; transform: scale(1.08); }
 
