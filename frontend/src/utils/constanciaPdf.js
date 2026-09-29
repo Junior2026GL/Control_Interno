@@ -46,6 +46,8 @@ function numeroALetras(num) {
 
 export async function generarConstanciaPdf(data, printMode = false) {
   const logoData = await loadImg('/logo-congreso.png.png');
+  const conCustodia = data.tipoConstancia === 'transferencia_custodia';
+  const totalPages = conCustodia ? 3 : 2;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
   const PW  = doc.internal.pageSize.getWidth();
@@ -209,7 +211,13 @@ export async function generarConstanciaPdf(data, printMode = false) {
   }
   drawField('Número de cuenta bancaria receptora:', data.numeroCuenta, ML, y, CW * 0.55);
   drawField('Fecha de la transferencia:', fechaStr, ML + CW * 0.58, y, CW * 0.42);
-  y += ROW + 2;
+  y += ROW;
+
+  if (conCustodia) {
+    drawField('Cuenta a nombre de:', data.cuentaNombre, ML, y, CW);
+    y += ROW;
+  }
+  y += 2;
 
   y = secHeader('III. CONCEPTO DE LA TRANSFERENCIA', y);
   if (data.concepto) {
@@ -230,7 +238,7 @@ export async function generarConstanciaPdf(data, printMode = false) {
     y += 15;
   }
 
-  drawFooter(1, 2);
+  drawFooter(1, totalPages);
 
   /*  PAGE 2  */
   doc.addPage();
@@ -368,7 +376,82 @@ export async function generarConstanciaPdf(data, printMode = false) {
   normal(10); doc.setTextColor(80, 80, 80);
   doc.text('Firma y huella', PW / 2, y, { align: 'center' });
 
-  drawFooter(2, 2);
+  drawFooter(2, totalPages);
+
+  /*  PAGE 3 — DECLARACIÓN DE VERACIDAD Y CUSTODIA (solo si aplica)  */
+  if (conCustodia) {
+    doc.addPage();
+    drawMarco();
+    y = 10;
+
+    doc.setFillColor(...BLANCO);
+    doc.setDrawColor(...AZUL);
+    doc.setLineWidth(0.5);
+    doc.rect(L, y, CW, HDR_H, 'FD');
+    if (logoData) {
+      const lSize = HDR_H - 6;
+      doc.addImage(logoData, 'PNG', L + (LOGO_W - lSize) / 2, y + 3, lSize, lSize);
+    }
+    doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
+    doc.line(L + LOGO_W, y + 4, L + LOGO_W, y + HDR_H - 4);
+    doc.setTextColor(...AZUL);
+    doc.setFont('helvetica', 'bold');   doc.setFontSize(13);
+    doc.text('REPÚBLICA DE HONDURAS', instCX, y + 10, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text('CONGRESO NACIONAL', instCX, y + 17, { align: 'center' });
+    doc.setFont('helvetica', 'bold');   doc.setFontSize(16);
+    doc.text('PAGADURÍA ESPECIAL', instCX, y + 27, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text('Despacho del Pagador Especial', instCX, y + 34, { align: 'center' });
+    y += HDR_H;
+    doc.setFillColor(...AZUL);
+    doc.rect(L, y, CW, TBAR_H, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.setTextColor(...BLANCO);
+    doc.text('DECLARACIÓN DE VERACIDAD Y CUSTODIA', PW / 2, y + 7.2, { align: 'center' });
+    y += TBAR_H + 10;
+
+    bold(10); doc.setTextColor(...AZUL_OSC);
+    doc.text('V. DECLARACIÓN DE VERACIDAD Y CUSTODIA', ML, y);
+    y += 8;
+
+    normal(9.5); doc.setTextColor(...NEGRO);
+    const custodiaTexto = 'Quien suscribe, en su calidad de custodio(a) y responsable de la entrega y traslado del ' +
+      'presente documento, DECLARA BAJO SU RESPONSABILIDAD que la información consignada en esta constancia y la ' +
+      'documentación transferida es completa, auténtica y veraz; que el documento se entrega íntegro y sin ' +
+      'alteraciones; y que, durante su custodia y traslado, ha adoptado las medidas necesarias para preservar su ' +
+      'integridad y confidencialidad. Asimismo, asume responsabilidad por cualquier daño, pérdida, sustracción, ' +
+      'sustitución, alteración o uso indebido derivado de incumplimientos atribuibles a su custodia, entrega o ' +
+      'traslado, de conformidad con la normativa institucional aplicable.';
+    doc.splitTextToSize(custodiaTexto, CW).forEach(l => { doc.text(l, ML, y); y += 5.5; });
+    y += 6;
+
+    y = secHeader('RESPONSABLE DE LA ENTREGA, TRASLADO Y CUSTODIA DEL DOCUMENTO', y);
+    y += 2;
+
+    drawField('Nombre:', data.custodiaNombre, ML, y, CW);
+    y += ROW;
+    drawField('DNI:', data.custodiaDni, ML, y, halfL);
+    drawField('Cargo:', data.custodiaCargo, xR, y, halfR);
+    y += ROW;
+    const custodiaFechaStr = data.custodiaFecha
+      ? new Date(data.custodiaFecha + 'T00:00:00').toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      : '';
+    drawField('Fecha:', custodiaFechaStr, ML, y, halfL);
+    y += ROW + 10;
+
+    const sigW2 = 80;
+    const sigC2 = PW / 2 - sigW2 / 2;
+    hline(sigC2, y, sigC2 + sigW2, AZUL, 0.5);
+    y += 6;
+    normal(12); doc.setTextColor(...NEGRO);
+    doc.text('Responsable de custodia', PW / 2, y, { align: 'center' });
+    y += 6;
+    normal(10); doc.setTextColor(80, 80, 80);
+    doc.text('Firma y Huella', PW / 2, y, { align: 'center' });
+
+    drawFooter(3, totalPages);
+  }
 
   const nombreFile = (data.nombre || 'constancia').replace(/\s+/g, '_');
   if (printMode) {

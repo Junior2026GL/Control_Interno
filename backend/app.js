@@ -75,6 +75,7 @@ app.use('/api/presupuesto',     require('./routes/presupuesto.routes'));
 app.use('/api/viaticos',             require('./routes/viaticos.routes'));
 app.use('/api/viaticos-diputados',   require('./routes/viaticos_diputados.routes'));
 app.use('/api/constancias',     require('./routes/constancias.routes'));
+app.use('/api/constancias-liquidacion', require('./routes/constanciasLiquidacion.routes'));
 app.use('/api/ayudas',           require('./routes/ayudas.routes'));
 app.use('/api/ayudas-alcaldias', require('./routes/ayudas_alcaldias.routes'));
 app.use('/api/alcaldes',         require('./routes/alcaldes.routes'));

@@ -23,7 +23,7 @@ export default function Sidebar() {
     { path: '/viaticos',                label: 'Viáticos',                  icon: FiDollarSign,    clave: 'viaticos',                  soloSuperAdmin: false },
     { path: '/viaticos-diputados',      label: 'Viáticos Diputados',        icon: FiMapPin,        clave: 'viaticos-diputados',        soloSuperAdmin: false },
     { path: '/busqueda-ayudas',         label: 'Consulta de Ayudas',        icon: FiEye,           clave: 'busqueda-ayudas',           soloSuperAdmin: false },
-    { path: '/constancia-transferencia',label: 'Constancia Transferencia',  icon: FiRepeat,        clave: 'constancia-transferencia',  soloSuperAdmin: false },
+    { path: '/constancia-transferencia',label: 'Constancias',  icon: FiRepeat,        clave: 'constancia-transferencia',  soloSuperAdmin: false },
     { path: '/ayudas',                  label: 'Ayudas',                    icon: FiGift,          clave: 'ayudas',                    soloSuperAdmin: false },
     { path: '/ayudas-alcaldias',         label: 'Ayudas Alcaldías',          icon: FiMapPin,        clave: 'ayudas_alcaldias',          soloSuperAdmin: false },
     { path: '/mapa-alcaldias',           label: 'Mapa Alcaldías',            icon: FiMapPin,        clave: 'mapa-alcaldias',            soloSuperAdmin: false },

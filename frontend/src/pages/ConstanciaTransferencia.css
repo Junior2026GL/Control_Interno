@@ -46,6 +46,107 @@
   color: rgba(255,255,255,0.72);
 }
 
+/* ── Selector de tipo de constancia ──────────────────────────── */
+.ct-selector-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.ct-type-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  text-align: left;
+  background: white;
+  border: 1.5px solid #e8edf7;
+  border-radius: 16px;
+  padding: 20px 22px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(39,76,141,0.06);
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+
+.ct-type-card:hover {
+  border-color: #274C8D;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(39,76,141,0.14);
+}
+
+.ct-type-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #eef2fb;
+  color: #274C8D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ct-type-card-body {
+  flex: 1;
+}
+
+.ct-type-card-body h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f2744;
+}
+
+.ct-type-card-body p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.ct-type-card-arrow {
+  color: #b8c4dc;
+  flex-shrink: 0;
+}
+
+/* ── Link volver a selección de tipo ─────────────────────────── */
+.ct-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #274C8D;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 14px;
+}
+
+.ct-back-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Badge de tipo en historial ──────────────────────────────── */
+.ct-badge-tipo {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #eef2fb;
+  color: #274C8D;
+  white-space: nowrap;
+}
+
+.ct-badge-tipo--custodia {
+  background: #fef3e2;
+  color: #b45309;
+}
+
 /* ── Body grid ────────────────────────────────────────────── */
 .ct-body {
   display: grid;
