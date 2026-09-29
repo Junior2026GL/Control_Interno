@@ -11,6 +11,8 @@
 
 /* ── Banner Header ────────────────────────────────────────── */
 .ct-banner {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 18px;
@@ -21,16 +23,30 @@
   box-shadow: 0 6px 24px rgba(15,39,68,0.25);
 }
 
+.ct-banner::before {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: -8%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.10), transparent 70%);
+  pointer-events: none;
+}
+
 .ct-banner-icon {
-  width: 52px;
-  height: 52px;
-  background: rgba(255,255,255,0.15);
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.26), rgba(255,255,255,0.08));
+  border: 1px solid rgba(255,255,255,0.28);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
 .ct-banner-title {
