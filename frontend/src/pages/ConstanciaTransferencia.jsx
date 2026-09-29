@@ -715,7 +715,6 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
                   <th>Fecha</th>
                   <th>Tipo</th>
                   <th>Beneficiario</th>
-                  <th>DNI</th>
                   <th>Monto</th>
                   <th>Concepto</th>
                   <th>Creado por</th>
@@ -732,7 +731,6 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
                       </span>
                     </td>
                     <td className="ct-hist-nombre">{c.nombre}</td>
-                    <td>{c.dni}</td>
                     <td className="ct-hist-monto">
                       Lps. {parseFloat(c.monto).toLocaleString('es-HN', { minimumFractionDigits: 2 })}
                     </td>

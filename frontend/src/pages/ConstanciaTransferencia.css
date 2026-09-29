@@ -789,8 +789,8 @@
 .ct-cfm-ok:hover { background: #be123c; }
 
 @media (max-width: 700px) {
-  .ct-hist-table thead th:nth-child(3),
-  .ct-hist-table tbody td:nth-child(3),
+  .ct-hist-table thead th:nth-child(2),
+  .ct-hist-table tbody td:nth-child(2),
   .ct-hist-table thead th:nth-child(5),
   .ct-hist-table tbody td:nth-child(5),
   .ct-hist-table thead th:nth-child(6),
