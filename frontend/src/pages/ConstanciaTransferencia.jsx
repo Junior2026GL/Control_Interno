@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useContext } from 'react';
 import {
   FiUser, FiFileText, FiCalendar,
   FiPhone, FiMail, FiMapPin, FiDownload,
@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
+import { AuthContext } from '../context/AuthContext';
 import { generarConstanciaPdf } from '../utils/constanciaPdf';
 import { generarCompromisoLiquidacionPdf } from '../utils/compromisoLiquidacionPdf';
 import './ConstanciaTransferencia.css';
@@ -141,6 +142,8 @@ function buildEmptyTransferencia(tipoConstancia) {
 }
 
 function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
+  const { user } = useContext(AuthContext);
+  const puedeEliminar = ['ADMIN', 'SUPER_ADMIN'].includes(user?.rol);
   const [tab, setTab]         = useState('nueva');   // 'nueva' | 'historial'
   const [form, setForm]       = useState(buildEmptyTransferencia(tipoInicial));
   const [loading, setLoading] = useState(false);
@@ -748,9 +751,11 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
                       <button className="ct-hist-btn ct-hist-btn--edit" title="Editar" onClick={() => handleEdit(c)}>
                         <FiEdit3 size={14} />
                       </button>
-                      <button className="ct-hist-btn ct-hist-btn--del" title="Eliminar" disabled={deletingId === c.id} onClick={() => handleEliminar(c.id)}>
-                        <FiTrash2 size={14} />
-                      </button>
+                      {puedeEliminar && (
+                        <button className="ct-hist-btn ct-hist-btn--del" title="Eliminar" disabled={deletingId === c.id} onClick={() => handleEliminar(c.id)}>
+                          <FiTrash2 size={14} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -850,6 +855,8 @@ function buildEmptyLiquidacion() {
 }
 
 function CompromisoLiquidacionView({ onVolver }) {
+  const { user } = useContext(AuthContext);
+  const puedeEliminar = ['ADMIN', 'SUPER_ADMIN'].includes(user?.rol);
   const [tab, setTab]         = useState('nueva');
   const [form, setForm]       = useState(buildEmptyLiquidacion());
   const [loading, setLoading] = useState(false);
@@ -1217,9 +1224,11 @@ function CompromisoLiquidacionView({ onVolver }) {
                       <button className="ct-hist-btn ct-hist-btn--edit" title="Editar" onClick={() => handleEdit(c)}>
                         <FiEdit3 size={14} />
                       </button>
-                      <button className="ct-hist-btn ct-hist-btn--del" title="Eliminar" disabled={deletingId === c.id} onClick={() => handleEliminar(c.id)}>
-                        <FiTrash2 size={14} />
-                      </button>
+                      {puedeEliminar && (
+                        <button className="ct-hist-btn ct-hist-btn--del" title="Eliminar" disabled={deletingId === c.id} onClick={() => handleEliminar(c.id)}>
+                          <FiTrash2 size={14} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

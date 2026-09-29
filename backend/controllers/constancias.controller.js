@@ -127,21 +127,12 @@ exports.update = (req, res) => {
 exports.remove = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!id || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
-  const esAdmin = ROLES_ADMIN.includes(req.user.rol);
-  const doDelete = () => {
-    db.query('DELETE FROM constancias_transferencia WHERE id = ?', [id], (err, result) => {
-      if (err) { console.error('[constancias] remove:', err); return res.status(500).json({ message: 'Error al eliminar la constancia.' }); }
-      if (result.affectedRows === 0) return res.status(404).json({ message: 'Constancia no encontrada.' });
-      logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'constancias', detalle: `Eliminó constancia ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
-      res.json({ message: 'Constancia eliminada.' });
-    });
-  };
-  if (esAdmin) return doDelete();
-  db.query('SELECT usuario_id FROM constancias_transferencia WHERE id = ?', [id], (err, rows) => {
-    if (err) return res.status(500).json({ message: 'Error interno del servidor.' });
-    if (!rows.length) return res.status(404).json({ message: 'Constancia no encontrada.' });
-    if (rows[0].usuario_id !== req.user.id) return res.status(403).json({ message: 'No tiene permiso para eliminar esta constancia.' });
-    doDelete();
+  if (!ROLES_ADMIN.includes(req.user.rol)) return res.status(403).json({ message: 'No tiene permiso para eliminar constancias.' });
+  db.query('DELETE FROM constancias_transferencia WHERE id = ?', [id], (err, result) => {
+    if (err) { console.error('[constancias] remove:', err); return res.status(500).json({ message: 'Error al eliminar la constancia.' }); }
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Constancia no encontrada.' });
+    logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ELIMINAR', modulo: 'constancias', detalle: `Eliminó constancia ID #${id}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
+    res.json({ message: 'Constancia eliminada.' });
   });
 };
 

@@ -423,7 +423,15 @@ export async function generarConstanciaPdf(data, printMode = false) {
       'integridad y confidencialidad. Asimismo, asume responsabilidad por cualquier daño, pérdida, sustracción, ' +
       'sustitución, alteración o uso indebido derivado de incumplimientos atribuibles a su custodia, entrega o ' +
       'traslado, de conformidad con la normativa institucional aplicable.';
-    doc.splitTextToSize(custodiaTexto, CW).forEach(l => { doc.text(l, ML, y); y += 5.5; });
+    const custodiaLines = doc.splitTextToSize(custodiaTexto, CW);
+    custodiaLines.forEach((l, idx) => {
+      if (idx === custodiaLines.length - 1) {
+        doc.text(l, ML, y);
+      } else {
+        doc.text(l, ML, y, { align: 'justify', maxWidth: CW });
+      }
+      y += 5.5;
+    });
     y += 6;
 
     y = secHeader('RESPONSABLE DE LA ENTREGA, TRASLADO Y CUSTODIA DEL DOCUMENTO', y);
@@ -438,7 +446,7 @@ export async function generarConstanciaPdf(data, printMode = false) {
       ? new Date(data.custodiaFecha + 'T00:00:00').toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' })
       : '';
     drawField('Fecha:', custodiaFechaStr, ML, y, halfL);
-    y += ROW + 10;
+    y += ROW + 30;
 
     const sigW2 = 80;
     const sigC2 = PW / 2 - sigW2 / 2;
