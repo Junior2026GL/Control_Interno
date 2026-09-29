@@ -148,6 +148,7 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
   const [editingId, setEditingId]   = useState(null);
   const [confirmCfg, setConfirmCfg] = useState(null);
   const [censoStatus, setCensoStatus] = useState(null);
+  const [censoStatusCustodia, setCensoStatusCustodia] = useState(null);
 
   const [historial, setHistorial]     = useState([]);
   const [loadingHist, setLoadingHist] = useState(false);
@@ -182,6 +183,27 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
         setCensoStatus('notfound');
       } else {
         setCensoStatus(null);
+      }
+    }
+  };
+
+  const handleCustodiaDniChange = async (value) => {
+    const digits = value.replace(/\D/g, '').slice(0, 13);
+    set('custodiaDni', digits);
+    if (digits.length !== 13) {
+      setCensoStatusCustodia(null);
+      return;
+    }
+    setCensoStatusCustodia('searching');
+    try {
+      const { data } = await api.get(`/censo/${digits}`);
+      set('custodiaNombre', data.nombreCompleto);
+      setCensoStatusCustodia('found');
+    } catch (err) {
+      if (err?.response?.status === 404) {
+        setCensoStatusCustodia('notfound');
+      } else {
+        setCensoStatusCustodia(null);
       }
     }
   };
@@ -532,33 +554,54 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
                 </div>
                 <div className="ct-fields">
                   <div className="ct-field-full">
+                    <label className="ct-label">DNI <span className="req">*</span></label>
+                    <div className="ct-dni-wrap">
+                      <input className="ct-input" type="text" inputMode="numeric" pattern="[0-9]{13}"
+                        placeholder="0801199900000"
+                        value={form.custodiaDni}
+                        onChange={e => handleCustodiaDniChange(e.target.value)}
+                        maxLength={13}
+                        required />
+                      {censoStatusCustodia === 'searching' && (
+                        <span className="ct-dni-status ct-dni-status--searching">
+                          <span className="ct-dni-spinner"/> Buscando…
+                        </span>
+                      )}
+                      {censoStatusCustodia === 'found' && (
+                        <span className="ct-dni-status ct-dni-status--found">
+                          ✓ Encontrado
+                        </span>
+                      )}
+                      {censoStatusCustodia === 'notfound' && (
+                        <span className="ct-dni-status ct-dni-status--notfound">
+                          ⚠ No encontrado — ingrese el nombre manualmente
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="ct-field-full">
                     <label className="ct-label">Nombre <span className="req">*</span></label>
                     <input className="ct-input" type="text" placeholder="Nombre del responsable de custodia"
                       value={form.custodiaNombre} onChange={e => set('custodiaNombre', e.target.value.toUpperCase())} required />
                   </div>
                   <div className="ct-row-2">
                     <div className="ct-field">
-                      <label className="ct-label">DNI <span className="req">*</span></label>
-                      <input className="ct-input" type="text" placeholder="Número de identidad"
-                        value={form.custodiaDni} onChange={e => set('custodiaDni', e.target.value)} required />
-                    </div>
-                    <div className="ct-field">
                       <label className="ct-label">Cargo</label>
                       <input className="ct-input" type="text" placeholder="Cargo del responsable"
                         value={form.custodiaCargo} onChange={e => set('custodiaCargo', e.target.value)} />
                     </div>
-                  </div>
-                  <div className="ct-field-full">
-                    <label className="ct-label">Fecha</label>
-                    <input className="ct-input" type="date"
-                      value={form.custodiaFecha} onChange={e => set('custodiaFecha', e.target.value)} />
+                    <div className="ct-field">
+                      <label className="ct-label">Fecha</label>
+                      <input className="ct-input" type="date"
+                        value={form.custodiaFecha} onChange={e => set('custodiaFecha', e.target.value)} />
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
             <div className="ct-actions-mobile">
-              <button type="button" className="ct-btn-reset" onClick={() => { setForm(buildEmptyTransferencia(tipoInicial)); setCensoStatus(null); }}>
+              <button type="button" className="ct-btn-reset" onClick={() => { setForm(buildEmptyTransferencia(tipoInicial)); setCensoStatus(null); setCensoStatusCustodia(null); }}>
                 <FiRefreshCw size={14} /> Limpiar
               </button>
               <button type="submit" className="ct-btn-pdf" disabled={loading}>
@@ -617,7 +660,7 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
               <div className="ct-aside-divider" />
 
               <div className="ct-aside-actions">
-                <button type="button" className="ct-btn-reset" onClick={() => { setForm(buildEmptyTransferencia(tipoInicial)); setCensoStatus(null); }}>
+                <button type="button" className="ct-btn-reset" onClick={() => { setForm(buildEmptyTransferencia(tipoInicial)); setCensoStatus(null); setCensoStatusCustodia(null); }}>
                   <FiRefreshCw size={14} /> Limpiar formulario
                 </button>
                 <button type="submit" form="ct-form" className="ct-btn-pdf" disabled={loading}>
@@ -626,7 +669,7 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
                     : <><FiPrinter size={15} /> {editingId ? 'Actualizar y Ver' : 'Guardar e Imprimir'}</>}
                 </button>
                 {editingId && (
-                  <button type="button" className="ct-btn-reset" onClick={() => { setEditingId(null); setForm(buildEmptyTransferencia(tipoInicial)); setCensoStatus(null); }}>
+                  <button type="button" className="ct-btn-reset" onClick={() => { setEditingId(null); setForm(buildEmptyTransferencia(tipoInicial)); setCensoStatus(null); setCensoStatusCustodia(null); }}>
                     Cancelar edición
                   </button>
                 )}
