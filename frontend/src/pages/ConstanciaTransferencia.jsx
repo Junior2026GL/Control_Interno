@@ -904,6 +904,7 @@ function CompromisoLiquidacionView({ onVolver }) {
   const [toast, setToast]     = useState(null);
   const [editingId, setEditingId]   = useState(null);
   const [confirmCfg, setConfirmCfg] = useState(null);
+  const [censoStatus, setCensoStatus] = useState(null);
 
   const [historial, setHistorial]     = useState([]);
   const [loadingHist, setLoadingHist] = useState(false);
@@ -922,6 +923,27 @@ function CompromisoLiquidacionView({ onVolver }) {
 
   const askConfirm = (msg, onOk) => setConfirmCfg({ msg, onOk });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleRepresentanteDniChange = async (value) => {
+    const digits = value.replace(/\D/g, '').slice(0, 13);
+    set('representanteDni', digits);
+    if (digits.length !== 13) {
+      setCensoStatus(null);
+      return;
+    }
+    setCensoStatus('searching');
+    try {
+      const { data } = await api.get(`/censo/${digits}`);
+      set('representanteNombre', data.nombreCompleto);
+      setCensoStatus('found');
+    } catch (err) {
+      if (err?.response?.status === 404) {
+        setCensoStatus('notfound');
+      } else {
+        setCensoStatus(null);
+      }
+    }
+  };
 
   const cargarHistorial = useCallback(async () => {
     setLoadingHist(true);
@@ -971,6 +993,7 @@ function CompromisoLiquidacionView({ onVolver }) {
       }
       const snapshot = { ...form };
       setForm(buildEmptyLiquidacion());
+      setCensoStatus(null);
       await generarCompromisoLiquidacionPdf(snapshot, true);
     } catch {
       showToast('Error al guardar el compromiso.', 'error');
@@ -1073,15 +1096,49 @@ function CompromisoLiquidacionView({ onVolver }) {
               </div>
               <div className="ct-fields">
                 <div className="ct-field-full">
+                  <label className="ct-label">DNI del Representante <span className="req">*</span></label>
+                  <div className="ct-dni-wrap">
+                    <input className="ct-input" type="text" inputMode="numeric" pattern="[0-9]{13}"
+                      placeholder="0801199900000"
+                      value={form.representanteDni}
+                      onChange={e => handleRepresentanteDniChange(e.target.value)}
+                      maxLength={13}
+                      required />
+                    {censoStatus === 'searching' && (
+                      <span className="ct-dni-status ct-dni-status--searching">
+                        <span className="ct-dni-spinner"/> Buscando…
+                      </span>
+                    )}
+                    {censoStatus === 'found' && (
+                      <span className="ct-dni-status ct-dni-status--found">
+                        ✓ Encontrado
+                      </span>
+                    )}
+                    {censoStatus === 'notfound' && (
+                      <span className="ct-dni-status ct-dni-status--notfound">
+                        ⚠ No encontrado — ingrese el nombre manualmente
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="ct-field-full">
                   <label className="ct-label">Nombre del Representante <span className="req">*</span></label>
                   <input className="ct-input" type="text" placeholder="Nombre completo del representante legal"
                     value={form.representanteNombre} onChange={e => set('representanteNombre', e.target.value.toUpperCase())} required />
                 </div>
+                <div className="ct-field-full">
+                  <label className="ct-label">Institución / Organización Beneficiaria <span className="req">*</span></label>
+                  <input className="ct-input" type="text" placeholder="Nombre de la organización, institución o beneficiario"
+                    value={form.institucion} onChange={e => set('institucion', e.target.value.toUpperCase())} required />
+                </div>
                 <div className="ct-row-2">
                   <div className="ct-field">
-                    <label className="ct-label">DNI del Representante <span className="req">*</span></label>
-                    <input className="ct-input" type="text" placeholder="Número de identidad"
-                      value={form.representanteDni} onChange={e => set('representanteDni', e.target.value)} required />
+                    <label className="ct-label">Correo Electrónico</label>
+                    <div className="ct-icon-field">
+                      <FiMail size={14} className="ct-icon" />
+                      <input className="ct-input ct-has-icon" type="email" placeholder="correo@ejemplo.com"
+                        value={form.correo} onChange={e => set('correo', e.target.value)} />
+                    </div>
                   </div>
                   <div className="ct-field">
                     <label className="ct-label">No. de Celular</label>
@@ -1090,19 +1147,6 @@ function CompromisoLiquidacionView({ onVolver }) {
                       <input className="ct-input ct-has-icon" type="text" placeholder="+504 0000-0000"
                         value={form.celular} onChange={e => set('celular', e.target.value)} />
                     </div>
-                  </div>
-                </div>
-                <div className="ct-field-full">
-                  <label className="ct-label">Institución / Organización Beneficiaria <span className="req">*</span></label>
-                  <input className="ct-input" type="text" placeholder="Nombre de la organización, institución o beneficiario"
-                    value={form.institucion} onChange={e => set('institucion', e.target.value.toUpperCase())} required />
-                </div>
-                <div className="ct-field-full">
-                  <label className="ct-label">Correo Electrónico</label>
-                  <div className="ct-icon-field">
-                    <FiMail size={14} className="ct-icon" />
-                    <input className="ct-input ct-has-icon" type="email" placeholder="correo@ejemplo.com"
-                      value={form.correo} onChange={e => set('correo', e.target.value)} />
                   </div>
                 </div>
               </div>
@@ -1141,7 +1185,7 @@ function CompromisoLiquidacionView({ onVolver }) {
             </div>
 
             <div className="ct-actions-mobile">
-              <button type="button" className="ct-btn-reset" onClick={() => setForm(buildEmptyLiquidacion())}>
+              <button type="button" className="ct-btn-reset" onClick={() => { setForm(buildEmptyLiquidacion()); setCensoStatus(null); }}>
                 <FiRefreshCw size={14} /> Limpiar
               </button>
               <button type="submit" className="ct-btn-pdf" disabled={loading}>
@@ -1189,7 +1233,7 @@ function CompromisoLiquidacionView({ onVolver }) {
               <div className="ct-aside-divider" />
 
               <div className="ct-aside-actions">
-                <button type="button" className="ct-btn-reset" onClick={() => setForm(buildEmptyLiquidacion())}>
+                <button type="button" className="ct-btn-reset" onClick={() => { setForm(buildEmptyLiquidacion()); setCensoStatus(null); }}>
                   <FiRefreshCw size={14} /> Limpiar formulario
                 </button>
                 <button type="submit" form="cl-form" className="ct-btn-pdf" disabled={loading}>
@@ -1198,7 +1242,7 @@ function CompromisoLiquidacionView({ onVolver }) {
                     : <><FiPrinter size={15} /> {editingId ? 'Actualizar y Ver' : 'Guardar e Imprimir'}</>}
                 </button>
                 {editingId && (
-                  <button type="button" className="ct-btn-reset" onClick={() => { setEditingId(null); setForm(buildEmptyLiquidacion()); }}>
+                  <button type="button" className="ct-btn-reset" onClick={() => { setEditingId(null); setForm(buildEmptyLiquidacion()); setCensoStatus(null); }}>
                     Cancelar edición
                   </button>
                 )}
