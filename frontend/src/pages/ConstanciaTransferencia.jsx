@@ -6,6 +6,7 @@ import {
   FiAlertCircle, FiEdit3, FiEye, FiX, FiPrinter,
   FiArrowLeft, FiShield, FiRepeat, FiClipboard, FiChevronRight,
 } from 'react-icons/fi';
+import { FaHandshake } from 'react-icons/fa';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
@@ -74,19 +75,22 @@ function SelectorTipoConstancia({ onSelect }) {
   const opciones = [
     {
       tipo: 'transferencia',
-      icon: <FiRepeat size={22} />,
+      icon: <FiRepeat size={24} />,
+      color: 'blue',
       titulo: 'Constancia de Transferencia Electrónica',
       desc: 'Constancia estándar de recepción de una transferencia bancaria.',
     },
     {
       tipo: 'transferencia_custodia',
-      icon: <FiShield size={22} />,
+      icon: <FiShield size={24} />,
+      color: 'amber',
       titulo: 'Transferencia Electrónica con Custodia',
       desc: 'Igual a la anterior, agregando la declaración de veracidad y custodia del documento.',
     },
     {
       tipo: 'liquidacion',
-      icon: <FiClipboard size={22} />,
+      icon: <FaHandshake size={22} />,
+      color: 'teal',
       titulo: 'Compromiso de Liquidación, Devolución y Recibo',
       desc: 'Para ayudas sociales entregadas a organizaciones o instituciones, con plazo de liquidación.',
     },
@@ -112,7 +116,7 @@ function SelectorTipoConstancia({ onSelect }) {
               className="ct-type-card"
               onClick={() => onSelect(op.tipo)}
             >
-              <div className="ct-type-card-icon">{op.icon}</div>
+              <div className={`ct-type-card-icon ct-type-card-icon--${op.color}`}>{op.icon}</div>
               <div className="ct-type-card-body">
                 <h3>{op.titulo}</h3>
                 <p>{op.desc}</p>
@@ -158,9 +162,13 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
   const [histError, setHistError]     = useState('');
   const [deletingId, setDeletingId]   = useState(null);
   const [viewItem, setViewItem]       = useState(null);
+  const [histPage, setHistPage]       = useState(1);
+  const HIST_PAGE_SIZE = 20;
 
   const esCustodia = form.tipoConstancia === 'transferencia_custodia';
   const info = TIPOS_INFO[form.tipoConstancia] || TIPOS_INFO.transferencia;
+  const histTotalPages   = Math.max(1, Math.ceil(historial.length / HIST_PAGE_SIZE));
+  const historialPaginado = historial.slice((histPage - 1) * HIST_PAGE_SIZE, histPage * HIST_PAGE_SIZE);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -219,6 +227,7 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
     try {
       const { data } = await api.get('/constancias');
       setHistorial(data);
+      setHistPage(1);
     } catch {
       setHistError('No se pudo cargar el historial.');
     } finally {
@@ -722,7 +731,7 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
                 </tr>
               </thead>
               <tbody>
-                {historial.map(c => (
+                {historialPaginado.map(c => (
                   <tr key={c.id}>
                     <td className="ct-hist-fecha">{fmtDate(c.created_at)}</td>
                     <td>
@@ -760,6 +769,40 @@ function ConstanciaTransferenciaView({ tipoInicial, onVolver }) {
               </tbody>
             </table>
           </div>
+          )}
+
+          {histTotalPages > 1 && (
+            <div className="std-pg">
+              <span className="std-pg-info">
+                {(histPage - 1) * HIST_PAGE_SIZE + 1}–{Math.min(histPage * HIST_PAGE_SIZE, historial.length)} de <strong>{historial.length}</strong>
+              </span>
+              <div className="std-pg-controls">
+                <button className="std-pg-btn" disabled={histPage === 1} onClick={() => setHistPage(1)}>«</button>
+                <button className="std-pg-btn" disabled={histPage === 1} onClick={() => setHistPage(p => p - 1)}>‹</button>
+                {(() => {
+                  const maxBtns = 7;
+                  let start = Math.max(1, histPage - Math.floor(maxBtns / 2));
+                  let end   = Math.min(histTotalPages, start + maxBtns - 1);
+                  if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                  const nums = [];
+                  if (start > 1) {
+                    nums.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setHistPage(1)}>1</button>);
+                    if (start > 2) nums.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                  }
+                  for (let p = start; p <= end; p++) {
+                    nums.push(<button key={p} className={`std-pg-btn std-pg-num${histPage === p ? ' std-pg-num--active' : ''}`} onClick={() => setHistPage(p)}>{p}</button>);
+                  }
+                  if (end < histTotalPages) {
+                    if (end < histTotalPages - 1) nums.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                    nums.push(<button key={histTotalPages} className="std-pg-btn std-pg-num" onClick={() => setHistPage(histTotalPages)}>{histTotalPages}</button>);
+                  }
+                  return nums;
+                })()}
+                <button className="std-pg-btn" disabled={histPage >= histTotalPages} onClick={() => setHistPage(p => p + 1)}>›</button>
+                <button className="std-pg-btn" disabled={histPage >= histTotalPages} onClick={() => setHistPage(histTotalPages)}>»</button>
+              </div>
+              <span className="std-pg-total">Pág. <strong>{histPage}</strong> / {histTotalPages}</span>
+            </div>
           )}
         </div>
         )}
@@ -867,6 +910,10 @@ function CompromisoLiquidacionView({ onVolver }) {
   const [histError, setHistError]     = useState('');
   const [deletingId, setDeletingId]   = useState(null);
   const [viewItem, setViewItem]       = useState(null);
+  const [histPage, setHistPage]       = useState(1);
+  const HIST_PAGE_SIZE = 20;
+  const histTotalPages    = Math.max(1, Math.ceil(historial.length / HIST_PAGE_SIZE));
+  const historialPaginado = historial.slice((histPage - 1) * HIST_PAGE_SIZE, histPage * HIST_PAGE_SIZE);
 
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
@@ -882,6 +929,7 @@ function CompromisoLiquidacionView({ onVolver }) {
     try {
       const { data } = await api.get('/constancias-liquidacion');
       setHistorial(data);
+      setHistPage(1);
     } catch {
       setHistError('No se pudo cargar el historial.');
     } finally {
@@ -1199,7 +1247,7 @@ function CompromisoLiquidacionView({ onVolver }) {
                 </tr>
               </thead>
               <tbody>
-                {historial.map(c => (
+                {historialPaginado.map(c => (
                   <tr key={c.id}>
                     <td className="ct-hist-fecha">{fmtDate(c.created_at)}</td>
                     <td className="ct-hist-nombre">{c.representante_nombre}</td>
@@ -1233,6 +1281,40 @@ function CompromisoLiquidacionView({ onVolver }) {
               </tbody>
             </table>
           </div>
+          )}
+
+          {histTotalPages > 1 && (
+            <div className="std-pg">
+              <span className="std-pg-info">
+                {(histPage - 1) * HIST_PAGE_SIZE + 1}–{Math.min(histPage * HIST_PAGE_SIZE, historial.length)} de <strong>{historial.length}</strong>
+              </span>
+              <div className="std-pg-controls">
+                <button className="std-pg-btn" disabled={histPage === 1} onClick={() => setHistPage(1)}>«</button>
+                <button className="std-pg-btn" disabled={histPage === 1} onClick={() => setHistPage(p => p - 1)}>‹</button>
+                {(() => {
+                  const maxBtns = 7;
+                  let start = Math.max(1, histPage - Math.floor(maxBtns / 2));
+                  let end   = Math.min(histTotalPages, start + maxBtns - 1);
+                  if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                  const nums = [];
+                  if (start > 1) {
+                    nums.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setHistPage(1)}>1</button>);
+                    if (start > 2) nums.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                  }
+                  for (let p = start; p <= end; p++) {
+                    nums.push(<button key={p} className={`std-pg-btn std-pg-num${histPage === p ? ' std-pg-num--active' : ''}`} onClick={() => setHistPage(p)}>{p}</button>);
+                  }
+                  if (end < histTotalPages) {
+                    if (end < histTotalPages - 1) nums.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                    nums.push(<button key={histTotalPages} className="std-pg-btn std-pg-num" onClick={() => setHistPage(histTotalPages)}>{histTotalPages}</button>);
+                  }
+                  return nums;
+                })()}
+                <button className="std-pg-btn" disabled={histPage >= histTotalPages} onClick={() => setHistPage(p => p + 1)}>›</button>
+                <button className="std-pg-btn" disabled={histPage >= histTotalPages} onClick={() => setHistPage(histTotalPages)}>»</button>
+              </div>
+              <span className="std-pg-total">Pág. <strong>{histPage}</strong> / {histTotalPages}</span>
+            </div>
           )}
         </div>
         )}

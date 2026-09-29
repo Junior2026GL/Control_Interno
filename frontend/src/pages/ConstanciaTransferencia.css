@@ -77,15 +77,29 @@
 }
 
 .ct-type-card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: #eef2fb;
-  color: #274C8D;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+.ct-type-card-icon--blue {
+  background: linear-gradient(135deg, #eaf0fd, #d9e4fa);
+  color: #274C8D;
+}
+
+.ct-type-card-icon--amber {
+  background: linear-gradient(135deg, #fef3e2, #fce3bd);
+  color: #b45309;
+}
+
+.ct-type-card-icon--teal {
+  background: linear-gradient(135deg, #e3f6f2, #c7ede4);
+  color: #0f766e;
 }
 
 .ct-type-card-body {
@@ -652,7 +666,8 @@
   color: #4a5568;
 }
 
-.ct-hist-actions { display: flex; gap: 6px; }
+.ct-hist-actions { display: flex; gap: 6px; justify-content: center; }
+.ct-hist-table thead th:last-child { text-align: center; }
 
 .ct-hist-btn {
   width: 32px;
