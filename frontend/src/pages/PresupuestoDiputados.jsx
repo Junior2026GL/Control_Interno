@@ -54,7 +54,7 @@ const EMPTY_PRES  = {
 };
 const EMPTY_AYUDA = {
   fecha: new Date().toISOString().slice(0, 10),
-  concepto: '', beneficiario: '', numero_orden: '', numero_cheque: '', monto: '', observaciones: '',
+  concepto: '', beneficiario: '', beneficiario_dni: '', beneficiario_telefono: '', numero_orden: '', numero_cheque: '', monto: '', observaciones: '',
   estado_liquidacion: 'sin_liquidar',
 };
 
@@ -106,6 +106,59 @@ export default function PresupuestoDiputados() {
   const [editingAyuda, setEditingAyuda] = useState(null);
   const [formErr, setFormErr]     = useState('');
   const [saving, setSaving]       = useState(false);
+  const [censoStatus, setCensoStatus] = useState(null); // null|'searching'|'found'|'notfound'
+
+  const handleBenefDni = async value => {
+    const digits = value.replace(/\D/g, '').slice(0, 13);
+    setAyudaForm(f => ({ ...f, beneficiario_dni: digits }));
+    if (digits.length !== 13) { setCensoStatus(null); return; }
+    setCensoStatus('searching');
+    try {
+      const { data } = await api.get(`/censo/${digits}`, { headers: authHeaders() });
+      setAyudaForm(f => ({ ...f, beneficiario: data.nombreCompleto }));
+      setCensoStatus('found');
+    } catch (err) {
+      setCensoStatus(err?.response?.status === 404 ? 'notfound' : null);
+    }
+  };
+
+  const renderBeneficiario = () => (
+    <div className="ps-form-group">
+      <label>Beneficiario</label>
+      <div className="ps-form-row ps-form-row-3">
+        <div className="ps-form-group">
+          <label>DNI</label>
+          <input
+            type="text" inputMode="numeric" maxLength={13}
+            placeholder="0801199900000"
+            value={ayudaForm.beneficiario_dni}
+            onChange={e => handleBenefDni(e.target.value)}
+          />
+          {censoStatus === 'searching' && <small style={{color:'#64748b'}}>Buscando…</small>}
+          {censoStatus === 'found' && <small style={{color:'#15803d',fontWeight:600}}>✓ Encontrado</small>}
+          {censoStatus === 'notfound' && <small style={{color:'#b45309'}}>⚠ No encontrado, escriba el nombre</small>}
+        </div>
+        <div className="ps-form-group">
+          <label>Nombre</label>
+          <input
+            type="text" maxLength={200}
+            placeholder="Nombre del beneficiario"
+            value={ayudaForm.beneficiario}
+            onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
+          />
+        </div>
+        <div className="ps-form-group">
+          <label>Teléfono</label>
+          <input
+            type="tel" maxLength={20}
+            placeholder="9999-9999"
+            value={ayudaForm.beneficiario_telefono}
+            onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_telefono: e.target.value.replace(/[^\d+\- ]/g, '') })}
+          />
+        </div>
+      </div>
+    </div>
+  );
   const [confirm, setConfirm]     = useState(null); // ayuda to delete
   const [montoFocused, setMontoFocused] = useState(false);
 
@@ -522,12 +575,15 @@ export default function PresupuestoDiputados() {
       fecha:         a.fecha.slice(0, 10),
       concepto:      a.concepto,
       beneficiario:  a.beneficiario || '',
+      beneficiario_dni:      a.beneficiario_dni || '',
+      beneficiario_telefono: a.beneficiario_telefono || '',
       numero_orden:  a.numero_orden  || '',
       numero_cheque: a.numero_cheque || '',
       monto:         a.monto.toString(),
       observaciones: a.observaciones || '',
     });
     setFormErr('');
+    setCensoStatus(null);
     setModal('editAyuda');
   };
 
@@ -2178,7 +2234,7 @@ export default function PresupuestoDiputados() {
                     {canEdit && (
                       <button
                         className="ps-btn-primary"
-                        onClick={() => { setAyudaForm({ ...EMPTY_AYUDA, observaciones: `AYUDA SOCIAL GESTIONADA Y DOCUMENTA POR HD : ${selectedDip?.nombre || ''}` }); setFormErr(''); setModal('ayuda'); }}
+                        onClick={() => { setAyudaForm({ ...EMPTY_AYUDA, observaciones: `AYUDA SOCIAL GESTIONADA Y DOCUMENTA POR HD : ${selectedDip?.nombre || ''}` }); setFormErr(''); setCensoStatus(null); setModal('ayuda'); }}
                         disabled={presupuesto.disponible <= 0}
                         title={presupuesto.disponible <= 0 ? 'Presupuesto agotado' : ''}
                       >
@@ -2195,7 +2251,7 @@ export default function PresupuestoDiputados() {
                     {canEdit && presupuesto.disponible > 0 && (
                       <button
                         className="ps-btn-primary"
-                        onClick={() => { setAyudaForm({ ...EMPTY_AYUDA, observaciones: `AYUDA SOCIAL GESTIONADA Y DOCUMENTA POR HD : ${selectedDip?.nombre || ''}` }); setFormErr(''); setModal('ayuda'); }}
+                        onClick={() => { setAyudaForm({ ...EMPTY_AYUDA, observaciones: `AYUDA SOCIAL GESTIONADA Y DOCUMENTA POR HD : ${selectedDip?.nombre || ''}` }); setFormErr(''); setCensoStatus(null); setModal('ayuda'); }}
                       >
                         <FiPlus size={14} /> Registrar primera ayuda
                       </button>
@@ -2770,16 +2826,7 @@ export default function PresupuestoDiputados() {
                   required
                 />
               </div>
-              <div className="ps-form-group">
-                <label>Beneficiario</label>
-                <input
-                  type="text"
-                  maxLength={200}
-                  placeholder="Nombre del beneficiario (opcional)"
-                  value={ayudaForm.beneficiario}
-                  onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
-                />
-              </div>
+              {renderBeneficiario()}
               <div className="ps-form-row">
                 <div className="ps-form-group">
                   <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
@@ -2877,16 +2924,7 @@ export default function PresupuestoDiputados() {
                   required
                 />
               </div>
-              <div className="ps-form-group">
-                <label>Beneficiario</label>
-                <input
-                  type="text"
-                  maxLength={200}
-                  placeholder="Nombre del beneficiario (opcional)"
-                  value={ayudaForm.beneficiario}
-                  onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
-                />
-              </div>
+              {renderBeneficiario()}
               <div className="ps-form-row">
                 <div className="ps-form-group">
                   <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>

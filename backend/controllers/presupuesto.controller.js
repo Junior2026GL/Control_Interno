@@ -39,7 +39,7 @@ exports.getByDiputado = async (req, res) => {
 
     const pres = presRows[0];
     const [ayudas] = await db.promise().query(
-      `SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
+      `SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.beneficiario_dni, a.beneficiario_telefono, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
               a.estado_liquidacion, a.fecha_liquidacion, a.liquidado_por, a.created_at, a.created_by,
               u.nombre AS creado_por_nombre,
               ul.nombre AS liquidado_por_nombre
@@ -297,6 +297,10 @@ exports.createAyuda = async (req, res) => {
   const beneficiario  = sanitize(req.body.beneficiario) || null;
   const monto         = parseFloat(req.body.monto);
   const observaciones = sanitize(req.body.observaciones) || null;
+  const beneficiario_dni      = (sanitize(req.body.beneficiario_dni) || '').replace(/\D/g, '') || null;
+  const beneficiario_telefono = (sanitize(req.body.beneficiario_telefono) || '').replace(/[^\d+\- ]/g, '').slice(0, 20) || null;
+  if (beneficiario_dni && beneficiario_dni.length !== 13)
+    return res.status(400).json({ message: 'El DNI del beneficiario debe tener 13 dígitos.' });
 
   if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha))
     return res.status(400).json({ message: 'Fecha inválida (formato YYYY-MM-DD).' });
@@ -348,9 +352,9 @@ exports.createAyuda = async (req, res) => {
     const numero_cheque_ins = sanitize(req.body.numero_cheque) || null;
     const [result] = await conn.query(
       `INSERT INTO ayudas_sociales
-         (presupuesto_id, diputado_id, fecha, concepto, beneficiario, numero_orden, numero_cheque, monto, observaciones, created_by, estado_liquidacion)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sin_liquidar')`,
-      [presId, pres.diputado_id, fecha, concepto, beneficiario, numero_orden_ins, numero_cheque_ins, monto, observaciones, req.user?.id || null]
+         (presupuesto_id, diputado_id, fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, numero_orden, numero_cheque, monto, observaciones, created_by, estado_liquidacion)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sin_liquidar')`,
+      [presId, pres.diputado_id, fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, numero_orden_ins, numero_cheque_ins, monto, observaciones, req.user?.id || null]
     );
     await conn.commit();
     res.status(201).json({ message: 'Ayuda social registrada correctamente.', id: result.insertId });
@@ -376,6 +380,10 @@ exports.updateAyuda = async (req, res) => {
   const beneficiario  = sanitize(req.body.beneficiario) || null;
   const monto         = parseFloat(req.body.monto);
   const observaciones = sanitize(req.body.observaciones) || null;
+  const beneficiario_dni      = (sanitize(req.body.beneficiario_dni) || '').replace(/\D/g, '') || null;
+  const beneficiario_telefono = (sanitize(req.body.beneficiario_telefono) || '').replace(/[^\d+\- ]/g, '').slice(0, 20) || null;
+  if (beneficiario_dni && beneficiario_dni.length !== 13)
+    return res.status(400).json({ message: 'El DNI del beneficiario debe tener 13 dígitos.' });
 
   if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha))
     return res.status(400).json({ message: 'Fecha inválida (formato YYYY-MM-DD).' });
@@ -431,8 +439,8 @@ exports.updateAyuda = async (req, res) => {
     const numero_orden_upd  = sanitize(req.body.numero_orden)  || null;
     const numero_cheque_upd = sanitize(req.body.numero_cheque) || null;
     await db.promise().query(
-      'UPDATE ayudas_sociales SET fecha=?, concepto=?, beneficiario=?, numero_orden=?, numero_cheque=?, monto=?, observaciones=? WHERE id=? AND presupuesto_id=?',
-      [fecha, concepto, beneficiario, numero_orden_upd, numero_cheque_upd, monto, observaciones, aidId, presId]
+      'UPDATE ayudas_sociales SET fecha=?, concepto=?, beneficiario=?, beneficiario_dni=?, beneficiario_telefono=?, numero_orden=?, numero_cheque=?, monto=?, observaciones=? WHERE id=? AND presupuesto_id=?',
+      [fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, numero_orden_upd, numero_cheque_upd, monto, observaciones, aidId, presId]
     );
     res.json({ message: 'Ayuda actualizada correctamente.' });
   } catch (err) {
@@ -687,7 +695,7 @@ exports.getReportesAyudas = async (req, res) => {
 
     const [rows] = await db.promise().query(
       `SELECT
-         a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
+         a.id, a.fecha, a.concepto, a.beneficiario, a.beneficiario_dni, a.beneficiario_telefono, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
          a.estado_liquidacion, a.created_at, p.anio,
          d.id AS diputado_id, d.nombre AS diputado, d.departamento, d.tipo, d.partido,
          u.nombre AS creado_por_nombre
@@ -819,7 +827,7 @@ exports.getReporteMensualDetalle = async (req, res) => {
     // Traer todas las ayudas del mes con datos de diputado
     const [rows] = await db.promise().query(
       `SELECT
-         a.id, a.fecha, a.concepto, a.beneficiario, a.numero_orden,
+         a.id, a.fecha, a.concepto, a.beneficiario, a.beneficiario_dni, a.beneficiario_telefono, a.numero_orden,
          a.monto, a.observaciones, a.estado_liquidacion, a.fecha_liquidacion,
          d.id AS diputado_id, d.nombre AS diputado_nombre,
          d.departamento, d.tipo, d.partido
