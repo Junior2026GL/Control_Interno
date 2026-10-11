@@ -66,7 +66,9 @@ exports.getAll = (req, res) => {
            COALESCE(SUM(a.monto), 0)  AS monto_total,
            DATE_FORMAT(MAX(a.fecha), '%Y-%m-%d') AS ultima_ayuda
     FROM beneficiarios_ayuda b
-    LEFT JOIN ayudas_sociales a ON a.beneficiario_dni = b.dni
+    LEFT JOIN ayudas_sociales a
+      ON CONVERT(a.beneficiario_dni USING utf8mb4) COLLATE utf8mb4_unicode_ci
+       = CONVERT(b.dni USING utf8mb4) COLLATE utf8mb4_unicode_ci
     GROUP BY b.id
     ORDER BY b.nombre ASC
   `;
