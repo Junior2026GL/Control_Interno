@@ -203,6 +203,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
   },
   {
+    path: '/beneficiarios-ayuda',
+    label: 'Campaña Ayudas Whatsapp',
+    clave: 'beneficiarios-ayuda',
+    description: 'Beneficiarios registrados con edad, cumpleaños y departamento',
+    icon: LuUsers,
+    gradient: 'linear-gradient(135deg, #0369a1 0%, #38bdf8 100%)',
+  },
+  {
     path: '/estado-liquidacion',
     label: 'Estado de Liquidación',
     clave: 'estado-liquidacion',

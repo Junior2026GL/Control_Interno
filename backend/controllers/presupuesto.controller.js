@@ -1,4 +1,5 @@
 const db = require('../db');
+const beneficiarios = require('./beneficiarios_ayuda.controller');
 
 function sanitize(str) { return (str || '').toString().trim(); }
 
@@ -367,6 +368,10 @@ exports.createAyuda = async (req, res) => {
       [presId, pres.diputado_id, fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, beneficiario_departamento, numero_orden_ins, numero_cheque_ins, monto, observaciones, req.user?.id || null]
     );
     await conn.commit();
+    beneficiarios.registrarDesdeAyuda({
+      dni: beneficiario_dni, nombre: beneficiario,
+      telefono: beneficiario_telefono, departamento: beneficiario_departamento,
+    });
     res.status(201).json({ message: 'Ayuda social registrada correctamente.', id: result.insertId });
   } catch (err) {
     await conn.rollback().catch(() => {});
@@ -455,6 +460,10 @@ exports.updateAyuda = async (req, res) => {
       'UPDATE ayudas_sociales SET fecha=?, concepto=?, beneficiario=?, beneficiario_dni=?, beneficiario_telefono=?, beneficiario_departamento=?, numero_orden=?, numero_cheque=?, monto=?, observaciones=? WHERE id=? AND presupuesto_id=?',
       [fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, beneficiario_departamento, numero_orden_upd, numero_cheque_upd, monto, observaciones, aidId, presId]
     );
+    beneficiarios.registrarDesdeAyuda({
+      dni: beneficiario_dni, nombre: beneficiario,
+      telefono: beneficiario_telefono, departamento: beneficiario_departamento,
+    });
     res.json({ message: 'Ayuda actualizada correctamente.' });
   } catch (err) {
     console.error('[presupuesto] Error en updateAyuda:', err);

@@ -61,6 +61,8 @@ function parseFecha(str) {
   return null;
 }
 
+exports.parseFecha = parseFecha;
+
 // GET /api/cumpleanos-diputados
 exports.getAll = (req, res) => {
   if (cacheValid()) {

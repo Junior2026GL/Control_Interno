@@ -1,0 +1,44 @@
+/* BeneficiariosAyuda — Beneficiarios de Ayuda Social */
+.bn-page { min-height: 100vh; background: var(--bg-main, #f4f6fa); }
+.bn-container { max-width: 1250px; margin: 0 auto; padding: 28px 20px 60px; }
+
+.bn-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.bn-header-left { display: flex; align-items: center; gap: 14px; }
+.bn-header-icon { font-size: 32px; color: #274c8d; flex-shrink: 0; }
+.bn-header h1 { margin: 0 0 3px; font-size: 24px; font-weight: 700; color: #1a3a52; letter-spacing: -0.4px; }
+.bn-header p { margin: 0; font-size: 13px; color: #8a99aa; }
+.bn-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.bn-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: 1px solid #d5dbe5; background: #fff; color: #334155; font-size: 13px; font-weight: 600; cursor: pointer; }
+.bn-btn:hover:not(:disabled) { background: #f1f5f9; }
+.bn-btn:disabled { opacity: .5; cursor: not-allowed; }
+.bn-btn--primary { background: #274c8d; border-color: #274c8d; color: #fff; }
+.bn-btn--primary:hover:not(:disabled) { background: #1e3a6e; }
+
+.bn-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.bn-stat { flex: 1; min-width: 170px; background: #fff; border: 1px solid #e3e8ef; border-radius: 12px; padding: 14px 18px; display: flex; flex-direction: column; }
+.bn-stat-num { font-size: 26px; font-weight: 700; color: #1a3a52; }
+.bn-stat-num--pink { color: #be185d; }
+.bn-stat-lbl { font-size: 12px; color: #8a99aa; }
+
+.bn-card { background: #fff; border: 1px solid #e3e8ef; border-radius: 14px; overflow: hidden; }
+.bn-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #eef1f6; flex-wrap: wrap; }
+.bn-search { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 240px; max-width: 460px; padding: 8px 12px; border: 1px solid #d5dbe5; border-radius: 8px; color: #8a99aa; }
+.bn-search input { flex: 1; border: none; outline: none; font-size: 13px; background: transparent; color: #1a3a52; }
+.bn-count { font-size: 12px; color: #8a99aa; }
+
+.bn-table-wrap { overflow-x: auto; }
+.bn-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bn-table th { text-align: left; padding: 10px 14px; background: #f6f8fb; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; }
+.bn-table td { padding: 10px 14px; border-top: 1px solid #eef1f6; color: #334155; white-space: nowrap; }
+.bn-table tbody tr:hover { background: #f9fbfd; }
+.bn-num { text-align: right !important; }
+.bn-mono { font-family: ui-monospace, Consolas, monospace; }
+.bn-name { font-weight: 600; color: #1a3a52; white-space: normal !important; min-width: 200px; }
+
+.bn-cumple { display: inline-flex; align-items: center; gap: 4px; }
+.bn-cumple--soon { background: #fdf2f8; color: #be185d; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+
+.bn-empty { padding: 40px 16px; text-align: center; color: #8a99aa; font-size: 14px; }
+.bn-empty--error { color: #b91c1c; }
+.bn-pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 14px; border-top: 1px solid #eef1f6; font-size: 13px; color: #64748b; }
