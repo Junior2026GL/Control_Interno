@@ -41,4 +41,3 @@
 
 .bn-empty { padding: 40px 16px; text-align: center; color: #8a99aa; font-size: 14px; }
 .bn-empty--error { color: #b91c1c; }
-.bn-pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 14px; border-top: 1px solid #eef1f6; font-size: 13px; color: #64748b; }

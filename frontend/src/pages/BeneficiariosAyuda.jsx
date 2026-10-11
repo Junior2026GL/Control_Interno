@@ -16,7 +16,7 @@ export default function BeneficiariosAyuda() {
   const [error, setError]     = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [page, setPage]       = useState(1);
-  const PAGE_SIZE = 15;
+  const PAGE_SIZE = 20;
 
   const fetchData = useCallback(async () => {
     try {
@@ -157,11 +157,37 @@ export default function BeneficiariosAyuda() {
             </div>
           )}
 
-          {totalPages > 1 && (
-            <div className="bn-pager">
-              <button className="bn-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Anterior</button>
-              <span>Página {page} de {totalPages}</span>
-              <button className="bn-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Siguiente</button>
+          {!loading && !error && filtrados.length > 0 && (
+            <div className="std-pg">
+              <span className="std-pg-info">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtrados.length)} de <strong>{filtrados.length}</strong>
+              </span>
+              <div className="std-pg-controls">
+                <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
+                <button className="std-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                {(() => {
+                  const maxBtns = 7;
+                  let start = Math.max(1, page - Math.floor(maxBtns / 2));
+                  let end   = Math.min(totalPages, start + maxBtns - 1);
+                  if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                  const nums = [];
+                  if (start > 1) {
+                    nums.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPage(1)}>1</button>);
+                    if (start > 2) nums.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                  }
+                  for (let p = start; p <= end; p++) {
+                    nums.push(<button key={p} className={`std-pg-btn std-pg-num${page === p ? ' std-pg-num--active' : ''}`} onClick={() => setPage(p)}>{p}</button>);
+                  }
+                  if (end < totalPages) {
+                    if (end < totalPages - 1) nums.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                    nums.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPage(totalPages)}>{totalPages}</button>);
+                  }
+                  return nums;
+                })()}
+                <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>›</button>
+                <button className="std-pg-btn" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>»</button>
+              </div>
+              <span className="std-pg-total">Pág. <strong>{page}</strong> / {totalPages}</span>
             </div>
           )}
         </div>
