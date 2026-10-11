@@ -5,7 +5,7 @@ import {
   FiChevronDown, FiChevronUp, FiBarChart2, FiDownload,
   FiArrowUp, FiArrowDown, FiCheckSquare,
   FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle, FiGift,
-  FiCalendar, FiDollarSign, FiFileText, FiHash, FiMessageSquare, FiHeart, FiClipboard,
+  FiCalendar, FiFileText, FiHash, FiMessageSquare, FiClipboard,
 } from 'react-icons/fi';
 import {
   HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
@@ -2847,7 +2847,7 @@ export default function PresupuestoDiputados() {
         <div className="ps-overlay">
           <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
-              <span className="ps-modal-icon"><FiHeart size={20} /></span><div className="ps-modal-titlebox"><h2>Registrar Ayuda Social</h2><p>Registre el apoyo entregado y descuéntelo del presupuesto</p></div>
+              <span className="ps-modal-icon"><FiGift size={20} /></span><div className="ps-modal-titlebox"><h2>Registrar Ayuda Social</h2><p>Registre el apoyo entregado y descuéntelo del presupuesto</p></div>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
                 <FiX size={18} />
               </button>
@@ -2855,7 +2855,7 @@ export default function PresupuestoDiputados() {
             <form className="ps-modal-form" onSubmit={handleAyuda}>
               {/* Available budget indicator */}
               <div className="ps-avail-badge">
-                <span><FiDollarSign className="ps-lbl-ico" />Presupuesto disponible</span>
+                <span><span className="ps-lbl-ico ps-lbl-L">L</span>Presupuesto disponible</span>
                 <strong>{formatHNL(presupuesto?.disponible || 0)}</strong>
               </div>
 
@@ -2876,7 +2876,7 @@ export default function PresupuestoDiputados() {
                     />
                   </div>
                   <div className="ps-form-group">
-                    <label><FiDollarSign className="ps-lbl-ico" />Monto (L) *</label>
+                    <label><span className="ps-lbl-ico ps-lbl-L">L</span>Monto (L) *</label>
                     <input
                       type="number"
                       min="0.01"
@@ -2954,14 +2954,14 @@ export default function PresupuestoDiputados() {
         <div className="ps-overlay">
           <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
-              <span className="ps-modal-icon"><FiHeart size={20} /></span><div className="ps-modal-titlebox"><h2>Editar Ayuda Social</h2><p>Modifique los datos de la ayuda registrada</p></div>
+              <span className="ps-modal-icon"><FiGift size={20} /></span><div className="ps-modal-titlebox"><h2>Editar Ayuda Social</h2><p>Modifique los datos de la ayuda registrada</p></div>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
                 <FiX size={18} />
               </button>
             </div>
             <form className="ps-modal-form" onSubmit={handleEditAyuda}>
               <div className="ps-avail-badge">
-                <span><FiDollarSign className="ps-lbl-ico" />Presupuesto disponible</span>
+                <span><span className="ps-lbl-ico ps-lbl-L">L</span>Presupuesto disponible</span>
                 <strong>{formatHNL((presupuesto?.disponible || 0) + (+editingAyuda.monto || 0))}</strong>
               </div>
               {renderBeneficiario()}
@@ -2981,7 +2981,7 @@ export default function PresupuestoDiputados() {
                     />
                   </div>
                   <div className="ps-form-group">
-                    <label><FiDollarSign className="ps-lbl-ico" />Monto (L) *</label>
+                    <label><span className="ps-lbl-ico ps-lbl-L">L</span>Monto (L) *</label>
                     <input
                       type="number"
                       min="0.01"

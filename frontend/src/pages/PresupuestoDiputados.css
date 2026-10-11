@@ -2031,3 +2031,14 @@
   flex-shrink: 0;
 }
 .ps-modal-ayuda .ps-avail-badge span { display: flex; align-items: center; }
+.ps-lbl-L {
+  display: inline-block;
+  width: auto;
+  height: auto;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: baseline;
+  color: #274C8D;
+}
+.ps-modal-ayuda .ps-avail-badge .ps-lbl-L { color: #047857; font-size: 14px; }
