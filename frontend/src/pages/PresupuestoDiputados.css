@@ -1985,7 +1985,7 @@
 }
 
 /* ── Modal de ayuda social: posición y alto ─────────────────── */
-.ps-overlay:has(.ps-modal-ayuda) { padding: 16px; align-items: flex-start; }
+.ps-overlay:has(.ps-modal-ayuda) { padding: 16px; align-items: center; }
 .ps-modal-ayuda {
   display: flex;
   flex-direction: column;
