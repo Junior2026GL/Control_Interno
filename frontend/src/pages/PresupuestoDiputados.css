@@ -968,6 +968,7 @@
   animation: psModalIn .2s cubic-bezier(.34, 1.56, .64, 1);
 }
 .ps-modal-sm { max-width: 420px; }
+.ps-modal-ayuda { max-width: 600px; }
 @keyframes psModalIn {
   from { transform: scale(.93); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }

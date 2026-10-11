@@ -189,16 +189,16 @@ export default function PresupuestoDiputados() {
             onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_telefono: e.target.value.replace(/[^\d+\- ]/g, '') })}
           />
         </div>
-        <div className="ps-form-group ps-benef-full">
+        <div className="ps-form-group">
           <label>Nombre completo</label>
           <input
             type="text" maxLength={200}
-            placeholder="Se completa automáticamente al digitar el DNI"
+            placeholder="Se completa con el DNI"
             value={ayudaForm.beneficiario}
             onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
           />
         </div>
-        <div className="ps-form-group ps-benef-full ps-depto-wrap">
+        <div className="ps-form-group ps-depto-wrap">
           <label>Departamento donde vive</label>
           <input
             type="text" maxLength={30} autoComplete="off"
@@ -2844,7 +2844,7 @@ export default function PresupuestoDiputados() {
       {/* ── Register Aid Modal ── */}
       {modal === 'ayuda' && (
         <div className="ps-overlay">
-          <div className="ps-modal" onClick={e => e.stopPropagation()}>
+          <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
               <h2>Registrar Ayuda Social</h2>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
@@ -2944,7 +2944,7 @@ export default function PresupuestoDiputados() {
       {/* ── Edit Aid Modal ── */}
       {modal === 'editAyuda' && editingAyuda && (
         <div className="ps-overlay">
-          <div className="ps-modal" onClick={e => e.stopPropagation()}>
+          <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
               <h2>Editar Ayuda Social</h2>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
