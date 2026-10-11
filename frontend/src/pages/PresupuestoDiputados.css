@@ -1926,3 +1926,60 @@
   cursor: pointer;
 }
 .ps-depto-list li.is-active { background: #eff4ff; color: #274C8D; font-weight: 600; }
+
+/* ── Modal de ayuda social: rediseño ───────────────────────── */
+.ps-modal-ayuda { border-radius: 20px; }
+.ps-modal-ayuda .ps-modal-header {
+  background: linear-gradient(135deg, #274C8D 0%, #3a66b5 100%);
+  border-bottom: none;
+  padding: 20px 26px;
+}
+.ps-modal-ayuda .ps-modal-header h2 { color: #fff; font-size: 18px; }
+.ps-modal-titlebox p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, .78);
+}
+.ps-modal-ayuda .ps-modal-close { color: rgba(255, 255, 255, .85); }
+.ps-modal-ayuda .ps-modal-close:hover { background: rgba(255, 255, 255, .18); color: #fff; }
+.ps-modal-ayuda .ps-modal-form {
+  background: #f4f7fc;
+  gap: 14px;
+}
+.ps-modal-ayuda .ps-avail-badge {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #fff;
+  border: 1.5px solid #a7f3d0;
+  border-left: 5px solid #10b981;
+  border-radius: 12px;
+}
+.ps-modal-ayuda .ps-avail-badge strong { font-size: 17px; color: #047857; }
+.ps-modal-ayuda .ps-benef-card {
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(39, 76, 141, .08);
+}
+.ps-aid-card {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-left: 5px solid #94a3b8;
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, .05);
+}
+.ps-aid-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+.ps-aid-body { display: flex; flex-direction: column; gap: 14px; }
+.ps-modal-ayuda .ps-modal-footer {
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}

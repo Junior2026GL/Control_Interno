@@ -2846,7 +2846,7 @@ export default function PresupuestoDiputados() {
         <div className="ps-overlay">
           <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
-              <h2>Registrar Ayuda Social</h2>
+              <div className="ps-modal-titlebox"><h2>Registrar Ayuda Social</h2><p>Registre el apoyo entregado y descuéntelo del presupuesto</p></div>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
                 <FiX size={18} />
               </button>
@@ -2854,80 +2854,86 @@ export default function PresupuestoDiputados() {
             <form className="ps-modal-form" onSubmit={handleAyuda}>
               {/* Available budget indicator */}
               <div className="ps-avail-badge">
-                <span>Disponible:</span>
+                <span>Presupuesto disponible</span>
                 <strong>{formatHNL(presupuesto?.disponible || 0)}</strong>
               </div>
 
               {renderBeneficiario()}
 
-              <div className="ps-form-row">
+              <div className="ps-aid-card">
+                <div className="ps-aid-title">Datos de la ayuda</div>
+                <div className="ps-aid-body">
+                <div className="ps-form-row">
+                  <div className="ps-form-group">
+                    <label>Fecha *</label>
+                    <input
+                      type="date"
+                      max={new Date().toISOString().slice(0, 10)}
+                      value={ayudaForm.fecha}
+                      onChange={e => setAyudaForm({ ...ayudaForm, fecha: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="ps-form-group">
+                    <label>Monto (L) *</label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      max="999999999.99"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={ayudaForm.monto}
+                      onChange={e => setAyudaForm({ ...ayudaForm, monto: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
                 <div className="ps-form-group">
-                  <label>Fecha *</label>
+                  <label>Concepto *</label>
                   <input
-                    type="date"
-                    max={new Date().toISOString().slice(0, 10)}
-                    value={ayudaForm.fecha}
-                    onChange={e => setAyudaForm({ ...ayudaForm, fecha: e.target.value })}
+                    type="text"
+                    maxLength={300}
+                    placeholder="Ej: Materiales de construcción para vivienda"
+                    value={ayudaForm.concepto}
+                    onChange={e => setAyudaForm({ ...ayudaForm, concepto: e.target.value })}
                     required
                   />
                 </div>
-                <div className="ps-form-group">
-                  <label>Monto (L) *</label>
-                  <input
-                    type="number"
-                    min="0.01"
-                    max="999999999.99"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={ayudaForm.monto}
-                    onChange={e => setAyudaForm({ ...ayudaForm, monto: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="ps-form-group">
-                <label>Concepto *</label>
-                <input
-                  type="text"
-                  maxLength={300}
-                  placeholder="Ej: Materiales de construcción para vivienda"
-                  value={ayudaForm.concepto}
-                  onChange={e => setAyudaForm({ ...ayudaForm, concepto: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="ps-form-row">
-                <div className="ps-form-group">
-                  <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
-                  <input
-                    type="text"
-                    maxLength={50}
-                    placeholder="Ej: 2025-001"
-                    value={ayudaForm.numero_orden}
-                    onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
-                  />
+                <div className="ps-form-row">
+                  <div className="ps-form-group">
+                    <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      placeholder="Ej: 2025-001"
+                      value={ayudaForm.numero_orden}
+                      onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
+                    />
+                  </div>
+                  <div className="ps-form-group">
+                    <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      placeholder="Ej: 166675"
+                      value={ayudaForm.numero_cheque}
+                      onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
+                    />
+                  </div>
                 </div>
                 <div className="ps-form-group">
-                  <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
-                  <input
-                    type="text"
-                    maxLength={50}
-                    placeholder="Ej: 166675"
-                    value={ayudaForm.numero_cheque}
-                    onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
+                  <label>Observaciones</label>
+                  <textarea
+                    rows={2}
+                    maxLength={500}
+                    placeholder="Notas opcionales…"
+                    value={ayudaForm.observaciones}
+                    onChange={e => setAyudaForm({ ...ayudaForm, observaciones: e.target.value })}
                   />
                 </div>
+                </div>
               </div>
-              <div className="ps-form-group">
-                <label>Observaciones</label>
-                <textarea
-                  rows={2}
-                  maxLength={500}
-                  placeholder="Notas opcionales…"
-                  value={ayudaForm.observaciones}
-                  onChange={e => setAyudaForm({ ...ayudaForm, observaciones: e.target.value })}
-                />
-              </div>
+
               {formErr && <div className="ps-form-error">{formErr}</div>}
               <div className="ps-modal-footer">
                 <button type="button" className="ps-btn-secondary" onClick={() => setModal(null)}>
@@ -2947,86 +2953,92 @@ export default function PresupuestoDiputados() {
         <div className="ps-overlay">
           <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
-              <h2>Editar Ayuda Social</h2>
+              <div className="ps-modal-titlebox"><h2>Editar Ayuda Social</h2><p>Modifique los datos de la ayuda registrada</p></div>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
                 <FiX size={18} />
               </button>
             </div>
             <form className="ps-modal-form" onSubmit={handleEditAyuda}>
               <div className="ps-avail-badge">
-                <span>Disponible (sin esta ayuda):</span>
+                <span>Presupuesto disponible</span>
                 <strong>{formatHNL((presupuesto?.disponible || 0) + (+editingAyuda.monto || 0))}</strong>
               </div>
               {renderBeneficiario()}
 
-              <div className="ps-form-row">
+              <div className="ps-aid-card">
+                <div className="ps-aid-title">Datos de la ayuda</div>
+                <div className="ps-aid-body">
+                <div className="ps-form-row">
+                  <div className="ps-form-group">
+                    <label>Fecha *</label>
+                    <input
+                      type="date"
+                      max={new Date().toISOString().slice(0, 10)}
+                      value={ayudaForm.fecha}
+                      onChange={e => setAyudaForm({ ...ayudaForm, fecha: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="ps-form-group">
+                    <label>Monto (L) *</label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      max="999999999.99"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={ayudaForm.monto}
+                      onChange={e => setAyudaForm({ ...ayudaForm, monto: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
                 <div className="ps-form-group">
-                  <label>Fecha *</label>
+                  <label>Concepto *</label>
                   <input
-                    type="date"
-                    max={new Date().toISOString().slice(0, 10)}
-                    value={ayudaForm.fecha}
-                    onChange={e => setAyudaForm({ ...ayudaForm, fecha: e.target.value })}
+                    type="text"
+                    maxLength={300}
+                    placeholder="Ej: Materiales de construcción para vivienda"
+                    value={ayudaForm.concepto}
+                    onChange={e => setAyudaForm({ ...ayudaForm, concepto: e.target.value })}
                     required
                   />
                 </div>
-                <div className="ps-form-group">
-                  <label>Monto (L) *</label>
-                  <input
-                    type="number"
-                    min="0.01"
-                    max="999999999.99"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={ayudaForm.monto}
-                    onChange={e => setAyudaForm({ ...ayudaForm, monto: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="ps-form-group">
-                <label>Concepto *</label>
-                <input
-                  type="text"
-                  maxLength={300}
-                  placeholder="Ej: Materiales de construcción para vivienda"
-                  value={ayudaForm.concepto}
-                  onChange={e => setAyudaForm({ ...ayudaForm, concepto: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="ps-form-row">
-                <div className="ps-form-group">
-                  <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
-                  <input
-                    type="text"
-                    maxLength={50}
-                    placeholder="Ej: 2025-001"
-                    value={ayudaForm.numero_orden}
-                    onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
-                  />
+                <div className="ps-form-row">
+                  <div className="ps-form-group">
+                    <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      placeholder="Ej: 2025-001"
+                      value={ayudaForm.numero_orden}
+                      onChange={e => setAyudaForm({ ...ayudaForm, numero_orden: e.target.value })}
+                    />
+                  </div>
+                  <div className="ps-form-group">
+                    <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      placeholder="Ej: 166675"
+                      value={ayudaForm.numero_cheque}
+                      onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
+                    />
+                  </div>
                 </div>
                 <div className="ps-form-group">
-                  <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
-                  <input
-                    type="text"
-                    maxLength={50}
-                    placeholder="Ej: 166675"
-                    value={ayudaForm.numero_cheque}
-                    onChange={e => setAyudaForm({ ...ayudaForm, numero_cheque: e.target.value })}
+                  <label>Observaciones</label>
+                  <textarea
+                    rows={2}
+                    maxLength={500}
+                    placeholder="Notas opcionales…"
+                    value={ayudaForm.observaciones}
+                    onChange={e => setAyudaForm({ ...ayudaForm, observaciones: e.target.value })}
                   />
                 </div>
+                </div>
               </div>
-              <div className="ps-form-group">
-                <label>Observaciones</label>
-                <textarea
-                  rows={2}
-                  maxLength={500}
-                  placeholder="Notas opcionales…"
-                  value={ayudaForm.observaciones}
-                  onChange={e => setAyudaForm({ ...ayudaForm, observaciones: e.target.value })}
-                />
-              </div>
+
               {formErr && <div className="ps-form-error">{formErr}</div>}
               <div className="ps-modal-footer">
                 <button type="button" className="ps-btn-secondary" onClick={() => setModal(null)}>
