@@ -1845,10 +1845,13 @@
 
 /* ── Beneficiario (DNI / nombre / teléfono) ─────────────────── */
 .ps-benef-card {
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
+  position: relative;
+  background: linear-gradient(180deg, #eff4ff 0%, #f8faff 100%);
+  border: 1.5px solid #c7d8f8;
+  border-left: 5px solid #274C8D;
   border-radius: 12px;
   padding: 14px 16px 16px;
+  box-shadow: 0 2px 8px rgba(39, 76, 141, .08);
 }
 .ps-benef-title {
   font-size: 12px;
@@ -1857,6 +1860,8 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #c7d8f8;
 }
 .ps-benef-title span {
   color: #94a3b8;
@@ -1886,4 +1891,12 @@
 .ps-benef-status.is-notfound  { color: #b45309; }
 @media (max-width: 480px) {
   .ps-benef-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.ps-benef-card .ps-form-group input {
+  background: #fff;
+  border-color: #c7d8f8;
+}
+.ps-benef-card .ps-form-group input:focus {
+  border-color: #274C8D;
+  box-shadow: 0 0 0 3px rgba(39, 76, 141, .15);
 }

@@ -115,8 +115,12 @@ export default function PresupuestoDiputados() {
     setCensoStatus('searching');
     try {
       const { data } = await api.get(`/censo/${digits}`, { headers: authHeaders() });
-      setAyudaForm(f => ({ ...f, beneficiario: data.nombreCompleto }));
-      setCensoStatus('found');
+      if (data.nombreCompleto) {
+        setAyudaForm(f => ({ ...f, beneficiario: data.nombreCompleto }));
+        setCensoStatus('found');
+      } else {
+        setCensoStatus('notfound');
+      }
     } catch (err) {
       setCensoStatus(err?.response?.status === 404 ? 'notfound' : null);
     }
