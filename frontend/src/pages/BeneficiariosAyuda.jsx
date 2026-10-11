@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift } from 'react-icons/fi';
+import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -7,6 +8,15 @@ import './BeneficiariosAyuda.css';
 
 const fmtMonto = (n) =>
   `L ${Number(n || 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const iniciales = (nombre) =>
+  nombre.split(/s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+
+const waLink = (tel) => {
+  const d = (tel || '').replace(/D/g, '');
+  if (d.length < 8) return null;
+  return `https://wa.me/${d.length === 8 ? '504' + d : d}`;
+};
 
 const fmtFecha = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
 
@@ -75,7 +85,7 @@ export default function BeneficiariosAyuda() {
       <div className="bn-container">
         <div className="bn-header">
           <div className="bn-header-left">
-            <FiUsers className="bn-header-icon" />
+            <div className="bn-header-icon"><FaWhatsapp size={26} /></div>
             <div>
               <h1>Campaña Ayudas Whatsapp</h1>
               <p>Personas registradas al entregar una ayuda social, con datos del censo nacional</p>
@@ -90,9 +100,18 @@ export default function BeneficiariosAyuda() {
         </div>
 
         <div className="bn-stats">
-          <div className="bn-stat"><span className="bn-stat-num">{rows.length}</span><span className="bn-stat-lbl">Beneficiarios</span></div>
-          <div className="bn-stat"><span className="bn-stat-num">{rows.filter(r => r.fecha_nacimiento).length}</span><span className="bn-stat-lbl">Con fecha de nacimiento</span></div>
-          <div className="bn-stat"><span className="bn-stat-num bn-stat-num--pink">{proximos}</span><span className="bn-stat-lbl">Cumplen años en 30 días</span></div>
+          <div className="bn-stat">
+            <span className="bn-stat-icon bn-stat-icon--blue"><FiUsers size={20} /></span>
+            <div><span className="bn-stat-num">{rows.length}</span><span className="bn-stat-lbl">Beneficiarios</span></div>
+          </div>
+          <div className="bn-stat">
+            <span className="bn-stat-icon bn-stat-icon--green"><FiCalendar size={20} /></span>
+            <div><span className="bn-stat-num">{rows.filter(r => r.fecha_nacimiento).length}</span><span className="bn-stat-lbl">Con fecha de nacimiento</span></div>
+          </div>
+          <div className="bn-stat">
+            <span className="bn-stat-icon bn-stat-icon--pink"><FiGift size={20} /></span>
+            <div><span className="bn-stat-num bn-stat-num--pink">{proximos}</span><span className="bn-stat-lbl">Cumplen años en 30 días</span></div>
+          </div>
         </div>
 
         <div className="bn-card">
@@ -135,21 +154,38 @@ export default function BeneficiariosAyuda() {
                   {visibles.map(r => (
                     <tr key={r.id}>
                       <td className="bn-mono">{r.dni}</td>
-                      <td className="bn-name">{r.nombre}</td>
-                      <td>{r.telefono || '—'}</td>
-                      <td>{r.departamento || '—'}</td>
+                      <td>
+                        <div className="bn-person">
+                          <span className="bn-avatar">{iniciales(r.nombre)}</span>
+                          <span className="bn-name">{r.nombre}</span>
+                        </div>
+                      </td>
+                      <td>
+                        {r.telefono ? (
+                          waLink(r.telefono) ? (
+                            <a className="bn-wa" href={waLink(r.telefono)} target="_blank" rel="noopener noreferrer" title="Abrir en WhatsApp">
+                              <FaWhatsapp size={14} /> {r.telefono}
+                            </a>
+                          ) : <span className="bn-tel"><FiPhone size={13} /> {r.telefono}</span>
+                        ) : <span className="bn-muted">—</span>}
+                      </td>
+                      <td>
+                        {r.departamento
+                          ? <span className="bn-chip"><FiMapPin size={12} /> {r.departamento}</span>
+                          : <span className="bn-muted">—</span>}
+                      </td>
                       <td>{fmtFecha(r.fecha_nacimiento)}</td>
-                      <td>{r.edad !== null ? `${r.edad} años` : '—'}</td>
+                      <td>{r.edad !== null ? <span className="bn-edad">{r.edad} años</span> : <span className="bn-muted">—</span>}</td>
                       <td>
                         {r.cumple ? (
                           <span className={`bn-cumple${r.dias_para_cumple <= 30 ? ' bn-cumple--soon' : ''}`}>
                             {r.dias_para_cumple === 0 && <FiGift size={12} />}
                             {r.dias_para_cumple === 0 ? 'Hoy' : r.cumple}
                           </span>
-                        ) : '—'}
+                        ) : <span className="bn-muted">—</span>}
                       </td>
-                      <td className="bn-num">{r.total_ayudas}</td>
-                      <td className="bn-num">{fmtMonto(r.monto_total)}</td>
+                      <td className="bn-num"><span className="bn-badge">{r.total_ayudas}</span></td>
+                      <td className="bn-num bn-monto">{fmtMonto(r.monto_total)}</td>
                     </tr>
                   ))}
                 </tbody>
