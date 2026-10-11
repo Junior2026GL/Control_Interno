@@ -5,6 +5,7 @@ import {
   FiChevronDown, FiChevronUp, FiBarChart2, FiDownload,
   FiArrowUp, FiArrowDown, FiCheckSquare,
   FiClock, FiRefreshCw, FiAlertTriangle, FiCheckCircle, FiGift,
+  FiCalendar, FiDollarSign, FiFileText, FiHash, FiMessageSquare, FiHeart, FiClipboard,
 } from 'react-icons/fi';
 import {
   HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
@@ -164,11 +165,11 @@ export default function PresupuestoDiputados() {
 
   const renderBeneficiario = () => (
     <div className="ps-benef-card">
-      <div className="ps-benef-title">Datos del beneficiario</div>
+      <div className="ps-benef-title"><FiUser className="ps-title-ico" /> Datos del beneficiario</div>
       <div className="ps-benef-grid">
         <div className="ps-form-group">
           <label>
-            DNI
+            <HiOutlineIdentification className="ps-lbl-ico" />DNI
             {censoStatus === 'searching' && <em className="ps-benef-status is-searching">Buscando…</em>}
             {censoStatus === 'found' && <em className="ps-benef-status is-found">✓ Encontrado</em>}
             {censoStatus === 'notfound' && <em className="ps-benef-status is-notfound">No encontrado</em>}
@@ -181,7 +182,7 @@ export default function PresupuestoDiputados() {
           />
         </div>
         <div className="ps-form-group">
-          <label>Teléfono</label>
+          <label><HiOutlinePhone className="ps-lbl-ico" />Teléfono</label>
           <input
             type="tel" maxLength={20}
             placeholder="9999-9999"
@@ -190,7 +191,7 @@ export default function PresupuestoDiputados() {
           />
         </div>
         <div className="ps-form-group">
-          <label>Nombre completo</label>
+          <label><FiUser className="ps-lbl-ico" />Nombre completo</label>
           <input
             type="text" maxLength={200}
             placeholder="Se completa con el DNI"
@@ -199,7 +200,7 @@ export default function PresupuestoDiputados() {
           />
         </div>
         <div className="ps-form-group ps-depto-wrap">
-          <label>Departamento donde vive</label>
+          <label><HiOutlineMapPin className="ps-lbl-ico" />Departamento donde vive</label>
           <input
             type="text" maxLength={30} autoComplete="off"
             placeholder="Escriba para buscar… ej: Valle"
@@ -2846,7 +2847,7 @@ export default function PresupuestoDiputados() {
         <div className="ps-overlay">
           <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
-              <div className="ps-modal-titlebox"><h2>Registrar Ayuda Social</h2><p>Registre el apoyo entregado y descuéntelo del presupuesto</p></div>
+              <span className="ps-modal-icon"><FiHeart size={20} /></span><div className="ps-modal-titlebox"><h2>Registrar Ayuda Social</h2><p>Registre el apoyo entregado y descuéntelo del presupuesto</p></div>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
                 <FiX size={18} />
               </button>
@@ -2854,18 +2855,18 @@ export default function PresupuestoDiputados() {
             <form className="ps-modal-form" onSubmit={handleAyuda}>
               {/* Available budget indicator */}
               <div className="ps-avail-badge">
-                <span>Presupuesto disponible</span>
+                <span><FiDollarSign className="ps-lbl-ico" />Presupuesto disponible</span>
                 <strong>{formatHNL(presupuesto?.disponible || 0)}</strong>
               </div>
 
               {renderBeneficiario()}
 
               <div className="ps-aid-card">
-                <div className="ps-aid-title">Datos de la ayuda</div>
+                <div className="ps-aid-title"><FiClipboard className="ps-title-ico" /> Datos de la ayuda</div>
                 <div className="ps-aid-body">
                 <div className="ps-form-row">
                   <div className="ps-form-group">
-                    <label>Fecha *</label>
+                    <label><FiCalendar className="ps-lbl-ico" />Fecha *</label>
                     <input
                       type="date"
                       max={new Date().toISOString().slice(0, 10)}
@@ -2875,7 +2876,7 @@ export default function PresupuestoDiputados() {
                     />
                   </div>
                   <div className="ps-form-group">
-                    <label>Monto (L) *</label>
+                    <label><FiDollarSign className="ps-lbl-ico" />Monto (L) *</label>
                     <input
                       type="number"
                       min="0.01"
@@ -2889,7 +2890,7 @@ export default function PresupuestoDiputados() {
                   </div>
                 </div>
                 <div className="ps-form-group">
-                  <label>Concepto *</label>
+                  <label><FiFileText className="ps-lbl-ico" />Concepto *</label>
                   <input
                     type="text"
                     maxLength={300}
@@ -2901,7 +2902,7 @@ export default function PresupuestoDiputados() {
                 </div>
                 <div className="ps-form-row">
                   <div className="ps-form-group">
-                    <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                    <label><FiHash className="ps-lbl-ico" />Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
                     <input
                       type="text"
                       maxLength={50}
@@ -2911,7 +2912,7 @@ export default function PresupuestoDiputados() {
                     />
                   </div>
                   <div className="ps-form-group">
-                    <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                    <label><FiCreditCard className="ps-lbl-ico" />Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
                     <input
                       type="text"
                       maxLength={50}
@@ -2922,7 +2923,7 @@ export default function PresupuestoDiputados() {
                   </div>
                 </div>
                 <div className="ps-form-group">
-                  <label>Observaciones</label>
+                  <label><FiMessageSquare className="ps-lbl-ico" />Observaciones</label>
                   <textarea
                     rows={2}
                     maxLength={500}
@@ -2953,24 +2954,24 @@ export default function PresupuestoDiputados() {
         <div className="ps-overlay">
           <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
-              <div className="ps-modal-titlebox"><h2>Editar Ayuda Social</h2><p>Modifique los datos de la ayuda registrada</p></div>
+              <span className="ps-modal-icon"><FiHeart size={20} /></span><div className="ps-modal-titlebox"><h2>Editar Ayuda Social</h2><p>Modifique los datos de la ayuda registrada</p></div>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
                 <FiX size={18} />
               </button>
             </div>
             <form className="ps-modal-form" onSubmit={handleEditAyuda}>
               <div className="ps-avail-badge">
-                <span>Presupuesto disponible</span>
+                <span><FiDollarSign className="ps-lbl-ico" />Presupuesto disponible</span>
                 <strong>{formatHNL((presupuesto?.disponible || 0) + (+editingAyuda.monto || 0))}</strong>
               </div>
               {renderBeneficiario()}
 
               <div className="ps-aid-card">
-                <div className="ps-aid-title">Datos de la ayuda</div>
+                <div className="ps-aid-title"><FiClipboard className="ps-title-ico" /> Datos de la ayuda</div>
                 <div className="ps-aid-body">
                 <div className="ps-form-row">
                   <div className="ps-form-group">
-                    <label>Fecha *</label>
+                    <label><FiCalendar className="ps-lbl-ico" />Fecha *</label>
                     <input
                       type="date"
                       max={new Date().toISOString().slice(0, 10)}
@@ -2980,7 +2981,7 @@ export default function PresupuestoDiputados() {
                     />
                   </div>
                   <div className="ps-form-group">
-                    <label>Monto (L) *</label>
+                    <label><FiDollarSign className="ps-lbl-ico" />Monto (L) *</label>
                     <input
                       type="number"
                       min="0.01"
@@ -2994,7 +2995,7 @@ export default function PresupuestoDiputados() {
                   </div>
                 </div>
                 <div className="ps-form-group">
-                  <label>Concepto *</label>
+                  <label><FiFileText className="ps-lbl-ico" />Concepto *</label>
                   <input
                     type="text"
                     maxLength={300}
@@ -3006,7 +3007,7 @@ export default function PresupuestoDiputados() {
                 </div>
                 <div className="ps-form-row">
                   <div className="ps-form-group">
-                    <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                    <label><FiHash className="ps-lbl-ico" />Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
                     <input
                       type="text"
                       maxLength={50}
@@ -3016,7 +3017,7 @@ export default function PresupuestoDiputados() {
                     />
                   </div>
                   <div className="ps-form-group">
-                    <label>Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
+                    <label><FiCreditCard className="ps-lbl-ico" />Número de Cheque <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
                     <input
                       type="text"
                       maxLength={50}
@@ -3027,7 +3028,7 @@ export default function PresupuestoDiputados() {
                   </div>
                 </div>
                 <div className="ps-form-group">
-                  <label>Observaciones</label>
+                  <label><FiMessageSquare className="ps-lbl-ico" />Observaciones</label>
                   <textarea
                     rows={2}
                     maxLength={500}

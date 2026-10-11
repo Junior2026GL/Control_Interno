@@ -2000,3 +2000,34 @@
   min-height: 0;
   max-height: none;
 }
+
+/* ── Iconos del modal de ayuda social ───────────────────────── */
+.ps-lbl-ico {
+  width: 13px;
+  height: 13px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  color: #274C8D;
+  flex-shrink: 0;
+}
+.ps-title-ico {
+  width: 15px;
+  height: 15px;
+  margin-right: 6px;
+  vertical-align: -3px;
+}
+.ps-aid-title .ps-title-ico { color: #64748b; }
+.ps-modal-ayuda .ps-modal-header { justify-content: flex-start; gap: 14px; }
+.ps-modal-ayuda .ps-modal-header .ps-modal-close { margin-left: auto; }
+.ps-modal-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ps-modal-ayuda .ps-avail-badge span { display: flex; align-items: center; }
