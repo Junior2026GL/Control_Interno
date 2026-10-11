@@ -52,9 +52,17 @@ const EMPTY_PRES  = {
   mes_inicio:        new Date().getMonth() + 1,
   meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, monto_asignado: '', ejecutado: 0 })),
 };
+const DEPARTAMENTOS_HN = [
+  'Atlántida', 'Choluteca', 'Colón', 'Comayagua', 'Copán', 'Cortés',
+  'El Paraíso', 'Francisco Morazán', 'Gracias a Dios', 'Intibucá',
+  'Islas de la Bahía', 'La Paz', 'Lempira', 'Ocotepeque', 'Olancho',
+  'Santa Bárbara', 'Valle', 'Yoro',
+];
+const normTxt = t => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
 const EMPTY_AYUDA = {
   fecha: new Date().toISOString().slice(0, 10),
-  concepto: '', beneficiario: '', beneficiario_dni: '', beneficiario_telefono: '', numero_orden: '', numero_cheque: '', monto: '', observaciones: '',
+  concepto: '', beneficiario: '', beneficiario_dni: '', beneficiario_telefono: '', beneficiario_departamento: '', numero_orden: '', numero_cheque: '', monto: '', observaciones: '',
   estado_liquidacion: 'sin_liquidar',
 };
 
@@ -126,6 +134,34 @@ export default function PresupuestoDiputados() {
     }
   };
 
+  const [deptoOpen, setDeptoOpen] = useState(false);
+  const [deptoIdx, setDeptoIdx]   = useState(0);
+  const deptoQuery = normTxt(ayudaForm.beneficiario_departamento || '');
+  const deptoMatches = DEPARTAMENTOS_HN.filter(d => normTxt(d).startsWith(deptoQuery));
+
+  const pickDepto = d => {
+    setAyudaForm(f => ({ ...f, beneficiario_departamento: d }));
+    setDeptoOpen(false);
+  };
+  const handleDeptoKey = e => {
+    if (!deptoOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { setDeptoOpen(true); return; }
+    if (!deptoMatches.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setDeptoIdx(i => (i + 1) % deptoMatches.length); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setDeptoIdx(i => (i - 1 + deptoMatches.length) % deptoMatches.length); }
+    else if (e.key === 'Enter' && deptoOpen) { e.preventDefault(); pickDepto(deptoMatches[Math.min(deptoIdx, deptoMatches.length - 1)]); }
+    else if (e.key === 'Escape') setDeptoOpen(false);
+  };
+  // al salir del campo: si no coincide exactamente con un departamento, se limpia
+  const handleDeptoBlur = () => {
+    setTimeout(() => {
+      setDeptoOpen(false);
+      setAyudaForm(f => {
+        const exact = DEPARTAMENTOS_HN.find(d => normTxt(d) === normTxt(f.beneficiario_departamento || ''));
+        return { ...f, beneficiario_departamento: exact || '' };
+      });
+    }, 150);
+  };
+
   const renderBeneficiario = () => (
     <div className="ps-benef-card">
       <div className="ps-benef-title">Datos del beneficiario <span>(opcional)</span></div>
@@ -161,6 +197,30 @@ export default function PresupuestoDiputados() {
             value={ayudaForm.beneficiario}
             onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
           />
+        </div>
+        <div className="ps-form-group ps-benef-full ps-depto-wrap">
+          <label>Departamento donde vive</label>
+          <input
+            type="text" maxLength={30} autoComplete="off"
+            placeholder="Escriba para buscar… ej: Valle"
+            value={ayudaForm.beneficiario_departamento}
+            onChange={e => { setAyudaForm({ ...ayudaForm, beneficiario_departamento: e.target.value }); setDeptoOpen(true); setDeptoIdx(0); }}
+            onFocus={() => setDeptoOpen(true)}
+            onBlur={handleDeptoBlur}
+            onKeyDown={handleDeptoKey}
+          />
+          {deptoOpen && deptoMatches.length > 0 && (
+            <ul className="ps-depto-list">
+              {deptoMatches.map((d, i) => (
+                <li
+                  key={d}
+                  className={i === deptoIdx ? 'is-active' : ''}
+                  onMouseDown={e => { e.preventDefault(); pickDepto(d); }}
+                  onMouseEnter={() => setDeptoIdx(i)}
+                >{d}</li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
@@ -584,6 +644,7 @@ export default function PresupuestoDiputados() {
       beneficiario:  a.beneficiario || '',
       beneficiario_dni:      a.beneficiario_dni || '',
       beneficiario_telefono: a.beneficiario_telefono || '',
+      beneficiario_departamento: a.beneficiario_departamento || '',
       numero_orden:  a.numero_orden  || '',
       numero_cheque: a.numero_cheque || '',
       monto:         a.monto.toString(),

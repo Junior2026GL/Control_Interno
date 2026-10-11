@@ -1900,3 +1900,28 @@
   border-color: #274C8D;
   box-shadow: 0 0 0 3px rgba(39, 76, 141, .15);
 }
+.ps-depto-wrap { position: relative; }
+.ps-depto-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 4px 0 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 180px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1.5px solid #c7d8f8;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(39, 76, 141, .18);
+}
+.ps-depto-list li {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #2d3748;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.ps-depto-list li.is-active { background: #eff4ff; color: #274C8D; font-weight: 600; }
