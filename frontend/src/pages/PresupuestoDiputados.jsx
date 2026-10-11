@@ -123,28 +123,21 @@ export default function PresupuestoDiputados() {
   };
 
   const renderBeneficiario = () => (
-    <div className="ps-form-group">
-      <label>Beneficiario</label>
-      <div className="ps-form-row ps-form-row-3">
+    <div className="ps-benef-card">
+      <div className="ps-benef-title">Datos del beneficiario <span>(opcional)</span></div>
+      <div className="ps-benef-grid">
         <div className="ps-form-group">
-          <label>DNI</label>
+          <label>
+            DNI
+            {censoStatus === 'searching' && <em className="ps-benef-status is-searching">Buscando…</em>}
+            {censoStatus === 'found' && <em className="ps-benef-status is-found">✓ Encontrado</em>}
+            {censoStatus === 'notfound' && <em className="ps-benef-status is-notfound">No encontrado</em>}
+          </label>
           <input
             type="text" inputMode="numeric" maxLength={13}
             placeholder="0801199900000"
             value={ayudaForm.beneficiario_dni}
             onChange={e => handleBenefDni(e.target.value)}
-          />
-          {censoStatus === 'searching' && <small style={{color:'#64748b'}}>Buscando…</small>}
-          {censoStatus === 'found' && <small style={{color:'#15803d',fontWeight:600}}>✓ Encontrado</small>}
-          {censoStatus === 'notfound' && <small style={{color:'#b45309'}}>⚠ No encontrado, escriba el nombre</small>}
-        </div>
-        <div className="ps-form-group">
-          <label>Nombre</label>
-          <input
-            type="text" maxLength={200}
-            placeholder="Nombre del beneficiario"
-            value={ayudaForm.beneficiario}
-            onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
           />
         </div>
         <div className="ps-form-group">
@@ -156,9 +149,19 @@ export default function PresupuestoDiputados() {
             onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_telefono: e.target.value.replace(/[^\d+\- ]/g, '') })}
           />
         </div>
+        <div className="ps-form-group ps-benef-full">
+          <label>Nombre completo</label>
+          <input
+            type="text" maxLength={200}
+            placeholder="Se completa automáticamente al digitar el DNI"
+            value={ayudaForm.beneficiario}
+            onChange={e => setAyudaForm({ ...ayudaForm, beneficiario: e.target.value })}
+          />
+        </div>
       </div>
     </div>
   );
+
   const [confirm, setConfirm]     = useState(null); // ayuda to delete
   const [montoFocused, setMontoFocused] = useState(false);
 
