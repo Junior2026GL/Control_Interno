@@ -5,9 +5,8 @@ import {
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
-  LuFileCheck2, LuCake, LuPrinter, LuReceiptText,
+  LuFileCheck2, LuCake, LuMegaphone, LuPrinter, LuReceiptText,
 } from 'react-icons/lu';
-import { FaWhatsapp } from 'react-icons/fa';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import './Dashboard.css';
@@ -208,7 +207,7 @@ const ALL_MODULES = [
     label: 'Campaña Ayudas Whatsapp',
     clave: 'beneficiarios-ayuda',
     description: 'Beneficiarios registrados con edad, cumpleaños y departamento',
-    icon: FaWhatsapp,
+    icon: LuMegaphone,
     gradient: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
   },
   {
