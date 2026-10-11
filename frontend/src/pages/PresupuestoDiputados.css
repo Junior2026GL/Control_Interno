@@ -1983,3 +1983,33 @@
   padding-top: 14px;
   border-top: 1px solid #e2e8f0;
 }
+
+/* ── Modal de ayuda social: versión compacta (menos altura) ── */
+.ps-overlay:has(.ps-modal-ayuda) { padding: 8px; align-items: flex-start; }
+.ps-modal-ayuda {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 16px);
+  margin: 0 auto;
+}
+.ps-modal-ayuda .ps-modal-header { padding: 14px 22px; flex-shrink: 0; }
+.ps-modal-ayuda .ps-modal-header h2 { font-size: 17px; }
+.ps-modal-ayuda .ps-modal-form {
+  padding: 14px 22px 16px;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.ps-modal-ayuda .ps-avail-badge { padding: 7px 14px; }
+.ps-modal-ayuda .ps-benef-card,
+.ps-modal-ayuda .ps-aid-card { padding: 10px 14px 12px; }
+.ps-modal-ayuda .ps-benef-title,
+.ps-modal-ayuda .ps-aid-title { margin-bottom: 8px; padding-bottom: 8px; }
+.ps-modal-ayuda .ps-benef-grid { gap: 8px 14px; }
+.ps-modal-ayuda .ps-aid-body { gap: 10px; }
+.ps-modal-ayuda .ps-form-row { gap: 14px; }
+.ps-modal-ayuda .ps-form-group { gap: 4px; }
+.ps-modal-ayuda .ps-form-group input,
+.ps-modal-ayuda .ps-form-group textarea { padding: 8px 12px; }
+.ps-modal-ayuda .ps-modal-footer { padding-top: 10px; }
