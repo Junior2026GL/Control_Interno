@@ -164,7 +164,7 @@ export default function PresupuestoDiputados() {
 
   const renderBeneficiario = () => (
     <div className="ps-benef-card">
-      <div className="ps-benef-title">Datos del beneficiario <span>(opcional)</span></div>
+      <div className="ps-benef-title">Datos del beneficiario</div>
       <div className="ps-benef-grid">
         <div className="ps-form-group">
           <label>
@@ -2858,6 +2858,8 @@ export default function PresupuestoDiputados() {
                 <strong>{formatHNL(presupuesto?.disponible || 0)}</strong>
               </div>
 
+              {renderBeneficiario()}
+
               <div className="ps-form-row">
                 <div className="ps-form-group">
                   <label>Fecha *</label>
@@ -2894,7 +2896,6 @@ export default function PresupuestoDiputados() {
                   required
                 />
               </div>
-              {renderBeneficiario()}
               <div className="ps-form-row">
                 <div className="ps-form-group">
                   <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
@@ -2956,6 +2957,8 @@ export default function PresupuestoDiputados() {
                 <span>Disponible (sin esta ayuda):</span>
                 <strong>{formatHNL((presupuesto?.disponible || 0) + (+editingAyuda.monto || 0))}</strong>
               </div>
+              {renderBeneficiario()}
+
               <div className="ps-form-row">
                 <div className="ps-form-group">
                   <label>Fecha *</label>
@@ -2992,7 +2995,6 @@ export default function PresupuestoDiputados() {
                   required
                 />
               </div>
-              {renderBeneficiario()}
               <div className="ps-form-row">
                 <div className="ps-form-group">
                   <label>Número de Orden <span style={{color:'#94a3b8',fontWeight:400,fontSize:'0.75rem'}}>(opcional)</span></label>
