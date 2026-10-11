@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fi';
 import {
   HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
-  HiOutlineIdentification, HiOutlinePhone,
+  HiOutlineIdentification, HiOutlinePhone, HiOutlineHandRaised,
 } from 'react-icons/hi2';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -2847,7 +2847,7 @@ export default function PresupuestoDiputados() {
         <div className="ps-overlay">
           <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
-              <span className="ps-modal-icon"><FiGift size={20} /></span><div className="ps-modal-titlebox"><h2>Registrar Ayuda Social</h2><p>Registre el apoyo entregado y descuéntelo del presupuesto</p></div>
+              <span className="ps-modal-icon"><HiOutlineHandRaised size={22} /></span><div className="ps-modal-titlebox"><h2>Registrar Ayuda Social</h2><p>Registre el apoyo entregado y descuéntelo del presupuesto</p></div>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
                 <FiX size={18} />
               </button>
@@ -2954,7 +2954,7 @@ export default function PresupuestoDiputados() {
         <div className="ps-overlay">
           <div className="ps-modal ps-modal-ayuda" onClick={e => e.stopPropagation()}>
             <div className="ps-modal-header">
-              <span className="ps-modal-icon"><FiGift size={20} /></span><div className="ps-modal-titlebox"><h2>Editar Ayuda Social</h2><p>Modifique los datos de la ayuda registrada</p></div>
+              <span className="ps-modal-icon"><FiEdit2 size={19} /></span><div className="ps-modal-titlebox"><h2>Editar Ayuda Social</h2><p>Modifique los datos de la ayuda registrada</p></div>
               <button className="ps-modal-close" onClick={() => setModal(null)}>
                 <FiX size={18} />
               </button>
