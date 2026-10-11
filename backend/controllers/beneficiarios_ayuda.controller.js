@@ -37,6 +37,21 @@ exports.registrarDesdeAyuda = async ({ dni, nombre, telefono, departamento }) =>
   }
 };
 
+// Elimina al beneficiario si ya no le queda ninguna ayuda registrada.
+exports.limpiarSinAyudas = async (dni) => {
+  try {
+    if (!dni) return;
+    await db.promise().query(
+      `DELETE FROM beneficiarios_ayuda
+       WHERE dni = ?
+         AND NOT EXISTS (SELECT 1 FROM ayudas_sociales WHERE beneficiario_dni = ?)`,
+      [dni, dni]
+    );
+  } catch (err) {
+    console.error('[beneficiarios_ayuda] Error en limpiarSinAyudas:', err.message);
+  }
+};
+
 // Calcula edad, fecha de cumpleaños y días que faltan para el próximo cumpleaños.
 function calcularCumple(fechaIso) {
   if (!fechaIso) return { edad: null, cumple: null, dias_para_cumple: null };
@@ -66,7 +81,7 @@ exports.getAll = (req, res) => {
            COALESCE(SUM(a.monto), 0)  AS monto_total,
            DATE_FORMAT(MAX(a.fecha), '%Y-%m-%d') AS ultima_ayuda
     FROM beneficiarios_ayuda b
-    LEFT JOIN ayudas_sociales a
+    JOIN ayudas_sociales a
       ON CONVERT(a.beneficiario_dni USING utf8mb4) COLLATE utf8mb4_unicode_ci
        = CONVERT(b.dni USING utf8mb4) COLLATE utf8mb4_unicode_ci
     GROUP BY b.id

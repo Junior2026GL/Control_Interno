@@ -537,7 +537,7 @@ exports.deleteAyuda = async (req, res) => {
   try {
     // Verificar que la ayuda pertenece a este presupuesto (Anti-IDOR)
     const [aidRows] = await db.promise().query(
-      'SELECT estado_liquidacion FROM ayudas_sociales WHERE id = ? AND presupuesto_id = ?',
+      'SELECT estado_liquidacion, beneficiario_dni FROM ayudas_sociales WHERE id = ? AND presupuesto_id = ?',
       [aidId, presId]
     );
     if (!aidRows.length) return res.status(404).json({ message: 'Registro no encontrado.' });
@@ -551,6 +551,7 @@ exports.deleteAyuda = async (req, res) => {
     await db.promise().query(
       'DELETE FROM ayudas_sociales WHERE id = ? AND presupuesto_id = ?', [aidId, presId]
     );
+    beneficiarios.limpiarSinAyudas(aidRows[0].beneficiario_dni);
     res.json({ message: 'Ayuda eliminada correctamente.' });
   } catch (err) {
     console.error('[presupuesto] Error en deleteAyuda:', err);
