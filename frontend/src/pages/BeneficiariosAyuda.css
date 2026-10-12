@@ -102,3 +102,62 @@
   .bn-stats { grid-template-columns: 1fr; }
   .bn-search { max-width: none; }
 }
+
+/* Pestañas */
+.bn-tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 1px solid #e3e8ef; }
+.bn-tab {
+  display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; margin-bottom: -1px;
+  background: none; border: none; border-bottom: 3px solid transparent; color: #64748b;
+  font: 600 14px 'Segoe UI', system-ui, sans-serif; cursor: pointer; transition: color .15s, border-color .15s;
+}
+.bn-tab:hover { color: #274c8d; }
+.bn-tab--active { color: #274c8d; border-bottom-color: #274c8d; }
+.bn-tab-count { background: #eaf0fb; color: #274c8d; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+
+/* Resumen */
+.bn-resumen { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.bn-side { display: flex; flex-direction: column; gap: 16px; }
+.bn-panel { padding-bottom: 8px; }
+.bn-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 18px 6px; }
+.bn-panel-head h2 { margin: 0 0 2px; font-size: 1rem; font-weight: 800; color: #0f172a; }
+.bn-panel-head p { margin: 0; font-size: .78rem; color: #64748b; }
+.bn-map-card { padding-bottom: 8px; }
+
+.bn-seg { display: inline-flex; background: #f1f5f9; border-radius: 10px; padding: 3px; }
+.bn-seg-btn { padding: 6px 12px; border: none; background: none; border-radius: 8px; color: #64748b; font: 600 12px 'Segoe UI', system-ui, sans-serif; cursor: pointer; transition: all .15s; }
+.bn-seg-btn--active { background: #fff; color: #274c8d; box-shadow: 0 1px 3px rgba(15, 23, 42, .12); }
+
+/* Top departamentos */
+.bn-top { list-style: none; margin: 0; padding: 4px 10px 6px; }
+.bn-top-row { display: flex; gap: 12px; width: 100%; padding: 10px 8px; background: none; border: none; border-radius: 10px; text-align: left; cursor: pointer; font-family: inherit; transition: background .12s; }
+.bn-top-row:hover { background: #f4f7fc; }
+.bn-top-pos { width: 24px; height: 24px; border-radius: 50%; background: #eaf0fb; color: #274c8d; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.bn-top-body { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.bn-top-line { display: flex; justify-content: space-between; gap: 8px; }
+.bn-top-name { font-weight: 700; color: #0f172a; font-size: 13.5px; }
+.bn-top-val { font-weight: 800; color: #274c8d; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.bn-top-track { height: 7px; background: #eef2f7; border-radius: 999px; overflow: hidden; }
+.bn-top-fill { display: block; height: 100%; background: linear-gradient(90deg, #3b6cc7, #274c8d); border-radius: 999px; transition: width .3s; }
+.bn-top-sub { font-size: 11.5px; color: #8a99aa; }
+
+/* Distribución por edad */
+.bn-bars { padding: 6px 12px 10px; display: flex; flex-direction: column; gap: 4px; }
+.bn-bar-row { display: grid; grid-template-columns: 112px 1fr 34px; align-items: center; gap: 10px; padding: 7px 8px; background: none; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; transition: background .12s; }
+.bn-bar-row:hover:not(:disabled) { background: #f4f7fc; }
+.bn-bar-row:disabled { cursor: default; opacity: .6; }
+.bn-bar-label { text-align: left; font-size: 12.5px; font-weight: 600; color: #334155; }
+.bn-bar-track { height: 14px; background: #eef2f7; border-radius: 999px; overflow: hidden; }
+.bn-bar-fill { display: block; height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 999px; min-width: 3px; transition: width .3s; }
+.bn-bar-val { text-align: right; font-weight: 800; color: #0f172a; font-size: 13px; }
+
+/* Filtros activos en la tabla */
+.bn-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 18px; background: #f8fafc; border-bottom: 1px solid #eef1f6; }
+.bn-filters-lbl { font-size: 12px; font-weight: 600; color: #64748b; }
+.bn-filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: #eaf0fb; color: #274c8d; border: 1px solid #cfdcf2; border-radius: 999px; font: 600 12px 'Segoe UI', system-ui, sans-serif; cursor: pointer; }
+.bn-filter-chip:hover { background: #dce7f8; }
+.bn-filters-clear { background: none; border: none; color: #64748b; font: 600 12px 'Segoe UI', system-ui, sans-serif; text-decoration: underline; cursor: pointer; }
+.bn-empty--sm { padding: 20px 16px; }
+
+@media (max-width: 980px) {
+  .bn-resumen { grid-template-columns: 1fr; }
+}

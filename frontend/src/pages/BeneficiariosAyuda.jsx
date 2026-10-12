@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone } from 'react-icons/fi';
+import ReactECharts from 'echarts-for-react';
+import * as echarts from 'echarts';
+import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { LuMegaphone } from 'react-icons/lu';
 import * as XLSX from 'xlsx';
@@ -7,27 +9,51 @@ import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import './BeneficiariosAyuda.css';
 
+const PAGE_SIZE = 20;
+
 const fmtMonto = (n) =>
   `L ${Number(n || 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const fmtMontoCorto = (n) =>
+  `L ${Number(n || 0).toLocaleString('es-HN', { maximumFractionDigits: 0 })}`;
+
 const iniciales = (nombre) =>
-  nombre.split(/s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+  nombre.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
 
 const waLink = (tel) => {
-  const d = (tel || '').replace(/D/g, '');
+  const d = (tel || '').replace(/\D/g, '');
   if (d.length < 8) return null;
   return `https://wa.me/${d.length === 8 ? '504' + d : d}`;
 };
 
 const fmtFecha = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
 
+// Rangos de edad del gráfico de distribución
+const RANGOS_EDAD = [
+  { key: 'menor18', label: 'Menos de 18', test: e => e < 18 },
+  { key: '18-29',   label: '18 – 29',     test: e => e >= 18 && e <= 29 },
+  { key: '30-44',   label: '30 – 44',     test: e => e >= 30 && e <= 44 },
+  { key: '45-59',   label: '45 – 59',     test: e => e >= 45 && e <= 59 },
+  { key: '60+',     label: '60 o más',    test: e => e >= 60 },
+];
+
+const METRICAS = [
+  { key: 'ayudas',        label: 'Ayudas' },
+  { key: 'monto',         label: 'Monto' },
+  { key: 'beneficiarios', label: 'Beneficiarios' },
+];
+
 export default function BeneficiariosAyuda() {
-  const [rows, setRows]       = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [rows, setRows]         = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
   const [busqueda, setBusqueda] = useState('');
-  const [page, setPage]       = useState(1);
-  const PAGE_SIZE = 20;
+  const [page, setPage]         = useState(1);
+  const [tab, setTab]           = useState('resumen'); // 'resumen' | 'beneficiarios'
+  const [metrica, setMetrica]   = useState('ayudas');
+  const [filtroDepto, setFiltroDepto] = useState('');
+  const [filtroEdad, setFiltroEdad]   = useState('');
+  const [mapReady, setMapReady] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -44,34 +70,157 @@ export default function BeneficiariosAyuda() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Mapa de Honduras (el mismo GeoJSON del módulo Mapa Alcaldías)
+  useEffect(() => {
+    fetch('/honduras-geo.json')
+      .then(r => r.json())
+      .then(geo => {
+        echarts.registerMap('honduras', geo);
+        setMapReady(true);
+      })
+      .catch(() => setMapReady(false));
+  }, []);
+
+  // ── Resumen por departamento ────────────────────────────────
+  const deptos = useMemo(() => {
+    const m = {};
+    rows.forEach(r => {
+      if (!r.departamento) return;
+      const d = m[r.departamento] || (m[r.departamento] = {
+        departamento: r.departamento, beneficiarios: 0, ayudas: 0, monto: 0, sumEdad: 0, conEdad: 0,
+      });
+      d.beneficiarios += 1;
+      d.ayudas += Number(r.total_ayudas) || 0;
+      d.monto += Number(r.monto_total) || 0;
+      if (r.edad !== null && r.edad !== undefined) { d.sumEdad += r.edad; d.conEdad += 1; }
+    });
+    return m;
+  }, [rows]);
+
+  const topDeptos = useMemo(
+    () => Object.values(deptos).sort((a, b) => b[metrica] - a[metrica]).slice(0, 5),
+    [deptos, metrica]
+  );
+  const maxMetrica = topDeptos.length ? Math.max(topDeptos[0][metrica], 1) : 1;
+
+  const fmtMetrica = (valor) =>
+    metrica === 'monto' ? fmtMontoCorto(valor) : Number(valor).toLocaleString('es-HN');
+
+  // ── Distribución por edad ───────────────────────────────────
+  const edades = useMemo(() => {
+    const out = RANGOS_EDAD.map(r => ({ ...r, total: 0 }));
+    let sinDato = 0;
+    rows.forEach(r => {
+      if (r.edad === null || r.edad === undefined) { sinDato += 1; return; }
+      const rango = out.find(x => x.test(r.edad));
+      if (rango) rango.total += 1;
+    });
+    const lista = out.filter(r => r.key !== 'menor18' || r.total > 0);
+    if (sinDato > 0) lista.push({ key: 'sin-dato', label: 'Sin fecha de nac.', total: sinDato });
+    return lista;
+  }, [rows]);
+  const maxEdad = Math.max(...edades.map(e => e.total), 1);
+
+  // ── Mapa ────────────────────────────────────────────────────
+  const maxMapa = Math.max(...Object.values(deptos).map(d => d[metrica]), 1);
+
+  const mapOption = mapReady ? {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#1e293b',
+      borderColor: '#334155',
+      textStyle: { color: '#e2e8f0', fontSize: 13 },
+      padding: [10, 14],
+      formatter: p => {
+        const d = deptos[p.name];
+        if (!d) return `<b>${p.name}</b><br/><span style="color:#94a3b8">Sin beneficiarios</span>`;
+        const prom = d.conEdad ? Math.round(d.sumEdad / d.conEdad) : null;
+        return `<b style="font-size:14px">${p.name}</b><hr style="border-color:#334155;margin:6px 0"/>
+          <span style="color:#94a3b8">Beneficiarios</span> <b>${d.beneficiarios}</b><br/>
+          <span style="color:#94a3b8">Ayudas</span> <b>${d.ayudas}</b><br/>
+          <span style="color:#94a3b8">Monto</span> <b style="color:#4ade80">${fmtMonto(d.monto)}</b>
+          ${prom !== null ? `<br/><span style="color:#94a3b8">Edad promedio</span> <b>${prom} años</b>` : ''}
+          <br/><span style="color:#64748b;font-size:11px">Clic para ver la lista</span>`;
+      },
+    },
+    visualMap: {
+      type: 'continuous',
+      min: 0,
+      max: maxMapa,
+      text: ['Más', 'Menos'],
+      textStyle: { color: '#64748b', fontSize: 11 },
+      inRange: { color: ['#dbeafe', '#60a5fa', '#1d4ed8', '#1e3a8a'] },
+      orient: 'vertical',
+      right: 6,
+      bottom: 20,
+      itemWidth: 12,
+      itemHeight: 90,
+    },
+    series: [{
+      type: 'map',
+      map: 'honduras',
+      roam: false,
+      zoom: 1.1,
+      center: [-86.25, 14.6],
+      selectedMode: false,
+      label: { show: true, color: '#334155', fontSize: 9, fontWeight: 500, formatter: p => p.name.split(' ')[0] },
+      itemStyle: { borderColor: '#ffffff', borderWidth: 1, areaColor: '#eef2f7' },
+      emphasis: {
+        label: { color: '#fff', fontWeight: 700 },
+        itemStyle: { areaColor: '#f59e0b' },
+      },
+      data: Object.values(deptos).map(d => ({ name: d.departamento, value: d[metrica] })),
+    }],
+  } : {};
+
+  // ── Navegación entre resumen y tabla ────────────────────────
+  const irATabla = ({ depto = '', edad = '' }) => {
+    setFiltroDepto(depto);
+    setFiltroEdad(edad);
+    setBusqueda('');
+    setPage(1);
+    setTab('beneficiarios');
+  };
+
+  const limpiarFiltros = () => { setFiltroDepto(''); setFiltroEdad(''); setPage(1); };
+
+  // ── Tabla ───────────────────────────────────────────────────
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(r =>
-      r.nombre.toLowerCase().includes(q) ||
-      r.dni.includes(q) ||
-      (r.departamento || '').toLowerCase().includes(q) ||
-      (r.telefono || '').includes(q)
-    );
-  }, [rows, busqueda]);
+    const rango = RANGOS_EDAD.find(r => r.key === filtroEdad);
+    return rows.filter(r => {
+      if (filtroDepto && r.departamento !== filtroDepto) return false;
+      if (filtroEdad === 'sin-dato') { if (r.edad !== null && r.edad !== undefined) return false; }
+      else if (rango && (r.edad === null || r.edad === undefined || !rango.test(r.edad))) return false;
+      if (!q) return true;
+      return (
+        r.nombre.toLowerCase().includes(q) ||
+        r.dni.includes(q) ||
+        (r.departamento || '').toLowerCase().includes(q) ||
+        (r.telefono || '').includes(q)
+      );
+    });
+  }, [rows, busqueda, filtroDepto, filtroEdad]);
 
   useEffect(() => { setPage(1); }, [busqueda]);
 
   const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
   const visibles   = filtrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const proximos   = rows.filter(r => r.dias_para_cumple !== null && r.dias_para_cumple <= 30).length;
+  const etiquetaEdad = edades.find(e => e.key === filtroEdad)?.label;
 
   const exportar = () => {
     const data = filtrados.map(r => ({
-      'DNI':                r.dni,
-      'Nombre':             r.nombre,
-      'Teléfono':           r.telefono || '',
-      'Departamento':       r.departamento || '',
+      'DNI':                 r.dni,
+      'Nombre':              r.nombre,
+      'Teléfono':            r.telefono || '',
+      'Departamento':        r.departamento || '',
       'Fecha de nacimiento': fmtFecha(r.fecha_nacimiento),
-      'Edad':               r.edad ?? '',
-      'Cumpleaños':         r.cumple || '',
-      'Ayudas recibidas':   r.total_ayudas,
-      'Monto total (L)':    r.monto_total,
+      'Edad':                r.edad ?? '',
+      'Cumpleaños':          r.cumple || '',
+      'Ayudas recibidas':    r.total_ayudas,
+      'Monto total (L)':     r.monto_total,
     }));
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(data);
@@ -115,6 +264,105 @@ export default function BeneficiariosAyuda() {
           </div>
         </div>
 
+        <div className="bn-tabs">
+          <button className={`bn-tab${tab === 'resumen' ? ' bn-tab--active' : ''}`} onClick={() => setTab('resumen')}>
+            <FiPieChart size={15} /> Resumen
+          </button>
+          <button className={`bn-tab${tab === 'beneficiarios' ? ' bn-tab--active' : ''}`} onClick={() => setTab('beneficiarios')}>
+            <FiList size={15} /> Beneficiarios <span className="bn-tab-count">{rows.length}</span>
+          </button>
+        </div>
+
+        {/* ── TAB: RESUMEN ─────────────────────────────────── */}
+        {tab === 'resumen' && (
+          loading ? (
+            <div className="bn-card"><div className="bn-empty">Cargando…</div></div>
+          ) : error ? (
+            <div className="bn-card"><div className="bn-empty bn-empty--error">{error}</div></div>
+          ) : (
+            <div className="bn-resumen">
+              <div className="bn-card bn-map-card">
+                <div className="bn-panel-head">
+                  <div>
+                    <h2>Mapa por departamento</h2>
+                    <p>Haga clic en un departamento para ver sus beneficiarios</p>
+                  </div>
+                  <div className="bn-seg">
+                    {METRICAS.map(m => (
+                      <button key={m.key} className={`bn-seg-btn${metrica === m.key ? ' bn-seg-btn--active' : ''}`} onClick={() => setMetrica(m.key)}>
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {mapReady ? (
+                  <ReactECharts
+                    option={mapOption}
+                    style={{ height: 460 }}
+                    onEvents={{ click: p => { if (p.name && deptos[p.name]) irATabla({ depto: p.name }); } }}
+                  />
+                ) : (
+                  <div className="bn-empty">Cargando mapa…</div>
+                )}
+              </div>
+
+              <div className="bn-side">
+                <div className="bn-card bn-panel">
+                  <div className="bn-panel-head">
+                    <div>
+                      <h2>Departamentos con más {metrica === 'monto' ? 'monto' : metrica === 'ayudas' ? 'ayudas' : 'beneficiarios'}</h2>
+                      <p>Top 5 · clic para ver la lista</p>
+                    </div>
+                  </div>
+                  {topDeptos.length === 0 ? (
+                    <div className="bn-empty bn-empty--sm">Aún no hay departamentos registrados.</div>
+                  ) : (
+                    <ol className="bn-top">
+                      {topDeptos.map((d, i) => (
+                        <li key={d.departamento}>
+                          <button className="bn-top-row" onClick={() => irATabla({ depto: d.departamento })}>
+                            <span className="bn-top-pos">{i + 1}</span>
+                            <span className="bn-top-body">
+                              <span className="bn-top-line">
+                                <span className="bn-top-name">{d.departamento}</span>
+                                <span className="bn-top-val">{fmtMetrica(d[metrica])}</span>
+                              </span>
+                              <span className="bn-top-track"><span className="bn-top-fill" style={{ width: `${(d[metrica] / maxMetrica) * 100}%` }} /></span>
+                              <span className="bn-top-sub">
+                                {d.beneficiarios} benef. · {d.ayudas} ayudas · {fmtMontoCorto(d.monto)}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+
+                <div className="bn-card bn-panel">
+                  <div className="bn-panel-head">
+                    <div>
+                      <h2>Distribución por edad</h2>
+                      <p>Clic en una barra para ver la lista</p>
+                    </div>
+                  </div>
+                  <div className="bn-bars">
+                    {edades.map(e => (
+                      <button key={e.key} className="bn-bar-row" onClick={() => e.total > 0 && irATabla({ edad: e.key })} disabled={e.total === 0}>
+                        <span className="bn-bar-label">{e.label}</span>
+                        <span className="bn-bar-track"><span className="bn-bar-fill" style={{ width: `${(e.total / maxEdad) * 100}%` }} /></span>
+                        <span className="bn-bar-val">{e.total}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        )}
+
+        {/* ── TAB: BENEFICIARIOS ───────────────────────────── */}
+        {tab === 'beneficiarios' && (
         <div className="bn-card">
           <div className="bn-toolbar">
             <div className="bn-search">
@@ -129,12 +377,29 @@ export default function BeneficiariosAyuda() {
             <span className="bn-count">{filtrados.length} resultado{filtrados.length !== 1 ? 's' : ''}</span>
           </div>
 
+          {(filtroDepto || filtroEdad) && (
+            <div className="bn-filters">
+              <span className="bn-filters-lbl">Filtrando por:</span>
+              {filtroDepto && (
+                <button className="bn-filter-chip" onClick={() => { setFiltroDepto(''); setPage(1); }}>
+                  <FiMapPin size={12} /> {filtroDepto} <FiX size={12} />
+                </button>
+              )}
+              {filtroEdad && (
+                <button className="bn-filter-chip" onClick={() => { setFiltroEdad(''); setPage(1); }}>
+                  Edad: {etiquetaEdad} <FiX size={12} />
+                </button>
+              )}
+              <button className="bn-filters-clear" onClick={limpiarFiltros}>Quitar todos</button>
+            </div>
+          )}
+
           {loading ? (
             <div className="bn-empty">Cargando…</div>
           ) : error ? (
             <div className="bn-empty bn-empty--error">{error}</div>
           ) : visibles.length === 0 ? (
-            <div className="bn-empty">No hay beneficiarios registrados.</div>
+            <div className="bn-empty">No hay beneficiarios para mostrar.</div>
           ) : (
             <div className="bn-table-wrap">
               <table className="bn-table">
@@ -228,6 +493,7 @@ export default function BeneficiariosAyuda() {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
