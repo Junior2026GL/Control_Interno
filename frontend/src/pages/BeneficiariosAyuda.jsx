@@ -200,7 +200,7 @@ export default function BeneficiariosAyuda() {
       map: 'honduras',
       roam: false,
       layoutCenter: ['50%', '50%'],
-      layoutSize: '128%',
+      layoutSize: '122%',
       selectedMode: false,
       label: {
         show: true,
