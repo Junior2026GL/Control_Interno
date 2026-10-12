@@ -37,6 +37,13 @@ const RANGOS_EDAD = [
   { key: '60+',     label: '60 o más',    test: e => e >= 60 },
 ];
 
+const NOMBRES_CORTOS = {
+  'Francisco Morazán': 'F. Morazán',
+  'Islas de la Bahía': 'Islas Bahía',
+  'Santa Bárbara': 'Sta. Bárbara',
+  'Gracias a Dios': 'Gracias a Dios',
+};
+
 const METRICAS = [
   { key: 'ayudas',        label: 'Ayudas' },
   { key: 'monto',         label: 'Monto' },
@@ -161,10 +168,25 @@ export default function BeneficiariosAyuda() {
       type: 'map',
       map: 'honduras',
       roam: false,
-      zoom: 1.1,
-      center: [-86.25, 14.6],
+      layoutCenter: ['47%', '52%'],
+      layoutSize: '112%',
       selectedMode: false,
-      label: { show: true, color: '#334155', fontSize: 9, fontWeight: 500, formatter: p => p.name.split(' ')[0] },
+      label: {
+        show: true,
+        color: '#334155',
+        fontSize: 11,
+        fontWeight: 600,
+        formatter: p => {
+          const d = deptos[p.name];
+          const nombre = NOMBRES_CORTOS[p.name] || p.name;
+          return d ? `{n|${nombre}}
+{v|${metrica === 'monto' ? fmtMontoCorto(d.monto) : d[metrica]}}` : nombre;
+        },
+        rich: {
+          n: { color: '#0f172a', fontSize: 11, fontWeight: 700, lineHeight: 15 },
+          v: { color: '#fff', backgroundColor: '#1d4ed8', borderRadius: 8, padding: [2, 7], fontSize: 11, fontWeight: 700, align: 'center' },
+        },
+      },
       itemStyle: { borderColor: '#ffffff', borderWidth: 1, areaColor: '#eef2f7' },
       emphasis: {
         label: { color: '#fff', fontWeight: 700 },
@@ -249,21 +271,6 @@ export default function BeneficiariosAyuda() {
           </div>
         </div>
 
-        <div className="bn-stats">
-          <div className="bn-stat">
-            <span className="bn-stat-icon bn-stat-icon--blue"><FiUsers size={20} /></span>
-            <div><span className="bn-stat-num">{rows.length}</span><span className="bn-stat-lbl">Beneficiarios</span></div>
-          </div>
-          <div className="bn-stat">
-            <span className="bn-stat-icon bn-stat-icon--green"><FiCalendar size={20} /></span>
-            <div><span className="bn-stat-num">{rows.filter(r => r.fecha_nacimiento).length}</span><span className="bn-stat-lbl">Con fecha de nacimiento</span></div>
-          </div>
-          <div className="bn-stat">
-            <span className="bn-stat-icon bn-stat-icon--pink"><FiGift size={20} /></span>
-            <div><span className="bn-stat-num bn-stat-num--pink">{proximos}</span><span className="bn-stat-lbl">Cumplen años en 30 días</span></div>
-          </div>
-        </div>
-
         <div className="bn-tabs">
           <button className={`bn-tab${tab === 'resumen' ? ' bn-tab--active' : ''}`} onClick={() => setTab('resumen')}>
             <FiPieChart size={15} /> Resumen
@@ -272,6 +279,24 @@ export default function BeneficiariosAyuda() {
             <FiList size={15} /> Beneficiarios <span className="bn-tab-count">{rows.length}</span>
           </button>
         </div>
+
+        {tab === 'beneficiarios' && (
+          <div className="bn-stats">
+            <div className="bn-stat">
+              <span className="bn-stat-icon bn-stat-icon--blue"><FiUsers size={20} /></span>
+              <div><span className="bn-stat-num">{rows.length}</span><span className="bn-stat-lbl">Beneficiarios</span></div>
+            </div>
+            <div className="bn-stat">
+              <span className="bn-stat-icon bn-stat-icon--green"><FiCalendar size={20} /></span>
+              <div><span className="bn-stat-num">{rows.filter(r => r.fecha_nacimiento).length}</span><span className="bn-stat-lbl">Con fecha de nacimiento</span></div>
+            </div>
+            <div className="bn-stat">
+              <span className="bn-stat-icon bn-stat-icon--pink"><FiGift size={20} /></span>
+              <div><span className="bn-stat-num bn-stat-num--pink">{proximos}</span><span className="bn-stat-lbl">Cumplen años en 30 días</span></div>
+            </div>
+          </div>
+
+        )}
 
         {/* ── TAB: RESUMEN ─────────────────────────────────── */}
         {tab === 'resumen' && (
@@ -298,7 +323,7 @@ export default function BeneficiariosAyuda() {
                 {mapReady ? (
                   <ReactECharts
                     option={mapOption}
-                    style={{ height: 460 }}
+                    style={{ height: 640 }}
                     onEvents={{ click: p => { if (p.name && deptos[p.name]) irATabla({ depto: p.name }); } }}
                   />
                 ) : (
