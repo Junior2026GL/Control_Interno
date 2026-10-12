@@ -186,7 +186,7 @@ export default function BeneficiariosAyuda() {
       type: 'map',
       map: 'honduras',
       roam: false,
-      layoutCenter: ['51%', '43%'],
+      layoutCenter: ['50%', '50%'],
       layoutSize: '112%',
       selectedMode: false,
       label: {
@@ -352,7 +352,7 @@ export default function BeneficiariosAyuda() {
                 {mapReady ? (
                   <ReactECharts
                     option={mapOption}
-                    style={{ height: 640 }}
+                    style={{ height: 700 }}
                     onEvents={{ click: p => { if (p.name && deptos[p.name]) irATabla({ depto: p.name }); } }}
                   />
                 ) : (
