@@ -490,7 +490,6 @@ export default function BeneficiariosAyuda() {
               <table className="bn-table">
                 <thead>
                   <tr>
-                    <th>DNI</th>
                     <th>Nombre</th>
                     <th>Teléfono</th>
                     <th>Departamento</th>
@@ -505,7 +504,6 @@ export default function BeneficiariosAyuda() {
                 <tbody>
                   {visibles.map(r => (
                     <tr key={r.id}>
-                      <td className="bn-mono">{r.dni}</td>
                       <td>
                         <div className="bn-person">
                           <span className="bn-avatar">{iniciales(r.nombre)}</span>
