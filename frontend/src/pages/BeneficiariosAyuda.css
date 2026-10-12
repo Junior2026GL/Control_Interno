@@ -115,7 +115,7 @@
 .bn-tab-count { background: #eaf0fb; color: #274c8d; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
 
 /* Resumen */
-.bn-resumen { display: grid; grid-template-columns: minmax(0, 1fr) 265px; gap: 16px; align-items: start; }
+.bn-resumen { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 16px; align-items: start; }
 .bn-side { display: flex; flex-direction: column; gap: 14px; }
 .bn-panel { padding-bottom: 8px; }
 .bn-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 18px 6px; }
@@ -196,3 +196,11 @@
 .bn-side .bn-gen-bar { margin: 4px 16px 6px; }
 .bn-side .bn-gen-list { padding: 0 10px 8px; }
 .bn-side .bn-gen-row { padding: 6px 6px; }
+
+/* Iconos de los títulos del resumen */
+.bn-panel-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bn-panel-ico { width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.bn-panel-ico--blue  { background: #eaf0fb; color: #274c8d; }
+.bn-panel-ico--amber { background: #fff4e0; color: #d97706; }
+.bn-panel-ico--green { background: #e8f8ef; color: #16a34a; }
+.bn-panel-ico--pink  { background: #fdf2f8; color: #be185d; }

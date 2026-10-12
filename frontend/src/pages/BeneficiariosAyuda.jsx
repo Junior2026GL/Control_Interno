@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
-import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList } from 'react-icons/fi';
+import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2 } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { LuChartNoAxesCombined } from 'react-icons/lu';
 import * as XLSX from 'xlsx';
@@ -350,9 +350,12 @@ export default function BeneficiariosAyuda() {
             <div className="bn-resumen">
               <div className="bn-card bn-map-card">
                 <div className="bn-panel-head">
-                  <div>
+                  <div className="bn-panel-title">
+                    <span className="bn-panel-ico bn-panel-ico--blue"><FiMap size={16} /></span>
+                    <div>
                     <h2>Mapa por Departamento</h2>
                     <p>Haga clic en un departamento para ver sus beneficiarios</p>
+                  </div>
                   </div>
                   <div className="bn-seg">
                     {METRICAS.map(m => (
@@ -378,9 +381,12 @@ export default function BeneficiariosAyuda() {
               <div className="bn-side">
                 <div className="bn-card bn-panel">
                   <div className="bn-panel-head">
-                    <div>
+                    <div className="bn-panel-title">
+                      <span className="bn-panel-ico bn-panel-ico--amber"><FiAward size={16} /></span>
+                      <div>
                       <h2>Departamentos con más {metrica === 'monto' ? 'Monto' : metrica === 'ayudas' ? 'Ayudas' : 'Beneficiarios'}</h2>
                       <p>Top 5 · clic para ver la lista</p>
+                    </div>
                     </div>
                   </div>
                   {topDeptos.length === 0 ? (
@@ -410,9 +416,12 @@ export default function BeneficiariosAyuda() {
 
                 <div className="bn-card bn-panel">
                   <div className="bn-panel-head">
-                    <div>
+                    <div className="bn-panel-title">
+                      <span className="bn-panel-ico bn-panel-ico--green"><FiBarChart2 size={16} /></span>
+                      <div>
                       <h2>Distribución por Edad</h2>
                       <p>Clic en una barra para ver la lista</p>
+                    </div>
                     </div>
                   </div>
                   <div className="bn-bars">
@@ -428,9 +437,12 @@ export default function BeneficiariosAyuda() {
 
                 <div className="bn-card bn-panel">
                   <div className="bn-panel-head">
-                    <div>
+                    <div className="bn-panel-title">
+                      <span className="bn-panel-ico bn-panel-ico--pink"><FiUsers size={16} /></span>
+                      <div>
                       <h2>Distribución por Género</h2>
                       <p>Clic para ver la lista</p>
+                    </div>
                     </div>
                   </div>
                   <div className="bn-gen-bar">
