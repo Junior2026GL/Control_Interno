@@ -95,7 +95,7 @@ export default function BeneficiariosAyuda() {
   useEffect(() => {
     const el = mapWrapRef.current;
     if (!el) return undefined;
-    const ajustar = () => setMapH(Math.round(Math.min(860, Math.max(420, el.clientWidth * 0.7))));
+    const ajustar = () => setMapH(Math.round(Math.min(860, Math.max(420, el.clientWidth * 0.72))));
     ajustar();
     const ro = new ResizeObserver(ajustar);
     ro.observe(el);
@@ -200,7 +200,7 @@ export default function BeneficiariosAyuda() {
       map: 'honduras',
       roam: false,
       layoutCenter: ['50%', '50%'],
-      layoutSize: '122%',
+      layoutSize: '128%',
       selectedMode: false,
       label: {
         show: true,
