@@ -3,7 +3,7 @@ import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
-import { LuMegaphone } from 'react-icons/lu';
+import { LuChartNoAxesCombined } from 'react-icons/lu';
 import * as XLSX from 'xlsx';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -286,7 +286,7 @@ export default function BeneficiariosAyuda() {
       <div className="bn-container">
         <div className="bn-header">
           <div className="bn-header-left">
-            <div className="bn-header-icon"><LuMegaphone size={26} /></div>
+            <div className="bn-header-icon"><LuChartNoAxesCombined size={26} /></div>
             <div>
               <h1>Estadísticas de Beneficiarios</h1>
               <p>Personas registradas al entregar una ayuda social, con datos del censo nacional</p>

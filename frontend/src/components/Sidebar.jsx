@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FiMenu, FiX, FiHome, FiDollarSign, FiUsers, FiLogOut, FiFileText, FiMessageSquare, FiShield, FiEye, FiBriefcase, FiUserCheck, FiRepeat, FiGift, FiMapPin, FiClipboard, FiPackage, FiPrinter } from 'react-icons/fi';
-import { LuMegaphone } from 'react-icons/lu';
+import { LuChartNoAxesCombined } from 'react-icons/lu';
 import { AuthContext } from '../context/AuthContext';
 import './Sidebar.css';
 
@@ -26,7 +26,7 @@ export default function Sidebar() {
     { path: '/busqueda-ayudas',         label: 'Consulta de Ayudas',        icon: FiEye,           clave: 'busqueda-ayudas',           soloSuperAdmin: false },
     { path: '/constancia-transferencia',label: 'Constancias',  icon: FiRepeat,        clave: 'constancia-transferencia',  soloSuperAdmin: false },
     { path: '/ayudas',                  label: 'Ayudas',                    icon: FiGift,          clave: 'ayudas',                    soloSuperAdmin: false },
-    { path: '/beneficiarios-ayuda',    label: 'Estadísticas de Beneficiarios', icon: LuMegaphone,        clave: 'beneficiarios-ayuda',       soloSuperAdmin: false },
+    { path: '/beneficiarios-ayuda',    label: 'Estadísticas de Beneficiarios', icon: LuChartNoAxesCombined,        clave: 'beneficiarios-ayuda',       soloSuperAdmin: false },
     { path: '/ayudas-alcaldias',        label: 'Ayudas Alcaldías',          icon: FiMapPin,        clave: 'ayudas_alcaldias',          soloSuperAdmin: false },
     { path: '/mapa-alcaldias',           label: 'Mapa Alcaldías',            icon: FiMapPin,        clave: 'mapa-alcaldias',            soloSuperAdmin: false },
     { path: '/alcaldes',                 label: 'Alcaldes Municipales',      icon: FiUserCheck,     clave: 'alcaldes',                  soloSuperAdmin: false },

@@ -5,7 +5,7 @@ import {
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
-  LuFileCheck2, LuCake, LuMegaphone, LuPrinter, LuReceiptText,
+  LuFileCheck2, LuCake, LuChartNoAxesCombined, LuPrinter, LuReceiptText,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -207,7 +207,7 @@ const ALL_MODULES = [
     label: 'Estadísticas de Beneficiarios',
     clave: 'beneficiarios-ayuda',
     description: 'Beneficiarios registrados con edad, cumpleaños y departamento',
-    icon: LuMegaphone,
+    icon: LuChartNoAxesCombined,
     gradient: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
   },
   {
