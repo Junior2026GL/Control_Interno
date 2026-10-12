@@ -204,7 +204,7 @@ const ALL_MODULES = [
   },
   {
     path: '/beneficiarios-ayuda',
-    label: 'Campaña Ayudas Whatsapp',
+    label: 'Estadísticas de Beneficiarios',
     clave: 'beneficiarios-ayuda',
     description: 'Beneficiarios registrados con edad, cumpleaños y departamento',
     icon: LuMegaphone,

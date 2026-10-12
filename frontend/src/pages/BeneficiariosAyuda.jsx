@@ -288,7 +288,7 @@ export default function BeneficiariosAyuda() {
           <div className="bn-header-left">
             <div className="bn-header-icon"><LuMegaphone size={26} /></div>
             <div>
-              <h1>Campaña Ayudas Whatsapp</h1>
+              <h1>Estadísticas de Beneficiarios</h1>
               <p>Personas registradas al entregar una ayuda social, con datos del censo nacional</p>
             </div>
           </div>

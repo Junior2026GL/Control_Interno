@@ -1,4 +1,4 @@
--- Módulo "Campaña Ayudas Whatsapp"
+-- Módulo "Estadísticas de Beneficiarios"
 -- Almacena los datos de cada beneficiario (único por DNI) cuando se registra una ayuda social.
 -- La fecha de nacimiento se toma de censo_nacional; edad y cumpleaños se calculan al consultar.
 
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS beneficiarios_ayuda (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Registrar el módulo y asignarlo al usuario administrador (id 1)
-INSERT IGNORE INTO modulos (clave, nombre) VALUES ('beneficiarios-ayuda', 'Campaña Ayudas Whatsapp');
+INSERT IGNORE INTO modulos (clave, nombre) VALUES ('beneficiarios-ayuda', 'Estadísticas de Beneficiarios');
 INSERT IGNORE INTO usuario_modulos (usuario_id, modulo_id)
   SELECT 1, id FROM modulos WHERE clave = 'beneficiarios-ayuda';
 
