@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
-import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2 } from 'react-icons/fi';
+import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2, FiAlertCircle } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { LuChartNoAxesCombined } from 'react-icons/lu';
 import * as XLSX from 'xlsx';
@@ -270,6 +270,7 @@ export default function BeneficiariosAyuda() {
   const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
   const visibles   = filtrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const proximos   = rows.filter(r => r.dias_para_cumple !== null && r.dias_para_cumple <= 30).length;
+  const hayFiltros = Boolean(busqueda.trim() || filtroDepto || filtroEdad || filtroSexo);
   const etiquetaEdad = edades.find(e => e.key === filtroEdad)?.label;
   const etiquetaSexo = generos.find(g => g.key === filtroSexo)?.label;
 
@@ -507,11 +508,40 @@ export default function BeneficiariosAyuda() {
           )}
 
           {loading ? (
-            <div className="bn-empty">Cargando…</div>
+            <div className="bn-skeleton" aria-label="Cargando beneficiarios">
+              {[0, 1, 2, 3, 4].map(i => (
+                <div key={i} className="bn-skeleton-row">
+                  <span className="bn-sk bn-sk--avatar" />
+                  <span className="bn-sk bn-sk--name" />
+                  <span className="bn-sk bn-sk--pill" />
+                  <span className="bn-sk bn-sk--pill" />
+                  <span className="bn-sk bn-sk--short" />
+                  <span className="bn-sk bn-sk--short" />
+                </div>
+              ))}
+            </div>
           ) : error ? (
-            <div className="bn-empty bn-empty--error">{error}</div>
+            <div className="bn-state">
+              <span className="bn-state-ico bn-state-ico--error"><FiAlertCircle size={28} /></span>
+              <h3>No se pudo cargar el listado</h3>
+              <p>Hubo un problema al conectar con el servidor. Intente de nuevo en unos segundos.</p>
+              <button className="bn-btn bn-btn--primary" onClick={fetchData}><FiRefreshCw size={15} /> Reintentar</button>
+            </div>
           ) : visibles.length === 0 ? (
-            <div className="bn-empty">No hay beneficiarios para mostrar.</div>
+            hayFiltros ? (
+              <div className="bn-state">
+                <span className="bn-state-ico"><FiSearch size={28} /></span>
+                <h3>Sin resultados</h3>
+                <p>Ningún beneficiario coincide con la búsqueda o los filtros aplicados.</p>
+                <button className="bn-btn" onClick={() => { limpiarFiltros(); setBusqueda(''); }}><FiX size={15} /> Quitar filtros</button>
+              </div>
+            ) : (
+              <div className="bn-state">
+                <span className="bn-state-ico"><FiUsers size={28} /></span>
+                <h3>Aún no hay beneficiarios</h3>
+                <p>Se agregan automáticamente al registrar una ayuda social con el DNI del beneficiario. Aquí verá su teléfono, edad, cumpleaños y departamento.</p>
+              </div>
+            )
           ) : (
             <div className="bn-table-wrap">
               <table className="bn-table">

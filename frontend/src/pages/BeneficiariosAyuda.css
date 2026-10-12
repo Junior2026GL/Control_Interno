@@ -204,3 +204,22 @@
 .bn-panel-ico--amber { background: #fff4e0; color: #d97706; }
 .bn-panel-ico--green { background: #e8f8ef; color: #16a34a; }
 .bn-panel-ico--pink  { background: #fdf2f8; color: #be185d; }
+
+/* Estados de la tabla: vacío, sin resultados y error */
+.bn-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 52px 24px 56px; }
+.bn-state-ico { width: 68px; height: 68px; border-radius: 20px; display: flex; align-items: center; justify-content: center; background: #eaf0fb; color: #274c8d; margin-bottom: 4px; }
+.bn-state-ico--error { background: #fef2f2; color: #dc2626; }
+.bn-state h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; }
+.bn-state p { margin: 0 0 8px; max-width: 420px; font-size: .86rem; line-height: 1.5; color: #64748b; }
+
+/* Esqueleto de carga */
+.bn-skeleton { padding: 6px 18px 14px; }
+.bn-skeleton-row { display: flex; align-items: center; gap: 18px; padding: 14px 0; border-bottom: 1px solid #f0f3f8; }
+.bn-skeleton-row:last-child { border-bottom: none; }
+.bn-sk { display: block; height: 14px; border-radius: 8px; background: linear-gradient(90deg, #eef2f7 25%, #e2e8f0 50%, #eef2f7 75%); background-size: 200% 100%; animation: bn-shimmer 1.3s infinite linear; }
+.bn-sk--avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; }
+.bn-sk--name { width: 190px; }
+.bn-sk--pill { width: 110px; height: 22px; border-radius: 999px; }
+.bn-sk--short { width: 70px; margin-left: auto; }
+.bn-sk--short + .bn-sk--short { margin-left: 0; }
+@keyframes bn-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
