@@ -179,12 +179,19 @@ export default function BeneficiariosAyuda() {
         formatter: p => {
           const d = deptos[p.name];
           const nombre = NOMBRES_CORTOS[p.name] || p.name;
-          return d ? `{n|${nombre}}
-{v|${metrica === 'monto' ? fmtMontoCorto(d.monto) : d[metrica]}}` : nombre;
+          if (!d) return nombre;
+          // Sobre azul oscuro el texto va en blanco; sobre tonos claros, oscuro
+          const oscuro = d[metrica] / maxMapa >= 0.45;
+          const valor = metrica === 'monto' ? fmtMontoCorto(d.monto) : d[metrica];
+          return oscuro ? `{nl|${nombre}}
+{vl|${valor}}` : `{n|${nombre}}
+{v|${valor}}`;
         },
         rich: {
-          n: { color: '#0f172a', fontSize: 11, fontWeight: 700, lineHeight: 15 },
-          v: { color: '#fff', backgroundColor: '#1d4ed8', borderRadius: 8, padding: [2, 7], fontSize: 11, fontWeight: 700, align: 'center' },
+          n:  { color: '#0f172a', fontSize: 11, fontWeight: 700, lineHeight: 15 },
+          v:  { color: '#fff', backgroundColor: '#1d4ed8', borderRadius: 8, padding: [2, 7], fontSize: 11, fontWeight: 700, align: 'center' },
+          nl: { color: '#ffffff', fontSize: 11, fontWeight: 700, lineHeight: 15 },
+          vl: { color: '#1e3a8a', backgroundColor: '#ffffff', borderRadius: 8, padding: [2, 7], fontSize: 11, fontWeight: 800, align: 'center' },
         },
       },
       itemStyle: { borderColor: '#ffffff', borderWidth: 1, areaColor: '#eef2f7' },
