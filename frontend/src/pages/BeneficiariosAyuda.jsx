@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList } from 'react-icons/fi';
@@ -62,6 +62,8 @@ export default function BeneficiariosAyuda() {
   const [filtroEdad, setFiltroEdad]   = useState('');
   const [filtroSexo, setFiltroSexo]   = useState('');
   const [mapReady, setMapReady] = useState(false);
+  const mapWrapRef = useRef(null);
+  const [mapH, setMapH] = useState(700);
 
   const fetchData = useCallback(async () => {
     try {
@@ -88,6 +90,17 @@ export default function BeneficiariosAyuda() {
       })
       .catch(() => setMapReady(false));
   }, []);
+
+  // La altura del mapa sigue al ancho disponible para que siempre rellene la tarjeta
+  useEffect(() => {
+    const el = mapWrapRef.current;
+    if (!el) return undefined;
+    const ajustar = () => setMapH(Math.round(Math.min(860, Math.max(420, el.clientWidth * 0.7))));
+    ajustar();
+    const ro = new ResizeObserver(ajustar);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [tab, loading, error, mapReady]);
 
   // ── Resumen por departamento ────────────────────────────────
   const deptos = useMemo(() => {
@@ -187,12 +200,12 @@ export default function BeneficiariosAyuda() {
       map: 'honduras',
       roam: false,
       layoutCenter: ['50%', '50%'],
-      layoutSize: '112%',
+      layoutSize: '128%',
       selectedMode: false,
       label: {
         show: true,
         color: '#334155',
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: 600,
         formatter: p => {
           const d = deptos[p.name];
@@ -206,10 +219,10 @@ export default function BeneficiariosAyuda() {
 {v|${valor}}`;
         },
         rich: {
-          n:  { color: '#0f172a', fontSize: 11, fontWeight: 700, lineHeight: 15 },
-          v:  { color: '#fff', backgroundColor: '#1d4ed8', borderRadius: 8, padding: [2, 7], fontSize: 11, fontWeight: 700, align: 'center' },
-          nl: { color: '#ffffff', fontSize: 11, fontWeight: 700, lineHeight: 15 },
-          vl: { color: '#1e3a8a', backgroundColor: '#ffffff', borderRadius: 8, padding: [2, 7], fontSize: 11, fontWeight: 800, align: 'center' },
+          n:  { color: '#0f172a', fontSize: 12, fontWeight: 700, lineHeight: 15 },
+          v:  { color: '#fff', backgroundColor: '#1d4ed8', borderRadius: 8, padding: [2, 7], fontSize: 12, fontWeight: 700, align: 'center' },
+          nl: { color: '#ffffff', fontSize: 12, fontWeight: 700, lineHeight: 15 },
+          vl: { color: '#1e3a8a', backgroundColor: '#ffffff', borderRadius: 8, padding: [2, 7], fontSize: 12, fontWeight: 800, align: 'center' },
         },
       },
       itemStyle: { borderColor: '#ffffff', borderWidth: 1, areaColor: '#eef2f7' },
@@ -349,15 +362,17 @@ export default function BeneficiariosAyuda() {
                     ))}
                   </div>
                 </div>
+                <div ref={mapWrapRef}>
                 {mapReady ? (
                   <ReactECharts
                     option={mapOption}
-                    style={{ height: 700 }}
+                    style={{ height: mapH }}
                     onEvents={{ click: p => { if (p.name && deptos[p.name]) irATabla({ depto: p.name }); } }}
                   />
                 ) : (
                   <div className="bn-empty">Cargando mapa…</div>
                 )}
+                </div>
               </div>
 
               <div className="bn-side">
