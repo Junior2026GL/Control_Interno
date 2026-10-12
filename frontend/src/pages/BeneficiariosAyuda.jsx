@@ -60,6 +60,7 @@ export default function BeneficiariosAyuda() {
   const [metrica, setMetrica]   = useState('ayudas');
   const [filtroDepto, setFiltroDepto] = useState('');
   const [filtroEdad, setFiltroEdad]   = useState('');
+  const [filtroSexo, setFiltroSexo]   = useState('');
   const [mapReady, setMapReady] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -127,6 +128,23 @@ export default function BeneficiariosAyuda() {
     return lista;
   }, [rows]);
   const maxEdad = Math.max(...edades.map(e => e.total), 1);
+
+  // ── Distribución por género ─────────────────────────────────
+  const generos = useMemo(() => {
+    const base = [
+      { key: 'M', label: 'Hombres', total: 0, ayudas: 0, monto: 0 },
+      { key: 'F', label: 'Mujeres', total: 0, ayudas: 0, monto: 0 },
+      { key: 'sin-dato', label: 'Sin dato', total: 0, ayudas: 0, monto: 0 },
+    ];
+    rows.forEach(r => {
+      const g = base.find(x => x.key === (r.sexo || 'sin-dato'));
+      g.total += 1;
+      g.ayudas += Number(r.total_ayudas) || 0;
+      g.monto += Number(r.monto_total) || 0;
+    });
+    return base.filter(g => g.key !== 'sin-dato' || g.total > 0);
+  }, [rows]);
+  const totalGeneros = Math.max(rows.length, 1);
 
   // ── Mapa ────────────────────────────────────────────────────
   const maxMapa = Math.max(...Object.values(deptos).map(d => d[metrica]), 1);
@@ -204,15 +222,16 @@ export default function BeneficiariosAyuda() {
   } : {};
 
   // ── Navegación entre resumen y tabla ────────────────────────
-  const irATabla = ({ depto = '', edad = '' }) => {
+  const irATabla = ({ depto = '', edad = '', sexo = '' }) => {
     setFiltroDepto(depto);
     setFiltroEdad(edad);
+    setFiltroSexo(sexo);
     setBusqueda('');
     setPage(1);
     setTab('beneficiarios');
   };
 
-  const limpiarFiltros = () => { setFiltroDepto(''); setFiltroEdad(''); setPage(1); };
+  const limpiarFiltros = () => { setFiltroDepto(''); setFiltroEdad(''); setFiltroSexo(''); setPage(1); };
 
   // ── Tabla ───────────────────────────────────────────────────
   const filtrados = useMemo(() => {
@@ -220,6 +239,7 @@ export default function BeneficiariosAyuda() {
     const rango = RANGOS_EDAD.find(r => r.key === filtroEdad);
     return rows.filter(r => {
       if (filtroDepto && r.departamento !== filtroDepto) return false;
+      if (filtroSexo && (r.sexo || 'sin-dato') !== filtroSexo) return false;
       if (filtroEdad === 'sin-dato') { if (r.edad !== null && r.edad !== undefined) return false; }
       else if (rango && (r.edad === null || r.edad === undefined || !rango.test(r.edad))) return false;
       if (!q) return true;
@@ -230,7 +250,7 @@ export default function BeneficiariosAyuda() {
         (r.telefono || '').includes(q)
       );
     });
-  }, [rows, busqueda, filtroDepto, filtroEdad]);
+  }, [rows, busqueda, filtroDepto, filtroEdad, filtroSexo]);
 
   useEffect(() => { setPage(1); }, [busqueda]);
 
@@ -238,6 +258,7 @@ export default function BeneficiariosAyuda() {
   const visibles   = filtrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const proximos   = rows.filter(r => r.dias_para_cumple !== null && r.dias_para_cumple <= 30).length;
   const etiquetaEdad = edades.find(e => e.key === filtroEdad)?.label;
+  const etiquetaSexo = generos.find(g => g.key === filtroSexo)?.label;
 
   const exportar = () => {
     const data = filtrados.map(r => ({
@@ -245,6 +266,7 @@ export default function BeneficiariosAyuda() {
       'Nombre':              r.nombre,
       'Teléfono':            r.telefono || '',
       'Departamento':        r.departamento || '',
+      'Sexo':                r.sexo === 'M' ? 'Hombre' : r.sexo === 'F' ? 'Mujer' : '',
       'Fecha de nacimiento': fmtFecha(r.fecha_nacimiento),
       'Edad':                r.edad ?? '',
       'Cumpleaños':          r.cumple || '',
@@ -253,7 +275,7 @@ export default function BeneficiariosAyuda() {
     }));
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(data);
-    ws['!cols'] = [{ wch: 16 }, { wch: 40 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 8 }, { wch: 18 }, { wch: 16 }, { wch: 16 }];
+    ws['!cols'] = [{ wch: 16 }, { wch: 40 }, { wch: 14 }, { wch: 20 }, { wch: 10 }, { wch: 18 }, { wch: 8 }, { wch: 18 }, { wch: 16 }, { wch: 16 }];
     XLSX.utils.book_append_sheet(wb, ws, 'Beneficiarios');
     XLSX.writeFile(wb, 'Beneficiarios_Ayuda_Social.xlsx');
   };
@@ -388,6 +410,32 @@ export default function BeneficiariosAyuda() {
                     ))}
                   </div>
                 </div>
+
+                <div className="bn-card bn-panel">
+                  <div className="bn-panel-head">
+                    <div>
+                      <h2>Distribución por género</h2>
+                      <p>Clic para ver la lista</p>
+                    </div>
+                  </div>
+                  <div className="bn-gen-bar">
+                    {generos.map(g => g.total > 0 && (
+                      <span key={g.key} className={`bn-gen-seg bn-gen-seg--${g.key}`} style={{ width: `${(g.total / totalGeneros) * 100}%` }} />
+                    ))}
+                  </div>
+                  <div className="bn-gen-list">
+                    {generos.map(g => (
+                      <button key={g.key} className="bn-gen-row" onClick={() => g.total > 0 && irATabla({ sexo: g.key })} disabled={g.total === 0}>
+                        <span className={`bn-gen-dot bn-gen-dot--${g.key}`} />
+                        <span className="bn-gen-info">
+                          <span className="bn-gen-name">{g.label}</span>
+                          <span className="bn-gen-sub">{g.ayudas} ayudas · {fmtMontoCorto(g.monto)}</span>
+                        </span>
+                        <span className="bn-gen-num">{g.total}<small>{Math.round((g.total / totalGeneros) * 100)}%</small></span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )
@@ -409,7 +457,7 @@ export default function BeneficiariosAyuda() {
             <span className="bn-count">{filtrados.length} resultado{filtrados.length !== 1 ? 's' : ''}</span>
           </div>
 
-          {(filtroDepto || filtroEdad) && (
+          {(filtroDepto || filtroEdad || filtroSexo) && (
             <div className="bn-filters">
               <span className="bn-filters-lbl">Filtrando por:</span>
               {filtroDepto && (
@@ -420,6 +468,11 @@ export default function BeneficiariosAyuda() {
               {filtroEdad && (
                 <button className="bn-filter-chip" onClick={() => { setFiltroEdad(''); setPage(1); }}>
                   Edad: {etiquetaEdad} <FiX size={12} />
+                </button>
+              )}
+              {filtroSexo && (
+                <button className="bn-filter-chip" onClick={() => { setFiltroSexo(''); setPage(1); }}>
+                  Género: {etiquetaSexo} <FiX size={12} />
                 </button>
               )}
               <button className="bn-filters-clear" onClick={limpiarFiltros}>Quitar todos</button>
@@ -442,6 +495,7 @@ export default function BeneficiariosAyuda() {
                     <th>Teléfono</th>
                     <th>Departamento</th>
                     <th>Fecha nac.</th>
+                    <th>Sexo</th>
                     <th>Edad</th>
                     <th>Cumpleaños</th>
                     <th className="bn-num">Ayudas</th>
@@ -473,6 +527,11 @@ export default function BeneficiariosAyuda() {
                           : <span className="bn-muted">—</span>}
                       </td>
                       <td>{fmtFecha(r.fecha_nacimiento)}</td>
+                      <td>
+                        {r.sexo
+                          ? <span className={`bn-sexo bn-sexo--${r.sexo}`}>{r.sexo === 'M' ? 'Hombre' : 'Mujer'}</span>
+                          : <span className="bn-muted">—</span>}
+                      </td>
                       <td>{r.edad !== null ? <span className="bn-edad">{r.edad} años</span> : <span className="bn-muted">—</span>}</td>
                       <td>
                         {r.cumple ? (

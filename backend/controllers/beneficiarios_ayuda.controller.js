@@ -6,6 +6,14 @@ const MESES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
+// El censo guarda SEXO como texto (MASCULINO/FEMENINO, HOMBRE/MUJER o M/F)
+function parseSexo(valor) {
+  const sx = String(valor || '').trim().toUpperCase();
+  if (sx.startsWith('F') || sx.includes('MUJER')) return 'F';
+  if (sx.startsWith('M') || sx.includes('HOMBRE')) return 'M';
+  return null;
+}
+
 // Guarda/actualiza el beneficiario de una ayuda social (único por DNI) y toma
 // su fecha de nacimiento del censo nacional. Nunca lanza: un fallo aquí no debe
 // impedir que la ayuda se registre.
@@ -14,23 +22,25 @@ exports.registrarDesdeAyuda = async ({ dni, nombre, telefono, departamento }) =>
     if (!dni || !/^\d{13}$/.test(dni)) return;
 
     const [censo] = await db.promise().query(
-      'SELECT FECHA_NACIMIENTO FROM censo_nacional WHERE NUMERO_IDENTIDAD = ? LIMIT 1',
+      'SELECT FECHA_NACIMIENTO, SEXO FROM censo_nacional WHERE NUMERO_IDENTIDAD = ? LIMIT 1',
       [dni]
     );
     const parsed = censo.length ? parseFecha(censo[0].FECHA_NACIMIENTO) : null;
     const fechaNac = parsed
       ? `${parsed.anio}-${String(parsed.mes).padStart(2, '0')}-${String(parsed.dia).padStart(2, '0')}`
       : null;
+    const sexo = censo.length ? parseSexo(censo[0].SEXO) : null;
 
     await db.promise().query(
-      `INSERT INTO beneficiarios_ayuda (dni, nombre, telefono, departamento, fecha_nacimiento)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO beneficiarios_ayuda (dni, nombre, telefono, departamento, sexo, fecha_nacimiento)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
          nombre           = VALUES(nombre),
          telefono         = COALESCE(VALUES(telefono), telefono),
          departamento     = COALESCE(VALUES(departamento), departamento),
+         sexo             = COALESCE(VALUES(sexo), sexo),
          fecha_nacimiento = COALESCE(VALUES(fecha_nacimiento), fecha_nacimiento)`,
-      [dni, nombre || 'SIN NOMBRE', telefono || null, departamento || null, fechaNac]
+      [dni, nombre || 'SIN NOMBRE', telefono || null, departamento || null, sexo, fechaNac]
     );
   } catch (err) {
     console.error('[beneficiarios_ayuda] Error en registrarDesdeAyuda:', err.message);
@@ -75,7 +85,7 @@ function calcularCumple(fechaIso) {
 // GET /api/beneficiarios-ayuda
 exports.getAll = (req, res) => {
   const sql = `
-    SELECT b.id, b.dni, b.nombre, b.telefono, b.departamento,
+    SELECT b.id, b.dni, b.nombre, b.telefono, b.departamento, b.sexo,
            DATE_FORMAT(b.fecha_nacimiento, '%Y-%m-%d') AS fecha_nacimiento,
            COUNT(a.id)                AS total_ayudas,
            COALESCE(SUM(a.monto), 0)  AS monto_total,

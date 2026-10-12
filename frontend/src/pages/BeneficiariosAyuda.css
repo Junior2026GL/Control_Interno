@@ -161,3 +161,28 @@
 @media (max-width: 980px) {
   .bn-resumen { grid-template-columns: 1fr; }
 }
+
+/* Sexo */
+.bn-sexo { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+.bn-sexo--M { background: #eaf0fb; color: #274c8d; }
+.bn-sexo--F { background: #fdf2f8; color: #be185d; }
+
+/* Distribución por género */
+.bn-gen-bar { display: flex; height: 16px; margin: 6px 18px 10px; border-radius: 999px; overflow: hidden; background: #eef2f7; }
+.bn-gen-seg { display: block; height: 100%; transition: width .3s; }
+.bn-gen-seg--M { background: linear-gradient(90deg, #3b6cc7, #274c8d); }
+.bn-gen-seg--F { background: linear-gradient(90deg, #ec4899, #be185d); }
+.bn-gen-seg--sin-dato { background: #cbd5e1; }
+.bn-gen-list { padding: 0 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+.bn-gen-row { display: flex; align-items: center; gap: 12px; padding: 9px 8px; background: none; border: none; border-radius: 10px; text-align: left; cursor: pointer; font-family: inherit; transition: background .12s; }
+.bn-gen-row:hover:not(:disabled) { background: #f4f7fc; }
+.bn-gen-row:disabled { cursor: default; opacity: .6; }
+.bn-gen-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.bn-gen-dot--M { background: #274c8d; }
+.bn-gen-dot--F { background: #be185d; }
+.bn-gen-dot--sin-dato { background: #cbd5e1; }
+.bn-gen-info { flex: 1; display: flex; flex-direction: column; }
+.bn-gen-name { font-weight: 700; color: #0f172a; font-size: 13.5px; }
+.bn-gen-sub { font-size: 11.5px; color: #8a99aa; }
+.bn-gen-num { font-weight: 800; color: #0f172a; font-size: 1.15rem; display: flex; align-items: baseline; gap: 6px; }
+.bn-gen-num small { font-size: 11.5px; font-weight: 700; color: #64748b; }
