@@ -338,7 +338,7 @@ export default function BeneficiariosAyuda() {
               <div className="bn-card bn-map-card">
                 <div className="bn-panel-head">
                   <div>
-                    <h2>Mapa por departamento</h2>
+                    <h2>Mapa por Departamento</h2>
                     <p>Haga clic en un departamento para ver sus beneficiarios</p>
                   </div>
                   <div className="bn-seg">
@@ -364,7 +364,7 @@ export default function BeneficiariosAyuda() {
                 <div className="bn-card bn-panel">
                   <div className="bn-panel-head">
                     <div>
-                      <h2>Departamentos con más {metrica === 'monto' ? 'monto' : metrica === 'ayudas' ? 'ayudas' : 'beneficiarios'}</h2>
+                      <h2>Departamentos con más {metrica === 'monto' ? 'Monto' : metrica === 'ayudas' ? 'Ayudas' : 'Beneficiarios'}</h2>
                       <p>Top 5 · clic para ver la lista</p>
                     </div>
                   </div>
@@ -396,7 +396,7 @@ export default function BeneficiariosAyuda() {
                 <div className="bn-card bn-panel">
                   <div className="bn-panel-head">
                     <div>
-                      <h2>Distribución por edad</h2>
+                      <h2>Distribución por Edad</h2>
                       <p>Clic en una barra para ver la lista</p>
                     </div>
                   </div>
@@ -414,7 +414,7 @@ export default function BeneficiariosAyuda() {
                 <div className="bn-card bn-panel">
                   <div className="bn-panel-head">
                     <div>
-                      <h2>Distribución por género</h2>
+                      <h2>Distribución por Género</h2>
                       <p>Clic para ver la lista</p>
                     </div>
                   </div>

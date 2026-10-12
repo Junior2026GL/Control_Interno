@@ -119,7 +119,7 @@
 .bn-side { display: flex; flex-direction: column; gap: 16px; }
 .bn-panel { padding-bottom: 8px; }
 .bn-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 18px 6px; }
-.bn-panel-head h2 { margin: 0 0 2px; font-size: .92rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: .4px; }
+.bn-panel-head h2 { margin: 0 0 2px; font-size: 1rem; font-weight: 800; color: #0f172a; }
 .bn-panel-head p { margin: 0; font-size: .78rem; color: #64748b; }
 .bn-map-card { padding-bottom: 8px; background: linear-gradient(180deg, #ffffff 0%, #f3f7fd 100%); }
 
