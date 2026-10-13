@@ -47,7 +47,7 @@ exports.getByDiputado = async (req, res) => {
 
     const pres = presRows[0];
     const [ayudas] = await db.promise().query(
-      `SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.beneficiario_dni, a.beneficiario_telefono, a.beneficiario_departamento, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
+      `SELECT a.id, a.fecha, a.concepto, a.beneficiario, a.beneficiario_dni, a.beneficiario_telefono, a.beneficiario_departamento, a.beneficiario_rtn, a.beneficiario_organizacion, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
               a.estado_liquidacion, a.fecha_liquidacion, a.liquidado_por, a.created_at, a.created_by,
               u.nombre AS creado_por_nombre,
               ul.nombre AS liquidado_por_nombre
@@ -312,6 +312,12 @@ exports.createAyuda = async (req, res) => {
   const beneficiario_departamento = sanitize(req.body.beneficiario_departamento) || null;
   if (beneficiario_departamento && !DEPARTAMENTOS_HN.includes(beneficiario_departamento))
     return res.status(400).json({ message: 'Departamento inválido.' });
+  const beneficiario_rtn = (sanitize(req.body.beneficiario_rtn) || '').replace(/\D/g, '') || null;
+  if (beneficiario_rtn && beneficiario_rtn.length !== 14)
+    return res.status(400).json({ message: 'El RTN debe tener 14 dígitos.' });
+  const beneficiario_organizacion = sanitize(req.body.beneficiario_organizacion) || null;
+  if (beneficiario_organizacion && beneficiario_organizacion.length > 200)
+    return res.status(400).json({ message: 'Organización demasiado larga (máx. 200 caracteres).' });
 
   if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha))
     return res.status(400).json({ message: 'Fecha inválida (formato YYYY-MM-DD).' });
@@ -363,9 +369,9 @@ exports.createAyuda = async (req, res) => {
     const numero_cheque_ins = sanitize(req.body.numero_cheque) || null;
     const [result] = await conn.query(
       `INSERT INTO ayudas_sociales
-         (presupuesto_id, diputado_id, fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, beneficiario_departamento, numero_orden, numero_cheque, monto, observaciones, created_by, estado_liquidacion)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sin_liquidar')`,
-      [presId, pres.diputado_id, fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, beneficiario_departamento, numero_orden_ins, numero_cheque_ins, monto, observaciones, req.user?.id || null]
+         (presupuesto_id, diputado_id, fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, beneficiario_departamento, beneficiario_rtn, beneficiario_organizacion, numero_orden, numero_cheque, monto, observaciones, created_by, estado_liquidacion)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sin_liquidar')`,
+      [presId, pres.diputado_id, fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, beneficiario_departamento, beneficiario_rtn, beneficiario_organizacion,numero_orden_ins, numero_cheque_ins, monto, observaciones, req.user?.id || null]
     );
     await conn.commit();
     beneficiarios.registrarDesdeAyuda({
@@ -402,6 +408,12 @@ exports.updateAyuda = async (req, res) => {
   const beneficiario_departamento = sanitize(req.body.beneficiario_departamento) || null;
   if (beneficiario_departamento && !DEPARTAMENTOS_HN.includes(beneficiario_departamento))
     return res.status(400).json({ message: 'Departamento inválido.' });
+  const beneficiario_rtn = (sanitize(req.body.beneficiario_rtn) || '').replace(/\D/g, '') || null;
+  if (beneficiario_rtn && beneficiario_rtn.length !== 14)
+    return res.status(400).json({ message: 'El RTN debe tener 14 dígitos.' });
+  const beneficiario_organizacion = sanitize(req.body.beneficiario_organizacion) || null;
+  if (beneficiario_organizacion && beneficiario_organizacion.length > 200)
+    return res.status(400).json({ message: 'Organización demasiado larga (máx. 200 caracteres).' });
 
   if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha))
     return res.status(400).json({ message: 'Fecha inválida (formato YYYY-MM-DD).' });
@@ -457,8 +469,8 @@ exports.updateAyuda = async (req, res) => {
     const numero_orden_upd  = sanitize(req.body.numero_orden)  || null;
     const numero_cheque_upd = sanitize(req.body.numero_cheque) || null;
     await db.promise().query(
-      'UPDATE ayudas_sociales SET fecha=?, concepto=?, beneficiario=?, beneficiario_dni=?, beneficiario_telefono=?, beneficiario_departamento=?, numero_orden=?, numero_cheque=?, monto=?, observaciones=? WHERE id=? AND presupuesto_id=?',
-      [fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, beneficiario_departamento, numero_orden_upd, numero_cheque_upd, monto, observaciones, aidId, presId]
+      'UPDATE ayudas_sociales SET fecha=?, concepto=?, beneficiario=?, beneficiario_dni=?, beneficiario_telefono=?, beneficiario_departamento=?, beneficiario_rtn=?, beneficiario_organizacion=?, numero_orden=?, numero_cheque=?, monto=?, observaciones=? WHERE id=? AND presupuesto_id=?',
+      [fecha, concepto, beneficiario, beneficiario_dni, beneficiario_telefono, beneficiario_departamento, beneficiario_rtn, beneficiario_organizacion,numero_orden_upd, numero_cheque_upd, monto, observaciones, aidId, presId]
     );
     beneficiarios.registrarDesdeAyuda({
       dni: beneficiario_dni, nombre: beneficiario,

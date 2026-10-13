@@ -63,7 +63,7 @@ const normTxt = t => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().tr
 
 const EMPTY_AYUDA = {
   fecha: new Date().toISOString().slice(0, 10),
-  concepto: '', beneficiario: '', beneficiario_dni: '', beneficiario_telefono: '', beneficiario_departamento: '', numero_orden: '', numero_cheque: '', monto: '', observaciones: '',
+  concepto: '', beneficiario: '', beneficiario_dni: '', beneficiario_telefono: '', beneficiario_departamento: '', beneficiario_rtn: '', beneficiario_organizacion: '', numero_orden: '', numero_cheque: '', monto: '', observaciones: '',
   estado_liquidacion: 'sin_liquidar',
 };
 
@@ -191,6 +191,15 @@ export default function PresupuestoDiputados() {
           />
         </div>
         <div className="ps-form-group">
+          <label><FiHash className="ps-lbl-ico" />RTN</label>
+          <input
+            type="text" inputMode="numeric" maxLength={14}
+            placeholder="14 dígitos"
+            value={ayudaForm.beneficiario_rtn}
+            onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_rtn: e.target.value.replace(/\D/g, '') })}
+          />
+        </div>
+        <div className="ps-form-group">
           <label><FiUser className="ps-lbl-ico" />Nombre completo</label>
           <input
             type="text" maxLength={200}
@@ -222,6 +231,15 @@ export default function PresupuestoDiputados() {
               ))}
             </ul>
           )}
+        </div>
+        <div className="ps-form-group">
+          <label><HiOutlineUsers className="ps-lbl-ico" />Organización / Institución</label>
+          <input
+            type="text" maxLength={200}
+            placeholder="Ej: Patronato, escuela, iglesia…"
+            value={ayudaForm.beneficiario_organizacion}
+            onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_organizacion: e.target.value })}
+          />
         </div>
       </div>
     </div>
@@ -646,6 +664,8 @@ export default function PresupuestoDiputados() {
       beneficiario_dni:      a.beneficiario_dni || '',
       beneficiario_telefono: a.beneficiario_telefono || '',
       beneficiario_departamento: a.beneficiario_departamento || '',
+      beneficiario_rtn: a.beneficiario_rtn || '',
+      beneficiario_organizacion: a.beneficiario_organizacion || '',
       numero_orden:  a.numero_orden  || '',
       numero_cheque: a.numero_cheque || '',
       monto:         a.monto.toString(),
