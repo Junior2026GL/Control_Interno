@@ -2396,7 +2396,13 @@ export default function PresupuestoDiputados() {
                                 <div className="ps-td-registrado">Registrado por: {a.creado_por_nombre}</div>
                               )}
                             </td>
-                            <td className="ps-td-benef">{a.beneficiario || '—'}</td>
+                            <td className="ps-td-benef">
+                              {!a.beneficiario && !a.beneficiario_organizacion && '—'}
+                              {a.beneficiario && <div className="ps-benef-nombre">{a.beneficiario}</div>}
+                              {a.beneficiario_organizacion && (
+                                <div className="ps-benef-org"><HiOutlineUsers className="ps-lbl-ico" />{a.beneficiario_organizacion}</div>
+                              )}
+                            </td>
                             <td className="ps-td-orden">
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
