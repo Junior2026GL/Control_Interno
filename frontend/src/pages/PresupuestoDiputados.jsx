@@ -242,7 +242,7 @@ export default function PresupuestoDiputados() {
           <label><HiOutlineUsers className="ps-lbl-ico" />Organización / Institución</label>
           <input
             type="text" maxLength={200}
-            placeholder="Ej: Patronato, escuela, iglesia…"
+            placeholder="Ej: Alcaldía, patronato, escuela, iglesia…"
             value={ayudaForm.beneficiario_organizacion}
             onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_organizacion: e.target.value })}
           />
