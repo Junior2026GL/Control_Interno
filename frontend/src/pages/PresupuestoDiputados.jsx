@@ -1138,7 +1138,7 @@ export default function PresupuestoDiputados() {
             String(idx + 1),
             formatFecha(a.fecha),
             a.concepto + (a.observaciones ? `\n${a.observaciones}` : ''),
-            a.beneficiario || '—',
+            [a.beneficiario, a.beneficiario_organizacion].filter(Boolean).join('\n') || '—',
             estadoLbl,
             a.creado_por_nombre || '—',
             (+(a.monto || 0)).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -1686,7 +1686,7 @@ export default function PresupuestoDiputados() {
           String(idx + 1),
           formatFecha(a.fecha),
           a.concepto + (a.observaciones ? `\n${a.observaciones}` : ''),
-          a.beneficiario || '—',
+          [a.beneficiario, a.beneficiario_organizacion].filter(Boolean).join('\n') || '—',
           estadoLbl,
           a.creado_por_nombre || '—',
           (+(a.monto || 0)).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -2400,7 +2400,7 @@ export default function PresupuestoDiputados() {
                               {!a.beneficiario && !a.beneficiario_organizacion && '—'}
                               {a.beneficiario && <div className="ps-benef-nombre">{a.beneficiario}</div>}
                               {a.beneficiario_organizacion && (
-                                <div className="ps-benef-org"><HiOutlineUsers className="ps-lbl-ico" />{a.beneficiario_organizacion}</div>
+                                <div className="ps-benef-org">{a.beneficiario_organizacion}</div>
                               )}
                             </td>
                             <td className="ps-td-orden">
