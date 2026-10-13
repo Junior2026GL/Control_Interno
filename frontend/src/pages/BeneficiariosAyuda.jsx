@@ -130,14 +130,12 @@ export default function BeneficiariosAyuda() {
   // ── Distribución por edad ───────────────────────────────────
   const edades = useMemo(() => {
     const out = RANGOS_EDAD.map(r => ({ ...r, total: 0 }));
-    let sinDato = 0;
     rows.forEach(r => {
-      if (r.edad === null || r.edad === undefined) { sinDato += 1; return; }
+      if (r.edad === null || r.edad === undefined) return;
       const rango = out.find(x => x.test(r.edad));
       if (rango) rango.total += 1;
     });
     const lista = out.filter(r => r.key !== 'menor18' || r.total > 0);
-    if (sinDato > 0) lista.push({ key: 'sin-dato', label: 'Sin fecha de nac.', total: sinDato });
     return lista;
   }, [rows]);
   const maxEdad = Math.max(...edades.map(e => e.total), 1);
@@ -155,9 +153,9 @@ export default function BeneficiariosAyuda() {
       g.ayudas += Number(r.total_ayudas) || 0;
       g.monto += Number(r.monto_total) || 0;
     });
-    return base.filter(g => g.key !== 'sin-dato' || g.total > 0);
+    return base.filter(g => g.key !== 'sin-dato');
   }, [rows]);
-  const totalGeneros = Math.max(rows.length, 1);
+  const totalGeneros = Math.max(generos.reduce((s, g) => s + g.total, 0), 1);
 
   // ── Mapa ────────────────────────────────────────────────────
   const maxMapa = Math.max(...Object.values(deptos).map(d => d[metrica]), 1);
