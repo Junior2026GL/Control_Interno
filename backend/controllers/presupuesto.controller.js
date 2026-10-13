@@ -312,9 +312,7 @@ exports.createAyuda = async (req, res) => {
   const beneficiario_departamento = sanitize(req.body.beneficiario_departamento) || null;
   if (beneficiario_departamento && !DEPARTAMENTOS_HN.includes(beneficiario_departamento))
     return res.status(400).json({ message: 'Departamento inválido.' });
-  const beneficiario_rtn = (sanitize(req.body.beneficiario_rtn) || '').replace(/\D/g, '') || null;
-  if (beneficiario_rtn && beneficiario_rtn.length !== 14)
-    return res.status(400).json({ message: 'El RTN debe tener 14 dígitos.' });
+  const beneficiario_rtn = (sanitize(req.body.beneficiario_rtn) || '').replace(/\D/g, '').slice(0, 20) || null;
   const beneficiario_organizacion = sanitize(req.body.beneficiario_organizacion) || null;
   if (beneficiario_organizacion && beneficiario_organizacion.length > 200)
     return res.status(400).json({ message: 'Organización demasiado larga (máx. 200 caracteres).' });
@@ -408,9 +406,7 @@ exports.updateAyuda = async (req, res) => {
   const beneficiario_departamento = sanitize(req.body.beneficiario_departamento) || null;
   if (beneficiario_departamento && !DEPARTAMENTOS_HN.includes(beneficiario_departamento))
     return res.status(400).json({ message: 'Departamento inválido.' });
-  const beneficiario_rtn = (sanitize(req.body.beneficiario_rtn) || '').replace(/\D/g, '') || null;
-  if (beneficiario_rtn && beneficiario_rtn.length !== 14)
-    return res.status(400).json({ message: 'El RTN debe tener 14 dígitos.' });
+  const beneficiario_rtn = (sanitize(req.body.beneficiario_rtn) || '').replace(/\D/g, '').slice(0, 20) || null;
   const beneficiario_organizacion = sanitize(req.body.beneficiario_organizacion) || null;
   if (beneficiario_organizacion && beneficiario_organizacion.length > 200)
     return res.status(400).json({ message: 'Organización demasiado larga (máx. 200 caracteres).' });

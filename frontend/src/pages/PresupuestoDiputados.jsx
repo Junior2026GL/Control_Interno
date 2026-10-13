@@ -232,8 +232,8 @@ export default function PresupuestoDiputados() {
         <div className="ps-form-group ps-benef-full">
           <label><FiHash className="ps-lbl-ico" />RTN</label>
           <input
-            type="text" inputMode="numeric" maxLength={14}
-            placeholder="14 dígitos"
+            type="text" inputMode="numeric" maxLength={20}
+            placeholder=""
             value={ayudaForm.beneficiario_rtn}
             onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_rtn: e.target.value.replace(/\D/g, '') })}
           />
