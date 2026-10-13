@@ -1873,11 +1873,19 @@
 }
 .ps-benef-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px 16px;
 }
+.ps-benef-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+.ps-org-card { border-left-color: #0f766e; }
+.ps-org-card .ps-benef-title { color: #0f766e; }
 @media (max-width: 720px) {
-  .ps-benef-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ps-benef-split { grid-template-columns: minmax(0, 1fr); }
 }
 .ps-benef-grid .ps-form-group { min-width: 0; }
 .ps-benef-grid input { width: 100%; min-width: 0; box-sizing: border-box; }

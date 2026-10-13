@@ -164,6 +164,7 @@ export default function PresupuestoDiputados() {
   };
 
   const renderBeneficiario = () => (
+    <div className="ps-benef-split">
     <div className="ps-benef-card">
       <div className="ps-benef-title"><FiUser className="ps-title-ico" /> Datos del beneficiario</div>
       <div className="ps-benef-grid">
@@ -188,15 +189,6 @@ export default function PresupuestoDiputados() {
             placeholder="9999-9999"
             value={ayudaForm.beneficiario_telefono}
             onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_telefono: e.target.value.replace(/[^\d+\- ]/g, '') })}
-          />
-        </div>
-        <div className="ps-form-group">
-          <label><FiHash className="ps-lbl-ico" />RTN</label>
-          <input
-            type="text" inputMode="numeric" maxLength={14}
-            placeholder="14 dígitos"
-            value={ayudaForm.beneficiario_rtn}
-            onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_rtn: e.target.value.replace(/\D/g, '') })}
           />
         </div>
         <div className="ps-form-group">
@@ -232,7 +224,21 @@ export default function PresupuestoDiputados() {
             </ul>
           )}
         </div>
-        <div className="ps-form-group">
+      </div>
+    </div>
+    <div className="ps-benef-card ps-org-card">
+      <div className="ps-benef-title"><HiOutlineUsers className="ps-title-ico" /> Datos de la organización</div>
+      <div className="ps-benef-grid">
+        <div className="ps-form-group ps-benef-full">
+          <label><FiHash className="ps-lbl-ico" />RTN</label>
+          <input
+            type="text" inputMode="numeric" maxLength={14}
+            placeholder="14 dígitos"
+            value={ayudaForm.beneficiario_rtn}
+            onChange={e => setAyudaForm({ ...ayudaForm, beneficiario_rtn: e.target.value.replace(/\D/g, '') })}
+          />
+        </div>
+        <div className="ps-form-group ps-benef-full">
           <label><HiOutlineUsers className="ps-lbl-ico" />Organización / Institución</label>
           <input
             type="text" maxLength={200}
@@ -242,6 +248,7 @@ export default function PresupuestoDiputados() {
           />
         </div>
       </div>
+    </div>
     </div>
   );
 
