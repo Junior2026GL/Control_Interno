@@ -1,4 +1,9 @@
 /* ViaticosMenu.css — prefijo vm- (reutiliza las clases ct- de Constancias) */
+.ct-type-card-icon--red {
+  background: linear-gradient(135deg, #fdecec, #fbd5d5);
+  color: #b91c1c;
+}
+
 .ct-type-card.vm-disabled {
   opacity: 0.55;
   cursor: not-allowed;

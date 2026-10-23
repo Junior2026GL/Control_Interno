@@ -59,6 +59,7 @@ const MODULOS_LABELS = {
   'estado-liquidacion':      'Estado de Liquidación',
   'fardos-confites':         'Entrega de Fardos de Confites',
   'viaticos-nacionales':     'Viáticos Nacionales',
+  'viaticos-seguridad':      'Viáticos Seguridad de Presidencia',
   'viaticos-reportes':       'Reportes de Viáticos',
 };
 

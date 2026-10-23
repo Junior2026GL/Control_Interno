@@ -59,7 +59,7 @@ export default function App() {
             <Route path="/diputados" element={<ModuleRoute modulo="diputados"><Diputados /></ModuleRoute>} />
             <Route path="/presupuesto-social" element={<ModuleRoute modulo="presupuesto-social"><PresupuestoDiputados /></ModuleRoute>} />
             <Route path="/reportes-presupuesto" element={<ModuleRoute modulo="reportes-presupuesto"><ReportesPresupuesto /></ModuleRoute>} />
-            <Route path="/viaticos" element={<ModuleRoute modulo={['viaticos', 'viaticos-nacionales', 'viaticos-reportes']}><ViaticosMenu /></ModuleRoute>} />
+            <Route path="/viaticos" element={<ModuleRoute modulo={['viaticos', 'viaticos-nacionales', 'viaticos-seguridad', 'viaticos-reportes']}><ViaticosMenu /></ModuleRoute>} />
             <Route path="/viaticos/internacional" element={<ModuleRoute modulo="viaticos"><Viaticos /></ModuleRoute>} />
             <Route path="/constancia-transferencia" element={<ModuleRoute modulo="constancia-transferencia"><ConstanciaTransferencia /></ModuleRoute>} />
             <Route path="/ayudas" element={<ModuleRoute modulo="ayudas"><Ayudas /></ModuleRoute>} />

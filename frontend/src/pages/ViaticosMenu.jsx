@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronRight } from 'react-icons/fi';
-import { LuPlane, LuCar, LuChartColumn, LuLuggage } from 'react-icons/lu';
+import { LuPlane, LuCar, LuChartColumn, LuLuggage, LuShieldCheck } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import './ConstanciaTransferencia.css';
@@ -23,6 +23,15 @@ const OPCIONES = [
     color: 'blue',
     titulo: 'Viáticos Internacionales',
     desc: 'Cuadro de cálculos de viáticos al exterior de diputados — Pagaduría Especial.',
+  },
+  {
+    path: '/viaticos/seguridad-presidencia',
+    modulo: 'viaticos-seguridad',
+    icon: <LuShieldCheck size={26} />,
+    color: 'red',
+    titulo: 'Viáticos Seguridad de Presidencia',
+    desc: 'Próximamente.',
+    deshabilitado: true,
   },
   {
     path: '/viaticos/reportes',
