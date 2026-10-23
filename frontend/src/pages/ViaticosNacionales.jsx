@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useContext, useMemo } from 'react';
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiPrinter,
-  FiUsers, FiRefreshCw, FiEye, FiCalendar, FiDollarSign,
+  FiUsers, FiRefreshCw, FiEye, FiCalendar,
   FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight, FiArrowLeft,
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,13 @@ import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import './Bodegas.css';
 import './ViaticosNacionales.css';
+
+/* Icono de Lempira (la moneda de estos viáticos) */
+function LempiraIcon({ size = 20, style }) {
+  return (
+    <span style={{ fontSize: Math.round(size * 0.62), fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', display: 'inline-block', ...style }}>Lps.</span>
+  );
+}
 
 /* ── Utilidades ──────────────────────────────────────────── */
 function today() { return new Date().toISOString().split('T')[0]; }
@@ -510,7 +517,7 @@ export default function ViaticosNacionales() {
 
         <div className="bod-page-header">
           <div className="bod-page-header__left">
-            <div className="bod-page-icon"><FiDollarSign size={22}/></div>
+            <div className="bod-page-icon"><LempiraIcon size={22}/></div>
             <div>
               <h1 className="bod-page-title">Viaticos Nacionales</h1>
               <p className="bod-page-sub">Recibos de viaticos para empleados — Pagaduria Especial</p>
@@ -529,7 +536,7 @@ export default function ViaticosNacionales() {
             <div className="bod-stat__body"><span className="bod-stat__label">Total Registros</span><span className="bod-stat__value">{registros.length}</span></div>
           </div>
           <div className="bod-stat">
-            <div className="bod-stat__icon bod-stat__icon--green"><FiDollarSign size={20}/></div>
+            <div className="bod-stat__icon bod-stat__icon--green"><LempiraIcon size={20}/></div>
             <div className="bod-stat__body">
               <span className="bod-stat__label">Total Pagado</span>
               <span className="bod-stat__value bod-stat__value--green">{fmtMonto(registros.reduce((s,r)=>s+(parseFloat(r.gran_total)||0),0))}</span>
@@ -570,7 +577,7 @@ export default function ViaticosNacionales() {
           </div>
           <div className="bod-table-wrap">
             {loading?<div className="bod-loading">Cargando registros…</div>
-             :filtered.length===0?<div className="bod-empty"><FiDollarSign size={36} style={{opacity:.3}}/><p>No hay registros.</p></div>
+             :filtered.length===0?<div className="bod-empty"><LempiraIcon size={36} style={{opacity:.3}}/><p>No hay registros.</p></div>
              :(
               <table className="bod-table">
                 <thead><tr>
@@ -637,7 +644,7 @@ export default function ViaticosNacionales() {
               </div>
               <div className="bod-view-body">
                 <div className="bod-view-hero">
-                  <div className="bod-view-hero__icon"><FiDollarSign size={26}/></div>
+                  <div className="bod-view-hero__icon"><LempiraIcon size={26}/></div>
                   <div>
                     <p className="bod-view-hero__name">{viewing.nombre_beneficiario}</p>
                     <p className="bod-view-hero__sub">DNI: {viewing.numero_identidad} · {viewing.cargo}</p>
