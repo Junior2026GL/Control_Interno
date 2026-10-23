@@ -519,7 +519,7 @@ export default function ViaticosNacionales() {
           <div className="bod-page-header__right">
             <button className="bod-btn bod-btn--outline" onClick={() => navigate('/viaticos')}><FiArrowLeft size={15}/> Volver</button>
             <button className="bod-btn bod-btn--outline" onClick={fetchRegistros} title="Actualizar"><FiRefreshCw size={15}/></button>
-            {canEdit && <button className="bod-btn bod-btn--primary" onClick={openNew}><FiPlus size={15}/> Nuevo Recibo</button>}
+            {canEdit && <button className="bod-btn bod-btn--primary" onClick={openNew}><FiPlus size={15}/> Nuevo Viático</button>}
           </div>
         </div>
 

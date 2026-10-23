@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronRight } from 'react-icons/fi';
-import { LuPlane, LuCarFront, LuChartColumn, LuLuggage } from 'react-icons/lu';
+import { LuPlane, LuCar, LuChartColumn, LuLuggage } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import './ConstanciaTransferencia.css';
@@ -11,7 +11,7 @@ const OPCIONES = [
   {
     path: '/viaticos-nacionales',
     modulo: 'viaticos-nacionales',
-    icon: <LuCarFront size={26} />,
+    icon: <LuCar size={26} />,
     color: 'teal',
     titulo: 'Viáticos Nacionales',
     desc: 'Recibos de viáticos para empleados con consulta al censo nacional.',
