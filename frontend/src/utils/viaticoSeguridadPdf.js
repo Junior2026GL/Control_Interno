@@ -119,7 +119,8 @@ function dibujar(doc, rec, logoDataUrl, k) {
 
   cell('MISION', rec.mision, 0, CW); y += RH;
   cell('LUGAR', rec.lugar, 0, CW * 0.6); cell('DEPENDENCIA', rec.dependencia, CW * 0.6, CW * 0.4); y += RH;
-  cell('NOMBRE DE QUIEN RECIBE', (rec.nombre_beneficiario || '').toUpperCase(), 0, CW, 40, V(6.6), true); y += V(6.6);
+  cell('NOMBRE DE QUIEN RECIBE', (rec.nombre_beneficiario || '').toUpperCase(), 0, CW * 0.68, 40, V(6.6), true);
+  cell('IDENTIDAD', rec.numero_identidad, CW * 0.68, CW * 0.32, 22, V(6.6)); y += V(6.6);
   cell('CARGO', rec.cargo, 0, CW / 2); cell('ENCARGADO DE LA MISION', rec.encargado_mision, CW / 2, CW / 2, 40); y += RH;
   const PL = 34, q = (CW - PL) / 4;
   doc.setFillColor(...GRIS); doc.rect(M, y, PL, RH, 'F');
@@ -238,20 +239,26 @@ function dibujar(doc, rec, logoDataUrl, k) {
   });
 
   /* ─ FIRMA ─ */
-  if (y > H - V(20) - 6) { doc.addPage(); y = M + 6; }
-  const gapFirma = 8, boxW = 62, leftW = CW - boxW - gapFirma, lblW = 24, boxH = V(12), fbX = M + leftW + gapFirma;
-  const FR = V(7.5);
-  doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(F(8)); doc.setTextColor(...NEGRO);
-  doc.text('NOMBRE:', M, y + FR * 0.62);
-  doc.setFont('helvetica', 'normal'); doc.text(sa((rec.nombre_beneficiario || '').toUpperCase()), M + lblW, y + FR * 0.62);
-  doc.line(M + lblW, y + FR * 0.8, M + leftW, y + FR * 0.8);
-  doc.setFont('helvetica', 'bold'); doc.text('IDENTIDAD:', M, y + FR * 1.62);
-  doc.setFont('helvetica', 'normal'); doc.text(sa(rec.numero_identidad || ''), M + lblW, y + FR * 1.62);
-  doc.line(M + lblW, y + FR * 1.8, M + leftW, y + FR * 1.8);
-  doc.rect(fbX, y, boxW, boxH);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(F(7.5));
-  doc.text('FIRMA', fbX + boxW / 2, y + boxH + V(3.6), { align: 'center' });
+  const FR = V(8.5);                       // alto de cada renglón de firma
+  if (y > H - M - FR * 3) { doc.addPage(); y = M + 6; }
+  const lblW = 24, lineW = 70;              // líneas cortas: NOMBRE, IDENTIDAD y FIRMA
+  doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3); doc.setTextColor(...NEGRO);
+  const renglon = (i, etiqueta, valor) => {
+    const base = y + FR * (i + 0.75);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(F(8));
+    doc.text(etiqueta, M, base);
+    if (valor) {
+      doc.setFont('helvetica', 'normal');
+      let fs = F(8);
+      doc.setFontSize(fs);
+      while (fs > 5 && doc.getTextWidth(valor) > lineW - 1) { fs -= 0.5; doc.setFontSize(fs); }
+      doc.text(valor, M + lblW, base - 0.8);
+    }
+    doc.line(M + lblW, base + 0.8, M + lblW + lineW, base + 0.8);
+  };
+  renglon(0, 'NOMBRE:', sa((rec.nombre_beneficiario || '').toUpperCase()));
+  renglon(1, 'IDENTIDAD:', sa(rec.numero_identidad || ''));
+  renglon(2, 'FIRMA:', '');
 }
 
 /* Prueba escalas de mayor a menor hasta que todo quepa en una hoja. */
