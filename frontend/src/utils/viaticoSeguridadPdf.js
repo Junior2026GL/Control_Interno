@@ -240,11 +240,12 @@ function dibujar(doc, rec, logoDataUrl, k) {
 
   /* ─ FIRMA ─ */
   const FR = V(8.5);                       // alto de cada renglón de firma
-  if (y > H - M - FR * 3) { doc.addPage(); y = M + 6; }
+  const ESPACIO_FIRMA = V(9);               // espacio extra para firmar a mano
+  if (y > H - M - FR * 3 - ESPACIO_FIRMA) { doc.addPage(); y = M + 6; }
   const lblW = 24, lineW = 70;              // líneas cortas: NOMBRE, IDENTIDAD y FIRMA
   doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3); doc.setTextColor(...NEGRO);
-  const renglon = (i, etiqueta, valor) => {
-    const base = y + FR * (i + 0.75);
+  const renglon = (i, etiqueta, valor, extra = 0) => {
+    const base = y + FR * (i + 0.75) + extra;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(F(8));
     doc.text(etiqueta, M, base);
     if (valor) {
@@ -258,7 +259,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   };
   renglon(0, 'NOMBRE:', sa((rec.nombre_beneficiario || '').toUpperCase()));
   renglon(1, 'IDENTIDAD:', sa(rec.numero_identidad || ''));
-  renglon(2, 'FIRMA:', '');
+  renglon(2, 'FIRMA:', '', ESPACIO_FIRMA);
 }
 
 /* Prueba escalas de mayor a menor hasta que todo quepa en una hoja. */
