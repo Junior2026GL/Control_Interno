@@ -94,8 +94,8 @@ function dibujar(doc, rec, logoDataUrl, k) {
   doc.text('Recibi de la Pagaduria Especial, la cantidad de:', M + 2, y + RB * 0.36);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(F(8.5)); doc.setTextColor(...AZUL);
   doc.text(doc.splitTextToSize(letras, CW - 60)[0] || letras, M + 2, y + RB * 0.80);
-  doc.setFontSize(F(10));
-  doc.text(`(L ${miles(montoVal)})`, M + CW - 2, y + RB * 0.72, { align: 'right' });
+  doc.setFontSize(F(14));
+  doc.text(`(L ${miles(montoVal)})`, M + CW - 2, y + RB * 0.70, { align: 'right' });
   y += RB + V(1);
 
   /* ─ CAMPOS ─ */
