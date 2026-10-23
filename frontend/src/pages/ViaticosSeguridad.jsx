@@ -526,7 +526,7 @@ export default function ViaticosSeguridad() {
 
         {/* Modal Crear/Editar */}
         {modal && (
-          <div className="bod-modal-overlay" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
+          <div className="bod-modal-overlay">
             <div className="bod-modal vn-modal vs-modal">
               <div className="bod-modal__header">
                 <h2 className="bod-modal__title">{editing ? 'Editar Recibo de Viaticos' : 'Nuevo Recibo de Viaticos'}</h2>
