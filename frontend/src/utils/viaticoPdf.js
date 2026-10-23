@@ -364,7 +364,7 @@ export async function generarPdfViatico(v, nombreUsuario) {
   const obsDetalle  = (v.obs_detalle || '').toUpperCase();
   const PILL_VALS   = [
     '$' + totalUSD.toFixed(2),
-    tasa.toFixed(2),
+    tasa.toFixed(4),
     'L ' + lps.toLocaleString('es-HN', { minimumFractionDigits: 2 }),
     obsDetalle,
   ];

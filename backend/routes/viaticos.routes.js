@@ -6,6 +6,9 @@ const ctrl        = require('../controllers/viaticos.controller');
 // Buscar diputado por DNI (autocompletar)
 router.get('/diputado/:identidad', verifyToken, ctrl.getByDNI);
 
+// Tipo de cambio oficial (BCH)
+router.get('/tipo-cambio', verifyToken, ctrl.getTipoCambio);
+
 // CRUD viáticos
 router.get('/',    verifyToken, ctrl.getAll);
 router.get('/:id', verifyToken, ctrl.getOne);

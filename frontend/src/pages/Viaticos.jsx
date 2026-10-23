@@ -116,17 +116,11 @@ export default function Viaticos() {
   const fetchTipoCambio = useCallback(async () => {
     setTcLoading(true); setTcError(false);
     try {
-      const res = await fetch('https://open.er-api.com/v6/latest/USD');
-      const json = await res.json();
-      const hnl = json?.rates?.HNL;
-      if (hnl) {
-        setTipoCambio(hnl);
-        if (json.time_last_update_utc) {
-          setTcUpdated(new Date(json.time_last_update_utc).toLocaleString('es-HN', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          }));
-        }
+      const res = await api.get('/viaticos/tipo-cambio', { headers: authHeaders() });
+      const { compra, venta, fecha } = res.data;
+      if (venta) {
+        setTipoCambio({ compra, venta });
+        setTcUpdated(formatDate(fecha));
       } else setTcError(true);
     } catch { setTcError(true); }
     finally { setTcLoading(false); }
@@ -292,7 +286,7 @@ export default function Viaticos() {
   const totalLPS  = totalUSD * (parseFloat(form.tasa_cambio) || 0);
 
   const openModal = () => {
-    setForm({ ...buildEmptyForm(me?.nombre), tasa_cambio: tipoCambio ? tipoCambio.toFixed(2) : '' });
+    setForm({ ...buildEmptyForm(me?.nombre), tasa_cambio: tipoCambio ? tipoCambio.venta.toFixed(4) : '' });
     setEditingId(null);
     setDniError(''); setFormErr('');
     setModal(true);
@@ -370,20 +364,20 @@ export default function Viaticos() {
               <div className="vt-tc-item vt-tc-compra">
                 <FiArrowDown size={13}/>
                 <span className="vt-tc-label">Compra</span>
-                <span className="vt-tc-val">L {(tipoCambio * 0.997).toFixed(4)}</span>
+                <span className="vt-tc-val">L {tipoCambio.compra.toFixed(4)}</span>
               </div>
               <div className="vt-tc-sep"/>
               <div className="vt-tc-item vt-tc-venta">
                 <FiArrowUp size={13}/>
                 <span className="vt-tc-label">Venta</span>
-                <span className="vt-tc-val">L {(tipoCambio * 1.003).toFixed(4)}</span>
+                <span className="vt-tc-val">L {tipoCambio.venta.toFixed(4)}</span>
               </div>
             </div>
           ) : null}
           <button className="vt-tc-refresh" onClick={fetchTipoCambio} disabled={tcLoading} title="Actualizar">
             <FiRefreshCw size={13}/>
           </button>
-          {tcUpdated && <span className="vt-tc-updated">Actualizado: {tcUpdated}</span>}
+          {tcUpdated && <span className="vt-tc-updated">BCH al {tcUpdated}</span>}
         </div>
 
         {/* ── Buscador ── */}
@@ -697,7 +691,7 @@ export default function Viaticos() {
                         <label>Tasa de Cambio (L por $1) <span className="vt-req">*</span></label>
                         <div className="vt-input-icon">
                           <FiDollarSign size={13} />
-                          <input type="number" step="0.01" min="0" value={form.tasa_cambio}
+                          <input type="number" step="0.0001" min="0" value={form.tasa_cambio}
                             onChange={e => setForm({...form, tasa_cambio: e.target.value})}
                             placeholder="Ej: 26.63" />
                         </div>

@@ -27,6 +27,42 @@ function insertDia(viatico_id, d, cb) {
   );
 }
 
+// ── Tipo de cambio oficial (Banco Central de Honduras) ─────────────
+// Lista pública del BCH con el tipo de cambio de referencia (valor de compra).
+// El precio de venta es la referencia + 0.5 %, igual al que publican los bancos.
+const BCH_TCR_URL =
+  "https://www.bch.hn/_api/web/lists(guid'08a9876c-c6f1-4e73-8d13-0039b0442fab')/items" +
+  '?$select=Fecha,Valor&$orderby=Fecha%20desc&$top=1';
+const TC_CACHE_MS = 30 * 60 * 1000;
+let tcCache = null; // { at, data }
+
+// GET /api/viaticos/tipo-cambio — tipo de cambio USD/HNL del BCH
+exports.getTipoCambio = async (req, res) => {
+  if (tcCache && Date.now() - tcCache.at < TC_CACHE_MS) return res.json(tcCache.data);
+  try {
+    const r = await fetch(BCH_TCR_URL, {
+      headers: { Accept: 'application/json;odata=nometadata', 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!r.ok) throw new Error(`BCH respondió ${r.status}`);
+    const item = (await r.json()).value?.[0];
+    const compra = Number(item?.Valor);
+    if (!compra) throw new Error('Respuesta del BCH sin valor.');
+    const data = {
+      fecha: String(item.Fecha).substring(0, 10),
+      compra: Math.round(compra * 10000) / 10000,
+      venta:  Math.round(compra * 1.005 * 10000) / 10000,
+      fuente: 'Banco Central de Honduras',
+    };
+    tcCache = { at: Date.now(), data };
+    res.json(data);
+  } catch (err) {
+    console.error('[viaticos] tipo de cambio BCH:', err.message);
+    if (tcCache) return res.json(tcCache.data); // último valor conocido
+    res.status(502).json({ message: 'No se pudo obtener el tipo de cambio del BCH.' });
+  }
+};
+
 // GET /api/viaticos/diputado/:identidad — buscar diputado por DNI
 exports.getByDNI = (req, res) => {
   const identidad = sanitize(req.params.identidad);

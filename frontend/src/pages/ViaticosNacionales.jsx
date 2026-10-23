@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback, useContext, useMemo } from 'react';
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiPrinter,
   FiUsers, FiRefreshCw, FiEye, FiCalendar, FiDollarSign,
-  FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
+  FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight, FiArrowLeft,
 } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api from '../api/axios';
@@ -314,6 +315,7 @@ async function generarReciboViatico(rec, logoDataUrl) {
 ══════════════════════════════════════════════════════════ */
 export default function ViaticosNacionales() {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const [registros, setRegistros]   = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -515,6 +517,7 @@ export default function ViaticosNacionales() {
             </div>
           </div>
           <div className="bod-page-header__right">
+            <button className="bod-btn bod-btn--outline" onClick={() => navigate('/viaticos')}><FiArrowLeft size={15}/> Volver</button>
             <button className="bod-btn bod-btn--outline" onClick={fetchRegistros} title="Actualizar"><FiRefreshCw size={15}/></button>
             {canEdit && <button className="bod-btn bod-btn--primary" onClick={openNew}><FiPlus size={15}/> Nuevo Recibo</button>}
           </div>
