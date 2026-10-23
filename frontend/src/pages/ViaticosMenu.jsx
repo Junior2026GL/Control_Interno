@@ -30,8 +30,7 @@ const OPCIONES = [
     icon: <LuShieldCheck size={26} />,
     color: 'red',
     titulo: 'Viáticos Seguridad de Presidencia',
-    desc: 'Próximamente.',
-    deshabilitado: true,
+    desc: 'Recibos de viáticos del personal de seguridad de Presidencia, en Lempiras.',
   },
   {
     path: '/viaticos/reportes',

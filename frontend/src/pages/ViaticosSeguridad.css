@@ -1,0 +1,52 @@
+/* ViaticosSeguridad.css — prefijo vs- (reutiliza bod- y vn-) */
+.vs-modal { max-width: 1040px !important; width: 96vw !important; }
+
+.vs-lps { font-size: 12px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+
+.vs-block { display: flex; flex-direction: column; gap: .5rem; }
+
+.vs-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .7rem;
+}
+.vs-tools .bod-label { margin: 0; }
+.vs-tool-input { width: 130px; height: 34px; padding: .3rem .6rem !important; }
+.vs-hint { font-size: .72rem; color: #6b7280; flex-basis: 100%; }
+
+.vs-scroll { overflow-x: auto; border: 1px solid #dce8f8; border-radius: 8px; }
+.vs-tbl { border-collapse: collapse; width: 100%; font-size: .78rem; }
+.vs-tbl th {
+  background: #274C8D; color: #fff; font-size: .68rem; font-weight: 800;
+  text-transform: uppercase; padding: .4rem .4rem; text-align: center; white-space: nowrap;
+}
+.vs-tbl td { padding: .25rem .3rem; border-top: 1px solid #e6eefb; vertical-align: middle; }
+.vs-tbl tbody tr:nth-child(even) { background: #f7faff; }
+.vs-th-dia { min-width: 74px; line-height: 1.25; }
+
+.vs-in { height: 32px; padding: .25rem .45rem !important; font-size: .8rem; }
+.vs-in--name  { min-width: 170px; }
+.vs-in--cargo { min-width: 120px; }
+.vs-in--cant  { width: 56px; text-align: center; }
+.vs-in--monto { width: 74px; text-align: right; }
+
+.vs-td-total { font-weight: 700; color: #16a34a; text-align: right; white-space: nowrap; padding-right: .6rem !important; }
+.vs-del {
+  border: none; background: transparent; color: #b91c1c; cursor: pointer;
+  width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+}
+.vs-del:hover:not(:disabled) { background: #fee2e2; }
+.vs-del:disabled { opacity: .3; cursor: not-allowed; }
+.vs-add { align-self: flex-start; }
+
+.vs-resumen {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem;
+}
+.vs-resumen div {
+  display: flex; flex-direction: column; gap: 2px; padding: .5rem .7rem;
+  background: #f5f8fd; border: 1px solid #dce8f8; border-radius: 8px;
+}
+.vs-resumen span { font-size: .66rem; font-weight: 700; color: #6b7280; text-transform: uppercase; }
+.vs-resumen strong { font-size: .9rem; color: #274C8D; }
+
+@media (max-width: 720px) {
+  .vs-resumen { grid-template-columns: repeat(2, 1fr); }
+}
