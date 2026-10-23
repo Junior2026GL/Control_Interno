@@ -5,6 +5,7 @@ import {
   FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight, FiArrowLeft,
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { LuCar } from 'react-icons/lu';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api from '../api/axios';
@@ -517,7 +518,7 @@ export default function ViaticosNacionales() {
 
         <div className="bod-page-header">
           <div className="bod-page-header__left">
-            <div className="bod-page-icon"><LempiraIcon size={22}/></div>
+            <div className="bod-page-icon"><LuCar size={26}/></div>
             <div>
               <h1 className="bod-page-title">Viaticos Nacionales</h1>
               <p className="bod-page-sub">Recibos de viaticos para empleados — Pagaduria Especial</p>
