@@ -36,7 +36,6 @@ const MODULOS_LABELS = {
   'asistente-ia':            'Asistente IA',
   'diputados':               'Diputados',
   'viaticos':                'Viáticos',
-  'viaticos-diputados':      'Viáticos Diputados',
   'reportes-presupuesto':    'Reportes Presupuesto',
   'presupuesto':             'Presupuesto Social',
   'presupuesto-social':      'Presupuesto Social',

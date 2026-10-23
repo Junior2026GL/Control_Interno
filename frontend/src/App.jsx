@@ -27,7 +27,6 @@ import OrdenChecklist from './pages/OrdenChecklist';
 import Bodegas from './pages/Bodegas';
 import FardosConfites from './pages/FardosConfites';
 import ViaticosNacionales from './pages/ViaticosNacionales';
-import ViaticosDiputados from './pages/ViaticosDiputados';
 import BusquedaAyudas from './pages/BusquedaAyudas';
 import OrdenesPago from './pages/OrdenesPago';
 import EstadoLiquidacion from './pages/EstadoLiquidacion';
@@ -71,7 +70,6 @@ export default function App() {
             <Route path="/bodegas" element={<ModuleRoute modulo="bodegas"><Bodegas /></ModuleRoute>} />
             <Route path="/fardos-confites" element={<ModuleRoute modulo="fardos-confites"><FardosConfites /></ModuleRoute>} />
             <Route path="/viaticos-nacionales" element={<ModuleRoute modulo="viaticos-nacionales"><ViaticosNacionales /></ModuleRoute>} />
-            <Route path="/viaticos-diputados" element={<ModuleRoute modulo="viaticos-diputados"><ViaticosDiputados /></ModuleRoute>} />
             <Route path="/busqueda-ayudas" element={<ModuleRoute modulo="busqueda-ayudas"><BusquedaAyudas /></ModuleRoute>} />
             <Route path="/ordenes-pago" element={<ModuleRoute modulo="ordenes-pago"><OrdenesPago /></ModuleRoute>} />
             <Route path="/imprimir-firma" element={<ModuleRoute modulo="imprimir-firma"><ImprimirFirma /></ModuleRoute>} />

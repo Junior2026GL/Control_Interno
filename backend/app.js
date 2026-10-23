@@ -73,7 +73,6 @@ app.use('/api/auditoria',       require('./routes/auditoria.routes'));
 app.use('/api/diputados',       require('./routes/diputados.routes'));
 app.use('/api/presupuesto',     require('./routes/presupuesto.routes'));
 app.use('/api/viaticos',             require('./routes/viaticos.routes'));
-app.use('/api/viaticos-diputados',   require('./routes/viaticos_diputados.routes'));
 app.use('/api/constancias',     require('./routes/constancias.routes'));
 app.use('/api/constancias-liquidacion', require('./routes/constanciasLiquidacion.routes'));
 app.use('/api/ayudas',           require('./routes/ayudas.routes'));
