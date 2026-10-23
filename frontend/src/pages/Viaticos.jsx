@@ -2,8 +2,9 @@ import { useEffect, useState, useContext, useCallback } from 'react';
 import {
   FiPlus, FiX, FiSearch, FiPrinter, FiTrash2, FiEye,
   FiUser, FiCalendar, FiMapPin, FiDollarSign, FiEdit3,
-  FiRefreshCw, FiArrowDown, FiArrowUp,
+  FiRefreshCw, FiArrowDown, FiArrowUp, FiArrowLeft,
 } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import { LuFileSpreadsheet } from 'react-icons/lu';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -73,6 +74,7 @@ function buildEmptyForm(userName) {
 
 export default function Viaticos() {
   const { user: me } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const [lista, setLista]       = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -342,8 +344,11 @@ export default function Viaticos() {
         {/* ── Header ── */}
         <div className="vt-header">
           <div>
-            <h1><LuFileSpreadsheet size={26} /> Cuadro de Viáticos</h1>
+            <h1><LuFileSpreadsheet size={26} /> Cuadro de Viáticos Internacionales</h1>
             <p>Pagaduría Especial — Congreso Nacional</p>
+            <button type="button" className="vt-btn-cancel" style={{ marginTop: 10 }} onClick={() => navigate('/viaticos')}>
+              <FiArrowLeft size={14} /> Volver
+            </button>
           </div>
           <button className="vt-btn-primary" onClick={openModal}>
             <FiPlus size={15} /> Nuevo Viático

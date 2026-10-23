@@ -7,6 +7,6 @@ export default function ModuleRoute({ modulo, children }) {
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (user.rol === 'SUPER_ADMIN') return children;
-  if (user.modulos?.includes(modulo)) return children;
+  if ([].concat(modulo).some(m => user.modulos?.includes(m))) return children;
   return <Navigate to="/dashboard" replace />;
 }
