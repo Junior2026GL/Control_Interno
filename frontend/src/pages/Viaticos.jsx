@@ -120,7 +120,8 @@ export default function Viaticos() {
       const { compra, venta, fecha } = res.data;
       if (venta) {
         setTipoCambio({ compra, venta });
-        setTcUpdated(formatDate(fecha));
+        const hora = new Date().toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
+        setTcUpdated(`BCH ${formatDate(fecha)} · Actualizado ${hora}`);
       } else setTcError(true);
     } catch { setTcError(true); }
     finally { setTcLoading(false); }
@@ -377,7 +378,7 @@ export default function Viaticos() {
           <button className="vt-tc-refresh" onClick={fetchTipoCambio} disabled={tcLoading} title="Actualizar">
             <FiRefreshCw size={13}/>
           </button>
-          {tcUpdated && <span className="vt-tc-updated">BCH al {tcUpdated}</span>}
+          {tcUpdated && <span className="vt-tc-updated">{tcUpdated}</span>}
         </div>
 
         {/* ── Buscador ── */}
