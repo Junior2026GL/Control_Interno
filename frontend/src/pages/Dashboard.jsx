@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   LuWallet, LuUsers, LuClipboardCheck,
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
-  LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuHandCoins, LuHeartHandshake,
+  LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuPlane, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
   LuFileCheck2, LuCake, LuChartNoAxesCombined, LuPrinter, LuReceiptText,
 } from 'react-icons/lu';
@@ -71,7 +71,7 @@ const ALL_MODULES = [
     label: 'Viáticos',
     clave: 'viaticos',
     description: 'Cuadro de cálculos de viáticos — Pagaduía Especial',
-    icon: LuFileSpreadsheet,
+    icon: LuPlane,
     gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
   },
   {

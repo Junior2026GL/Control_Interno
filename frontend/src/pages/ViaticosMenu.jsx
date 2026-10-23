@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiDollarSign, FiGlobe, FiMapPin, FiBarChart2, FiChevronRight } from 'react-icons/fi';
+import { FiChevronRight } from 'react-icons/fi';
+import { LuPlane, LuCarFront, LuChartColumn, LuLuggage } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import './ConstanciaTransferencia.css';
@@ -10,7 +11,7 @@ const OPCIONES = [
   {
     path: '/viaticos-nacionales',
     modulo: 'viaticos-nacionales',
-    icon: <FiMapPin size={24} />,
+    icon: <LuCarFront size={26} />,
     color: 'teal',
     titulo: 'Viáticos Nacionales',
     desc: 'Recibos de viáticos para empleados con consulta al censo nacional.',
@@ -18,7 +19,7 @@ const OPCIONES = [
   {
     path: '/viaticos/internacional',
     modulo: 'viaticos',
-    icon: <FiGlobe size={24} />,
+    icon: <LuPlane size={26} />,
     color: 'blue',
     titulo: 'Viáticos Internacionales',
     desc: 'Cuadro de cálculos de viáticos al exterior de diputados — Pagaduría Especial.',
@@ -26,7 +27,7 @@ const OPCIONES = [
   {
     path: '/viaticos/reportes',
     modulo: 'viaticos-reportes',
-    icon: <FiBarChart2 size={24} />,
+    icon: <LuChartColumn size={26} />,
     color: 'amber',
     titulo: 'Reportes de Viáticos',
     desc: 'Próximamente.',
@@ -46,7 +47,7 @@ export default function ViaticosMenu() {
       <Navbar />
       <div className="ct-page">
         <div className="ct-banner">
-          <div className="ct-banner-icon"><FiDollarSign size={26} /></div>
+          <div className="ct-banner-icon"><LuLuggage size={26} /></div>
           <div>
             <h1 className="ct-banner-title">Viáticos</h1>
             <p className="ct-banner-sub">Seleccione el tipo de viático con el que desea trabajar</p>
