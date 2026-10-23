@@ -64,10 +64,10 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const combustible  = rec.detalle_combustible || [];
 
   /* ─ ENCABEZADO ─ */
-  const HH = V(18), LW = 28, TW = 80, MIDW = CW - LW - TW;
+  const HH = V(23), LW = HH + 8, TW = 80, MIDW = CW - LW - TW;
   doc.setFillColor(255, 255, 255); doc.setDrawColor(...AZUL); doc.setLineWidth(0.5);
   doc.rect(M, y, CW, HH, 'FD');
-  if (logoDataUrl) { const s = HH - 2; doc.addImage(logoDataUrl, 'PNG', M + (LW - s) / 2, y + 1, s, s); }
+  if (logoDataUrl) { const s = HH - 0.8; doc.addImage(logoDataUrl, 'PNG', M + (LW - s) / 2, y + 0.4, s, s); }
   doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.3);
   doc.line(M + LW, y + 2, M + LW, y + HH - 2);
   const mX = M + LW + MIDW / 2;
