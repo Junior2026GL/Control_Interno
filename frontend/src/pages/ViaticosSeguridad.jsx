@@ -3,6 +3,7 @@ import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiPrinter,
   FiUsers, FiRefreshCw, FiEye, FiCalendar, FiArrowLeft,
   FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
+  FiMapPin, FiBriefcase, FiUser,
 } from 'react-icons/fi';
 import { LuShieldCheck } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
@@ -108,6 +109,22 @@ async function cargarLogo() {
       img.src = blobUrl;
     });
   } catch { return null; }
+}
+
+/* Tarjeta numerada del formulario */
+function Seccion({ n, titulo, desc, children }) {
+  return (
+    <section className="vs-sec">
+      <div className="vs-sec-head">
+        <span className="vs-step">{n}</span>
+        <div>
+          <h3 className="vs-sec-title">{titulo}</h3>
+          <p className="vs-sec-desc">{desc}</p>
+        </div>
+      </div>
+      <div className="vs-sec-body">{children}</div>
+    </section>
+  );
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -527,186 +544,240 @@ export default function ViaticosSeguridad() {
         {/* Modal Crear/Editar */}
         {modal && (
           <div className="bod-modal-overlay">
-            <div className="bod-modal vn-modal vs-modal">
+            <div className="bod-modal vs-modal">
               <div className="bod-modal__header">
-                <h2 className="bod-modal__title">{editing ? 'Editar Recibo de Viaticos' : 'Nuevo Recibo de Viaticos'}</h2>
+                <div className="vs-modal-title">
+                  <span className="vs-modal-icon"><LuShieldCheck size={20} /></span>
+                  <div>
+                    <h2 className="bod-modal__title">{editing ? 'Editar Recibo de Viaticos' : 'Nuevo Recibo de Viaticos'}</h2>
+                    <p className="vs-modal-sub">Seguridad de Presidencia — Pagaduria Especial</p>
+                  </div>
+                </div>
                 <button className="bod-btn bod-btn--ghost" onClick={closeModal}><FiX size={18} /></button>
               </div>
-              <form className="bod-modal__body" onSubmit={handleSave} noValidate>
 
-                {/* DNI */}
-                <div className="vn-dni-section">
-                  <div className="vn-dni-title">IDENTIFICACION DE QUIEN RECIBE</div>
-                  <div className="vn-dni-row">
-                    <div className="vn-dni-field">
-                      <label className="bod-label">Numero de Identidad (DNI) *</label>
-                      <div className="vn-dni-input-wrap">
-                        <input className={`bod-input vn-dni-input ${formErrors.numero_identidad ? 'bod-input--error' : ''}`}
+              <form className="vs-form" onSubmit={handleSave} noValidate>
+                <div className="vs-form-body">
+
+                  {/* 1 · Quien recibe */}
+                  <Seccion n={1} titulo="Datos de quien recibe" desc="Identificacion de la persona que recibe el viatico">
+                    <div className="vs-field">
+                      <label className="vs-label">Numero de Identidad (DNI) <span className="vs-req">*</span></label>
+                      <div className="vs-dni-row">
+                        <input className={`vs-input ${formErrors.numero_identidad ? 'vs-input--error' : ''}`}
                           name="numero_identidad" value={form.numero_identidad}
                           onChange={e => { handleField(e); setDniError(''); }}
                           onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleDniSearch())}
                           placeholder="0000-0000-00000  (13 digitos)" maxLength={20} />
-                        <button type="button" className="bod-btn bod-btn--primary vn-btn-buscar" onClick={handleDniSearch} disabled={dniLoading}>
+                        <button type="button" className="vs-btn-buscar" onClick={handleDniSearch} disabled={dniLoading}>
                           {dniLoading ? <span className="bod-btn-spinner" /> : <FiSearch size={15} />}
                           {dniLoading ? ' Buscando…' : ' Buscar'}
                         </button>
                       </div>
-                      {formErrors.numero_identidad && <span className="bod-error">{formErrors.numero_identidad}</span>}
-                      {dniError && <span className="bod-error">{dniError}</span>}
+                      {formErrors.numero_identidad && <span className="vs-error">{formErrors.numero_identidad}</span>}
+                      {dniError && <span className="vs-error">{dniError}</span>}
                     </div>
-                    <div className="vn-nombre-found">
-                      <label className="bod-label">Nombre de quien recibe *</label>
-                      <div className={`vn-nombre-display ${form.nombre_beneficiario ? 'vn-nombre-display--found' : ''}`}>
-                        {form.nombre_beneficiario || 'Busque el DNI para auto-completar el nombre'}
+                    <div className="vs-row-2">
+                      <div className="vs-field">
+                        <label className="vs-label">Nombre de quien recibe <span className="vs-req">*</span></label>
+                        <div className={`vs-nombre ${form.nombre_beneficiario ? 'vs-nombre--ok' : ''}`}>
+                          {form.nombre_beneficiario || 'Busque el DNI para auto-completar el nombre'}
+                        </div>
+                        {formErrors.nombre_beneficiario && <span className="vs-error">{formErrors.nombre_beneficiario}</span>}
                       </div>
-                      {formErrors.nombre_beneficiario && <span className="bod-error">{formErrors.nombre_beneficiario}</span>}
+                      <div className="vs-field">
+                        <label className="vs-label">Cargo</label>
+                        <div className="vs-icon-field">
+                          <FiBriefcase size={14} className="vs-icon" />
+                          <input className="vs-input vs-has-icon" name="cargo" value={form.cargo} onChange={handleField} placeholder="Cargo de quien recibe" />
+                        </div>
+                      </div>
                     </div>
+                  </Seccion>
+
+                  {/* 2 · Datos del viaje */}
+                  <Seccion n={2} titulo="Datos del viaje" desc="Mision, lugar y periodo de la comision">
+                    <div className="vs-field">
+                      <label className="vs-label">Mision <span className="vs-req">*</span></label>
+                      <textarea className={`vs-input vs-textarea ${formErrors.mision ? 'vs-input--error' : ''}`} name="mision" value={form.mision} onChange={handleField} rows={2} placeholder="Descripcion de la mision…" />
+                      {formErrors.mision && <span className="vs-error">{formErrors.mision}</span>}
+                    </div>
+                    <div className="vs-row-2">
+                      <div className="vs-field">
+                        <label className="vs-label">Lugar <span className="vs-req">*</span></label>
+                        <div className="vs-icon-field">
+                          <FiMapPin size={14} className="vs-icon" />
+                          <input className={`vs-input vs-has-icon ${formErrors.lugar ? 'vs-input--error' : ''}`} name="lugar" value={form.lugar} onChange={handleField} placeholder="Ciudad / Departamento" />
+                        </div>
+                        {formErrors.lugar && <span className="vs-error">{formErrors.lugar}</span>}
+                      </div>
+                      <div className="vs-field">
+                        <label className="vs-label">Dependencia</label>
+                        <div className="vs-icon-field">
+                          <FiBriefcase size={14} className="vs-icon" />
+                          <input className="vs-input vs-has-icon" name="dependencia" value={form.dependencia} onChange={handleField} placeholder="Dependencia" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="vs-field">
+                      <label className="vs-label">Encargado de la Mision</label>
+                      <div className="vs-icon-field">
+                        <FiUser size={14} className="vs-icon" />
+                        <input className="vs-input vs-has-icon" name="encargado_mision" value={form.encargado_mision} onChange={handleField} placeholder="Se llena con quien recibe; puede cambiarlo" />
+                      </div>
+                    </div>
+                    <div className="vs-row-4">
+                      <div className="vs-field">
+                        <label className="vs-label">Periodo Desde <span className="vs-req">*</span></label>
+                        <input type="date" className={`vs-input ${formErrors.periodo_desde ? 'vs-input--error' : ''}`} name="periodo_desde" value={form.periodo_desde} onChange={handleField} />
+                        {formErrors.periodo_desde && <span className="vs-error">{formErrors.periodo_desde}</span>}
+                      </div>
+                      <div className="vs-field">
+                        <label className="vs-label">Periodo Hasta <span className="vs-req">*</span></label>
+                        <input type="date" className={`vs-input ${formErrors.periodo_hasta ? 'vs-input--error' : ''}`} name="periodo_hasta" value={form.periodo_hasta} onChange={handleField} />
+                        {formErrors.periodo_hasta && <span className="vs-error">{formErrors.periodo_hasta}</span>}
+                      </div>
+                      <div className="vs-field">
+                        <label className="vs-label">Hora de Salida</label>
+                        <input type="time" className="vs-input" name="hora_salida" value={form.hora_salida} onChange={handleField} />
+                      </div>
+                      <div className="vs-field">
+                        <label className="vs-label">Hora de Regreso</label>
+                        <input type="time" className="vs-input" name="hora_regreso" value={form.hora_regreso} onChange={handleField} />
+                      </div>
+                    </div>
+                  </Seccion>
+
+                  {/* 3 · Alimentación */}
+                  <Seccion n={3} titulo="Detalle de alimentacion" desc="Personas y monto por cada dia del periodo">
+                    <div className="vs-tools">
+                      <label className="vs-label">Monto por dia (L)</label>
+                      <input type="number" min="0" step="0.01" className="vs-input vs-tool-input" value={aplicarAlim} onChange={e => setAplicarAlim(e.target.value)} placeholder="Ej. 600" />
+                      <button type="button" className="vs-btn-soft" onClick={() => aplicarMonto('alimentacion', aplicarAlim, false)} disabled={aplicarAlim === ''}>Aplicar a todos los dias</button>
+                    </div>
+                    <div className="vs-scroll">
+                      <table className="vs-tbl">
+                        <thead><tr>
+                          <th>#</th><th>Nombre</th><th>Cargo</th>
+                          {fechas.map(f => <th key={f} className="vs-th-dia">{dayShort(f)}<br />{fmtFecha(f).slice(0, 5)}</th>)}
+                          <th>Total</th><th />
+                        </tr></thead>
+                        <tbody>
+                          {form.alimentacion.map((r, i) => (
+                            <tr key={i}>
+                              <td>{i + 1}</td>
+                              <td><input className="vs-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('alimentacion', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
+                              <td><input className="vs-input vs-in vs-in--cargo" value={r.cargo} onChange={e => setRow('alimentacion', i, { cargo: e.target.value })} placeholder="Cargo" /></td>
+                              {r.dias.map(d => (
+                                <td key={d.fecha}><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={d.monto} onChange={e => setRowDia('alimentacion', i, d.fecha, e.target.value)} placeholder="0" /></td>
+                              ))}
+                              <td className="vs-td-total">{fmtMonto(totalAlim(r))}</td>
+                              <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('alimentacion', i)} disabled={form.alimentacion.length === 1}><FiX size={14} /></button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('alimentacion', { nombre: '', cargo: '', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar persona</button>
+                  </Seccion>
+
+                  {/* 4 · Hospedaje */}
+                  <Seccion n={4} titulo="Detalle de hospedaje" desc="Habitaciones y precio por noche">
+                    <div className="vs-tools">
+                      <label className="vs-label">Precio por noche (L)</label>
+                      <input type="number" min="0" step="0.01" className="vs-input vs-tool-input" value={aplicarHosp} onChange={e => setAplicarHosp(e.target.value)} placeholder="Ej. 1500" />
+                      <button type="button" className="vs-btn-soft" onClick={() => aplicarMonto('hospedaje', aplicarHosp, true)} disabled={aplicarHosp === ''}>Aplicar a las noches</button>
+                      <span className="vs-hint">El total de cada renglon es cantidad × suma de las noches. El ultimo dia no se cobra como noche.</span>
+                    </div>
+                    <div className="vs-scroll">
+                      <table className="vs-tbl">
+                        <thead><tr>
+                          <th>#</th><th>Detalle</th><th>Cant.</th>
+                          {fechas.map(f => <th key={f} className="vs-th-dia">{dayShort(f)}<br />{fmtFecha(f).slice(0, 5)}</th>)}
+                          <th>Total</th><th />
+                        </tr></thead>
+                        <tbody>
+                          {form.hospedaje.map((r, i) => (
+                            <tr key={i}>
+                              <td>{i + 1}</td>
+                              <td><input className="vs-input vs-in vs-in--name" value={r.detalle} onChange={e => setRow('hospedaje', i, { detalle: e.target.value })} placeholder="Ej. HABITACION SENCILLA" /></td>
+                              <td><input type="number" min="1" step="1" className="vs-input vs-in vs-in--cant" value={r.cantidad} onChange={e => setRow('hospedaje', i, { cantidad: e.target.value })} /></td>
+                              {r.dias.map(d => (
+                                <td key={d.fecha}><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={d.monto} onChange={e => setRowDia('hospedaje', i, d.fecha, e.target.value)} placeholder="0" /></td>
+                              ))}
+                              <td className="vs-td-total">{fmtMonto(totalHosp(r))}</td>
+                              <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('hospedaje', i)} disabled={form.hospedaje.length === 1}><FiX size={14} /></button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('hospedaje', { detalle: '', cantidad: '1', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar renglon</button>
+                  </Seccion>
+
+                  {/* 5 · Combustible */}
+                  <Seccion n={5} titulo="Detalle de combustible" desc="Conductores, vehiculos y monto">
+                    <div className="vs-scroll">
+                      <table className="vs-tbl">
+                        <thead><tr><th>#</th><th>Nombre</th><th>Detalle / Vehiculos</th><th>Monto (L)</th><th /></tr></thead>
+                        <tbody>
+                          {form.combustible.map((r, i) => (
+                            <tr key={i}>
+                              <td>{i + 1}</td>
+                              <td><input className="vs-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('combustible', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
+                              <td><input className="vs-input vs-in vs-in--name" value={r.detalle} onChange={e => setRow('combustible', i, { detalle: e.target.value })} placeholder="Ej. VEHICULO 1" /></td>
+                              <td><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={r.monto} onChange={e => setRow('combustible', i, { monto: e.target.value })} placeholder="0.00" /></td>
+                              <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('combustible', i)} disabled={form.combustible.length === 1}><FiX size={14} /></button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('combustible', { nombre: '', detalle: '', monto: '' })}><FiPlus size={13} /> Agregar renglon</button>
+                  </Seccion>
+
+                  {/* 6 · Otros gastos y resumen */}
+                  <Seccion n={6} titulo="Otros gastos y resumen" desc="Imprevisto, otros y totales del recibo">
+                    <div className="vs-row-3">
+                      <div className="vs-field">
+                        <label className="vs-label">Imprevisto — Monto</label>
+                        <div className="vs-lps-field"><span className="vs-lps-tag">Lps.</span><input type="number" min="0" step="0.01" className="vs-input vs-has-lps" name="monto_imprevistos" value={form.monto_imprevistos} onChange={handleField} placeholder="0.00" /></div>
+                      </div>
+                      <div className="vs-field">
+                        <label className="vs-label">Otros — Descripcion</label>
+                        <input className="vs-input" name="otros_descripcion" value={form.otros_descripcion} onChange={handleField} placeholder="Ej. 4 PEAJES" />
+                      </div>
+                      <div className="vs-field">
+                        <label className="vs-label">Otros — Monto</label>
+                        <div className="vs-lps-field"><span className="vs-lps-tag">Lps.</span><input type="number" min="0" step="0.01" className="vs-input vs-has-lps" name="monto_otros" value={form.monto_otros} onChange={handleField} placeholder="0.00" /></div>
+                      </div>
+                    </div>
+                    <div className="vs-resumen">
+                      <div><span>Hospedaje</span><strong>{fmtMonto(totales.hospedaje)}</strong></div>
+                      <div><span>Alimentacion</span><strong>{fmtMonto(totales.alimentacion)}</strong></div>
+                      <div><span>Combustible</span><strong>{fmtMonto(totales.combustible)}</strong></div>
+                      <div><span>Imprevisto</span><strong>{fmtMonto(totales.imprevistos)}</strong></div>
+                      <div><span>Otros</span><strong>{fmtMonto(totales.otros)}</strong></div>
+                    </div>
+                    <div className="vs-field">
+                      <label className="vs-label">Observaciones</label>
+                      <textarea className="vs-input vs-textarea" name="observaciones" value={form.observaciones} onChange={handleField} rows={2} maxLength={500} placeholder="Observaciones (opcional)" />
+                    </div>
+                  </Seccion>
+
+                </div>
+
+                <div className="vs-footer">
+                  <div className="vs-total-pill">
+                    <span>GRAN TOTAL</span>
+                    <strong>{fmtMonto(totales.gran)}</strong>
                   </div>
-                </div>
-
-                <div className="vn-section-title">DATOS DEL VIAJE</div>
-                <div className="bod-field bod-field--full">
-                  <label className="bod-label">Mision *</label>
-                  <textarea className={`bod-textarea ${formErrors.mision ? 'bod-input--error' : ''}`} name="mision" value={form.mision} onChange={handleField} rows={2} placeholder="Descripcion de la mision…" />
-                  {formErrors.mision && <span className="bod-error">{formErrors.mision}</span>}
-                </div>
-                <div className="bod-field"><label className="bod-label">Lugar *</label>
-                  <input className={`bod-input ${formErrors.lugar ? 'bod-input--error' : ''}`} name="lugar" value={form.lugar} onChange={handleField} placeholder="Ciudad / Departamento" />
-                  {formErrors.lugar && <span className="bod-error">{formErrors.lugar}</span>}
-                </div>
-                <div className="bod-field"><label className="bod-label">Dependencia</label><input className="bod-input" name="dependencia" value={form.dependencia} onChange={handleField} /></div>
-                <div className="bod-field"><label className="bod-label">Cargo</label><input className="bod-input" name="cargo" value={form.cargo} onChange={handleField} /></div>
-                <div className="bod-field"><label className="bod-label">Encargado de la Mision</label><input className="bod-input" name="encargado_mision" value={form.encargado_mision} onChange={handleField} /></div>
-                <div className="bod-field"><label className="bod-label">Periodo Desde *</label>
-                  <input type="date" className={`bod-input ${formErrors.periodo_desde ? 'bod-input--error' : ''}`} name="periodo_desde" value={form.periodo_desde} onChange={handleField} />
-                  {formErrors.periodo_desde && <span className="bod-error">{formErrors.periodo_desde}</span>}
-                </div>
-                <div className="bod-field"><label className="bod-label">Periodo Hasta *</label>
-                  <input type="date" className={`bod-input ${formErrors.periodo_hasta ? 'bod-input--error' : ''}`} name="periodo_hasta" value={form.periodo_hasta} onChange={handleField} />
-                  {formErrors.periodo_hasta && <span className="bod-error">{formErrors.periodo_hasta}</span>}
-                </div>
-                <div className="bod-field"><label className="bod-label">Hora de Salida</label><input type="time" className="bod-input" name="hora_salida" value={form.hora_salida} onChange={handleField} /></div>
-                <div className="bod-field"><label className="bod-label">Hora de Regreso</label><input type="time" className="bod-input" name="hora_regreso" value={form.hora_regreso} onChange={handleField} /></div>
-
-                {/* ── Alimentación ── */}
-                <div className="bod-field--full vs-block">
-                  <div className="vn-section-title">DETALLE DE ALIMENTACION</div>
-                  <div className="vs-tools">
-                    <label className="bod-label">Monto por dia (L)</label>
-                    <input type="number" min="0" step="0.01" className="bod-input vs-tool-input" value={aplicarAlim} onChange={e => setAplicarAlim(e.target.value)} placeholder="Ej. 600" />
-                    <button type="button" className="bod-btn bod-btn--outline bod-btn--sm" onClick={() => aplicarMonto('alimentacion', aplicarAlim, false)} disabled={aplicarAlim === ''}>Aplicar a todos los dias</button>
+                  <div className="vs-footer-btns">
+                    <button type="button" className="bod-btn bod-btn--outline" onClick={closeModal}>Cancelar</button>
+                    <button type="submit" className="bod-btn bod-btn--primary" disabled={saving}>
+                      {saving ? <><span className="bod-btn-spinner" /> Guardando…</> : editing ? 'Actualizar' : 'Guardar'}
+                    </button>
                   </div>
-                  <div className="vs-scroll">
-                    <table className="vs-tbl">
-                      <thead><tr>
-                        <th>#</th><th>Nombre</th><th>Cargo</th>
-                        {fechas.map(f => <th key={f} className="vs-th-dia">{dayShort(f)}<br />{fmtFecha(f).slice(0, 5)}</th>)}
-                        <th>Total</th><th />
-                      </tr></thead>
-                      <tbody>
-                        {form.alimentacion.map((r, i) => (
-                          <tr key={i}>
-                            <td>{i + 1}</td>
-                            <td><input className="bod-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('alimentacion', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
-                            <td><input className="bod-input vs-in vs-in--cargo" value={r.cargo} onChange={e => setRow('alimentacion', i, { cargo: e.target.value })} placeholder="Cargo" /></td>
-                            {r.dias.map(d => (
-                              <td key={d.fecha}><input type="number" min="0" step="0.01" className="bod-input vs-in vs-in--monto" value={d.monto} onChange={e => setRowDia('alimentacion', i, d.fecha, e.target.value)} placeholder="0" /></td>
-                            ))}
-                            <td className="vs-td-total">{fmtMonto(totalAlim(r))}</td>
-                            <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('alimentacion', i)} disabled={form.alimentacion.length === 1}><FiX size={14} /></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <button type="button" className="bod-btn bod-btn--ghost bod-btn--sm vs-add" onClick={() => addRow('alimentacion', { nombre: '', cargo: '', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar persona</button>
-                </div>
-
-                {/* ── Hospedaje ── */}
-                <div className="bod-field--full vs-block">
-                  <div className="vn-section-title">DETALLE DE HOSPEDAJE</div>
-                  <div className="vs-tools">
-                    <label className="bod-label">Precio por noche (L)</label>
-                    <input type="number" min="0" step="0.01" className="bod-input vs-tool-input" value={aplicarHosp} onChange={e => setAplicarHosp(e.target.value)} placeholder="Ej. 1500" />
-                    <button type="button" className="bod-btn bod-btn--outline bod-btn--sm" onClick={() => aplicarMonto('hospedaje', aplicarHosp, true)} disabled={aplicarHosp === ''}>Aplicar a las noches</button>
-                    <span className="vs-hint">El total de cada renglon es cantidad × suma de las noches. El ultimo dia no se cobra como noche.</span>
-                  </div>
-                  <div className="vs-scroll">
-                    <table className="vs-tbl">
-                      <thead><tr>
-                        <th>#</th><th>Detalle</th><th>Cant.</th>
-                        {fechas.map(f => <th key={f} className="vs-th-dia">{dayShort(f)}<br />{fmtFecha(f).slice(0, 5)}</th>)}
-                        <th>Total</th><th />
-                      </tr></thead>
-                      <tbody>
-                        {form.hospedaje.map((r, i) => (
-                          <tr key={i}>
-                            <td>{i + 1}</td>
-                            <td><input className="bod-input vs-in vs-in--name" value={r.detalle} onChange={e => setRow('hospedaje', i, { detalle: e.target.value })} placeholder="Ej. HABITACION SENCILLA" /></td>
-                            <td><input type="number" min="1" step="1" className="bod-input vs-in vs-in--cant" value={r.cantidad} onChange={e => setRow('hospedaje', i, { cantidad: e.target.value })} /></td>
-                            {r.dias.map(d => (
-                              <td key={d.fecha}><input type="number" min="0" step="0.01" className="bod-input vs-in vs-in--monto" value={d.monto} onChange={e => setRowDia('hospedaje', i, d.fecha, e.target.value)} placeholder="0" /></td>
-                            ))}
-                            <td className="vs-td-total">{fmtMonto(totalHosp(r))}</td>
-                            <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('hospedaje', i)} disabled={form.hospedaje.length === 1}><FiX size={14} /></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <button type="button" className="bod-btn bod-btn--ghost bod-btn--sm vs-add" onClick={() => addRow('hospedaje', { detalle: '', cantidad: '1', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar renglon</button>
-                </div>
-
-                {/* ── Combustible ── */}
-                <div className="bod-field--full vs-block">
-                  <div className="vn-section-title">DETALLE DE COMBUSTIBLE</div>
-                  <div className="vs-scroll">
-                    <table className="vs-tbl">
-                      <thead><tr><th>#</th><th>Nombre</th><th>Detalle / Vehiculos</th><th>Monto (L)</th><th /></tr></thead>
-                      <tbody>
-                        {form.combustible.map((r, i) => (
-                          <tr key={i}>
-                            <td>{i + 1}</td>
-                            <td><input className="bod-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('combustible', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
-                            <td><input className="bod-input vs-in vs-in--name" value={r.detalle} onChange={e => setRow('combustible', i, { detalle: e.target.value })} placeholder="Ej. VEHICULO 1" /></td>
-                            <td><input type="number" min="0" step="0.01" className="bod-input vs-in vs-in--monto" value={r.monto} onChange={e => setRow('combustible', i, { monto: e.target.value })} placeholder="0.00" /></td>
-                            <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('combustible', i)} disabled={form.combustible.length === 1}><FiX size={14} /></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <button type="button" className="bod-btn bod-btn--ghost bod-btn--sm vs-add" onClick={() => addRow('combustible', { nombre: '', detalle: '', monto: '' })}><FiPlus size={13} /> Agregar renglon</button>
-                </div>
-
-                <div className="vn-section-title bod-field--full">OTROS GASTOS</div>
-                <div className="bod-field"><label className="bod-label">Imprevisto — Monto</label><input type="number" min="0" step="0.01" className="bod-input" name="monto_imprevistos" value={form.monto_imprevistos} onChange={handleField} placeholder="0.00" /></div>
-                <div className="bod-field" />
-                <div className="bod-field"><label className="bod-label">Otros — Descripcion</label><input className="bod-input" name="otros_descripcion" value={form.otros_descripcion} onChange={handleField} placeholder="Ej. 4 PEAJES" /></div>
-                <div className="bod-field"><label className="bod-label">Otros — Monto</label><input type="number" min="0" step="0.01" className="bod-input" name="monto_otros" value={form.monto_otros} onChange={handleField} placeholder="0.00" /></div>
-
-                <div className="bod-field bod-field--full vs-resumen">
-                  <div><span>Hospedaje</span><strong>{fmtMonto(totales.hospedaje)}</strong></div>
-                  <div><span>Alimentacion</span><strong>{fmtMonto(totales.alimentacion)}</strong></div>
-                  <div><span>Combustible</span><strong>{fmtMonto(totales.combustible)}</strong></div>
-                  <div><span>Imprevisto</span><strong>{fmtMonto(totales.imprevistos)}</strong></div>
-                  <div><span>Otros</span><strong>{fmtMonto(totales.otros)}</strong></div>
-                </div>
-                <div className="bod-field bod-field--full vn-gran-total">
-                  <span className="vn-gran-total__label">GRAN TOTAL</span>
-                  <span className="vn-gran-total__value">{fmtMonto(totales.gran)}</span>
-                </div>
-
-                <div className="bod-field bod-field--full">
-                  <label className="bod-label">Observaciones</label>
-                  <textarea className="bod-textarea" name="observaciones" value={form.observaciones} onChange={handleField} rows={2} maxLength={500} />
-                </div>
-
-                <div className="bod-modal__footer">
-                  <button type="button" className="bod-btn bod-btn--outline" onClick={closeModal}>Cancelar</button>
-                  <button type="submit" className="bod-btn bod-btn--primary" disabled={saving}>
-                    {saving ? <><span className="bod-btn-spinner" /> Guardando…</> : editing ? 'Actualizar' : 'Guardar'}
-                  </button>
                 </div>
               </form>
             </div>
