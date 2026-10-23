@@ -20,6 +20,13 @@ function fmtFecha(s) {
   const [y, m, d] = String(s).split('T')[0].split('-');
   return `${d}/${m}/${y}`;
 }
+/* "13:13" → "01:13 PM" (el input de hora guarda 24 h) */
+function fmtHora(h) {
+  const m = /^(\d{1,2}):(\d{2})/.exec(String(h || '').trim());
+  if (!m) return '';
+  const hh = parseInt(m[1], 10);
+  return `${String(hh % 12 || 12).padStart(2, '0')}:${m[2]} ${hh >= 12 ? 'PM' : 'AM'}`;
+}
 const partes = iso => String(iso).split('T')[0].split('-').map(Number);
 function dayName(iso) {
   const [y, m, d] = partes(iso);
@@ -156,8 +163,8 @@ function dibujar(doc, rec, logoDataUrl, k) {
   doc.text('PERIODO DE TIEMPO:', M + 1.5, y + RH * 0.66);
   cell('DESDE', fmtFecha(rec.periodo_desde), PL, q, 14);
   cell('HASTA', fmtFecha(rec.periodo_hasta), PL + q, q, 14);
-  cell('HORA DE SALIDA', rec.hora_salida || '-', PL + 2 * q, q, 26);
-  cell('HORA DE REGRESO', rec.hora_regreso || '-', PL + 3 * q, q, 28);
+  cell('HORA DE SALIDA', fmtHora(rec.hora_salida) || '-', PL + 2 * q, q, 26);
+  cell('HORA DE REGRESO', fmtHora(rec.hora_regreso) || '-', PL + 3 * q, q, 28);
   y += RH + V(2);
 
   /* ─ RESUMEN DE GASTOS (izquierda) + COMBUSTIBLE (derecha) ─ */
@@ -269,6 +276,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const FR = V(8.5);                       // alto de cada renglón de firma
   const ESPACIO_FIRMA = V(9);               // espacio extra para firmar a mano
   if (y > FY - 2 - FR * 3 - ESPACIO_FIRMA) { doc.addPage(); y = M + 6; }
+  else y -= V(3);                           // sube un poco el bloque de firma, lejos del pie
   const lblW = 24, lineW = 70;              // líneas cortas: NOMBRE, IDENTIDAD y FIRMA
   doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3); doc.setTextColor(...NEGRO);
   const renglon = (i, etiqueta, valor, extra = 0) => {

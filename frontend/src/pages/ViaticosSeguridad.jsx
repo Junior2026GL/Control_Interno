@@ -190,6 +190,9 @@ export default function ViaticosSeguridad() {
       setForm(f => ({
         ...f,
         nombre_beneficiario: nombre,
+        // El encargado de la misión es, por defecto, quien recibe (se puede editar después)
+        encargado_mision: !f.encargado_mision || f.encargado_mision === f.nombre_beneficiario
+          ? nombre : f.encargado_mision,
         alimentacion: f.alimentacion.length === 1 && !f.alimentacion[0].nombre
           ? [{ ...f.alimentacion[0], nombre: nombre.toUpperCase() }]
           : f.alimentacion,
