@@ -153,6 +153,9 @@ export default function ViaticosSeguridad() {
   const [printLoading, setPrintLoading] = useState(null);
   const [aplicarAlim, setAplicarAlim] = useState('');
   const [aplicarHosp, setAplicarHosp] = useState('');
+  const [addDni, setAddDni]         = useState('');
+  const [addDniLoading, setAddDniLoading] = useState(false);
+  const [addDniError, setAddDniError] = useState('');
 
   const PAGE_SIZE = 10;
   const canEdit   = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(user?.rol);
@@ -219,6 +222,28 @@ export default function ViaticosSeguridad() {
     finally { setDniLoading(false); }
   };
 
+  /* Agrega una persona a la alimentación buscándola por DNI en el censo */
+  const handleAgregarPersona = async () => {
+    const dni = addDni.replace(/D/g, '');
+    if (dni.length !== 13) { setAddDniError('Ingrese los 13 digitos del DNI.'); return; }
+    setAddDniLoading(true); setAddDniError('');
+    try {
+      const res = await api.get(`/censo/${encodeURIComponent(dni)}`, { headers: authHeaders() });
+      const nombre = (res.data.nombreCompleto || '').toUpperCase();
+      if (form.alimentacion.some(r => r.nombre.trim().toUpperCase() === nombre)) {
+        setAddDniError('Esa persona ya esta en la lista.');
+      } else {
+        setForm(f => {
+          const vacia = f.alimentacion.findIndex(r => !r.nombre.trim());
+          if (vacia >= 0) return { ...f, alimentacion: f.alimentacion.map((r, i) => (i === vacia ? { ...r, nombre } : r)) };
+          return { ...f, alimentacion: [...f.alimentacion, { nombre, cargo: '', dias: syncDias(fechas) }] };
+        });
+        setAddDni('');
+      }
+    } catch (err) { setAddDniError(err.response?.data?.message || 'Persona no encontrada en el censo.'); }
+    finally { setAddDniLoading(false); }
+  };
+
   /* Totales (mismo cálculo que el servidor) */
   const totales = useMemo(() => {
     const alimentacion = form.alimentacion.reduce((s, r) => s + totalAlim(r), 0);
@@ -252,7 +277,7 @@ export default function ViaticosSeguridad() {
 
   const openNew = () => {
     setEditing(null); setForm(buildEmpty()); setDniError(''); setFormErrors({});
-    setAplicarAlim(''); setAplicarHosp(''); setModal(true);
+    setAplicarAlim(''); setAplicarHosp(''); setAddDni(''); setAddDniError(''); setModal(true);
   };
 
   const openEdit = async (id) => {
@@ -283,7 +308,7 @@ export default function ViaticosSeguridad() {
         monto_otros: r.monto_otros > 0 ? r.monto_otros : '',
         observaciones: r.observaciones || '',
       });
-      setAplicarAlim(''); setAplicarHosp('');
+      setAplicarAlim(''); setAplicarHosp(''); setAddDni(''); setAddDniError('');
       setDniError(''); setFormErrors({}); setModal(true);
     } catch { showToast('Error al cargar el registro.'); }
   };
@@ -678,7 +703,21 @@ export default function ViaticosSeguridad() {
                         </tbody>
                       </table>
                     </div>
-                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('alimentacion', { nombre: '', cargo: '', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar persona</button>
+                    <div className="vs-add-person">
+                      <label className="vs-label">Agregar persona por DNI</label>
+                      <div className="vs-dni-row">
+                        <input className="vs-input" value={addDni}
+                          onChange={e => { setAddDni(e.target.value); setAddDniError(''); }}
+                          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAgregarPersona())}
+                          placeholder="0000-0000-00000  (13 digitos)" maxLength={20} />
+                        <button type="button" className="vs-btn-buscar" onClick={handleAgregarPersona} disabled={addDniLoading}>
+                          {addDniLoading ? <span className="bod-btn-spinner" /> : <FiPlus size={15} />}
+                          {addDniLoading ? ' Buscando…' : ' Buscar y agregar'}
+                        </button>
+                      </div>
+                      {addDniError && <span className="vs-error">{addDniError}</span>}
+                      <button type="button" className="vs-link" onClick={() => addRow('alimentacion', { nombre: '', cargo: '', dias: syncDias(fechas) })}>o agregar una fila sin DNI</button>
+                    </div>
                   </Seccion>
 
                   {/* 4 · Hospedaje */}

@@ -2,7 +2,7 @@
 .vs-lps { font-size: 12px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
 
 /* ── Ventana ─────────────────────────────────────────────── */
-.vs-modal { max-width: 1040px !important; width: 96vw !important; background: #f4f6fb; }
+.vs-modal { max-width: 1400px !important; width: 96vw !important; background: #f4f6fb; }
 .vs-modal .bod-modal__header { background: #fff; }
 .vs-modal-title { display: flex; align-items: center; gap: .8rem; }
 .vs-modal-icon {
@@ -122,6 +122,15 @@
 }
 .vs-del:hover:not(:disabled) { background: #fee2e2; }
 .vs-del:disabled { opacity: .3; cursor: not-allowed; }
+
+.vs-add-person {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;
+  background: #eef3fc; border: 1.5px dashed #b9c9e8; border-radius: 12px;
+}
+.vs-link {
+  align-self: flex-start; border: none; background: none; padding: 0; cursor: pointer;
+  color: #274C8D; font-size: 12px; font-family: inherit; text-decoration: underline;
+}
 
 /* ── Resumen y pie ───────────────────────────────────────── */
 .vs-resumen { display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem; }
