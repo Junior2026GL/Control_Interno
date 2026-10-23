@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
-import { generarReciboSeguridadPdf } from '../utils/viaticoSeguridadPdf';
+import { generarReciboSeguridadPdf, limitesContenido } from '../utils/viaticoSeguridadPdf';
 import './Bodegas.css';
 import './ViaticosNacionales.css';
 import './ViaticosSeguridad.css';
@@ -93,9 +93,16 @@ async function cargarLogo() {
       img.onload = () => {
         const c = document.createElement('canvas');
         c.width = img.width; c.height = img.height;
-        c.getContext('2d').drawImage(img, 0, 0);
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(blobUrl);
-        resolve(c.toDataURL('image/png'));
+        // Recorta el margen blanco para que el sello llene el espacio del encabezado
+        const b = limitesContenido(ctx, c.width, c.height);
+        if (!b) { resolve(c.toDataURL('image/png')); return; }
+        const r = document.createElement('canvas');
+        r.width = b.ancho; r.height = b.alto;
+        r.getContext('2d').drawImage(c, b.x, b.y, b.ancho, b.alto, 0, 0, b.ancho, b.alto);
+        resolve(r.toDataURL('image/png'));
       };
       img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(null); };
       img.src = blobUrl;

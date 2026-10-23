@@ -49,12 +49,34 @@ function fechasColumna(rows) {
 }
 const montoDia = (r, fecha) => num((r.dias || []).find(d => String(d.fecha).slice(0, 10) === fecha)?.monto);
 
+/* Rectángulo que ocupa el contenido (lo que no es blanco ni transparente) de un
+   canvas; se usa para recortar los márgenes blancos del logo. */
+export function limitesContenido(ctx, w, h, umbral = 245, margen = 1) {
+  const { data } = ctx.getImageData(0, 0, w, h);
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (data[i + 3] > 10 && (data[i] < umbral || data[i + 1] < umbral || data[i + 2] < umbral)) {
+        if (x < x0) x0 = x; if (x > x1) x1 = x;
+        if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    }
+  }
+  if (x1 < 0) return null;
+  x0 = Math.max(0, x0 - margen); y0 = Math.max(0, y0 - margen);
+  x1 = Math.min(w - 1, x1 + margen); y1 = Math.min(h - 1, y1 + margen);
+  return { x: x0, y: y0, ancho: x1 - x0 + 1, alto: y1 - y0 + 1 };
+}
+
 /* ══════════════════════════════════════════════════════════
    Dibuja el recibo con la escala `k` (1 = tamaño normal).
    Todo lo vertical (alturas, espacios, letras) se multiplica por k.
 ══════════════════════════════════════════════════════════ */
 function dibujar(doc, rec, logoDataUrl, k) {
   const W = 279.4, H = 215.9, M = 10, CW = W - 2 * M;
+  const FH = 8, FY = H - 5 - FH;            // franja del pie de página
+  const MB = H - FY + 2;                    // margen inferior para las tablas
   const V = v => v * k;                       // longitudes verticales
   const F = v => Math.max(5, v * k);          // tamaños de letra (mínimo legible)
   let y = M;
@@ -64,10 +86,15 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const combustible  = rec.detalle_combustible || [];
 
   /* ─ ENCABEZADO ─ */
-  const HH = V(23), LW = HH + 8, TW = 80, MIDW = CW - LW - TW;
+  const HH = V(23), LW = HH + 4, TW = 80, MIDW = CW - LW - TW;
   doc.setFillColor(255, 255, 255); doc.setDrawColor(...AZUL); doc.setLineWidth(0.5);
   doc.rect(M, y, CW, HH, 'FD');
-  if (logoDataUrl) { const s = HH - 0.8; doc.addImage(logoDataUrl, 'PNG', M + (LW - s) / 2, y + 0.4, s, s); }
+  if (logoDataUrl) {
+    // alto = toda la caja; el ancho respeta la proporción del logo
+    const p = doc.getImageProperties(logoDataUrl);
+    const hL = HH - 0.8, wL = Math.min(LW - 1, hL * p.width / p.height);
+    doc.addImage(logoDataUrl, 'PNG', M + (LW - wL) / 2, y + 0.4, wL, hL);
+  }
   doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.3);
   doc.line(M + LW, y + 2, M + LW, y + HH - 2);
   const mX = M + LW + MIDW / 2;
@@ -138,7 +165,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const gastosW = Math.round(CW * 0.42), gapT = 4, combW = CW - gastosW - gapT;
   const yTablas = y;
   autoTable(doc, {
-    startY: y, margin: { left: M, right: W - M - gastosW }, tableWidth: gastosW,
+    startY: y, margin: { left: M, right: W - M - gastosW, bottom: MB }, tableWidth: gastosW,
     head: [['No.', 'Detalle', 'TOTAL']],
     body: [
       ['1', 'HOSPEDAJE', dash(rec.monto_hospedaje)],
@@ -164,7 +191,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   while (cbody.length < 3) cbody.push([String(cbody.length + 1), '', '', '']);
   const cpad = { top: V(1.2), bottom: V(1.2), left: 1.5, right: 1.5 };
   autoTable(doc, {
-    startY: yTablas, margin: { left: M + gastosW + gapT, right: M }, tableWidth: combW,
+    startY: yTablas, margin: { left: M + gastosW + gapT, right: M, bottom: MB }, tableWidth: combW,
     head: [
       [{ content: 'DETALLE DE COMBUSTIBLE', colSpan: 4, styles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
       ['#', 'Nombre', 'DETALLE / VEHICULOS', 'TOTAL'],
@@ -199,9 +226,9 @@ function dibujar(doc, rec, logoDataUrl, k) {
     const totalGeneral = rows.reduce((s, r) => s + montoFila(r), 0);
     const cp = { top: V(1.3), bottom: V(1.3), left: 1.5, right: 1.5 };
 
-    if (y > H - 45) { doc.addPage(); y = M; }
+    if (y > FY - 40) { doc.addPage(); y = M; }
     autoTable(doc, {
-      startY: y, margin: { left: M, right: M }, tableWidth: CW,
+      startY: y, margin: { left: M, right: M, bottom: MB }, tableWidth: CW,
       head: [
         [{ content: titulo, colSpan: 4 + n, styles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
         ['#', ...cols.head, ...fechas.map(dayHead), 'TOTAL'],
@@ -241,7 +268,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   /* ─ FIRMA ─ */
   const FR = V(8.5);                       // alto de cada renglón de firma
   const ESPACIO_FIRMA = V(9);               // espacio extra para firmar a mano
-  if (y > H - M - FR * 3 - ESPACIO_FIRMA) { doc.addPage(); y = M + 6; }
+  if (y > FY - 2 - FR * 3 - ESPACIO_FIRMA) { doc.addPage(); y = M + 6; }
   const lblW = 24, lineW = 70;              // líneas cortas: NOMBRE, IDENTIDAD y FIRMA
   doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3); doc.setTextColor(...NEGRO);
   const renglon = (i, etiqueta, valor, extra = 0) => {
@@ -260,12 +287,27 @@ function dibujar(doc, rec, logoDataUrl, k) {
   renglon(0, 'NOMBRE:', sa((rec.nombre_beneficiario || '').toUpperCase()));
   renglon(1, 'IDENTIDAD:', sa(rec.numero_identidad || ''));
   renglon(2, 'FIRMA:', '', ESPACIO_FIRMA);
+
+  /* ─ PIE DE PÁGINA (todas las hojas) ─ */
+  const ahora = new Date();
+  const fechaGen = ahora.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const horaGen  = ahora.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
+  const totalPaginas = doc.getNumberOfPages();
+  for (let pg = 1; pg <= totalPaginas; pg++) {
+    doc.setPage(pg);
+    doc.setFillColor(...AZUL);
+    doc.rect(M, FY, CW, FH, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...BLANCO);
+    doc.text('Congreso Nacional - Pagaduría Especial', M + 3, FY + FH * 0.65);
+    doc.text(`Página ${pg} de ${totalPaginas}`, W / 2, FY + FH * 0.65, { align: 'center' });
+    doc.text(`Generado: ${fechaGen} ${horaGen}`, M + CW - 3, FY + FH * 0.65, { align: 'right' });
+  }
 }
 
 /* Prueba escalas de mayor a menor hasta que todo quepa en una hoja. */
 export async function generarReciboSeguridadPdf(rec, logoDataUrl) {
   const nuevo = () => new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
-  const K_MIN = 0.7;
+  const K_MIN = 0.6;
   let k = 1;
   for (; k > K_MIN; k = Math.round((k - 0.04) * 100) / 100) {
     const prueba = nuevo();
