@@ -351,7 +351,7 @@ export default function BusquedaAyudas() {
                 <FiSearch size={18} className="ba-main-icon" />
                 <input
                   className="ba-main-input"
-                  placeholder="Buscar por nombre, DNI, RTN, concepto o N° de orden…"
+                  placeholder="Buscar por nombre, organización, DNI, RTN, concepto o N° de orden…"
                   value={qInput}
                   onChange={e => {
                     setQInput(e.target.value);
@@ -369,6 +369,7 @@ export default function BusquedaAyudas() {
             <div className="ba-chips-hint">
               <span>Busca en:</span>
               <span className="ba-chip">Beneficiario</span>
+              <span className="ba-chip">Organización</span>
               <span className="ba-chip">DNI</span>
               <span className="ba-chip">RTN</span>
               <span className="ba-chip">Concepto</span>
@@ -541,6 +542,7 @@ export default function BusquedaAyudas() {
                               <td>
                                 <div className="ba-td-dip">
                                   <span className="ba-dip-nombre-t">{r.beneficiario || '—'}</span>
+                                  {r.beneficiario_organizacion && <span className="ba-dip-dept ba-td-concepto-sub" title={r.beneficiario_organizacion}>🏛 {r.beneficiario_organizacion}</span>}
                                   {r.concepto && <span className="ba-dip-dept ba-td-concepto-sub" title={r.concepto}>{r.concepto}</span>}
                                 </div>
                               </td>
@@ -818,6 +820,18 @@ export default function BusquedaAyudas() {
                     <span className="ba-detail-label">Beneficiario</span>
                     <span className="ba-detail-val ba-detail-val--bold">{detalle.beneficiario || '—'}</span>
                   </div>
+                  {detalle.beneficiario_organizacion && (
+                    <div className="ba-detail-field ba-detail-field--wide">
+                      <span className="ba-detail-label">Organización / Institución</span>
+                      <span className="ba-detail-val">{detalle.beneficiario_organizacion}</span>
+                    </div>
+                  )}
+                  {detalle.beneficiario_rtn && (
+                    <div className="ba-detail-field">
+                      <span className="ba-detail-label">RTN</span>
+                      <span className="ba-detail-val">{detalle.beneficiario_rtn}</span>
+                    </div>
+                  )}
                   <div className="ba-detail-field">
                     <span className="ba-detail-label">Registrado</span>
                     <span className="ba-detail-val">{formatFecha(detalle.created_at)}</span>

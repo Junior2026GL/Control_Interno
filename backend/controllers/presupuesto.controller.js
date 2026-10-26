@@ -714,7 +714,7 @@ exports.getReportesAyudas = async (req, res) => {
     // DNI y RTN se guardan solo con dígitos: se busca sin guiones ni espacios
     const qDigitos      = q ? String(q).replace(/\D/g, '') : '';
     const searchFilter  = q
-      ? `AND (a.concepto LIKE ? OR a.beneficiario LIKE ? OR a.numero_orden LIKE ?${qDigitos ? ' OR a.beneficiario_dni LIKE ? OR a.beneficiario_rtn LIKE ?' : ''})`
+      ? `AND (a.concepto LIKE ? OR a.beneficiario LIKE ? OR a.numero_orden LIKE ? OR a.beneficiario_organizacion LIKE ?${qDigitos ? ' OR a.beneficiario_dni LIKE ? OR a.beneficiario_rtn LIKE ?' : ''})`
       : '';
 
     if (diputadoId)    baseParams.push(diputadoId);
@@ -724,14 +724,14 @@ exports.getReportesAyudas = async (req, res) => {
     if (numero_cheque) baseParams.push(numero_cheque);
     if (fecha_desde)   baseParams.push(fecha_desde);
     if (fecha_hasta)   baseParams.push(fecha_hasta);
-    if (q)             baseParams.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    if (q)             baseParams.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
     if (q && qDigitos) baseParams.push(`%${qDigitos}%`, `%${qDigitos}%`);
 
     const orderBy = sort === 'monto_desc' ? 'a.monto DESC, a.id DESC' : 'a.fecha DESC, a.id DESC';
 
     const [rows] = await db.promise().query(
       `SELECT
-         a.id, a.fecha, a.concepto, a.beneficiario, a.beneficiario_dni, a.beneficiario_telefono, a.beneficiario_departamento, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
+         a.id, a.fecha, a.concepto, a.beneficiario, a.beneficiario_dni, a.beneficiario_telefono, a.beneficiario_departamento, a.beneficiario_rtn, a.beneficiario_organizacion, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
          a.estado_liquidacion, a.created_at, p.anio,
          d.id AS diputado_id, d.nombre AS diputado, d.departamento, d.tipo, d.partido,
          u.nombre AS creado_por_nombre
