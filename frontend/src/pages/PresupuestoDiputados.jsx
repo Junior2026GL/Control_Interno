@@ -316,14 +316,32 @@ export default function PresupuestoDiputados() {
   /* ── filtered dropdown ──────────────────────────────────── */
   const dipResults = useMemo(() => {
     if (!dipSearch.trim()) return [];
-    const q = dipSearch.toLowerCase();
+    // Cada palabra escrita debe aparecer en algún dato (sin importar el orden ni las tildes)
+    const tokens = normTxt(dipSearch).split(/\s+/).filter(Boolean);
+    const tokensDni = dipSearch.replace(/\D/g, '');
+    const puntaje = d => {
+      const nombre = normTxt(d.nombre || '');
+      const palabras = nombre.split(/\s+/);
+      const resto = normTxt(`${d.departamento || ''} ${d.partido || ''}`);
+      const dni = String(d.identidad || '').replace(/\D/g, '');
+      let pts = 0;
+      for (const t of tokens) {
+        if (palabras.some(p => p.startsWith(t))) pts += 3;       // inicio de nombre o apellido
+        else if (nombre.includes(t)) pts += 2;                    // dentro del nombre
+        else if (resto.includes(t)) pts += 1;                     // departamento o partido
+        else if (tokensDni.length >= 3 && dni.includes(t.replace(/\D/g, '') || '\0')) pts += 2;
+        else return 0;                                            // una palabra no coincide
+      }
+      if (nombre.startsWith(tokens[0])) pts += 2;
+      return pts;
+    };
     return datos
-      .filter(d => d.activo && (
-        d.nombre.toLowerCase().includes(q) ||
-        d.departamento.toLowerCase().includes(q) ||
-        (d.partido || '').toLowerCase().includes(q)
-      ))
-      .slice(0, 12);
+      .filter(d => d.activo)
+      .map(d => ({ d, pts: puntaje(d) }))
+      .filter(x => x.pts > 0)
+      .sort((a, b) => b.pts - a.pts || a.d.nombre.localeCompare(b.d.nombre))
+      .map(x => x.d)
+      .slice(0, 15);
   }, [datos, dipSearch]);
 
   /* ── load budget when deputy/year changes ───────────────── */
@@ -2004,7 +2022,7 @@ export default function PresupuestoDiputados() {
               <FiSearch className="ps-search-icon" size={14} />
               <input
                 className="ps-search-input"
-                placeholder={loadingDips ? 'Cargando diputados…' : 'Buscar por nombre, departamento o partido…'}
+                placeholder={loadingDips ? 'Cargando diputados…' : 'Buscar por nombre, apellido, DNI, departamento o partido…'}
                 value={dipSearch}
                 onChange={e => { setDipSearch(e.target.value); setShowDropdown(true); }}
                 onFocus={() => dipSearch && setShowDropdown(true)}
