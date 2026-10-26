@@ -349,7 +349,7 @@ export default function BusquedaAyudas() {
             <div className="ba-filters-row">
               {/* Texto libre */}
               <div className="ba-fg ba-fg--flex2">
-                <label className="ba-label"><FiSearch size={11} /> Buscar (beneficiario, concepto, N° orden)</label>
+                <label className="ba-label"><FiSearch size={11} /> Buscar (beneficiario, DNI, RTN, concepto, N° orden)</label>
                 <div className="ba-input-wrap">
                   <input
                     className="ba-input"
@@ -512,6 +512,7 @@ export default function BusquedaAyudas() {
                             <th style={{ width: 36 }}>#</th>
                             <th>Fecha</th>
                             <th>Diputado</th>
+                            <th>Beneficiario</th>
                             <th>N° Orden</th>
                             <th>N° Cheque</th>
                             <th>Estado</th>
@@ -528,6 +529,12 @@ export default function BusquedaAyudas() {
                                 <div className="ba-td-dip">
                                   <span className="ba-dip-nombre-t">{r.diputado}</span>
                                   <span className="ba-dip-dept">{r.departamento}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="ba-td-dip">
+                                  <span className="ba-dip-nombre-t">{r.beneficiario || '—'}</span>
+                                  {r.concepto && <span className="ba-dip-dept ba-td-concepto-sub" title={r.concepto}>{r.concepto}</span>}
                                 </div>
                               </td>
                               <td>

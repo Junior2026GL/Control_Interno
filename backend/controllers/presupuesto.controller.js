@@ -711,7 +711,11 @@ exports.getReportesAyudas = async (req, res) => {
     const chequeFilter  = numero_cheque ? 'AND a.numero_cheque = ?'            : '';
     const desdeFilter   = fecha_desde  ? 'AND a.fecha >= ?'                  : '';
     const hastaFilter   = fecha_hasta  ? 'AND a.fecha <= ?'                  : '';
-    const searchFilter  = q ? 'AND (a.concepto LIKE ? OR a.beneficiario LIKE ? OR a.numero_orden LIKE ?)' : '';
+    // DNI y RTN se guardan solo con dígitos: se busca sin guiones ni espacios
+    const qDigitos      = q ? String(q).replace(/\D/g, '') : '';
+    const searchFilter  = q
+      ? `AND (a.concepto LIKE ? OR a.beneficiario LIKE ? OR a.numero_orden LIKE ?${qDigitos ? ' OR a.beneficiario_dni LIKE ? OR a.beneficiario_rtn LIKE ?' : ''})`
+      : '';
 
     if (diputadoId)    baseParams.push(diputadoId);
     if (partido)       baseParams.push(partido);
@@ -721,6 +725,7 @@ exports.getReportesAyudas = async (req, res) => {
     if (fecha_desde)   baseParams.push(fecha_desde);
     if (fecha_hasta)   baseParams.push(fecha_hasta);
     if (q)             baseParams.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    if (q && qDigitos) baseParams.push(`%${qDigitos}%`, `%${qDigitos}%`);
 
     const orderBy = sort === 'monto_desc' ? 'a.monto DESC, a.id DESC' : 'a.fecha DESC, a.id DESC';
 

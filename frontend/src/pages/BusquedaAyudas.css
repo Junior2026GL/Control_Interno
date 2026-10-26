@@ -342,6 +342,7 @@
 .ba-td-dip    { display: flex; flex-direction: column; gap: 1px; }
 .ba-dip-nombre-t { font-weight: 600; color: #1e3a5f; font-size: 0.82rem; }
 .ba-dip-dept  { font-size: 0.75rem; color: #94a3b8; }
+.ba-td-concepto-sub { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Badges / tags ────────────────────────────────────────────── */
 .ba-badge {
