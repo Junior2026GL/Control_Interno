@@ -345,26 +345,43 @@ export default function BusquedaAyudas() {
         {tab === 'busqueda' && (
           <div className="ba-search-panel">
 
+            {/* Barra de búsqueda principal */}
+            <div className="ba-main-search">
+              <div className="ba-main-input-wrap">
+                <FiSearch size={18} className="ba-main-icon" />
+                <input
+                  className="ba-main-input"
+                  placeholder="Buscar por nombre, DNI, RTN, concepto o N° de orden…"
+                  value={qInput}
+                  onChange={e => {
+                    setQInput(e.target.value);
+                    clearTimeout(qTimer.current);
+                    qTimer.current = setTimeout(() => setQ(e.target.value), 400);
+                  }}
+                  onKeyDown={e => e.key === 'Enter' && buscar(1)}
+                />
+                {qInput && <button className="ba-input-clear" onClick={() => { setQInput(''); setQ(''); }}><FiX size={14} /></button>}
+              </div>
+              <button className="ba-btn-primary ba-btn-main" onClick={() => buscar(1)} disabled={loading}>
+                <FiSearch size={15} /> {loading ? 'Buscando…' : 'Buscar'}
+              </button>
+            </div>
+            <div className="ba-chips-hint">
+              <span>Busca en:</span>
+              <span className="ba-chip">Beneficiario</span>
+              <span className="ba-chip">DNI</span>
+              <span className="ba-chip">RTN</span>
+              <span className="ba-chip">Concepto</span>
+              <span className="ba-chip">N° de orden</span>
+            </div>
+
+            <div className="ba-filters-title">
+              <span>Filtros específicos</span>
+              <button className="ba-btn-text" onClick={limpiar}><FiX size={12} /> Limpiar todo</button>
+            </div>
+
             {/* 3 filtros en fila */}
             <div className="ba-filters-row">
-              {/* Texto libre */}
-              <div className="ba-fg ba-fg--flex2">
-                <label className="ba-label"><FiSearch size={11} /> Buscar (beneficiario, DNI, RTN, concepto, N° orden)</label>
-                <div className="ba-input-wrap">
-                  <input
-                    className="ba-input"
-                    placeholder="Escriba para buscar…"
-                    value={qInput}
-                    onChange={e => {
-                      setQInput(e.target.value);
-                      clearTimeout(qTimer.current);
-                      qTimer.current = setTimeout(() => setQ(e.target.value), 400);
-                    }}
-                    onKeyDown={e => e.key === 'Enter' && buscar(1)}
-                  />
-                  {qInput && <button className="ba-input-clear" onClick={() => { setQInput(''); setQ(''); }}><FiX size={11} /></button>}
-                </div>
-              </div>
 
               {/* N° Orden */}
               <div className="ba-fg">
@@ -444,16 +461,6 @@ export default function BusquedaAyudas() {
               </div>
             )}
 
-            {/* Botones */}
-            <div className="ba-filter-actions">
-              <button className="ba-btn-secondary" onClick={limpiar}>
-                <FiX size={13} /> Limpiar
-              </button>
-              <button className="ba-btn-primary" onClick={() => buscar(1)} disabled={loading}>
-                <FiSearch size={13} /> {loading ? 'Buscando…' : 'Buscar'}
-              </button>
-
-            </div>
 
             {/* Resultados */}
             {hasSearched && !loading && results.length > 0 && (() => {
