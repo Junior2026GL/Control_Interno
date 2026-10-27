@@ -52,7 +52,8 @@ const syncDias = (fechas, dias = []) =>
 
 const sumDias = dias => (dias || []).reduce((s, d) => s + num(d.monto), 0);
 const totalAlim = r => sumDias(r.dias);
-const totalHosp = r => (num(r.cantidad) || 1) * sumDias(r.dias);
+const cantHosp = c => (c === '' || c == null || isNaN(parseFloat(c)) ? 1 : parseFloat(c));
+const totalHosp = r => cantHosp(r.cantidad) * sumDias(r.dias);
 
 function buildEmpty() {
   const f = today();
@@ -361,7 +362,7 @@ export default function ViaticosSeguridad() {
           nombre: up(r.nombre), cargo: up(r.cargo), dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
         })),
         detalle_hospedaje: form.hospedaje.map(r => ({
-          detalle: up(r.detalle), cantidad: num(r.cantidad) || 1, dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
+          detalle: up(r.detalle), cantidad: cantHosp(r.cantidad), dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
         })),
         detalle_combustible: form.combustible.map(r => ({ nombre: up(r.nombre), detalle: up(r.detalle), monto: num(r.monto) })),
         monto_imprevistos: num(form.monto_imprevistos),

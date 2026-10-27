@@ -10,6 +10,7 @@ const sa = s => (s || '').replace(/[ÁÉÍÓÚÑáéíóúñ]/g,
   c => ({ Á: 'A', É: 'E', Í: 'I', Ó: 'O', Ú: 'U', Ñ: 'N', á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ñ: 'n' }[c] || c));
 
 const num = v => parseFloat(v) || 0;
+const cantHosp = c => (c === '' || c == null || isNaN(parseFloat(c)) ? 1 : parseFloat(c));
 const miles = v => num(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmt = v => `L ${miles(v)}`;
 const dash = v => (num(v) > 0 ? fmt(v) : '-');
@@ -221,7 +222,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
     const fijo = 8 + cols.ancho + 28;                // # + columna fija + total
     const fw = n > 0 ? Math.min(24, Math.max(12, Math.floor((CW - fijo - 70) / n))) : 0;
     const totalCol = 3 + n;
-    const cantidad = r => (mult ? num(r.cantidad) || 1 : 1);
+    const cantidad = r => (mult ? cantHosp(r.cantidad) : 1);
     const montoFila = r => cantidad(r) * fechas.reduce((s, f) => s + montoDia(r, f), 0);
     const body = rows.map((r, i) => [
       String(i + 1), ...cols.fila(r),
@@ -268,7 +269,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   });
   tablaDias({
     titulo: 'DETALLE DE HOSPEDAJE', mult: true,
-    cols: { head: ['DETALLE', 'CANTIDAD'], ancho: 22, alineo: 'center', fila: r => [sa((r.detalle || '').toUpperCase()), String(num(r.cantidad) || 1)] },
+    cols: { head: ['DETALLE', 'CANTIDAD'], ancho: 22, alineo: 'center', fila: r => [sa((r.detalle || '').toUpperCase()), String(cantHosp(r.cantidad))] },
     rows: hospedaje,
   });
 

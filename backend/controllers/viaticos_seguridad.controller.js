@@ -27,7 +27,7 @@ function normHospedaje(arr) {
       const cant = parseFloat(r.cantidad);
       return {
         detalle: sanitize(r.detalle).toUpperCase(),
-        cantidad: isNaN(cant) || cant <= 0 ? 1 : cant,
+        cantidad: isNaN(cant) || cant < 0 ? 1 : cant,
         dias: normDias(r.dias),
       };
     })
