@@ -740,7 +740,7 @@ export default function ViaticosSeguridad() {
                             <tr key={i}>
                               <td>{i + 1}</td>
                               <td><input className="vs-input vs-in vs-in--name" value={r.detalle} onChange={e => setRow('hospedaje', i, { detalle: e.target.value })} placeholder="Ej. HABITACION SENCILLA" /></td>
-                              <td><input type="number" min="1" step="1" className="vs-input vs-in vs-in--cant" value={r.cantidad} onChange={e => setRow('hospedaje', i, { cantidad: e.target.value })} /></td>
+                              <td className="vs-td-cant"><input type="text" inputMode="numeric" maxLength={3} className="vs-input vs-in vs-in--cant" value={r.cantidad} onFocus={e => e.target.select()} onChange={e => setRow('hospedaje', i, { cantidad: e.target.value.replace(/\D/g, '') })} /></td>
                               {r.dias.map(d => (
                                 <td key={d.fecha}><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={d.monto} onChange={e => setRowDia('hospedaje', i, d.fecha, e.target.value)} placeholder="0" /></td>
                               ))}

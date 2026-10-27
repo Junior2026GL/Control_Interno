@@ -112,7 +112,8 @@
 .vs-in { padding: .3rem .5rem !important; font-size: .8rem; border-radius: 8px; }
 .vs-in--name  { min-width: 230px; }
 .vs-in--cargo { min-width: 120px; }
-.vs-in--cant  { width: 56px; text-align: center; }
+.vs-td-cant   { min-width: 76px; }
+.vs-in--cant  { width: 100%; min-width: 64px; text-align: center; }
 .vs-in--monto { width: 74px; text-align: right; }
 
 .vs-td-total { font-weight: 700; color: #16a34a; text-align: right; white-space: nowrap; padding-right: .6rem !important; }
