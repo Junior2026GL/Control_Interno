@@ -297,9 +297,6 @@ function dibujar(doc, rec, logoDataUrl, k) {
   renglon(2, 'FIRMA:', '', ESPACIO_FIRMA);
 
   /* ─ PIE DE PÁGINA (todas las hojas) ─ */
-  const ahora = new Date();
-  const fechaGen = ahora.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const horaGen  = ahora.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
   const totalPaginas = doc.getNumberOfPages();
   for (let pg = 1; pg <= totalPaginas; pg++) {
     doc.setPage(pg);
@@ -307,9 +304,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
     doc.rect(M, FY, CW, FH, 'F');
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...BLANCO);
     doc.text('Congreso Nacional - Pagaduría Especial', M + 3, FY + FH * 0.65);
-    doc.text(`Página ${pg} de ${totalPaginas}`, W / 2, FY + FH * 0.65, { align: 'center' });
-    doc.text(`Generado: ${fechaGen} ${horaGen}`, M + CW - 3, FY + FH * 0.65, { align: 'right' });
-  }
+    doc.text(`Página ${pg} de ${totalPaginas}`, W / 2, FY + FH * 0.65, { align: 'center' });  }
 }
 
 /* Prueba escalas de mayor a menor hasta que todo quepa en una hoja. */
