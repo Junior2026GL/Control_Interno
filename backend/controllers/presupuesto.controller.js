@@ -732,13 +732,14 @@ exports.getReportesAyudas = async (req, res) => {
     const [rows] = await db.promise().query(
       `SELECT
          a.id, a.fecha, a.concepto, a.beneficiario, a.beneficiario_dni, a.beneficiario_telefono, a.beneficiario_departamento, a.beneficiario_rtn, a.beneficiario_organizacion, a.numero_orden, a.numero_cheque, a.monto, a.observaciones,
-         a.estado_liquidacion, a.created_at, p.anio,
+         a.estado_liquidacion, a.fecha_liquidacion, a.created_at, p.anio,
          d.id AS diputado_id, d.nombre AS diputado, d.departamento, d.tipo, d.partido,
-         u.nombre AS creado_por_nombre
+         u.nombre AS creado_por_nombre, ul.nombre AS liquidado_por_nombre
        FROM ayudas_sociales a
        JOIN presupuesto_diputados p ON p.id = a.presupuesto_id
        JOIN diputados d ON d.id = p.diputado_id
        LEFT JOIN usuarios u ON u.id = a.created_by
+       LEFT JOIN usuarios ul ON ul.id = a.liquidado_por
        WHERE 1=1 ${anioFilter} ${dipFilter} ${partidoFilter} ${estadoFilter} ${ordenFilter} ${chequeFilter} ${desdeFilter} ${hastaFilter} ${searchFilter}
        ORDER BY ${orderBy}
        LIMIT ? OFFSET ?`,

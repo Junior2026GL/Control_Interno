@@ -781,6 +781,15 @@ export default function BusquedaAyudas() {
                 <div className="ba-modal-kpi">
                   <span className="ba-modal-kpi-lbl">Estado liquidación</span>
                   <span className="ba-modal-kpi-val">{estadoBadge(detalle.estado_liquidacion)}</span>
+                  {detalle.estado_liquidacion === 'liquido' && detalle.fecha_liquidacion && (
+                    <span className="ba-modal-kpi-sub">
+                      {new Date(detalle.fecha_liquidacion).toLocaleString('es-HN', {
+                        day: '2-digit', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', hour12: true,
+                      })}
+                      {detalle.liquidado_por_nombre && <><br />Por: {detalle.liquidado_por_nombre}</>}
+                    </span>
+                  )}
                 </div>
                 <div className="ba-modal-kpi">
                   <span className="ba-modal-kpi-lbl">N° de Orden</span>

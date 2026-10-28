@@ -942,6 +942,8 @@
 }
 .ba-modal-kpi--monto .ba-modal-kpi-val { color: #274c8d; font-size: 1.15rem; }
 
+.ba-modal-kpi-sub { font-size: 0.72rem; font-weight: 600; color: #475569; line-height: 1.35; margin-top: 2px; }
+
 .ba-vacio-sm { font-size: 0.8rem; color: #cbd5e1; font-weight: 500; }
 
 .ba-modal-body {
