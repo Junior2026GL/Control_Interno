@@ -254,7 +254,21 @@ export default function EstadoLiquidacion() {
     doc.setFillColor(...C_HEADER);
     doc.roundedRect(x0, y, CW, 11, 2, 2, 'F');
     doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C_BLANCO);
-    doc.text(`ESTADO: ${detailItem?.label?.toUpperCase()}`, x0 + CW / 2, y + 7.5, { align: 'center' });
+    const estadoTxt = `ESTADO: ${detailItem?.label?.toUpperCase()}`;
+    if (detailItem?.key === 'plazo_vencido') {
+      // Icono de advertencia (triángulo con "!") a la izquierda del texto
+      const tw = doc.getTextWidth(estadoTxt);
+      const ix = x0 + CW / 2 - tw / 2 - 5;
+      const iy = y + 2;
+      doc.setFillColor(...C_BLANCO);
+      doc.triangle(ix + 3.5, iy, ix, iy + 7, ix + 7, iy + 7, 'F');
+      doc.setFillColor(...C_HEADER);
+      doc.rect(ix + 3.05, iy + 2.6, 0.9, 2.5, 'F');
+      doc.rect(ix + 3.05, iy + 5.7, 0.9, 0.9, 'F');
+      doc.text(estadoTxt, x0 + CW / 2 + 4, y + 7.5, { align: 'center' });
+    } else {
+      doc.text(estadoTxt, x0 + CW / 2, y + 7.5, { align: 'center' });
+    }
     y += 15;
 
     // Datos del diputado
@@ -313,7 +327,7 @@ export default function EstadoLiquidacion() {
       doc.setFillColor(...C_AZUL);
       doc.rect(x0 - 4, pH - BM - 8, CW + 8, BM + 3, 'F');
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...C_BLANCO);
-      doc.text('CONGRESO NACIONAL · PAGADURÍA ESPECIAL · DOCUMENTO GENERADO AUTOMÁTICAMENTE', x0 + CW / 2, pH - BM - 3.5, { align: 'center' });
+      doc.text(`CONGRESO NACIONAL · PAGADURÍA ESPECIAL · TRANSPARENCIA Y CONTROL DEL GASTO PÚBLICO  |  Página ${p} de ${pageCount}`, x0 + CW / 2, pH - BM - 3.5, { align: 'center' });
     }
 
     const safeName = (selectedDip?.nombre || 'diputado').replace(/\s+/g, '_');
