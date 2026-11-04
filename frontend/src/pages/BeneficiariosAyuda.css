@@ -131,6 +131,14 @@
 .bn-var--up { color: #16a34a; font-weight: 700; }
 .bn-var--down { color: #dc2626; font-weight: 700; }
 @media (max-width: 900px) { .bn-meses { grid-template-columns: 1fr; } }
+.bn-head-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bn-live { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: #15803d; background: #ecfdf3; border: 1px solid #bbf7d0; border-radius: 999px; padding: 5px 11px; white-space: nowrap; }
+.bn-live small { font-size: 11px; font-weight: 600; color: #64748b; }
+.bn-live-dot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+.bn-live-dot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #22c55e; animation: bn-pulso 1.6s ease-out infinite; }
+.bn-live--off { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+.bn-live--off .bn-live-dot, .bn-live--off .bn-live-dot::after { background: #ef4444; }
+@keyframes bn-pulso { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(3.2); opacity: 0; } }
 .bn-seg { display: inline-flex; background: #f1f5f9; border-radius: 10px; padding: 3px; }
 .bn-seg-btn { padding: 6px 12px; border: none; background: none; border-radius: 8px; color: #64748b; font: 600 12px 'Segoe UI', system-ui, sans-serif; cursor: pointer; transition: all .15s; }
 .bn-seg-btn--active { background: #fff; color: #274c8d; box-shadow: 0 1px 3px rgba(15, 23, 42, .12); }

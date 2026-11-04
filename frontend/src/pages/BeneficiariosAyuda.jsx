@@ -44,6 +44,8 @@ const NOMBRES_CORTOS = {
   'Gracias a Dios': 'Gracias a Dios',
 };
 
+const REFRESCO_MS = 5 * 60 * 1000;
+
 const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 const METRICAS = [
@@ -66,28 +68,42 @@ export default function BeneficiariosAyuda() {
   const [porMes, setPorMes]     = useState([]);
   const [metricaMes, setMetricaMes] = useState('ayudas');
   const [anioMes, setAnioMes]       = useState('');
+  const [ultimaAct, setUltimaAct]   = useState(null);
+  const [liveOk, setLiveOk]         = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const mapWrapRef = useRef(null);
   const [mapH, setMapH] = useState(700);
 
-  const fetchData = useCallback(async () => {
+  // silencioso = actualización automática: no muestra "Cargando…" ni borra lo que ya se ve
+  const fetchData = useCallback(async (silencioso = false) => {
     try {
-      setLoading(true);
-      setError('');
+      if (!silencioso) { setLoading(true); setError(''); }
       const [res, resMes] = await Promise.all([
         api.get('/beneficiarios-ayuda'),
-        api.get('/beneficiarios-ayuda/por-mes').catch(() => ({ data: [] })),
+        api.get('/beneficiarios-ayuda/por-mes').catch(() => null),
       ]);
       setRows(res.data);
-      setPorMes(resMes.data);
+      if (resMes) setPorMes(resMes.data);
+      else if (!silencioso) setPorMes([]);
+      setUltimaAct(new Date());
+      setLiveOk(true);
     } catch {
-      setError('No se pudo cargar el listado de beneficiarios.');
+      if (silencioso) setLiveOk(false);
+      else setError('No se pudo cargar el listado de beneficiarios.');
     } finally {
-      setLoading(false);
+      if (!silencioso) setLoading(false);
     }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Actualización automática cada 5 minutos (solo con la pestaña del navegador visible)
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchData(true);
+    }, REFRESCO_MS);
+    return () => clearInterval(id);
+  }, [fetchData]);
 
   // Mapa de Honduras (el mismo GeoJSON del módulo Mapa Alcaldías)
   useEffect(() => {
@@ -198,7 +214,9 @@ export default function BeneficiariosAyuda() {
 
   const mesesOption = {
     backgroundColor: 'transparent',
-    animationDuration: 700,
+    animationDuration: 800,
+    animationEasing: 'cubicOut',
+    animationDelay: idx => idx * 140,
     grid: { left: 8, right: 24, top: 40, bottom: 8, containLabel: true },
     tooltip: {
       trigger: 'axis',
@@ -411,7 +429,7 @@ export default function BeneficiariosAyuda() {
             </div>
           </div>
           <div className="bn-header-actions">
-            <button className="bn-btn" onClick={fetchData}><FiRefreshCw size={15} /> Actualizar</button>
+            <button className="bn-btn" onClick={() => fetchData()}><FiRefreshCw size={15} /> Actualizar</button>
             <button className="bn-btn bn-btn--primary" onClick={exportar} disabled={!filtrados.length}>
               <FiDownload size={15} /> Exportar Excel
             </button>
@@ -484,7 +502,7 @@ export default function BeneficiariosAyuda() {
                       </div>
                     </div>
                   </div>
-                  <ReactECharts option={mesesOption} style={{ height: 440 }} />
+                  <ReactECharts key={metricaMes + anioMes} option={mesesOption} style={{ height: 440 }} />
                 </div>
               </div>
             </>
@@ -526,12 +544,19 @@ export default function BeneficiariosAyuda() {
                     <p>Haga clic en un departamento para ver sus beneficiarios</p>
                   </div>
                   </div>
-                  <div className="bn-seg">
-                    {METRICAS.map(m => (
-                      <button key={m.key} className={`bn-seg-btn${metrica === m.key ? ' bn-seg-btn--active' : ''}`} onClick={() => setMetrica(m.key)}>
-                        {m.label}
-                      </button>
-                    ))}
+                  <div className="bn-head-right">
+                    <span className={`bn-live${liveOk ? '' : ' bn-live--off'}`} title="Se actualiza solo cada 5 minutos">
+                      <span className="bn-live-dot" />
+                      {liveOk ? 'En vivo' : 'Sin conexión'}
+                      {ultimaAct && <small>· {ultimaAct.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' })}</small>}
+                    </span>
+                    <div className="bn-seg">
+                      {METRICAS.map(m => (
+                        <button key={m.key} className={`bn-seg-btn${metrica === m.key ? ' bn-seg-btn--active' : ''}`} onClick={() => setMetrica(m.key)}>
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div ref={mapWrapRef}>
@@ -693,7 +718,7 @@ export default function BeneficiariosAyuda() {
               <span className="bn-state-ico bn-state-ico--error"><FiAlertCircle size={28} /></span>
               <h3>No se pudo cargar el listado</h3>
               <p>Hubo un problema al conectar con el servidor. Intente de nuevo en unos segundos.</p>
-              <button className="bn-btn bn-btn--primary" onClick={fetchData}><FiRefreshCw size={15} /> Reintentar</button>
+              <button className="bn-btn bn-btn--primary" onClick={() => fetchData()}><FiRefreshCw size={15} /> Reintentar</button>
             </div>
           ) : visibles.length === 0 ? (
             hayFiltros ? (
