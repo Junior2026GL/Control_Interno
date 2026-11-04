@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
-import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2, FiAlertCircle, FiTrendingUp, FiDollarSign } from 'react-icons/fi';
+import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2, FiAlertCircle, FiTrendingUp } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { LuChartNoAxesCombined } from 'react-icons/lu';
 import * as XLSX from 'xlsx';
@@ -210,9 +210,17 @@ export default function BeneficiariosAyuda() {
       formatter: ps => detalleMes(meses[ps[0].dataIndex]),
     },
     xAxis: {
-      type: 'category', data: meses.map(m => m.label),
+      type: 'category', data: meses.map(m => m.nombre),
       axisLine: { lineStyle: { color: '#cbd5e1' } }, axisTick: { show: false },
-      axisLabel: { color: '#475569', fontWeight: 600, fontSize: 12, margin: 14 },
+      axisLabel: {
+        margin: 14, interval: 0, lineHeight: 16,
+        formatter: v => { const [mes, anio] = v.split(' '); return `{m|${mes}}
+{a|${anio}}`; },
+        rich: {
+          m: { color: '#1e293b', fontWeight: 700, fontSize: 13, align: 'center' },
+          a: { color: '#94a3b8', fontWeight: 500, fontSize: 11, align: 'center' },
+        },
+      },
     },
     yAxis: {
       type: 'value', minInterval: 1,
@@ -221,21 +229,29 @@ export default function BeneficiariosAyuda() {
       splitLine: { lineStyle: { color: '#e8edf4', type: 'dashed' } },
     },
     series: [{
-      type: 'bar', barMaxWidth: 54, barCategoryGap: '38%',
-      data: meses.map(m => ({
-        value: m[metricaMes],
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, m.clave === mejorClave
-            ? [{ offset: 0, color: '#34d399' }, { offset: 1, color: '#059669' }]
-            : [{ offset: 0, color: '#60a5fa' }, { offset: 1, color: '#1d4ed8' }]),
-          borderRadius: [10, 10, 0, 0],
-          shadowColor: m.clave === mejorClave ? 'rgba(5, 150, 105, .28)' : 'rgba(29, 78, 216, .22)',
-          shadowBlur: 12, shadowOffsetY: 5,
-        },
-      })),
-      emphasis: { itemStyle: { opacity: .88 } },
+      type: 'bar', barMaxWidth: 60, barCategoryGap: '34%',
+      showBackground: true,
+      backgroundStyle: { color: 'rgba(148, 163, 184, .10)', borderRadius: [14, 14, 0, 0] },
+      data: meses.map(m => {
+        const mejor = m.clave === mejorClave;
+        return {
+          value: m[metricaMes],
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, mejor
+              ? [{ offset: 0, color: '#6ee7b7' }, { offset: .55, color: '#10b981' }, { offset: 1, color: '#047857' }]
+              : [{ offset: 0, color: '#93c5fd' }, { offset: .5, color: '#3b82f6' }, { offset: 1, color: '#1e40af' }]),
+            borderRadius: [14, 14, 0, 0],
+            shadowColor: mejor ? 'rgba(16, 185, 129, .35)' : 'rgba(37, 99, 235, .28)',
+            shadowBlur: 16, shadowOffsetY: 6,
+          },
+          label: mejor ? { color: '#047857', backgroundColor: '#d1fae5', borderColor: '#6ee7b7' } : {},
+        };
+      }),
+      emphasis: { focus: 'self', itemStyle: { shadowBlur: 24 } },
       label: {
-        show: true, position: 'top', distance: 8, color: '#1e3a8a', fontWeight: 800, fontSize: 12,
+        show: true, position: 'top', distance: 10, fontWeight: 800, fontSize: 12,
+        color: '#1e3a8a', backgroundColor: '#eff6ff', borderColor: '#bfdbfe', borderWidth: 1,
+        borderRadius: 999, padding: [4, 10],
         formatter: p => fmtMes(p.value),
       },
       markLine: {
@@ -431,9 +447,9 @@ export default function BeneficiariosAyuda() {
                   <div><span className="bn-stat-num">{totalesMes.mesActual.ayudas}</span><span className="bn-stat-lbl">Último mes ({totalesMes.mesActual.nombre})</span></div>
                 </div>
                 <div className="bn-stat">
-                  <span className="bn-stat-icon bn-stat-icon--pink">{esMonto ? <FiDollarSign size={20} /> : <FiAward size={20} />}</span>
+                  <span className={`bn-stat-icon bn-stat-icon--${esMonto ? 'green' : 'pink'}`}>{esMonto ? <b className="bn-stat-lps">Lps.</b> : <FiAward size={20} />}</span>
                   {esMonto ? (
-                    <div><span className="bn-stat-num bn-stat-num--pink">{fmtMonto(totalesMes.monto)}</span><span className="bn-stat-lbl">Monto total entregado</span></div>
+                    <div><span className="bn-stat-num bn-stat-num--monto">{fmtMonto(totalesMes.monto).replace('L ', 'Lps. ')}</span><span className="bn-stat-lbl">Monto total entregado</span></div>
                   ) : (
                     <div><span className="bn-stat-num bn-stat-num--pink">{totalesMes.mejor.nombre}</span><span className="bn-stat-lbl">Mes con más ayudas ({totalesMes.mejor.ayudas}) · promedio {totalesMes.promedio.toFixed(1)}/mes</span></div>
                   )}

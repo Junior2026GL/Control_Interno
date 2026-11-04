@@ -43,6 +43,8 @@
 .bn-stat-icon--pink  { background: #fdf2f8; color: #be185d; }
 .bn-stat-num { font-size: 1.7rem; font-weight: 800; color: #0f172a; line-height: 1.1; }
 .bn-stat-num--pink { color: #be185d; }
+.bn-stat-num--monto { color: #15803d; font-size: 1.55rem; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.bn-stat-lps { font-size: .78rem; font-weight: 800; letter-spacing: -.01em; }
 .bn-stat-lbl { font-size: .78rem; font-weight: 500; color: #64748b; margin-top: 2px; }
 
 /* Tarjeta de tabla */
