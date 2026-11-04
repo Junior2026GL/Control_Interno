@@ -205,7 +205,6 @@ export default function BeneficiariosAyuda() {
     <span style="color:#94a3b8">Monto</span> <b style="color:#4ade80">${fmtMonto(m.monto)}</b>`;
 
   const mejorClave = meses.reduce((b, m) => (m[metricaMes] > (b?.[metricaMes] ?? -1) ? m : b), null)?.clave;
-  const totalMetricaMes = meses.reduce((s, m) => s + m[metricaMes], 0);
 
   const mesesOption = {
     backgroundColor: 'transparent',
@@ -231,26 +230,6 @@ export default function BeneficiariosAyuda() {
         label: { color: '#b45309', fontWeight: 600, formatter: p => `Promedio ${fmtMes(Math.round(p.value))}` },
         data: [{ type: 'average' }],
       },
-    }],
-  };
-
-  const PALETA_MESES = ['#1e3a8a', '#2563eb', '#60a5fa', '#16a34a', '#4ade80', '#f59e0b', '#fbbf24', '#db2777', '#a78bfa', '#94a3b8', '#0ea5e9', '#64748b'];
-  const pastelOption = {
-    backgroundColor: 'transparent',
-    tooltip: { ...tipMes, trigger: 'item', formatter: p => detalleMes(meses[p.dataIndex]) },
-    legend: { bottom: 0, textStyle: { color: '#64748b', fontSize: 12 } },
-    graphic: [{
-      type: 'text', left: 'center', top: '38%',
-      style: {
-        text: `${fmtMes(totalMetricaMes)}\n${METRICAS.find(x => x.key === metricaMes).label}`,
-        textAlign: 'center', fill: '#0f172a', fontSize: 22, fontWeight: 800, lineHeight: 28,
-      },
-    }],
-    series: [{
-      type: 'pie', radius: ['42%', '70%'], center: ['50%', '44%'],
-      itemStyle: { borderColor: '#fff', borderWidth: 2 },
-      label: { color: '#334155', fontWeight: 600, formatter: p => `${p.percent.toFixed(0)}%` },
-      data: meses.map((m, i) => ({ name: m.nombre, value: m[metricaMes], itemStyle: { color: PALETA_MESES[i % PALETA_MESES.length] } })),
     }],
   };
 
@@ -442,7 +421,7 @@ export default function BeneficiariosAyuda() {
                   <div><span className="bn-stat-num bn-stat-num--pink">{totalesMes.mejor.nombre}</span><span className="bn-stat-lbl">Mes con más ayudas ({totalesMes.mejor.ayudas}) · promedio {totalesMes.promedio.toFixed(1)}/mes</span></div>
                 </div>
               </div>
-              <div className="bn-meses">
+              <div>
                 <div className="bn-card bn-panel">
                   <div className="bn-panel-head">
                     <div className="bn-panel-title">
@@ -471,46 +450,7 @@ export default function BeneficiariosAyuda() {
                       </div>
                     </div>
                   </div>
-                  <ReactECharts option={mesesOption} style={{ height: 360 }} />
-                </div>
-                <div className="bn-card bn-panel">
-                  <div className="bn-panel-head">
-                    <div className="bn-panel-title">
-                      <span className="bn-panel-ico bn-panel-ico--amber"><FiPieChart size={16} /></span>
-                      <div>
-                        <h2>Participación de cada mes</h2>
-                        <p>Porcentaje sobre el total</p>
-                      </div>
-                    </div>
-                  </div>
-                  <ReactECharts option={pastelOption} style={{ height: 360 }} />
-                </div>
-              </div>
-
-              <div className="bn-card bn-meses-tabla">
-                <div className="bn-table-wrap">
-                  <table className="bn-table">
-                    <thead>
-                      <tr><th>Mes</th><th>Ayudas</th><th>vs. mes anterior</th><th>Beneficiarios</th><th>Monto</th></tr>
-                    </thead>
-                    <tbody>
-                      {[...meses].reverse().map((m, i, lista) => {
-                        const ant = lista[i + 1];
-                        const dif = ant && ant.ayudas > 0 ? Math.round(((m.ayudas - ant.ayudas) / ant.ayudas) * 100) : null;
-                        return (
-                          <tr key={m.clave}>
-                            <td><b>{m.nombre}</b></td>
-                            <td>{m.ayudas}</td>
-                            <td className={dif === null ? '' : dif >= 0 ? 'bn-var--up' : 'bn-var--down'}>
-                              {dif === null ? '—' : `${dif >= 0 ? '▲' : '▼'} ${Math.abs(dif)}%`}
-                            </td>
-                            <td>{m.beneficiarios}</td>
-                            <td>{fmtMonto(m.monto)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  <ReactECharts option={mesesOption} style={{ height: 440 }} />
                 </div>
               </div>
             </>
