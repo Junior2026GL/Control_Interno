@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
-import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2, FiAlertCircle, FiTrendingUp } from 'react-icons/fi';
+import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2, FiAlertCircle, FiTrendingUp, FiDollarSign } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { LuChartNoAxesCombined } from 'react-icons/lu';
 import * as XLSX from 'xlsx';
@@ -166,22 +166,16 @@ export default function BeneficiariosAyuda() {
   }, [rows]);
   const totalGeneros = Math.max(generos.reduce((s, g) => s + g.total, 0), 1);
 
-  // ── Ayudas por mes (rellena los meses sin ayudas con 0) ─────
+  // ── Ayudas por mes ──────────────────────────────────────────
   const aniosMes = useMemo(() => [...new Set(porMes.map(m => m.mes.slice(0, 4)))], [porMes]);
 
+  // Solo se muestran los meses con ayudas registradas
   const meses = useMemo(() => {
     const datos = anioMes ? porMes.filter(m => m.mes.startsWith(anioMes)) : porMes;
-    if (!datos.length) return [];
-    const porClave = Object.fromEntries(datos.map(m => [m.mes, m]));
-    const [a0, m0] = datos[0].mes.split('-').map(Number);
-    const [a1, m1] = datos[datos.length - 1].mes.split('-').map(Number);
-    const out = [];
-    for (let a = a0, m = m0; a < a1 || (a === a1 && m <= m1); m === 12 ? (a++, m = 1) : m++) {
-      const clave = `${a}-${String(m).padStart(2, '0')}`;
-      const d = porClave[clave] || { ayudas: 0, monto: 0, beneficiarios: 0 };
-      out.push({ clave, label: `${MESES_CORTOS[m - 1]} ${String(a).slice(2)}`, nombre: `${MESES_CORTOS[m - 1]} ${a}`, ...d });
-    }
-    return out;
+    return datos.filter(d => d.ayudas > 0).map(d => {
+      const [a, m] = d.mes.split('-').map(Number);
+      return { ...d, clave: d.mes, label: `${MESES_CORTOS[m - 1]} ${String(a).slice(2)}`, nombre: `${MESES_CORTOS[m - 1]} ${a}` };
+    });
   }, [porMes, anioMes]);
 
   const totalesMes = useMemo(() => {
@@ -192,42 +186,62 @@ export default function BeneficiariosAyuda() {
     return { ayudas, monto, mejor, mesActual, promedio: meses.length ? ayudas / meses.length : 0 };
   }, [meses]);
 
-  const fmtMes = (v) => (metricaMes === 'monto' ? fmtMontoCorto(v) : Number(v).toLocaleString('es-HN'));
-  const tipMes = {
-    backgroundColor: '#1e293b',
-    borderColor: '#334155',
-    textStyle: { color: '#e2e8f0', fontSize: 13 },
-    padding: [10, 14],
-  };
-  const detalleMes = (m) => `<b>${m.nombre}</b><hr style="border-color:#334155;margin:6px 0"/>
+  const fmtMillones = (v) =>
+    v >= 1e6 ? `L ${(v / 1e6).toFixed(1)} M` : v >= 1e3 ? `L ${Math.round(v / 1e3)} mil` : `L ${v}`;
+  const fmtMes = (v) => (metricaMes === 'monto' ? fmtMillones(v) : Number(v).toLocaleString('es-HN'));
+  const detalleMes = (m) => `<b style="font-size:14px">${m.nombre}</b><hr style="border-color:#334155;margin:6px 0"/>
     <span style="color:#94a3b8">Ayudas</span> <b>${m.ayudas}</b><br/>
-    <span style="color:#94a3b8">Beneficiarios</span> <b>${m.beneficiarios}</b><br/>
     <span style="color:#94a3b8">Monto</span> <b style="color:#4ade80">${fmtMonto(m.monto)}</b>`;
 
   const mejorClave = meses.reduce((b, m) => (m[metricaMes] > (b?.[metricaMes] ?? -1) ? m : b), null)?.clave;
+  const esMonto = metricaMes === 'monto';
 
   const mesesOption = {
     backgroundColor: 'transparent',
-    grid: { left: 56, right: 16, top: 28, bottom: 36 },
-    tooltip: { ...tipMes, trigger: 'axis', formatter: ps => detalleMes(meses[ps[0].dataIndex]) },
-    xAxis: { type: 'category', data: meses.map(m => m.label), axisLine: { lineStyle: { color: '#e3e8ef' } }, axisLabel: { color: '#64748b' }, axisTick: { show: false } },
-    yAxis: { type: 'value', minInterval: 1, axisLabel: { color: '#64748b', formatter: v => (metricaMes === 'monto' && v >= 1000 ? `${Math.round(v / 1000)}k` : v) }, splitLine: { lineStyle: { color: '#eef2f7' } } },
+    animationDuration: 700,
+    grid: { left: 8, right: 24, top: 40, bottom: 8, containLabel: true },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(37, 99, 235, .06)' } },
+      backgroundColor: '#1e293b',
+      borderColor: '#334155',
+      textStyle: { color: '#e2e8f0', fontSize: 13 },
+      padding: [10, 14],
+      formatter: ps => detalleMes(meses[ps[0].dataIndex]),
+    },
+    xAxis: {
+      type: 'category', data: meses.map(m => m.label),
+      axisLine: { lineStyle: { color: '#cbd5e1' } }, axisTick: { show: false },
+      axisLabel: { color: '#475569', fontWeight: 600, fontSize: 12, margin: 14 },
+    },
+    yAxis: {
+      type: 'value', minInterval: 1,
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: '#94a3b8', fontSize: 11, formatter: v => (esMonto ? fmtMillones(v) : v) },
+      splitLine: { lineStyle: { color: '#e8edf4', type: 'dashed' } },
+    },
     series: [{
-      type: 'bar', barMaxWidth: 46,
+      type: 'bar', barMaxWidth: 54, barCategoryGap: '38%',
       data: meses.map(m => ({
         value: m[metricaMes],
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, m.clave === mejorClave
-            ? [{ offset: 0, color: '#4ade80' }, { offset: 1, color: '#16a34a' }]
+            ? [{ offset: 0, color: '#34d399' }, { offset: 1, color: '#059669' }]
             : [{ offset: 0, color: '#60a5fa' }, { offset: 1, color: '#1d4ed8' }]),
-          borderRadius: [6, 6, 0, 0],
+          borderRadius: [10, 10, 0, 0],
+          shadowColor: m.clave === mejorClave ? 'rgba(5, 150, 105, .28)' : 'rgba(29, 78, 216, .22)',
+          shadowBlur: 12, shadowOffsetY: 5,
         },
       })),
-      label: { show: true, position: 'top', color: '#274c8d', fontWeight: 700, fontSize: 11, formatter: p => fmtMes(p.value) },
+      emphasis: { itemStyle: { opacity: .88 } },
+      label: {
+        show: true, position: 'top', distance: 8, color: '#1e3a8a', fontWeight: 800, fontSize: 12,
+        formatter: p => fmtMes(p.value),
+      },
       markLine: {
         symbol: 'none', silent: true,
         lineStyle: { color: '#f59e0b', type: 'dashed', width: 1.5 },
-        label: { color: '#b45309', fontWeight: 600, formatter: p => `Promedio ${fmtMes(Math.round(p.value))}` },
+        label: { position: 'insideEndTop', color: '#b45309', fontWeight: 700, fontSize: 11, formatter: p => `Promedio ${fmtMes(Math.round(p.value))}` },
         data: [{ type: 'average' }],
       },
     }],
@@ -417,8 +431,12 @@ export default function BeneficiariosAyuda() {
                   <div><span className="bn-stat-num">{totalesMes.mesActual.ayudas}</span><span className="bn-stat-lbl">Último mes ({totalesMes.mesActual.nombre})</span></div>
                 </div>
                 <div className="bn-stat">
-                  <span className="bn-stat-icon bn-stat-icon--pink"><FiAward size={20} /></span>
-                  <div><span className="bn-stat-num bn-stat-num--pink">{totalesMes.mejor.nombre}</span><span className="bn-stat-lbl">Mes con más ayudas ({totalesMes.mejor.ayudas}) · promedio {totalesMes.promedio.toFixed(1)}/mes</span></div>
+                  <span className="bn-stat-icon bn-stat-icon--pink">{esMonto ? <FiDollarSign size={20} /> : <FiAward size={20} />}</span>
+                  {esMonto ? (
+                    <div><span className="bn-stat-num bn-stat-num--pink">{fmtMonto(totalesMes.monto)}</span><span className="bn-stat-lbl">Monto total entregado</span></div>
+                  ) : (
+                    <div><span className="bn-stat-num bn-stat-num--pink">{totalesMes.mejor.nombre}</span><span className="bn-stat-lbl">Mes con más ayudas ({totalesMes.mejor.ayudas}) · promedio {totalesMes.promedio.toFixed(1)}/mes</span></div>
+                  )}
                 </div>
               </div>
               <div>
@@ -428,7 +446,7 @@ export default function BeneficiariosAyuda() {
                       <span className="bn-panel-ico bn-panel-ico--blue"><FiTrendingUp size={16} /></span>
                       <div>
                         <h2>Por mes</h2>
-                        <p>Cantidad, monto o beneficiarios de cada mes</p>
+                        <p>Cantidad de ayudas y monto entregado cada mes</p>
                       </div>
                     </div>
                     <div className="bn-meses-ctrl">
@@ -442,7 +460,7 @@ export default function BeneficiariosAyuda() {
                         </div>
                       )}
                       <div className="bn-seg">
-                        {METRICAS.map(m => (
+                        {METRICAS.filter(m => m.key !== 'beneficiarios').map(m => (
                           <button key={m.key} className={`bn-seg-btn${metricaMes === m.key ? ' bn-seg-btn--active' : ''}`} onClick={() => setMetricaMes(m.key)}>
                             {m.label}
                           </button>
