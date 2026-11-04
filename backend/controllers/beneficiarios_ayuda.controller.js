@@ -82,6 +82,27 @@ function calcularCumple(fechaIso) {
   };
 }
 
+// GET /api/beneficiarios-ayuda/por-mes — ayudas, monto y beneficiarios por mes
+exports.porMes = (req, res) => {
+  const sql = `
+    SELECT DATE_FORMAT(fecha, '%Y-%m') AS mes,
+           COUNT(*)                          AS ayudas,
+           COALESCE(SUM(monto), 0)           AS monto,
+           COUNT(DISTINCT beneficiario_dni)  AS beneficiarios
+    FROM ayudas_sociales
+    WHERE fecha IS NOT NULL
+    GROUP BY mes
+    ORDER BY mes ASC
+  `;
+  db.query(sql, (err, rows) => {
+    if (err) {
+      console.error('[beneficiarios_ayuda] Error en porMes:', err);
+      return res.status(500).json({ message: 'Error al obtener las ayudas por mes.' });
+    }
+    res.json(rows.map(r => ({ ...r, monto: parseFloat(r.monto) })));
+  });
+};
+
 // GET /api/beneficiarios-ayuda
 exports.getAll = (req, res) => {
   const sql = `

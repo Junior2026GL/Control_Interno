@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
-import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2, FiAlertCircle } from 'react-icons/fi';
+import { FiUsers, FiSearch, FiRefreshCw, FiDownload, FiGift, FiCalendar, FiMapPin, FiPhone, FiX, FiPieChart, FiList, FiMap, FiAward, FiBarChart2, FiAlertCircle, FiTrendingUp } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { LuChartNoAxesCombined } from 'react-icons/lu';
 import * as XLSX from 'xlsx';
@@ -44,6 +44,8 @@ const NOMBRES_CORTOS = {
   'Gracias a Dios': 'Gracias a Dios',
 };
 
+const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
 const METRICAS = [
   { key: 'ayudas',        label: 'Ayudas' },
   { key: 'monto',         label: 'Monto' },
@@ -61,6 +63,7 @@ export default function BeneficiariosAyuda() {
   const [filtroDepto, setFiltroDepto] = useState('');
   const [filtroEdad, setFiltroEdad]   = useState('');
   const [filtroSexo, setFiltroSexo]   = useState('');
+  const [porMes, setPorMes]     = useState([]);
   const [mapReady, setMapReady] = useState(false);
   const mapWrapRef = useRef(null);
   const [mapH, setMapH] = useState(700);
@@ -69,8 +72,12 @@ export default function BeneficiariosAyuda() {
     try {
       setLoading(true);
       setError('');
-      const res = await api.get('/beneficiarios-ayuda');
+      const [res, resMes] = await Promise.all([
+        api.get('/beneficiarios-ayuda'),
+        api.get('/beneficiarios-ayuda/por-mes').catch(() => ({ data: [] })),
+      ]);
       setRows(res.data);
+      setPorMes(resMes.data);
     } catch {
       setError('No se pudo cargar el listado de beneficiarios.');
     } finally {
@@ -156,6 +163,65 @@ export default function BeneficiariosAyuda() {
     return base.filter(g => g.key !== 'sin-dato');
   }, [rows]);
   const totalGeneros = Math.max(generos.reduce((s, g) => s + g.total, 0), 1);
+
+  // ── Ayudas por mes (rellena los meses sin ayudas con 0) ─────
+  const meses = useMemo(() => {
+    if (!porMes.length) return [];
+    const porClave = Object.fromEntries(porMes.map(m => [m.mes, m]));
+    const [a0, m0] = porMes[0].mes.split('-').map(Number);
+    const [a1, m1] = porMes[porMes.length - 1].mes.split('-').map(Number);
+    const out = [];
+    for (let a = a0, m = m0; a < a1 || (a === a1 && m <= m1); m === 12 ? (a++, m = 1) : m++) {
+      const clave = `${a}-${String(m).padStart(2, '0')}`;
+      const d = porClave[clave] || { ayudas: 0, monto: 0, beneficiarios: 0 };
+      out.push({ clave, label: `${MESES_CORTOS[m - 1]} ${String(a).slice(2)}`, nombre: `${MESES_CORTOS[m - 1]} ${a}`, ...d });
+    }
+    return out;
+  }, [porMes]);
+
+  const totalesMes = useMemo(() => {
+    const ayudas = meses.reduce((s, m) => s + m.ayudas, 0);
+    const monto = meses.reduce((s, m) => s + m.monto, 0);
+    const mejor = meses.reduce((b, m) => (m.ayudas > (b?.ayudas ?? -1) ? m : b), null);
+    const mesActual = meses[meses.length - 1];
+    return { ayudas, monto, mejor, mesActual, promedio: meses.length ? ayudas / meses.length : 0 };
+  }, [meses]);
+
+  const mesesOption = {
+    backgroundColor: 'transparent',
+    grid: { left: 48, right: 64, top: 40, bottom: 36 },
+    legend: { top: 0, right: 0, textStyle: { color: '#64748b', fontSize: 12 } },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#1e293b',
+      borderColor: '#334155',
+      textStyle: { color: '#e2e8f0', fontSize: 13 },
+      padding: [10, 14],
+      formatter: ps => {
+        const m = meses[ps[0].dataIndex];
+        return `<b>${m.nombre}</b><hr style="border-color:#334155;margin:6px 0"/>
+          <span style="color:#94a3b8">Ayudas</span> <b>${m.ayudas}</b><br/>
+          <span style="color:#94a3b8">Beneficiarios</span> <b>${m.beneficiarios}</b><br/>
+          <span style="color:#94a3b8">Monto</span> <b style="color:#4ade80">${fmtMonto(m.monto)}</b>`;
+      },
+    },
+    xAxis: { type: 'category', data: meses.map(m => m.label), axisLine: { lineStyle: { color: '#e3e8ef' } }, axisLabel: { color: '#64748b' }, axisTick: { show: false } },
+    yAxis: [
+      { type: 'value', minInterval: 1, axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#eef2f7' } } },
+      { type: 'value', axisLabel: { color: '#64748b', formatter: v => (v >= 1000 ? `${Math.round(v / 1000)}k` : v) }, splitLine: { show: false } },
+    ],
+    series: [
+      {
+        name: 'Ayudas', type: 'bar', data: meses.map(m => m.ayudas), barMaxWidth: 38,
+        itemStyle: { color: '#2563eb', borderRadius: [6, 6, 0, 0] },
+        label: { show: true, position: 'top', color: '#274c8d', fontWeight: 700, fontSize: 11 },
+      },
+      {
+        name: 'Monto (L)', type: 'line', yAxisIndex: 1, smooth: true, data: meses.map(m => m.monto),
+        symbolSize: 7, lineStyle: { width: 3, color: '#16a34a' }, itemStyle: { color: '#16a34a' },
+      },
+    ],
+  };
 
   // ── Mapa ────────────────────────────────────────────────────
   const maxMapa = Math.max(...Object.values(deptos).map(d => d[metrica]), 1);
@@ -319,7 +385,47 @@ export default function BeneficiariosAyuda() {
           <button className={`bn-tab${tab === 'beneficiarios' ? ' bn-tab--active' : ''}`} onClick={() => setTab('beneficiarios')}>
             <FiList size={15} /> Beneficiarios <span className="bn-tab-count">{rows.length}</span>
           </button>
+          <button className={`bn-tab${tab === 'meses' ? ' bn-tab--active' : ''}`} onClick={() => setTab('meses')}>
+            <FiTrendingUp size={15} /> Ayudas por mes
+          </button>
         </div>
+
+        {tab === 'meses' && (
+          loading ? (
+            <div className="bn-card"><div className="bn-empty">Cargando…</div></div>
+          ) : meses.length === 0 ? (
+            <div className="bn-card"><div className="bn-empty">Aún no hay ayudas registradas.</div></div>
+          ) : (
+            <>
+              <div className="bn-stats">
+                <div className="bn-stat">
+                  <span className="bn-stat-icon bn-stat-icon--blue"><FiGift size={20} /></span>
+                  <div><span className="bn-stat-num">{totalesMes.ayudas}</span><span className="bn-stat-lbl">Ayudas en total</span></div>
+                </div>
+                <div className="bn-stat">
+                  <span className="bn-stat-icon bn-stat-icon--green"><FiCalendar size={20} /></span>
+                  <div><span className="bn-stat-num">{totalesMes.mesActual.ayudas}</span><span className="bn-stat-lbl">Último mes ({totalesMes.mesActual.nombre})</span></div>
+                </div>
+                <div className="bn-stat">
+                  <span className="bn-stat-icon bn-stat-icon--pink"><FiAward size={20} /></span>
+                  <div><span className="bn-stat-num bn-stat-num--pink">{totalesMes.mejor.nombre}</span><span className="bn-stat-lbl">Mes con más ayudas ({totalesMes.mejor.ayudas}) · promedio {totalesMes.promedio.toFixed(1)}/mes</span></div>
+                </div>
+              </div>
+              <div className="bn-card bn-panel">
+                <div className="bn-panel-head">
+                  <div className="bn-panel-title">
+                    <span className="bn-panel-ico bn-panel-ico--blue"><FiTrendingUp size={16} /></span>
+                    <div>
+                      <h2>Ayudas entregadas por mes</h2>
+                      <p>Barras: cantidad de ayudas · Línea: monto en lempiras</p>
+                    </div>
+                  </div>
+                </div>
+                <ReactECharts option={mesesOption} style={{ height: 380 }} />
+              </div>
+            </>
+          )
+        )}
 
         {tab === 'beneficiarios' && (
           <div className="bn-stats">
