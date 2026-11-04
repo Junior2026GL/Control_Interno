@@ -54,6 +54,24 @@ const METRICAS = [
   { key: 'beneficiarios', label: 'Beneficiarios' },
 ];
 
+// Número que sube desde 0 hasta su valor (respeta "reducir movimiento" del sistema)
+function Contador({ valor, formato = v => Math.round(v).toLocaleString('es-HN'), duracion = 1100 }) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setV(valor); return undefined; }
+    let raf;
+    const t0 = performance.now();
+    const paso = (t) => {
+      const p = Math.min((t - t0) / duracion, 1);
+      setV(valor * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(paso);
+    };
+    raf = requestAnimationFrame(paso);
+    return () => cancelAnimationFrame(raf);
+  }, [valor, duracion]);
+  return <>{formato(v)}</>;
+}
+
 export default function BeneficiariosAyuda() {
   const [rows, setRows]         = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -458,16 +476,16 @@ export default function BeneficiariosAyuda() {
               <div className="bn-stats">
                 <div className="bn-stat">
                   <span className="bn-stat-icon bn-stat-icon--blue"><FiGift size={20} /></span>
-                  <div><span className="bn-stat-num">{totalesMes.ayudas}</span><span className="bn-stat-lbl">Ayudas en total</span></div>
+                  <div><span className="bn-stat-num"><Contador valor={totalesMes.ayudas} /></span><span className="bn-stat-lbl">Ayudas en total</span></div>
                 </div>
                 <div className="bn-stat">
                   <span className="bn-stat-icon bn-stat-icon--green"><FiCalendar size={20} /></span>
-                  <div><span className="bn-stat-num">{totalesMes.mesActual.ayudas}</span><span className="bn-stat-lbl">Último mes ({totalesMes.mesActual.nombre})</span></div>
+                  <div><span className="bn-stat-num"><Contador valor={totalesMes.mesActual.ayudas} /></span><span className="bn-stat-lbl">Último mes ({totalesMes.mesActual.nombre})</span></div>
                 </div>
                 <div className="bn-stat">
                   <span className={`bn-stat-icon bn-stat-icon--${esMonto ? 'green' : 'pink'}`}>{esMonto ? <b className="bn-stat-lps">Lps.</b> : <FiAward size={20} />}</span>
                   {esMonto ? (
-                    <div><span className="bn-stat-num bn-stat-num--monto">{fmtMonto(totalesMes.monto).replace('L ', 'Lps. ')}</span><span className="bn-stat-lbl">Monto total entregado</span></div>
+                    <div><span className="bn-stat-num bn-stat-num--monto"><Contador valor={totalesMes.monto} duracion={1400} formato={v => fmtMonto(v).replace('L ', 'Lps. ')} /></span><span className="bn-stat-lbl">Monto total entregado</span></div>
                   ) : (
                     <div><span className="bn-stat-num bn-stat-num--pink">{totalesMes.mejor.nombre}</span><span className="bn-stat-lbl">Mes con más ayudas ({totalesMes.mejor.ayudas}) · promedio {totalesMes.promedio.toFixed(1)}/mes</span></div>
                   )}
@@ -547,7 +565,7 @@ export default function BeneficiariosAyuda() {
                   <div className="bn-head-right">
                     <span className={`bn-live${liveOk ? '' : ' bn-live--off'}`} title="Se actualiza solo cada 5 minutos">
                       <span className="bn-live-dot" />
-                      {liveOk ? 'En vivo' : 'Sin conexión'}
+                      {liveOk ? 'Datos en tiempo real' : 'Sin conexión'}
                       {ultimaAct && <small>· {ultimaAct.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' })}</small>}
                     </span>
                     <div className="bn-seg">
