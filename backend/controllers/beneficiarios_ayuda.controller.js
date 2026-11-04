@@ -91,6 +91,7 @@ exports.porMes = (req, res) => {
            COUNT(DISTINCT beneficiario_dni)  AS beneficiarios
     FROM ayudas_sociales
     WHERE fecha IS NOT NULL
+      AND YEAR(fecha) BETWEEN 2020 AND YEAR(CURDATE()) + 1
     GROUP BY mes
     ORDER BY mes ASC
   `;

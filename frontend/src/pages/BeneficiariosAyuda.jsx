@@ -64,6 +64,8 @@ export default function BeneficiariosAyuda() {
   const [filtroEdad, setFiltroEdad]   = useState('');
   const [filtroSexo, setFiltroSexo]   = useState('');
   const [porMes, setPorMes]     = useState([]);
+  const [metricaMes, setMetricaMes] = useState('ayudas');
+  const [anioMes, setAnioMes]       = useState('');
   const [mapReady, setMapReady] = useState(false);
   const mapWrapRef = useRef(null);
   const [mapH, setMapH] = useState(700);
@@ -165,11 +167,14 @@ export default function BeneficiariosAyuda() {
   const totalGeneros = Math.max(generos.reduce((s, g) => s + g.total, 0), 1);
 
   // ── Ayudas por mes (rellena los meses sin ayudas con 0) ─────
+  const aniosMes = useMemo(() => [...new Set(porMes.map(m => m.mes.slice(0, 4)))], [porMes]);
+
   const meses = useMemo(() => {
-    if (!porMes.length) return [];
-    const porClave = Object.fromEntries(porMes.map(m => [m.mes, m]));
-    const [a0, m0] = porMes[0].mes.split('-').map(Number);
-    const [a1, m1] = porMes[porMes.length - 1].mes.split('-').map(Number);
+    const datos = anioMes ? porMes.filter(m => m.mes.startsWith(anioMes)) : porMes;
+    if (!datos.length) return [];
+    const porClave = Object.fromEntries(datos.map(m => [m.mes, m]));
+    const [a0, m0] = datos[0].mes.split('-').map(Number);
+    const [a1, m1] = datos[datos.length - 1].mes.split('-').map(Number);
     const out = [];
     for (let a = a0, m = m0; a < a1 || (a === a1 && m <= m1); m === 12 ? (a++, m = 1) : m++) {
       const clave = `${a}-${String(m).padStart(2, '0')}`;
@@ -177,7 +182,7 @@ export default function BeneficiariosAyuda() {
       out.push({ clave, label: `${MESES_CORTOS[m - 1]} ${String(a).slice(2)}`, nombre: `${MESES_CORTOS[m - 1]} ${a}`, ...d });
     }
     return out;
-  }, [porMes]);
+  }, [porMes, anioMes]);
 
   const totalesMes = useMemo(() => {
     const ayudas = meses.reduce((s, m) => s + m.ayudas, 0);
@@ -187,40 +192,66 @@ export default function BeneficiariosAyuda() {
     return { ayudas, monto, mejor, mesActual, promedio: meses.length ? ayudas / meses.length : 0 };
   }, [meses]);
 
+  const fmtMes = (v) => (metricaMes === 'monto' ? fmtMontoCorto(v) : Number(v).toLocaleString('es-HN'));
+  const tipMes = {
+    backgroundColor: '#1e293b',
+    borderColor: '#334155',
+    textStyle: { color: '#e2e8f0', fontSize: 13 },
+    padding: [10, 14],
+  };
+  const detalleMes = (m) => `<b>${m.nombre}</b><hr style="border-color:#334155;margin:6px 0"/>
+    <span style="color:#94a3b8">Ayudas</span> <b>${m.ayudas}</b><br/>
+    <span style="color:#94a3b8">Beneficiarios</span> <b>${m.beneficiarios}</b><br/>
+    <span style="color:#94a3b8">Monto</span> <b style="color:#4ade80">${fmtMonto(m.monto)}</b>`;
+
+  const mejorClave = meses.reduce((b, m) => (m[metricaMes] > (b?.[metricaMes] ?? -1) ? m : b), null)?.clave;
+  const totalMetricaMes = meses.reduce((s, m) => s + m[metricaMes], 0);
+
   const mesesOption = {
     backgroundColor: 'transparent',
-    grid: { left: 48, right: 64, top: 40, bottom: 36 },
-    legend: { top: 0, right: 0, textStyle: { color: '#64748b', fontSize: 12 } },
-    tooltip: {
-      trigger: 'axis',
-      backgroundColor: '#1e293b',
-      borderColor: '#334155',
-      textStyle: { color: '#e2e8f0', fontSize: 13 },
-      padding: [10, 14],
-      formatter: ps => {
-        const m = meses[ps[0].dataIndex];
-        return `<b>${m.nombre}</b><hr style="border-color:#334155;margin:6px 0"/>
-          <span style="color:#94a3b8">Ayudas</span> <b>${m.ayudas}</b><br/>
-          <span style="color:#94a3b8">Beneficiarios</span> <b>${m.beneficiarios}</b><br/>
-          <span style="color:#94a3b8">Monto</span> <b style="color:#4ade80">${fmtMonto(m.monto)}</b>`;
-      },
-    },
+    grid: { left: 56, right: 16, top: 28, bottom: 36 },
+    tooltip: { ...tipMes, trigger: 'axis', formatter: ps => detalleMes(meses[ps[0].dataIndex]) },
     xAxis: { type: 'category', data: meses.map(m => m.label), axisLine: { lineStyle: { color: '#e3e8ef' } }, axisLabel: { color: '#64748b' }, axisTick: { show: false } },
-    yAxis: [
-      { type: 'value', minInterval: 1, axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#eef2f7' } } },
-      { type: 'value', axisLabel: { color: '#64748b', formatter: v => (v >= 1000 ? `${Math.round(v / 1000)}k` : v) }, splitLine: { show: false } },
-    ],
-    series: [
-      {
-        name: 'Ayudas', type: 'bar', data: meses.map(m => m.ayudas), barMaxWidth: 38,
-        itemStyle: { color: '#2563eb', borderRadius: [6, 6, 0, 0] },
-        label: { show: true, position: 'top', color: '#274c8d', fontWeight: 700, fontSize: 11 },
+    yAxis: { type: 'value', minInterval: 1, axisLabel: { color: '#64748b', formatter: v => (metricaMes === 'monto' && v >= 1000 ? `${Math.round(v / 1000)}k` : v) }, splitLine: { lineStyle: { color: '#eef2f7' } } },
+    series: [{
+      type: 'bar', barMaxWidth: 46,
+      data: meses.map(m => ({
+        value: m[metricaMes],
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, m.clave === mejorClave
+            ? [{ offset: 0, color: '#4ade80' }, { offset: 1, color: '#16a34a' }]
+            : [{ offset: 0, color: '#60a5fa' }, { offset: 1, color: '#1d4ed8' }]),
+          borderRadius: [6, 6, 0, 0],
+        },
+      })),
+      label: { show: true, position: 'top', color: '#274c8d', fontWeight: 700, fontSize: 11, formatter: p => fmtMes(p.value) },
+      markLine: {
+        symbol: 'none', silent: true,
+        lineStyle: { color: '#f59e0b', type: 'dashed', width: 1.5 },
+        label: { color: '#b45309', fontWeight: 600, formatter: p => `Promedio ${fmtMes(Math.round(p.value))}` },
+        data: [{ type: 'average' }],
       },
-      {
-        name: 'Monto (L)', type: 'line', yAxisIndex: 1, smooth: true, data: meses.map(m => m.monto),
-        symbolSize: 7, lineStyle: { width: 3, color: '#16a34a' }, itemStyle: { color: '#16a34a' },
+    }],
+  };
+
+  const PALETA_MESES = ['#1e3a8a', '#2563eb', '#60a5fa', '#16a34a', '#4ade80', '#f59e0b', '#fbbf24', '#db2777', '#a78bfa', '#94a3b8', '#0ea5e9', '#64748b'];
+  const pastelOption = {
+    backgroundColor: 'transparent',
+    tooltip: { ...tipMes, trigger: 'item', formatter: p => detalleMes(meses[p.dataIndex]) },
+    legend: { bottom: 0, textStyle: { color: '#64748b', fontSize: 12 } },
+    graphic: [{
+      type: 'text', left: 'center', top: '38%',
+      style: {
+        text: `${fmtMes(totalMetricaMes)}\n${METRICAS.find(x => x.key === metricaMes).label}`,
+        textAlign: 'center', fill: '#0f172a', fontSize: 22, fontWeight: 800, lineHeight: 28,
       },
-    ],
+    }],
+    series: [{
+      type: 'pie', radius: ['42%', '70%'], center: ['50%', '44%'],
+      itemStyle: { borderColor: '#fff', borderWidth: 2 },
+      label: { color: '#334155', fontWeight: 600, formatter: p => `${p.percent.toFixed(0)}%` },
+      data: meses.map((m, i) => ({ name: m.nombre, value: m[metricaMes], itemStyle: { color: PALETA_MESES[i % PALETA_MESES.length] } })),
+    }],
   };
 
   // ── Mapa ────────────────────────────────────────────────────
@@ -411,17 +442,76 @@ export default function BeneficiariosAyuda() {
                   <div><span className="bn-stat-num bn-stat-num--pink">{totalesMes.mejor.nombre}</span><span className="bn-stat-lbl">Mes con más ayudas ({totalesMes.mejor.ayudas}) · promedio {totalesMes.promedio.toFixed(1)}/mes</span></div>
                 </div>
               </div>
-              <div className="bn-card bn-panel">
-                <div className="bn-panel-head">
-                  <div className="bn-panel-title">
-                    <span className="bn-panel-ico bn-panel-ico--blue"><FiTrendingUp size={16} /></span>
-                    <div>
-                      <h2>Ayudas entregadas por mes</h2>
-                      <p>Barras: cantidad de ayudas · Línea: monto en lempiras</p>
+              <div className="bn-meses">
+                <div className="bn-card bn-panel">
+                  <div className="bn-panel-head">
+                    <div className="bn-panel-title">
+                      <span className="bn-panel-ico bn-panel-ico--blue"><FiTrendingUp size={16} /></span>
+                      <div>
+                        <h2>Por mes</h2>
+                        <p>Cantidad, monto o beneficiarios de cada mes</p>
+                      </div>
+                    </div>
+                    <div className="bn-meses-ctrl">
+                      {aniosMes.length > 1 && (
+                        <div className="bn-seg">
+                          {['', ...aniosMes].map(a => (
+                            <button key={a || 'todos'} className={`bn-seg-btn${anioMes === a ? ' bn-seg-btn--active' : ''}`} onClick={() => setAnioMes(a)}>
+                              {a || 'Todos'}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="bn-seg">
+                        {METRICAS.map(m => (
+                          <button key={m.key} className={`bn-seg-btn${metricaMes === m.key ? ' bn-seg-btn--active' : ''}`} onClick={() => setMetricaMes(m.key)}>
+                            {m.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                  <ReactECharts option={mesesOption} style={{ height: 360 }} />
                 </div>
-                <ReactECharts option={mesesOption} style={{ height: 380 }} />
+                <div className="bn-card bn-panel">
+                  <div className="bn-panel-head">
+                    <div className="bn-panel-title">
+                      <span className="bn-panel-ico bn-panel-ico--amber"><FiPieChart size={16} /></span>
+                      <div>
+                        <h2>Participación de cada mes</h2>
+                        <p>Porcentaje sobre el total</p>
+                      </div>
+                    </div>
+                  </div>
+                  <ReactECharts option={pastelOption} style={{ height: 360 }} />
+                </div>
+              </div>
+
+              <div className="bn-card bn-meses-tabla">
+                <div className="bn-table-wrap">
+                  <table className="bn-table">
+                    <thead>
+                      <tr><th>Mes</th><th>Ayudas</th><th>vs. mes anterior</th><th>Beneficiarios</th><th>Monto</th></tr>
+                    </thead>
+                    <tbody>
+                      {[...meses].reverse().map((m, i, lista) => {
+                        const ant = lista[i + 1];
+                        const dif = ant && ant.ayudas > 0 ? Math.round(((m.ayudas - ant.ayudas) / ant.ayudas) * 100) : null;
+                        return (
+                          <tr key={m.clave}>
+                            <td><b>{m.nombre}</b></td>
+                            <td>{m.ayudas}</td>
+                            <td className={dif === null ? '' : dif >= 0 ? 'bn-var--up' : 'bn-var--down'}>
+                              {dif === null ? '—' : `${dif >= 0 ? '▲' : '▼'} ${Math.abs(dif)}%`}
+                            </td>
+                            <td>{m.beneficiarios}</td>
+                            <td>{fmtMonto(m.monto)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </>
           )
