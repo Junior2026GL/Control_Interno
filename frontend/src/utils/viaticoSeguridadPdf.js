@@ -156,13 +156,17 @@ function dibujar(doc, rec, logoDataUrl, k) {
       lineas.forEach((l, i) => doc.text(l, M + ox + lblW + 2, y + RH * 0.68 + i * lh));
       return h;
     }
-    doc.setFont('helvetica', big ? 'bold' : 'normal'); doc.setFontSize(F(big ? 10.5 : 8));
-    const txt = doc.splitTextToSize(sa(val || ''), w - lblW - 3)[0] || '';
+    // El texto se escribe completo en una línea; si no cabe, se reduce la letra
+    const txt = sa(val || '');
+    const maxW = w - lblW - (big ? 3 : 4);
+    let fs = F(big ? 10.5 : 8);
+    doc.setFont('helvetica', big ? 'bold' : 'normal'); doc.setFontSize(fs);
+    while (fs > 4 && doc.getTextWidth(txt) > maxW) { fs -= 0.25; doc.setFontSize(fs); }
     if (big) {
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(F(10.5)); doc.setTextColor(...AZUL);
+      doc.setTextColor(...AZUL);
       doc.text(txt, M + ox + lblW + (w - lblW) / 2, y + h * 0.68, { align: 'center' });
     } else {
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(F(8)); doc.setTextColor(...NEGRO);
+      doc.setTextColor(...NEGRO);
       doc.text(txt, M + ox + lblW + 2, y + h * 0.68);
     }
   };
