@@ -228,7 +228,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
       ['#', 'DETALLE', 'TOTAL'],
     ],
     body: cbody,
-    foot: [['', 'TOTAL:', dash(rec.monto_combustible)]],
+    foot: [['', 'TOTAL:', { content: dash(rec.monto_combustible), styles: { halign: 'center' } }]],
     headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: F(6.5), halign: 'center', cellPadding: cpad },
     bodyStyles: { fontSize: F(7), textColor: NEGRO, cellPadding: cpad },
     footStyles: { fillColor: GRIS, textColor: NEGRO, fontSize: F(7), fontStyle: 'bold', cellPadding: cpad },
