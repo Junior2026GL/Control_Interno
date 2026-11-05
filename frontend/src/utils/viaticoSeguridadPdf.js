@@ -191,11 +191,12 @@ function dibujar(doc, rec, logoDataUrl, k) {
     startY: y, margin: { left: M, right: W - M - gastosW, bottom: MB }, tableWidth: gastosW,
     head: [['No.', 'Detalle', 'TOTAL']],
     body: [
-      ['1', 'HOSPEDAJE', dash(rec.monto_hospedaje)],
-      ['2', 'ALIMENTACION', dash(rec.monto_alimentacion)],
-      ['3', 'COMBUSTIBLE', dash(rec.monto_combustible)],
-      ['4', 'IMPREVISTO', dash(rec.monto_imprevistos)],
-      ['5', rec.otros_descripcion ? `OTROS  ${sa(rec.otros_descripcion.toUpperCase())}` : 'OTROS', dash(rec.monto_otros)],
+      // Detalle en blanco salvo el 2 (temporal; los montos se conservan)
+      ['1', '', dash(rec.monto_hospedaje)],
+      ['2', 'HOSPEDAJE Y ALIMENTACION', dash(rec.monto_alimentacion)],
+      ['3', '', dash(rec.monto_combustible)],
+      ['4', '', dash(rec.monto_imprevistos)],
+      ['5', '', dash(rec.monto_otros)],
     ],
     foot: [[
       { content: 'GRAN TOTAL:', colSpan: 2, styles: { halign: 'right' } },
