@@ -234,7 +234,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
     footStyles: { fillColor: GRIS, textColor: NEGRO, fontSize: F(7), fontStyle: 'bold', cellPadding: cpad },
     styles: { lineColor: AZUL_L, lineWidth: 0.2 },
     alternateRowStyles: { fillColor: GRIS2 },
-    columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 28, halign: 'right' } },
+    columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 28, halign: 'center' } },
   });
   y = Math.max(yGastos, doc.lastAutoTable.finalY) + V(2.5);
 
