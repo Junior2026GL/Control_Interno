@@ -292,7 +292,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   /* ─ FIRMA ─ */
   const FR = V(8.5);                       // alto de cada renglón de firma
   const ESPACIO_FIRMA = V(9);               // espacio extra para firmar a mano
-  if (y > FY - 2 - FR * 3 - ESPACIO_FIRMA) { doc.addPage(); y = M + 6; }
+  if (y > FY - 2 - FR * 4 - ESPACIO_FIRMA) { doc.addPage(); y = M + 6; }
   else y -= V(3);                           // sube un poco el bloque de firma, lejos del pie
   const lblW = 24, lineW = 70;              // líneas cortas: NOMBRE, IDENTIDAD y FIRMA
   doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3); doc.setTextColor(...NEGRO);
@@ -311,7 +311,8 @@ function dibujar(doc, rec, logoDataUrl, k) {
   };
   renglon(0, 'NOMBRE:', sa((rec.nombre_beneficiario || '').toUpperCase()));
   renglon(1, 'IDENTIDAD:', sa(rec.numero_identidad || ''));
-  renglon(2, 'FIRMA:', '', ESPACIO_FIRMA);
+  renglon(2, 'FECHA:', '');                 // se llena a mano
+  renglon(3, 'FIRMA:', '', ESPACIO_FIRMA);
 
   /* ─ PIE DE PÁGINA (todas las hojas) ─ */
   const totalPaginas = doc.getNumberOfPages();
