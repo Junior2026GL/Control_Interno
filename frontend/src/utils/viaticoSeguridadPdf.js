@@ -235,7 +235,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
     const fechas = fechasColumna(rows);
     const n = fechas.length;
     const fijo = 8 + cols.ancho + 28;                // # + columna fija + total
-    const fw = n > 0 ? Math.min(24, Math.max(12, Math.floor((CW - fijo - 70) / n))) : 0;
+    const fw = n > 0 ? Math.min(24, Math.max(17,Math.floor((CW - fijo - 70) / n))) : 0;
     const totalCol = 3 + n;
     const cantidad = r => (mult ? cantHosp(r.cantidad) : 1);
     const montoFila = r => cantidad(r) * fechas.reduce((s, f) => s + montoDia(r, f), 0);
