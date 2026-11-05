@@ -221,6 +221,7 @@ export default function Autorizaciones() {
 
   // protección contra impresión concurrente
   const [printing, setPrinting]     = useState(false);
+  const [pdfBusyId, setPdfBusyId]   = useState(null); // fila que está generando su PDF
 
   // notificaciones inline (reemplaza alert())
   const [toast, setToast]           = useState(null);
@@ -1019,12 +1020,25 @@ export default function Autorizaciones() {
 
   // ── Imprimir PDF directo sin descarga ─────────────────────────────────
   const imprimirPDF = async (item) => {
-    if (printing) return;
+    if (printing || pdfBusyId) return;
     setPrinting(true);
+    setPdfBusyId(item.id);
     try {
       await generarPDF(item, true);
     } finally {
       setPrinting(false);
+      setPdfBusyId(null);
+    }
+  };
+
+  // ── Descargar PDF (solo bloquea la fila que se está generando) ────────
+  const descargarPDF = async (item) => {
+    if (printing || pdfBusyId) return;
+    setPdfBusyId(item.id);
+    try {
+      await generarPDF(item);
+    } finally {
+      setPdfBusyId(null);
     }
   };
 
@@ -1536,11 +1550,11 @@ export default function Autorizaciones() {
                             <FiEye size={14} />
                           </button>
                           {/* PDF */}
-                          <button className="action-btn" title="Descargar PDF" onClick={() => generarPDF(a)}>
+                          <button className="action-btn" title="Descargar PDF" disabled={pdfBusyId === a.id} onClick={() => descargarPDF(a)}>
                             <FiDownload size={14} />
                           </button>
                           {/* Imprimir */}
-                          <button className="action-btn" title="Imprimir" disabled={printing} onClick={() => imprimirPDF(a)}>
+                          <button className="action-btn" title="Imprimir" disabled={pdfBusyId === a.id} onClick={() => imprimirPDF(a)}>
                             <FiPrinter size={14} />
                           </button>
                           {/* Editar (ASISTENTE, ADMIN, SUPER_ADMIN — cualquier estado) */}
@@ -1610,7 +1624,7 @@ export default function Autorizaciones() {
 
       {/* ═══ MODAL EDITAR ══════════════════════════════════════════════════════ */}
       {editItem && (
-        <div className="modal-overlay" onClick={() => setEditItem(null)}>
+        <div className="modal-overlay">
           <div className="aut-modal" onClick={e => e.stopPropagation()}>
             <div className="aut-modal-header" style={{ background: 'linear-gradient(135deg,#2f5fad,#274C8D)' }}>
               <div className="aut-modal-icon"><FiEdit2 size={20} color="#274C8D" /></div>
@@ -1935,7 +1949,7 @@ export default function Autorizaciones() {
 
       {/* ═══ MODAL AUTORIZAR (FIRMA DIGITAL) ══════════════════════════════════ */}
       {autItem && (
-        <div className="modal-overlay" onClick={() => setAutItem(null)}>
+        <div className="modal-overlay">
           <div className="aut-modal aut-modal-firma" onClick={e => e.stopPropagation()}>
             <div className="aut-modal-header aut-header-firma">
               <div className="aut-modal-icon"><FiCheckCircle size={20} color="#059669" /></div>
@@ -1966,7 +1980,7 @@ export default function Autorizaciones() {
       )}
 
       {autItem && (
-        <div className="modal-overlay" onClick={() => setAutItem(null)}>
+        <div className="modal-overlay">
           <div className="aut-modal aut-modal-firma" onClick={e => e.stopPropagation()}>
             <div className="aut-modal-header aut-header-firma">
               <div className="aut-modal-icon"><FiCheckCircle size={20} color="#059669" /></div>
@@ -1998,7 +2012,7 @@ export default function Autorizaciones() {
 
       {/* ═══ MODAL RECHAZAR ═══════════════════════════════════════════════════ */}
       {rechItem && (
-        <div className="modal-overlay" onClick={() => setRechItem(null)}>
+        <div className="modal-overlay">
           <div className="aut-modal aut-modal-firma" onClick={e => e.stopPropagation()}>
             <div className="aut-modal-header" style={{ background: 'linear-gradient(135deg,#fff1f2,#ffe4e6)' }}>
               <div className="aut-modal-icon"><FiXCircle size={20} color="#e11d48" /></div>
