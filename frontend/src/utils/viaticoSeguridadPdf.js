@@ -191,17 +191,20 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const pad = { top: V(1.2), bottom: V(1.2), left: 2.5, right: 2.5 };
   const gastosW = Math.round(CW * 0.42), gapT = 4, combW = CW - gastosW - gapT;
   const yTablas = y;
+  // Lo que se agrega en la tabla DETALLE (derecha) pasa también al resumen (izquierda)
+  const textoDet = r => sa((r.detalle || r.nombre || '').toUpperCase());
+  const itemsDet = combustible.filter(r => textoDet(r) || num(r.monto) > 0);
+  const filasResumen = [
+    ['', dash(rec.monto_hospedaje)],
+    ['HOSPEDAJE Y ALIMENTACION', dash(rec.monto_alimentacion)],
+    ...(itemsDet.length ? itemsDet.map(r => [textoDet(r), cellMonto(r.monto)]) : [['', dash(rec.monto_combustible)]]),
+    ['', dash(rec.monto_imprevistos)],
+    ['', dash(rec.monto_otros)],
+  ].map((f, i) => [String(i + 1), ...f]);
   autoTable(doc, {
     startY: y, margin: { left: M, right: W - M - gastosW, bottom: MB }, tableWidth: gastosW,
     head: [['No.', 'Detalle', 'TOTAL']],
-    body: [
-      // Detalle en blanco salvo el 2 (temporal; los montos se conservan)
-      ['1', '', dash(rec.monto_hospedaje)],
-      ['2', 'HOSPEDAJE Y ALIMENTACION', dash(rec.monto_alimentacion)],
-      ['3', '', dash(rec.monto_combustible)],
-      ['4', '', dash(rec.monto_imprevistos)],
-      ['5', '', dash(rec.monto_otros)],
-    ],
+    body: filasResumen,
     foot: [[
       { content: 'GRAN TOTAL:', colSpan: 2, styles: { halign: 'right' } },
       { content: fmt(rec.gran_total), styles: { halign: 'right' } },
@@ -215,23 +218,23 @@ function dibujar(doc, rec, logoDataUrl, k) {
   });
   const yGastos = doc.lastAutoTable.finalY;
 
-  const cbody = combustible.map((r, i) => [String(i + 1), sa((r.nombre || '').toUpperCase()), sa((r.detalle || '').toUpperCase()), cellMonto(r.monto)]);
-  while (cbody.length < 3) cbody.push([String(cbody.length + 1), '', '', '']);
+  const cbody = combustible.map((r, i) => [String(i + 1), textoDet(r), cellMonto(r.monto)]);
+  while (cbody.length < 3) cbody.push([String(cbody.length + 1), '', '']);
   const cpad = { top: V(1.2), bottom: V(1.2), left: 1.5, right: 1.5 };
   autoTable(doc, {
     startY: yTablas, margin: { left: M + gastosW + gapT, right: M, bottom: MB }, tableWidth: combW,
     head: [
-      [{ content: 'DETALLE DE COMBUSTIBLE', colSpan: 4, styles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
-      ['#', 'Nombre', 'DETALLE / VEHICULOS', 'TOTAL'],
+      [{ content: 'DETALLE', colSpan: 3, styles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
+      ['#', 'DETALLE', 'TOTAL'],
     ],
     body: cbody,
-    foot: [['', 'TOTAL:', '', dash(rec.monto_combustible)]],
+    foot: [['', 'TOTAL:', dash(rec.monto_combustible)]],
     headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: F(6.5), halign: 'center', cellPadding: cpad },
     bodyStyles: { fontSize: F(7), textColor: NEGRO, cellPadding: cpad },
     footStyles: { fillColor: GRIS, textColor: NEGRO, fontSize: F(7), fontStyle: 'bold', cellPadding: cpad },
     styles: { lineColor: AZUL_L, lineWidth: 0.2 },
     alternateRowStyles: { fillColor: GRIS2 },
-    columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 42 }, 3: { cellWidth: 28, halign: 'right' } },
+    columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 28, halign: 'right' } },
   });
   y = Math.max(yGastos, doc.lastAutoTable.finalY) + V(2.5);
 
