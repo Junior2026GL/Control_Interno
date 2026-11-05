@@ -278,11 +278,12 @@ function dibujar(doc, rec, logoDataUrl, k) {
   };
 
   tablaDias({
-    titulo: 'DETALLE DE ALIMENTACION', mult: false,
+    titulo: 'VIATICOS HOSPEDAJE Y ALIMENTACION', mult: false,
     cols: { head: ['Nombre', 'Cargo'], ancho: 38, alineo: 'left', fila: r => [sa((r.nombre || '').toUpperCase()), sa((r.cargo || '').toUpperCase())] },
     rows: alimentacion,
   });
-  tablaDias({
+  /* Tabla de hospedaje oculta temporalmente (para volver a mostrarla, quitar el "false &&") */
+  if (false && hospedaje) tablaDias({
     titulo: 'DETALLE DE HOSPEDAJE', mult: true,
     cols: { head: ['DETALLE', 'CANTIDAD'], ancho: 22, alineo: 'center', fila: r => [sa((r.detalle || '').toUpperCase()), String(cantHosp(r.cantidad))] },
     rows: hospedaje,
