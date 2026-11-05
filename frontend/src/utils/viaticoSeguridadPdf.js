@@ -135,13 +135,28 @@ function dibujar(doc, rec, logoDataUrl, k) {
 
   /* ─ CAMPOS ─ */
   const RH = V(4.8);
-  const cell = (lbl, val, ox, w, lblW = 34, h = RH, big = false) => {
+  const cell = (lbl, val, ox, w, lblW = 34, h = RH, big = false, wrap = false) => {
+    // Con wrap, el texto largo baja a más renglones y la celda crece en alto
+    let lineas = null;
+    if (wrap && !big) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(F(8));
+      lineas = doc.splitTextToSize(sa(val || ''), w - lblW - 4);
+      const lh = F(8) * 0.3528 * 1.2;
+      h = Math.max(h, lineas.length * lh + V(1.8));
+    }
     doc.setFillColor(...GRIS); doc.rect(M + ox, y, lblW, h, 'F');
     doc.setFillColor(255, 255, 255); doc.rect(M + ox + lblW, y, w - lblW, h, 'F');
     doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.2);
     doc.rect(M + ox, y, w, h, 'S'); doc.line(M + ox + lblW, y, M + ox + lblW, y + h);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(F(6)); doc.setTextColor(...ETIQ);
-    doc.text(sa(lbl + ':'), M + ox + 1.5, y + h * 0.66);
+    doc.text(sa(lbl + ':'), M + ox + 1.5, y + (lineas ? RH : h) * 0.66);
+    if (lineas) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(F(8)); doc.setTextColor(...NEGRO);
+      const lh = F(8) * 0.3528 * 1.2;
+      lineas.forEach((l, i) => doc.text(l, M + ox + lblW + 2, y + RH * 0.68 + i * lh));
+      return h;
+    }
+    doc.setFont('helvetica', big ? 'bold' : 'normal'); doc.setFontSize(F(big ? 10.5 : 8));
     const txt = doc.splitTextToSize(sa(val || ''), w - lblW - 3)[0] || '';
     if (big) {
       doc.setFont('helvetica', 'bold'); doc.setFontSize(F(10.5)); doc.setTextColor(...AZUL);
@@ -152,7 +167,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
     }
   };
 
-  cell('MISION', rec.mision, 0, CW); y += RH;
+  y += cell('MISION', rec.mision, 0, CW, 34, RH, false, true) || RH;
   cell('LUGAR', rec.lugar, 0, CW * 0.6); cell('DEPENDENCIA', rec.dependencia, CW * 0.6, CW * 0.4); y += RH;
   cell('NOMBRE DE QUIEN RECIBE', (rec.nombre_beneficiario || '').toUpperCase(), 0, CW * 0.68, 40, V(6.6), true);
   cell('IDENTIDAD', rec.numero_identidad, CW * 0.68, CW * 0.32, 22, V(6.6)); y += V(6.6);
