@@ -105,7 +105,7 @@ exports.getAll = (req, res) => {
             vs.creado_en, u.nombre AS registrado_por
      FROM viaticos_seguridad vs
      LEFT JOIN usuarios u ON u.id = vs.usuario_id
-     ORDER BY vs.periodo_desde DESC, vs.id DESC
+     ORDER BY vs.id DESC
      LIMIT 3000`,
     (err, results) => {
       if (err) {
