@@ -667,7 +667,6 @@ export default function Autorizaciones() {
     // Si la autorización tiene fecha de emisión personalizada, esa es la que se imprime
     const fechaGen = isoADMY(item.fecha_emision)
       || now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const horaGen  = now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
     const genPor   = sa((user?.nombre || 'Sistema').toUpperCase());
 
     doc.setFont('helvetica', 'bold');
@@ -683,18 +682,14 @@ export default function Autorizaciones() {
     doc.setLineWidth(0.2);
     doc.line(infoX + 3, y + 17, infoX + INFO_W - 3, y + 17);
 
-    const col1 = infoX + 4;
-    const col2 = infoX + INFO_W / 2 + 2;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     doc.setTextColor(100, 120, 160);
-    doc.text('GENERADO', col1, y + 22);
-    doc.text('HORA',     col2, y + 22);
+    doc.text('FECHA DE EMISIÓN', infoMid, y + 22, { align: 'center' });
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(20, 20, 20);
-    doc.text(fechaGen, col1, y + 27.5);
-    doc.text(horaGen,  col2, y + 27.5);
+    doc.text(fechaGen, infoMid, y + 27.5, { align: 'center' });
 
     doc.setDrawColor(210, 220, 235);
     doc.setLineWidth(0.2);
@@ -1010,7 +1005,6 @@ export default function Autorizaciones() {
     const now2 = new Date();
     const fGen = isoADMY(item.fecha_emision)
       || now2.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const hGen = now2.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
     for (let p = 1; p <= pageCount; p++) {
       doc.setPage(p);
       const FH = 9;
@@ -1022,7 +1016,7 @@ export default function Autorizaciones() {
       doc.setTextColor(...BLANCO);
       doc.text('Congreso Nacional - Pagaduría Especial', L - 1, FY + 5.8);
       doc.text('Página ' + p + ' de ' + pageCount, L + CW / 2, FY + 5.8, { align: 'center' });
-      doc.text('Generado: ' + fGen + ' ' + hGen, L + CW + 1, FY + 5.8, { align: 'right' });
+      doc.text('Fecha de emisión: ' + fGen, L + CW + 1, FY + 5.8, { align: 'right' });
     }
 
     if (printMode) {
