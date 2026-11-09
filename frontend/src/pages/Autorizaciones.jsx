@@ -115,10 +115,21 @@ const ESTADO_CFG = {
   RECHAZADO:   { label: 'Rechazado',               cls: 'badge-rechazado' },
 };
 
+// Fecha local de hoy en formato YYYY-MM-DD (para el input type="date")
+function hoyISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+// 'YYYY-MM-DD' → 'DD/MM/YYYY' (sin pasar por Date, para evitar desfases de zona horaria)
+function isoADMY(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
+}
+
 const EMPTY_FORM = {
   tipo_pago: 'CHEQUE', beneficiario: '', monto: '', monto_letras: '',
   detalle: '', anio: new Date().getFullYear(), org: '11111', fondo: '11',
-  lleva_factura: false, numero_factura: '',
+  lleva_factura: false, numero_factura: '', fecha_emision: hoyISO(),
 };
 
 const MONTO_MAX = 99_999_999;
@@ -397,6 +408,7 @@ export default function Autorizaciones() {
       fondo:        a.fondo || '',
       lleva_factura: hasFactura(a),
       numero_factura: a.numero_factura || '',
+      fecha_emision: a.fecha_emision || '',
     });
     setEditErrors({});
   };
@@ -652,7 +664,9 @@ export default function Autorizaciones() {
     const infoX   = L + LOGO_W + CENT_W;
     const infoMid = infoX + INFO_W / 2;
     const now      = new Date();
-    const fechaGen = now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    // Si la autorización tiene fecha de emisión personalizada, esa es la que se imprime
+    const fechaGen = isoADMY(item.fecha_emision)
+      || now.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const horaGen  = now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
     const genPor   = sa((user?.nombre || 'Sistema').toUpperCase());
 
@@ -994,7 +1008,8 @@ export default function Autorizaciones() {
     // ── Footer azul en todas las páginas ─────────────────
     const pageCount = doc.internal.getNumberOfPages();
     const now2 = new Date();
-    const fGen = now2.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const fGen = isoADMY(item.fecha_emision)
+      || now2.toLocaleDateString('es-HN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const hGen = now2.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true });
     for (let p = 1; p <= pageCount; p++) {
       doc.setPage(p);
@@ -1064,7 +1079,7 @@ export default function Autorizaciones() {
             <p>Gestión de autorizaciones para emisión de pago — Pagaduría Especial</p>
           </div>
           {!esAdmin && (
-            <button className="btn-primary" onClick={() => { setForm({ ...EMPTY_FORM }); setFormErrors({}); setModalCrear(true); }}>
+            <button className="btn-primary" onClick={() => { setForm({ ...EMPTY_FORM, fecha_emision: hoyISO() }); setFormErrors({}); setModalCrear(true); }}>
               <FiPlus size={15} /> Nueva Autorización
             </button>
           )}
@@ -1719,6 +1734,12 @@ export default function Autorizaciones() {
                 </div>
               </div>
               <div className="aut-form-group">
+                <label>Fecha de emisión (aparece en el PDF)</label>
+                <input className="caja-input" type="date" min="2000-01-01" max="2100-12-31"
+                  value={editForm.fecha_emision || ''}
+                  onChange={e => setEditForm(p => ({ ...p, fecha_emision: e.target.value }))} />
+              </div>
+              <div className="aut-form-group">
                 <label>Cantidad en Letras</label>
                 <input className={`caja-input${editErrors.monto_letras ? ' input-error' : ''}`}
                   type="text" maxLength={600}
@@ -1843,6 +1864,14 @@ export default function Autorizaciones() {
                   <input className="caja-input" type="text" maxLength={20}
                     value={form.fondo} onChange={e => setF('fondo', e.target.value)} />
                 </div>
+              </div>
+
+              {/* Fecha de emisión */}
+              <div className="aut-form-group">
+                <label>Fecha de emisión (aparece en el PDF)</label>
+                <input className="caja-input" type="date" min="2000-01-01" max="2100-12-31"
+                  value={form.fecha_emision || ''}
+                  onChange={e => setF('fecha_emision', e.target.value)} />
               </div>
 
               {/* Monto en letras */}

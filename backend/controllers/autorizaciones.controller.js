@@ -7,6 +7,19 @@ const MONTO_MAX   = 99_999_999;
 const ANIO_REGEX  = /^\d{4}$/; // valida año de 4 dígitos
 const FACTURA_REGEX = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
 const CORRELATIVO_ID = 1;
+const FECHA_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+// Devuelve 'YYYY-MM-DD' válida, null si viene vacía, o undefined si es inválida
+function parseFechaEmision(raw) {
+  const v = (raw || '').toString().trim();
+  if (!v) return null;
+  if (!FECHA_REGEX.test(v)) return undefined;
+  const d = new Date(v + 'T12:00:00Z');
+  if (isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) return undefined;
+  const y = parseInt(v.slice(0, 4), 10);
+  if (y < 2000 || y > 2100) return undefined;
+  return v;
+}
 
 // Verifica que numero_factura no esté ya usado en otra autorización activa
 // (RECHAZADO libera el número). excludeId se usa al editar para no chocar consigo misma.
@@ -168,14 +181,14 @@ exports.updateCorrelativoConfig = (req, res) => {
 exports.getAll = (req, res) => {
   const canSeeAll = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol);
   const sql = canSeeAll
-    ? `SELECT ap.*,
+    ? `SELECT ap.*, DATE_FORMAT(ap.fecha_emision, '%Y-%m-%d') AS fecha_emision,
               u1.nombre AS creado_por_nombre,
               u2.nombre AS autorizado_por_nombre
        FROM autorizaciones_pago ap
        JOIN usuarios u1 ON u1.id = ap.creado_por
        LEFT JOIN usuarios u2 ON u2.id = ap.autorizado_por
        ORDER BY ap.id DESC LIMIT 2000`
-    : `SELECT ap.*,
+    : `SELECT ap.*, DATE_FORMAT(ap.fecha_emision, '%Y-%m-%d') AS fecha_emision,
               u1.nombre AS creado_por_nombre,
               u2.nombre AS autorizado_por_nombre
        FROM autorizaciones_pago ap
@@ -196,12 +209,12 @@ exports.getOne = (req, res) => {
   if (isNaN(id) || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
   const canSeeAll = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol);
   const sql = canSeeAll
-    ? `SELECT ap.*, u1.nombre AS creado_por_nombre, u2.nombre AS autorizado_por_nombre
+    ? `SELECT ap.*, DATE_FORMAT(ap.fecha_emision, '%Y-%m-%d') AS fecha_emision, u1.nombre AS creado_por_nombre, u2.nombre AS autorizado_por_nombre
        FROM autorizaciones_pago ap
        JOIN usuarios u1 ON u1.id = ap.creado_por
        LEFT JOIN usuarios u2 ON u2.id = ap.autorizado_por
        WHERE ap.id = ?`
-    : `SELECT ap.*, u1.nombre AS creado_por_nombre, u2.nombre AS autorizado_por_nombre
+    : `SELECT ap.*, DATE_FORMAT(ap.fecha_emision, '%Y-%m-%d') AS fecha_emision, u1.nombre AS creado_por_nombre, u2.nombre AS autorizado_por_nombre
        FROM autorizaciones_pago ap
        JOIN usuarios u1 ON u1.id = ap.creado_por
        LEFT JOIN usuarios u2 ON u2.id = ap.autorizado_por
@@ -220,6 +233,7 @@ exports.create = (req, res) => {
     tipo_pago, beneficiario: rawBenef, monto, monto_letras: rawLetras,
     detalle: rawDetalle, anio, org: rawOrg, fondo: rawFondo,
     lleva_factura: rawLlevaFactura, numero_factura: rawNumeroFactura,
+    fecha_emision: rawFechaEmision,
   } = req.body;
 
   // tipo_pago
@@ -254,6 +268,10 @@ exports.create = (req, res) => {
   if (!anio || isNaN(anioNum) || anioNum < 2000 || anioNum > 2100)
     return res.status(400).json({ message: 'El año es inválido.' });
 
+  const fecha_emision = parseFechaEmision(rawFechaEmision);
+  if (fecha_emision === undefined)
+    return res.status(400).json({ message: 'La fecha de emisión es inválida.' });
+
   const org   = (rawOrg   || '').trim().substring(0, 20) || null;
   const fondo = (rawFondo || '').trim().substring(0, 20) || null;
 
@@ -286,11 +304,11 @@ exports.create = (req, res) => {
         db.query(
           `INSERT INTO autorizaciones_pago
             (numero, tipo_pago, beneficiario, monto, monto_letras, detalle, anio, org, fondo,
-             lleva_factura, numero_factura, creado_por,
+             lleva_factura, numero_factura, fecha_emision, creado_por,
              estado, autorizado_por, fecha_autorizacion, firma_nombre)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'AUTORIZADO',?,NOW(),?)`,
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, 'AUTORIZADO',?,NOW(),?)`,
           [numero, tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo,
-           lleva_factura ? 1 : 0, numero_factura, req.user.id,
+           lleva_factura ? 1 : 0, numero_factura, fecha_emision, req.user.id,
            firmante.id, firmante.nombre],
           (err2, result) => {
             if (err2) { console.error('[autorizaciones] Error en create INSERT:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
@@ -316,6 +334,7 @@ exports.update = (req, res) => {
     tipo_pago, beneficiario: rawBenef, monto, monto_letras: rawLetras,
     detalle: rawDetalle, anio, org: rawOrg, fondo: rawFondo,
     lleva_factura: rawLlevaFactura, numero_factura: rawNumeroFactura,
+    fecha_emision: rawFechaEmision,
   } = req.body;
 
   if (!tipo_pago || !VALID_TIPOS.includes(tipo_pago))
@@ -343,6 +362,10 @@ exports.update = (req, res) => {
   const anioNum = parseInt(anio, 10);
   if (!anio || isNaN(anioNum) || anioNum < 2000 || anioNum > 2100)
     return res.status(400).json({ message: 'El año es inválido.' });
+
+  const fecha_emision = parseFechaEmision(rawFechaEmision);
+  if (fecha_emision === undefined)
+    return res.status(400).json({ message: 'La fecha de emisión es inválida.' });
 
   const org   = (rawOrg   || '').trim().substring(0, 20) || null;
   const fondo = (rawFondo || '').trim().substring(0, 20) || null;
@@ -376,9 +399,9 @@ exports.update = (req, res) => {
     db.query(
       `UPDATE autorizaciones_pago
          SET tipo_pago = ?, beneficiario = ?, monto = ?, monto_letras = ?,
-             detalle = ?, anio = ?, org = ?, fondo = ?, lleva_factura = ?, numero_factura = ?
+             detalle = ?, anio = ?, org = ?, fondo = ?, lleva_factura = ?, numero_factura = ?, fecha_emision = ?
        WHERE id = ?`,
-      [tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, lleva_factura ? 1 : 0, numero_factura, id],
+      [tipo_pago, beneficiario, montoFinal, monto_letras, detalle, anioNum, org, fondo, lleva_factura ? 1 : 0, numero_factura, fecha_emision, id],
       (err2) => {
         if (err2) { console.error('[autorizaciones] Error en update UPDATE:', err2); return res.status(500).json({ message: 'Error interno del servidor.' }); }
         logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'autorizaciones', detalle: `Actualizó autorización ID #${id} — ${beneficiario}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
