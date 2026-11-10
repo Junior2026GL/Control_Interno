@@ -96,6 +96,28 @@
 .card-accent {
   height: 5px;
   background: linear-gradient(90deg, #0f2744 0%, #274C8D 50%, #1e4a9a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-accent::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: accent-loading 1.8s ease-in-out infinite;
+}
+
+@keyframes accent-loading {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-accent::after { animation: none; display: none; }
 }
 
 /* Header */
