@@ -7,6 +7,43 @@
   overflow: hidden;
   margin-bottom: 28px;
   box-shadow: 0 4px 20px rgba(15, 39, 68, 0.18);
+  position: relative;
+}
+
+/* Contorno animado: un destello de luz recorre el borde del banner */
+@property --banner-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.dash-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--banner-angle),
+    transparent 0%,
+    transparent 55%,
+    rgba(96, 165, 250, 0.2) 70%,
+    #60a5fa 88%,
+    #ffffff 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+  animation: banner-border-spin 4s linear infinite;
+}
+
+@keyframes banner-border-spin {
+  to { --banner-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-banner::after { animation: none; display: none; }
 }
 
 .dash-banner-img {
