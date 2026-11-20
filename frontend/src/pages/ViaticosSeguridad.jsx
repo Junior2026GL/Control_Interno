@@ -72,7 +72,7 @@ function buildEmpty() {
 
 function clientValidate(form) {
   const e = {};
-  if ((form.numero_identidad || '').replace(/\D/g, '').length !== 13) e.numero_identidad = 'El DNI debe tener 13 digitos.';
+  { const n = (form.numero_identidad || '').replace(/\D/g, '').length; if (n < 13 || n > 17) e.numero_identidad = 'El DNI debe tener entre 13 y 17 digitos.'; }
   if (!(form.nombre_beneficiario || '').trim()) e.nombre_beneficiario = 'Busque el DNI o escriba el nombre.';
   if (!(form.mision || '').trim()) e.mision = 'La mision es requerida.';
   if (!(form.lugar || '').trim())  e.lugar  = 'El lugar es requerido.';
@@ -594,7 +594,7 @@ export default function ViaticosSeguridad() {
                           name="numero_identidad" value={form.numero_identidad}
                           onChange={e => { handleField(e); setDniError(''); }}
                           onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleDniSearch())}
-                          placeholder="0000-0000-00000  (13 digitos)" maxLength={20} />
+                          placeholder="0000-0000-00000  (13 a 17 digitos)" maxLength={20} />
                         <button type="button" className="vs-btn-buscar" onClick={handleDniSearch} disabled={dniLoading}>
                           {dniLoading ? <span className="bod-btn-spinner" /> : <FiSearch size={15} />}
                           {dniLoading ? ' Buscando…' : ' Buscar'}

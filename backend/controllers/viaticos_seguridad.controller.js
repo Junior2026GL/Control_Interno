@@ -47,7 +47,7 @@ function buildRecord(body) {
   const mision = sanitize(body.mision);
   const lugar  = sanitize(body.lugar);
 
-  if (dni.length !== 13)            return { error: 'El DNI debe tener exactamente 13 dígitos.' };
+  if (dni.length < 13 || dni.length > 17) return { error: 'El DNI debe tener entre 13 y 17 dígitos.' };
   if (nombre.length < 2)            return { error: 'El nombre del beneficiario es requerido.' };
   if (mision.length < 2)            return { error: 'La misión es requerida.' };
   if (lugar.length < 2)             return { error: 'El lugar es requerido.' };
