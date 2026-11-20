@@ -73,7 +73,7 @@ function buildEmpty() {
 function clientValidate(form) {
   const e = {};
   if ((form.numero_identidad || '').replace(/\D/g, '').length !== 13) e.numero_identidad = 'El DNI debe tener 13 digitos.';
-  if (!(form.nombre_beneficiario || '').trim()) e.nombre_beneficiario = 'Busque el DNI para obtener el nombre.';
+  if (!(form.nombre_beneficiario || '').trim()) e.nombre_beneficiario = 'Busque el DNI o escriba el nombre.';
   if (!(form.mision || '').trim()) e.mision = 'La mision es requerida.';
   if (!(form.lugar || '').trim())  e.lugar  = 'El lugar es requerido.';
   if (!form.periodo_desde) e.periodo_desde = 'Fecha de inicio requerida.';
@@ -606,9 +606,19 @@ export default function ViaticosSeguridad() {
                     <div className="vs-row-2">
                       <div className="vs-field">
                         <label className="vs-label">Nombre de quien recibe <span className="vs-req">*</span></label>
-                        <div className={`vs-nombre ${form.nombre_beneficiario ? 'vs-nombre--ok' : ''}`}>
-                          {form.nombre_beneficiario || 'Busque el DNI para auto-completar el nombre'}
-                        </div>
+                        <input className={`vs-input ${formErrors.nombre_beneficiario ? 'vs-input--error' : ''}`}
+                          name="nombre_beneficiario" value={form.nombre_beneficiario}
+                          onChange={e => {
+                            const v = e.target.value;
+                            setForm(f => ({
+                              ...f,
+                              nombre_beneficiario: v,
+                              encargado_mision: !f.encargado_mision || f.encargado_mision === f.nombre_beneficiario
+                                ? v : f.encargado_mision,
+                            }));
+                            setFormErrors(prev => ({ ...prev, nombre_beneficiario: undefined }));
+                          }}
+                          placeholder="Busque el DNI o escriba el nombre manualmente" />
                         {formErrors.nombre_beneficiario && <span className="vs-error">{formErrors.nombre_beneficiario}</span>}
                       </div>
                       <div className="vs-field">
