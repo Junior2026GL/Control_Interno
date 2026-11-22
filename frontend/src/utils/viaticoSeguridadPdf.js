@@ -212,9 +212,11 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const tablaDias = ({ titulo, cols, rows, mult }) => {
     const fechas = fechasColumna(rows);
     const n = fechas.length;
-    const fijo = 8 + cols.ancho + 28;                // # + columna fija + total
+    const nc = cols.head.length;                      // columnas de texto (antes de los días)
+    const b = 1 + nc;                                 // índice de la primera columna de día
+    const fijo = 8 + cols.anchos.filter(a => typeof a === 'number').reduce((x, y) => x + y, 0) + 28;  // # + columnas fijas + total
     const fw = n > 0 ? Math.min(24, Math.max(17,Math.floor((CW - fijo - 70) / n))) : 0;
-    const totalCol = 3 + n;
+    const totalCol = b + n;
     const cantidad = r => (mult ? cantHosp(r.cantidad) : 1);
     const montoFila = r => cantidad(r) * fechas.reduce((s, f) => s + montoDia(r, f), 0);
     const body = rows.map((r, i) => [
@@ -222,7 +224,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
       ...fechas.map(f => cellMonto(montoDia(r, f))),
       { content: fmt(montoFila(r)), styles: { fontStyle: 'bold', textColor: AZUL } },
     ]);
-    if (!body.length) body.push(['1', '', '', ...fechas.map(() => ''), '']);
+    if (!body.length) body.push(['1', ...cols.head.map(() => ''), ...fechas.map(() => ''), '']);
     const totDia = fechas.map(f => rows.reduce((s, r) => s + cantidad(r) * montoDia(r, f), 0));
     const totalGeneral = rows.reduce((s, r) => s + montoFila(r), 0);
     const cp = { top: V(1.3), bottom: V(1.3), left: 1.5, right: 1.5 };
@@ -231,11 +233,11 @@ function dibujar(doc, rec, logoDataUrl, k) {
     autoTable(doc, {
       startY: y, margin: { left: M, right: M, bottom: MB }, tableWidth: CW,
       head: [
-        [{ content: titulo, colSpan: 4 + n, styles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
+        [{ content: titulo, colSpan: 2 + nc + n, styles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
         ['#', ...cols.head, ...fechas.map(dayHead), 'TOTAL'],
       ],
       body,
-      foot: [['', 'TOTAL:', '', ...totDia.map(t => ({ content: cellMonto(t), styles: { halign: 'center' } })),
+      foot: [['', ...cols.head.map((_, i) => (i === 0 ? 'TOTAL:' : '')), ...totDia.map(t => ({ content: cellMonto(t), styles: { halign: 'center' } })),
         { content: fmt(totalGeneral), styles: { halign: 'right', textColor: AZUL } }]],
       headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: F(6.5), halign: 'center', cellPadding: cp },
       bodyStyles: { fontSize: F(7), textColor: NEGRO, cellPadding: cp },
@@ -243,13 +245,14 @@ function dibujar(doc, rec, logoDataUrl, k) {
       alternateRowStyles: { fillColor: GRIS2 },
       styles: { lineColor: AZUL_L, lineWidth: 0.2, overflow: 'linebreak' },
       columnStyles: {
-        0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: cols.ancho, halign: cols.alineo },
-        ...Object.fromEntries(fechas.map((_, i) => [i + 3, { cellWidth: fw, halign: 'center' }])),
+        0: { cellWidth: 8, halign: 'center' },
+        ...Object.fromEntries(cols.anchos.map((w, i) => [i + 1, { cellWidth: w, halign: cols.alineos[i] }])),
+        ...Object.fromEntries(fechas.map((_, i) => [i + b, { cellWidth: fw, halign: 'center' }])),
         [totalCol]: { cellWidth: 28, halign: 'right' },
       },
       didParseCell(data) {
         const ci = data.column.index;
-        if (data.section !== 'head' && ci >= 3 && ci < totalCol && esFinDeSemana(fechas[ci - 3])) data.cell.styles.fillColor = FINDE;
+        if (data.section !== 'head' && ci >= b && ci < totalCol && esFinDeSemana(fechas[ci - b])) data.cell.styles.fillColor = FINDE;
       },
     });
     y = doc.lastAutoTable.finalY + V(2.5);
@@ -257,13 +260,16 @@ function dibujar(doc, rec, logoDataUrl, k) {
 
   tablaDias({
     titulo: 'DETALLES DEL VIATICO', mult: false,
-    cols: { head: ['Nombre', 'Cargo'], ancho: 38, alineo: 'left', fila: r => [sa((r.nombre || '').toUpperCase()), sa((r.cargo || '').toUpperCase())] },
+    cols: {
+      head: ['Detalle', 'Nombre', 'Cargo'], anchos: [36, 'auto', 38], alineos: ['left', 'left', 'left'],
+      fila: r => [sa((r.detalle || '').toUpperCase()), sa((r.nombre || '').toUpperCase()), sa((r.cargo || '').toUpperCase())],
+    },
     rows: alimentacion,
   });
   /* Tabla de hospedaje oculta temporalmente (para volver a mostrarla, quitar el "false &&") */
   if (false && hospedaje) tablaDias({
     titulo: 'DETALLE DE HOSPEDAJE', mult: true,
-    cols: { head: ['DETALLE', 'CANTIDAD'], ancho: 22, alineo: 'center', fila: r => [sa((r.detalle || '').toUpperCase()), String(cantHosp(r.cantidad))] },
+    cols: { head: ['DETALLE', 'CANTIDAD'], anchos: ['auto', 22], alineos: ['left', 'center'], fila: r => [sa((r.detalle || '').toUpperCase()), String(cantHosp(r.cantidad))] },
     rows: hospedaje,
   });
 

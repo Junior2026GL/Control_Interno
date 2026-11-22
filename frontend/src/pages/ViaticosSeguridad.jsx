@@ -18,6 +18,8 @@ import './ViaticosSeguridad.css';
 
 /* ── Utilidades ──────────────────────────────────────────── */
 const today = () => new Date().toISOString().split('T')[0];
+/* Qué cubre el viático de cada persona (columna "Detalle") */
+const DETALLES_VIATICO = ['ALIMENTACION', 'HOSPEDAJE', 'ALIMENTACION Y HOSPEDAJE'];
 const num = v => parseFloat(v) || 0;
 
 function fmtFecha(s) {
@@ -63,7 +65,7 @@ function buildEmpty() {
     numero_identidad: '', nombre_beneficiario: '', mision: '', lugar: '',
     dependencia: '', cargo: '', encargado_mision: '',
     periodo_desde: f, periodo_hasta: f, hora_salida: '', hora_regreso: '',
-    alimentacion: [{ nombre: '', cargo: '', dias: syncDias(fechas) }],
+    alimentacion: [{ detalle: '', nombre: '', cargo: '', dias: syncDias(fechas) }],
     hospedaje:    [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fechas) }],
     resumen: [
       { descripcion: 'ALIMENTACION', monto: '', auto: 'a' },
@@ -334,7 +336,7 @@ export default function ViaticosSeguridad() {
         hora_salida: r.hora_salida || '', hora_regreso: r.hora_regreso || '',
         alimentacion: r.detalle_alimentacion.length
           ? r.detalle_alimentacion.map(x => ({ ...x, dias: syncDias(fs, x.dias) }))
-          : [{ nombre: '', cargo: '', dias: syncDias(fs) }],
+          : [{ detalle: '', nombre: '', cargo: '', dias: syncDias(fs) }],
         hospedaje: r.detalle_hospedaje.length
           ? r.detalle_hospedaje.map(x => ({ ...x, cantidad: String(x.cantidad ?? 1), dias: syncDias(fs, x.dias) }))
           : [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fs) }],
@@ -419,7 +421,7 @@ export default function ViaticosSeguridad() {
         periodo_desde: form.periodo_desde, periodo_hasta: form.periodo_hasta,
         hora_salida: form.hora_salida, hora_regreso: form.hora_regreso,
         detalle_alimentacion: form.alimentacion.map(r => ({
-          nombre: up(r.nombre), cargo: up(r.cargo), dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
+          detalle: up(r.detalle), nombre: up(r.nombre), cargo: up(r.cargo), dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
         })),
         detalle_hospedaje: !verHosp ? [] : form.hospedaje.map(r => ({
           detalle: up(r.detalle), cantidad: cantHosp(r.cantidad), dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
@@ -766,7 +768,7 @@ export default function ViaticosSeguridad() {
                     <div className="vs-scroll">
                       <table className="vs-tbl">
                         <thead><tr>
-                          <th>#</th><th>Nombre</th><th>Cargo</th>
+                          <th>#</th><th>Detalle</th><th>Nombre</th><th>Cargo</th>
                           {fechas.map(f => <th key={f} className="vs-th-dia">{dayShort(f)}<br />{fmtFecha(f).slice(0, 5)}</th>)}
                           <th>Total</th><th />
                         </tr></thead>
@@ -774,6 +776,12 @@ export default function ViaticosSeguridad() {
                           {form.alimentacion.map((r, i) => (
                             <tr key={i}>
                               <td>{i + 1}</td>
+                              <td>
+                                <select className="vs-input vs-in vs-in--detalle" value={r.detalle || ''} onChange={e => setRow('alimentacion', i, { detalle: e.target.value })}>
+                                  <option value="">Seleccione…</option>
+                                  {DETALLES_VIATICO.map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                              </td>
                               <td><input className="vs-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('alimentacion', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
                               <td><input className="vs-input vs-in vs-in--cargo" value={r.cargo} onChange={e => setRow('alimentacion', i, { cargo: e.target.value })} placeholder="Cargo" /></td>
                               {r.dias.map(d => (

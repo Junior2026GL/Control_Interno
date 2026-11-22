@@ -17,7 +17,12 @@ const sumDias = (dias) => dias.reduce((s, d) => s + d.monto, 0);
 function normAlimentacion(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.slice(0, 60)
-    .map(r => ({ nombre: sanitize(r.nombre).toUpperCase(), cargo: sanitize(r.cargo).toUpperCase(), dias: normDias(r.dias) }))
+    .map(r => ({
+      detalle: sanitize(r.detalle).toUpperCase().slice(0, 60),   // ALIMENTACION / HOSPEDAJE / ALIMENTACION Y HOSPEDAJE
+      nombre: sanitize(r.nombre).toUpperCase(),
+      cargo: sanitize(r.cargo).toUpperCase(),
+      dias: normDias(r.dias),
+    }))
     .filter(r => r.nombre || sumDias(r.dias) > 0);
 }
 function normHospedaje(arr) {

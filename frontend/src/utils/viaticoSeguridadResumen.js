@@ -5,9 +5,6 @@
 const num = v => parseFloat(v) || 0;
 
 export const SUGERENCIAS = [
-  { texto: 'HOSPEDAJE Y ALIMENTACION', auto: 'ah' },
-  { texto: 'ALIMENTACION',             auto: 'a'  },
-  { texto: 'HOSPEDAJE',                auto: 'h'  },
   { texto: 'COMBUSTIBLE',              auto: null },
   { texto: 'KILOMETRAJE',              auto: null },
   { texto: 'PEAJES',                   auto: null },
