@@ -272,3 +272,14 @@
 .vs-hora-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .vs-hora-chips .vs-chip { padding: 4px 10px; }
 .vs-chip--on, .vs-chip--on:hover { background: #274C8D; border-color: #274C8D; color: #fff; }
+
+/* Botón "Repetir en el siguiente recibo" (encabezado de Datos del viaje) */
+.vs-repetir {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 12px; cursor: pointer;
+  border: 1.5px solid #cdd9ee; background: #f4f7fd; color: #274C8D; font: inherit; font-size: 13px; font-weight: 700;
+  transition: background .2s, color .2s, border-color .2s, transform .15s;
+}
+.vs-repetir:hover { background: #e6eefb; border-color: #274C8D; transform: translateY(-1px); }
+.vs-repetir--on, .vs-repetir--on:hover {
+  background: linear-gradient(135deg, #274C8D, #3a66b5); border-color: #274C8D; color: #fff; box-shadow: 0 3px 10px rgba(39, 76, 141, .28);
+}

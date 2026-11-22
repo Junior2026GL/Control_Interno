@@ -3,7 +3,7 @@ import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiPrinter,
   FiUsers, FiRefreshCw, FiEye, FiCalendar, FiArrowLeft,
   FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
-  FiMapPin, FiBriefcase, FiUser, FiCheck, FiClock,
+  FiMapPin, FiBriefcase, FiUser, FiCheck, FiClock, FiRepeat,
 } from 'react-icons/fi';
 import { LuShieldCheck } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
@@ -128,6 +128,15 @@ function DiasBadge({ n }) {
   );
 }
 
+/* Datos del viaje que se repiten en el siguiente recibo (se recuerdan en este navegador) */
+const CLAVE_VIAJE = 'vs_viaje_repetido', CLAVE_REPETIR = 'vs_repetir_viaje';
+const leerLS = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const escribirLS = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
+const datosViaje = f => ({
+  lugar: f.lugar, mision: f.mision, periodo_desde: f.periodo_desde, periodo_hasta: f.periodo_hasta,
+  hora_salida: f.hora_salida, hora_regreso: f.hora_regreso,
+});
+
 /* Horas exactas (sin minutos): de 5:00 AM a 11:00 PM y después 12:00 AM a 4:00 AM */
 const HORAS_EXACTAS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4]
   .map(h => String(h).padStart(2, '0') + ':00');
@@ -204,6 +213,7 @@ export default function ViaticosSeguridad() {
   const dniEditado = useRef(false);   // true solo cuando el usuario escribe el DNI (no al abrir un recibo)
   const dniRef     = useRef('');
   const autoRef    = useRef(null);    // nombre cargado por la última búsqueda automática
+  const [repetirViaje, setRepetirViaje] = useState(() => !!leerLS(CLAVE_REPETIR));   // repetir los datos del viaje en el siguiente recibo
   const [verHosp, setVerHosp] = useState(false);  // la sección de hospedaje solo se ve al editar recibos antiguos que la usan
   const [printLoading, setPrintLoading] = useState(null);
   const [aplicarAlim, setAplicarAlim] = useState('');
@@ -363,8 +373,17 @@ export default function ViaticosSeguridad() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  const alternarRepetir = () => {
+    const nuevo = !repetirViaje;
+    setRepetirViaje(nuevo);
+    escribirLS(CLAVE_REPETIR, nuevo ? true : null);
+    if (!nuevo) escribirLS(CLAVE_VIAJE, null);       // al apagarlo se olvidan los datos guardados
+  };
+
   const openNew = () => {
-    setEditing(null); setForm(buildEmpty()); setDniError(''); setFormErrors({});
+    const guardado = repetirViaje ? leerLS(CLAVE_VIAJE) : null;
+    setEditing(null); setForm(guardado ? { ...buildEmpty(), ...guardado } : buildEmpty()); setDniError(''); setFormErrors({});
+    if (guardado) showToast('Datos del viaje cargados del recibo anterior.', 'ok');
     setVerHosp(false); setAplicarAlim(''); setAplicarHosp(''); setModal(true);
   };
 
@@ -480,7 +499,11 @@ export default function ViaticosSeguridad() {
         observaciones: form.observaciones,
       };
       if (editing) { await api.put(`/viaticos-seguridad/${editing}`, payload, { headers: authHeaders() }); showToast('Registro actualizado correctamente.', 'ok'); }
-      else         { await api.post('/viaticos-seguridad', payload, { headers: authHeaders() }); showToast('Viatico registrado correctamente.', 'ok'); }
+      else         {
+        await api.post('/viaticos-seguridad', payload, { headers: authHeaders() });
+        if (repetirViaje) escribirLS(CLAVE_VIAJE, datosViaje(form));
+        showToast('Viatico registrado correctamente.', 'ok');
+      }
       closeModal(); fetchRegistros();
     } catch (err) { showToast(err.response?.data?.message || 'Error al guardar.', 'error'); }
     finally { setSaving(false); }
@@ -754,7 +777,14 @@ export default function ViaticosSeguridad() {
                   </Seccion>
 
                   {/* 2 · Datos del viaje */}
-                  <Seccion n={2} titulo="Datos del viaje" desc="Lugar, mision y periodo de la comision">
+                  <Seccion n={2} titulo="Datos del viaje" desc="Lugar, mision y periodo de la comision"
+                    extra={!editing && (
+                      <button type="button" className={'vs-repetir' + (repetirViaje ? ' vs-repetir--on' : '')} onClick={alternarRepetir}
+                        title={repetirViaje ? 'Al guardar, el siguiente recibo nuevo traera estos datos. Pulse para desactivar.' : 'Pulse para que, al guardar, el siguiente recibo nuevo traiga estos datos del viaje.'}>
+                        {repetirViaje ? <FiCheck size={15} /> : <FiRepeat size={15} />}
+                        {repetirViaje ? 'Se repetira en el siguiente' : 'Repetir en el siguiente recibo'}
+                      </button>
+                    )}>
                     <div className="vs-field">
                       <label className="vs-label">Lugar <span className="vs-req">*</span></label>
                       <div className="vs-icon-field">
