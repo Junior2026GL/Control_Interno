@@ -161,9 +161,6 @@ export default function ViaticosSeguridad() {
   const [printLoading, setPrintLoading] = useState(null);
   const [aplicarAlim, setAplicarAlim] = useState('');
   const [aplicarHosp, setAplicarHosp] = useState('');
-  const [addDni, setAddDni]         = useState('');
-  const [addDniLoading, setAddDniLoading] = useState(false);
-  const [addDniError, setAddDniError] = useState('');
 
   const PAGE_SIZE = 10;
   const canEdit   = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(user?.rol);
@@ -285,28 +282,6 @@ export default function ViaticosSeguridad() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.numero_identidad, modal]);
 
-  /* Agrega una persona a la alimentación buscándola por DNI en el censo */
-  const handleAgregarPersona = async () => {
-    const dni = addDni.replace(/D/g, '');
-    if (dni.length !== 13) { setAddDniError('Ingrese los 13 digitos del DNI.'); return; }
-    setAddDniLoading(true); setAddDniError('');
-    try {
-      const res = await api.get(`/censo/${encodeURIComponent(dni)}`, { headers: authHeaders() });
-      const nombre = (res.data.nombreCompleto || '').toUpperCase();
-      if (form.alimentacion.some(r => r.nombre.trim().toUpperCase() === nombre)) {
-        setAddDniError('Esa persona ya esta en la lista.');
-      } else {
-        setForm(f => {
-          const vacia = f.alimentacion.findIndex(r => !r.nombre.trim());
-          if (vacia >= 0) return { ...f, alimentacion: f.alimentacion.map((r, i) => (i === vacia ? { ...r, nombre } : r)) };
-          return { ...f, alimentacion: [...f.alimentacion, { nombre, cargo: '', dias: syncDias(fechas) }] };
-        });
-        setAddDni('');
-      }
-    } catch (err) { setAddDniError(err.response?.data?.message || 'Persona no encontrada en el censo.'); }
-    finally { setAddDniLoading(false); }
-  };
-
   /* Totales (mismo cálculo que el servidor) */
   const totales = useMemo(() => {
     const alimentacion = form.alimentacion.reduce((s, r) => s + totalAlim(r), 0);
@@ -339,7 +314,7 @@ export default function ViaticosSeguridad() {
 
   const openNew = () => {
     setEditing(null); setForm(buildEmpty()); setDniError(''); setFormErrors({});
-    setAplicarAlim(''); setAplicarHosp(''); setAddDni(''); setAddDniError(''); setModal(true);
+    setAplicarAlim(''); setAplicarHosp(''); setModal(true);
   };
 
   const openEdit = async (id) => {
@@ -370,7 +345,7 @@ export default function ViaticosSeguridad() {
         })(),
         observaciones: r.observaciones || '',
       });
-      setAplicarAlim(''); setAplicarHosp(''); setAddDni(''); setAddDniError('');
+      setAplicarAlim(''); setAplicarHosp('');
       setDniError(''); setFormErrors({}); setModal(true);
     } catch { showToast('Error al cargar el registro.'); }
   };
@@ -664,7 +639,7 @@ export default function ViaticosSeguridad() {
                       <div className="vs-field">
                         <label className="vs-label">Numero de Identidad (DNI) <span className="vs-req">*</span></label>
                         <div className="vs-dni-row">
-                          <input className={'vs-input' + (formErrors.numero_identidad ? ' vs-input--error' : '')}
+                          <input className={'vs-input vs-dni-input' + (formErrors.numero_identidad ? ' vs-input--error' : '')}
                             name="numero_identidad" value={form.numero_identidad}
                             onChange={e => { dniEditado.current = true; handleField(e); setDniError(''); setDniInfo(''); }}
                             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleDniSearch())}
@@ -764,6 +739,11 @@ export default function ViaticosSeguridad() {
                       <label className="vs-label">Monto por dia (L)</label>
                       <input type="number" min="0" step="0.01" className="vs-input vs-tool-input" value={aplicarAlim} onChange={e => setAplicarAlim(e.target.value)} placeholder="Ej. 600" />
                       <button type="button" className="vs-btn-soft" onClick={() => aplicarMonto('alimentacion', aplicarAlim, false)} disabled={aplicarAlim === ''}>Aplicar a todos los dias</button>
+                      <div className="vs-dias-badge" title="Dias del periodo seleccionado">
+                        <FiCalendar size={17} />
+                        <strong>{fechas.length}</strong>
+                        <span>{fechas.length === 1 ? 'dia' : 'dias'}</span>
+                      </div>
                     </div>
                     <div className="vs-scroll">
                       <table className="vs-tbl">
@@ -788,21 +768,7 @@ export default function ViaticosSeguridad() {
                         </tbody>
                       </table>
                     </div>
-                    <div className="vs-add-person">
-                      <label className="vs-label">Agregar persona por DNI</label>
-                      <div className="vs-dni-row">
-                        <input className="vs-input" value={addDni}
-                          onChange={e => { setAddDni(e.target.value); setAddDniError(''); }}
-                          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAgregarPersona())}
-                          placeholder="0000-0000-00000  (13 digitos)" maxLength={20} />
-                        <button type="button" className="vs-btn-buscar" onClick={handleAgregarPersona} disabled={addDniLoading}>
-                          {addDniLoading ? <span className="bod-btn-spinner" /> : <FiPlus size={15} />}
-                          {addDniLoading ? ' Buscando…' : ' Buscar y agregar'}
-                        </button>
-                      </div>
-                      {addDniError && <span className="vs-error">{addDniError}</span>}
-                      <button type="button" className="vs-link" onClick={() => addRow('alimentacion', { nombre: '', cargo: '', dias: syncDias(fechas) })}>o agregar una fila sin DNI</button>
-                    </div>
+                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('alimentacion', { nombre: '', cargo: '', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar persona</button>
                   </Seccion>
 
                   {/* 4 · Hospedaje */}
