@@ -3,7 +3,7 @@ import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiPrinter,
   FiUsers, FiRefreshCw, FiEye, FiCalendar, FiArrowLeft,
   FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
-  FiMapPin, FiBriefcase, FiUser,
+  FiMapPin, FiBriefcase, FiUser, FiCheck,
 } from 'react-icons/fi';
 import { LuShieldCheck } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
@@ -115,8 +115,21 @@ async function cargarLogo() {
   } catch { return null; }
 }
 
+/* Cuadro con los días de viático: el último día (regreso) cuenta como medio día */
+function DiasBadge({ n }) {
+  const pagados = n > 1 ? n - 0.5 : n;
+  return (
+    <div className="vs-dias-badge" title="Dias de viatico: el ultimo dia (regreso) cuenta como medio dia">
+      <FiCalendar size={17} />
+      <strong>{pagados}</strong>
+      <span>{pagados === 1 ? 'dia' : 'dias'}</span>
+      {n > 1 && <small>{n} de calendario · ultimo dia medio</small>}
+    </div>
+  );
+}
+
 /* Tarjeta numerada del formulario */
-function Seccion({ n, titulo, desc, children }) {
+function Seccion({ n, titulo, desc, extra, children }) {
   return (
     <section className="vs-sec">
       <div className="vs-sec-head">
@@ -125,6 +138,7 @@ function Seccion({ n, titulo, desc, children }) {
           <h3 className="vs-sec-title">{titulo}</h3>
           <p className="vs-sec-desc">{desc}</p>
         </div>
+        {extra && <div className="vs-sec-extra">{extra}</div>}
       </div>
       <div className="vs-sec-body">{children}</div>
     </section>
@@ -695,7 +709,7 @@ export default function ViaticosSeguridad() {
                           <input className="vs-input vs-has-icon" name="dependencia" value={form.dependencia} onChange={handleField} placeholder="Dependencia" />
                         </div>
                       </div>
-                      <div className="vs-field">
+                      <div className="vs-field vs-quien-cargo">
                         <label className="vs-label">Cargo</label>
                         <div className="vs-icon-field">
                           <FiBriefcase size={14} className="vs-icon" />
@@ -743,25 +757,19 @@ export default function ViaticosSeguridad() {
                   </Seccion>
 
                   {/* 3 · Alimentación */}
-                  <Seccion n={3} titulo="Detalle de alimentacion" desc="Personas y monto por cada dia del periodo">
-                    <div className="vs-tools">
-                      <label className="vs-label">Monto por dia (L)</label>
-                      <input type="number" min="0" step="0.01" className="vs-input vs-tool-input" value={aplicarAlim} onChange={e => setAplicarAlim(e.target.value)} placeholder="Ej. 600" />
-                      <button type="button" className="vs-btn-soft" onClick={() => aplicarMonto('alimentacion', aplicarAlim, false, true)} disabled={aplicarAlim === ''}>Aplicar a todos los dias</button>
-                      {(() => {
-                        // El último día (regreso) se paga a la mitad: 4 días de calendario = 3.5 días de viático
-                        const n = fechas.length;
-                        const pagados = n > 1 ? n - 0.5 : n;
-                        return (
-                          <div className="vs-dias-badge" title="Dias de viatico: el ultimo dia (regreso) cuenta como medio dia">
-                            <FiCalendar size={17} />
-                            <strong>{pagados}</strong>
-                            <span>{pagados === 1 ? 'dia' : 'dias'}</span>
-                            {n > 1 && <small>{n} de calendario · ultimo dia medio</small>}
-                          </div>
-                        );
-                      })()}
-                      <span className="vs-hint">Al aplicar el monto, el ultimo dia (regreso) se llena con la mitad.</span>
+                  <Seccion n={3} titulo="Detalle de alimentacion" desc="Personas y monto por cada dia del periodo" extra={<DiasBadge n={fechas.length} />}>
+                    <div className="vs-aplicar">
+                      <div className="vs-aplicar-field">
+                        <label className="vs-label">Monto por dia</label>
+                        <div className="vs-lps-field">
+                          <span className="vs-lps-tag">Lps.</span>
+                          <input type="number" min="0" step="0.01" className="vs-input vs-has-lps vs-aplicar-input" value={aplicarAlim} onChange={e => setAplicarAlim(e.target.value)} placeholder="Ej. 1400" />
+                        </div>
+                      </div>
+                      <button type="button" className="vs-btn-aplicar" onClick={() => aplicarMonto('alimentacion', aplicarAlim, false, true)} disabled={aplicarAlim === ''}>
+                        <FiCheck size={15} /> Aplicar a todos los dias
+                      </button>
+                      <p className="vs-aplicar-hint">El ultimo dia (regreso) se llena con la mitad del monto.</p>
                     </div>
                     <div className="vs-scroll">
                       <table className="vs-tbl">
@@ -780,8 +788,15 @@ export default function ViaticosSeguridad() {
                                   {DETALLES_VIATICO.map(d => <option key={d} value={d}>{d}</option>)}
                                 </select>
                               </td>
-                              <td><input className="vs-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('alimentacion', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
-                              <td><input className="vs-input vs-in vs-in--cargo" value={r.cargo} onChange={e => setRow('alimentacion', i, { cargo: e.target.value })} placeholder="Cargo" /></td>
+                              {/* Nombre y cargo solo en la primera fila (o en filas antiguas que ya los tengan) */}
+                              {i === 0 || r.nombre || r.cargo ? (
+                                <>
+                                  <td><input className="vs-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('alimentacion', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
+                                  <td><input className="vs-input vs-in vs-in--cargo" value={r.cargo} onChange={e => setRow('alimentacion', i, { cargo: e.target.value })} placeholder="Cargo" /></td>
+                                </>
+                              ) : (
+                                <><td /><td /></>
+                              )}
                               {r.dias.map(d => (
                                 <td key={d.fecha}><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={d.monto} onChange={e => setRowDia('alimentacion', i, d.fecha, e.target.value)} placeholder="0" /></td>
                               ))}
@@ -843,7 +858,7 @@ export default function ViaticosSeguridad() {
                       {SUGERENCIAS.map(s => <option key={s.texto} value={s.texto} />)}
                     </datalist>
                     {form.resumen.length > 0 && (
-                    <div className="vs-scroll">
+                    <div className="vs-scroll vs-scroll--gastos">
                       <table className="vs-tbl">
                         <thead><tr><th>#</th><th>Descripcion</th>{totales.hayAnteriores && <th>Origen del monto</th>}<th>Monto (L)</th><th /></tr></thead>
                         <tbody>

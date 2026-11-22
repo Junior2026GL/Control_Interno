@@ -298,6 +298,33 @@ function dibujar(doc, rec, logoDataUrl, k) {
   renglon(2, 'FECHA:', '');                 // se llena a mano
   renglon(3, 'FIRMA:', '', ESPACIO_FIRMA);
 
+  /* ─ OBSERVACIONES: recuadro a la derecha de la firma; solo aparece si se escribió algo ─ */
+  const obs = sa((rec.observaciones || '').trim());
+  if (obs) {
+    const bx = M + CW * 0.55, bw = CW * 0.45;
+    const by = y + FR * 0.15, bh = FR * 3.75 + ESPACIO_FIRMA;
+    const th = V(5);                                   // franja del título
+    doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.3);
+    doc.setFillColor(255, 255, 255); doc.rect(bx, by, bw, bh, 'F');
+    doc.setFillColor(...GRIS); doc.rect(bx, by, bw, th, 'F');
+    doc.rect(bx, by, bw, bh, 'S');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(F(6.5)); doc.setTextColor(...ETIQ);
+    doc.text('OBSERVACIONES:', bx + 2, by + th * 0.7);
+    // El texto se escribe completo; si no cabe, se reduce la letra
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(...NEGRO);
+    const disponible = bh - th - 3;
+    let fs = F(8.5), lineas = [];
+    for (;;) {
+      doc.setFontSize(fs);
+      lineas = doc.splitTextToSize(obs, bw - 6);
+      if (lineas.length * fs * 0.3528 * 1.25 <= disponible || fs <= 5) break;
+      fs -= 0.5;
+    }
+    const lh = fs * 0.3528 * 1.25;
+    const maxLineas = Math.max(1, Math.floor(disponible / lh));
+    lineas.slice(0, maxLineas).forEach((l, i) => doc.text(l, bx + 3, by + th + 2.5 + (i + 0.8) * lh));
+  }
+
   /* ─ PIE DE PÁGINA (todas las hojas) ─ */
   const totalPaginas = doc.getNumberOfPages();
   for (let pg = 1; pg <= totalPaginas; pg++) {
