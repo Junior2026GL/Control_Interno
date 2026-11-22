@@ -122,15 +122,29 @@ function dibujar(doc, rec, logoDataUrl, k) {
   /* ─ "RECIBI DE LA PAGADURIA…" ─ */
   const montoVal = num(rec.gran_total);
   const letras = sa(numeroALetras(montoVal));
-  const RB = V(9);
+  const RB = V(8);
   doc.setFillColor(...GRIS2); doc.setDrawColor(...AZUL); doc.setLineWidth(0.4);
   doc.rect(M, y, CW, RB, 'FD');
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(F(6.5)); doc.setTextColor(80, 80, 80);
-  doc.text('Recibi de la Pagaduria Especial, la cantidad de:', M + 2, y + RB * 0.36);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(F(8.5)); doc.setTextColor(...AZUL);
-  doc.text(doc.splitTextToSize(letras, CW - 60)[0] || letras, M + 2, y + RB * 0.80);
-  doc.setFontSize(F(14));
-  doc.text(`(L ${miles(montoVal)})`, M + CW - 2, y + RB * 0.70, { align: 'right' });
+  // Todo en una sola línea y del mismo tamaño de letra: "Recibi de la Pagaduria…" + cantidad en letras + monto pegado
+  const etiqueta = 'Recibi de la Pagaduria Especial, la cantidad de:';
+  const montoTxt = `(L ${miles(montoVal)})`;
+  const medir = (txt, estilo, tam) => { doc.setFont('helvetica', estilo); doc.setFontSize(tam); return doc.getTextWidth(txt); };
+  const hueco = 3, disponible = CW - 5;
+  let fsTexto = F(9), fsMonto = F(14);
+  while (fsTexto > 5 && medir(etiqueta, 'normal', fsTexto) + hueco + medir(letras, 'bold', fsTexto) + hueco + medir(montoTxt, 'bold', fsMonto) > disponible) {
+    fsTexto -= 0.25;
+    if (fsMonto > F(10)) fsMonto -= 0.25;
+  }
+  const base = y + RB * 0.68;
+  let px = M + 2.5;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(fsTexto); doc.setTextColor(80, 80, 80);
+  doc.text(etiqueta, px, base);
+  px += doc.getTextWidth(etiqueta) + hueco;
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(...AZUL);
+  doc.text(letras, px, base);
+  px += doc.getTextWidth(letras) + hueco;
+  doc.setFontSize(fsMonto);
+  doc.text(montoTxt, px, base);
   y += RB + V(1);
 
   /* ─ CAMPOS ─ */
@@ -302,27 +316,30 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const obs = sa((rec.observaciones || '').trim());
   if (obs) {
     const bx = M + CW * 0.55, bw = CW * 0.45;
-    const by = y + FR * 0.15, bh = FR * 3.75 + ESPACIO_FIRMA;
-    const th = V(5);                                   // franja del título
+    const sep = V(6);                                  // separación respecto a la tabla de arriba
+    const by = y + sep;
+    const maxH = FR * 3.75 + ESPACIO_FIRMA - sep;      // no pasa del final del bloque de firma
+    const th = V(5), pad = 2.5;                        // franja del título y margen interno
+    // El texto se escribe completo; si no cabe en el espacio, se reduce la letra
+    let fs = F(8.5), lineas = [];
+    for (;;) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(fs);
+      lineas = doc.splitTextToSize(obs, bw - 6);
+      if (th + pad * 2 + lineas.length * fs * 0.3528 * 1.25 <= maxH || fs <= 5) break;
+      fs -= 0.5;
+    }
+    const lh = fs * 0.3528 * 1.25;
+    const maxLineas = Math.max(1, Math.floor((maxH - th - pad * 2) / lh));
+    const mostradas = lineas.slice(0, maxLineas);
+    const bh = Math.min(maxH, th + pad * 2 + mostradas.length * lh);   // el alto se adapta al contenido
     doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.3);
     doc.setFillColor(255, 255, 255); doc.rect(bx, by, bw, bh, 'F');
     doc.setFillColor(...GRIS); doc.rect(bx, by, bw, th, 'F');
     doc.rect(bx, by, bw, bh, 'S');
     doc.setFont('helvetica', 'bold'); doc.setFontSize(F(6.5)); doc.setTextColor(...ETIQ);
     doc.text('OBSERVACIONES:', bx + 2, by + th * 0.7);
-    // El texto se escribe completo; si no cabe, se reduce la letra
-    doc.setFont('helvetica', 'normal'); doc.setTextColor(...NEGRO);
-    const disponible = bh - th - 3;
-    let fs = F(8.5), lineas = [];
-    for (;;) {
-      doc.setFontSize(fs);
-      lineas = doc.splitTextToSize(obs, bw - 6);
-      if (lineas.length * fs * 0.3528 * 1.25 <= disponible || fs <= 5) break;
-      fs -= 0.5;
-    }
-    const lh = fs * 0.3528 * 1.25;
-    const maxLineas = Math.max(1, Math.floor(disponible / lh));
-    lineas.slice(0, maxLineas).forEach((l, i) => doc.text(l, bx + 3, by + th + 2.5 + (i + 0.8) * lh));
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(fs); doc.setTextColor(...NEGRO);
+    mostradas.forEach((l, i) => doc.text(l, bx + 3, by + th + pad + (i + 0.8) * lh));
   }
 
   /* ─ PIE DE PÁGINA (todas las hojas) ─ */

@@ -246,7 +246,7 @@
 }
 .vs-btn-aplicar:hover:not(:disabled) { transform: translateY(-1px); }
 .vs-btn-aplicar:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
-.vs-aplicar-hint { margin: 0; align-self: center; font-size: .74rem; color: #5f7391; flex: 1 1 200px; }
+.vs-aplicar-hint { margin: 0; align-self: center; font-size: 1rem; font-weight: 600; line-height: 1.35; color: #3d5577; flex: 1 1 240px; }
 .vs-aplicar-hint::before { content: "ⓘ "; font-weight: 700; color: #274C8D; }
 @media (max-width: 700px) { .vs-sec-head { flex-wrap: wrap; } .vs-sec-extra { margin-left: 46px; } }
 
@@ -255,3 +255,13 @@
 .vs-scroll--gastos .vs-tbl .vs-in--name { min-width: 0; width: 100%; }
 .vs-scroll--gastos .vs-tbl .vs-in--monto { width: 130px; min-width: 0; }
 .vs-scroll--gastos .vs-tbl td:first-child, .vs-scroll--gastos .vs-tbl th:first-child { width: 34px; }
+
+/* Sección 1: arriba 3 campos en tercios (DNI | Nombre | Encargado); abajo Dependencia y Cargo, mitad y mitad */
+.vs-quien { grid-template-columns: repeat(6, 1fr); }
+.vs-quien > *:nth-child(-n+3) { grid-column: span 2; }
+.vs-quien > *:nth-child(n+4)  { grid-column: span 3; }
+@media (max-width: 1100px) {
+  .vs-quien { grid-template-columns: 1fr 1fr; }
+  .vs-quien > *:nth-child(-n+3), .vs-quien > *:nth-child(n+4) { grid-column: auto; }
+}
+@media (max-width: 600px) { .vs-quien { grid-template-columns: 1fr; } }
