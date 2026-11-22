@@ -794,6 +794,7 @@ export default function ViaticosSeguridad() {
                         </tbody>
                       </table>
                     </div>
+                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('alimentacion', { detalle: '', nombre: '', cargo: '', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar renglon</button>
                   </Seccion>
 
                   {/* 4 · Hospedaje (solo al editar recibos antiguos que lo tengan) */}
