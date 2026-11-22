@@ -52,7 +52,7 @@ export default function DifusionWhatsapp() {
   const [datos, setDatos]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
-  const [modo, setModo]       = useState('difusion'); // 'individual' | 'difusion'
+  const [modo, setModo]       = useState('individual'); // 'individual' | 'difusion'
   const [mensaje, setMensaje] = useState('');
 
   // individual
@@ -65,6 +65,8 @@ export default function DifusionWhatsapp() {
   const [fTipo, setFTipo]       = useState('ALL');
   const [excluidos, setExcluidos] = useState({}); // id → true
   const [abiertos, setAbiertos]   = useState({}); // id → true
+  const [pagina, setPagina]       = useState(1);
+  const PAGE_SIZE = 30;
 
   useEffect(() => {
     (async () => {
@@ -111,6 +113,10 @@ export default function DifusionWhatsapp() {
       ),
     [datos, fPartido, fDept, fTipo]
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
+  const safePage   = Math.min(pagina, totalPages);
+  const paginados  = filtrados.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const seleccionados = filtrados.filter((d) => !excluidos[d.id]);
   const conTelefono   = seleccionados.filter((d) => normalizarTelefono(d.telefono));
@@ -237,21 +243,21 @@ export default function DifusionWhatsapp() {
                     <div className="dif-filters">
                       <label className="dif-field">
                         <span>Partido</span>
-                        <select value={fPartido} onChange={(e) => { setFPartido(e.target.value); setAbiertos({}); }}>
+                        <select value={fPartido} onChange={(e) => { setFPartido(e.target.value); setAbiertos({}); setPagina(1); }}>
                           <option value="ALL">Todos los partidos</option>
                           {partidos.map((p) => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </label>
                       <label className="dif-field">
                         <span>Departamento</span>
-                        <select value={fDept} onChange={(e) => { setFDept(e.target.value); setAbiertos({}); }}>
+                        <select value={fDept} onChange={(e) => { setFDept(e.target.value); setAbiertos({}); setPagina(1); }}>
                           <option value="ALL">Todos los departamentos</option>
                           {departamentos.map((p) => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </label>
                       <label className="dif-field">
                         <span>Tipo</span>
-                        <select value={fTipo} onChange={(e) => { setFTipo(e.target.value); setAbiertos({}); }}>
+                        <select value={fTipo} onChange={(e) => { setFTipo(e.target.value); setAbiertos({}); setPagina(1); }}>
                           <option value="ALL">Propietarios y suplentes</option>
                           <option value="PROPIETARIO">Solo propietarios</option>
                           <option value="SUPLENTE">Solo suplentes</option>
@@ -387,7 +393,7 @@ export default function DifusionWhatsapp() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtrados.map((d) => {
+                    {paginados.map((d) => {
                       const tel = normalizarTelefono(d.telefono);
                       const incluido = !excluidos[d.id];
                       return (
@@ -417,6 +423,42 @@ export default function DifusionWhatsapp() {
                 </table>
               )}
             </div>
+
+            {filtrados.length > PAGE_SIZE && (
+              <div className="std-pg" style={{ marginTop: 14 }}>
+                <span className="std-pg-info">
+                  {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtrados.length)} de <strong>{filtrados.length}</strong>
+                </span>
+                <div className="std-pg-controls">
+                  <button className="std-pg-btn" disabled={safePage === 1} onClick={() => setPagina(1)}>«</button>
+                  <button className="std-pg-btn" disabled={safePage === 1} onClick={() => setPagina(safePage - 1)}>‹</button>
+                  {(() => {
+                    const maxBtns = 7;
+                    let start = Math.max(1, safePage - Math.floor(maxBtns / 2));
+                    let end   = Math.min(totalPages, start + maxBtns - 1);
+                    if (end - start < maxBtns - 1) start = Math.max(1, end - maxBtns + 1);
+                    const nums = [];
+                    if (start > 1) {
+                      nums.push(<button key={1} className="std-pg-btn std-pg-num" onClick={() => setPagina(1)}>1</button>);
+                      if (start > 2) nums.push(<span key="el" className="std-pg-ellipsis">…</span>);
+                    }
+                    for (let p = start; p <= end; p++) {
+                      nums.push(
+                        <button key={p} className={`std-pg-btn std-pg-num${safePage === p ? ' std-pg-num--active' : ''}`} onClick={() => setPagina(p)}>{p}</button>
+                      );
+                    }
+                    if (end < totalPages) {
+                      if (end < totalPages - 1) nums.push(<span key="er" className="std-pg-ellipsis">…</span>);
+                      nums.push(<button key={totalPages} className="std-pg-btn std-pg-num" onClick={() => setPagina(totalPages)}>{totalPages}</button>);
+                    }
+                    return nums;
+                  })()}
+                  <button className="std-pg-btn" disabled={safePage >= totalPages} onClick={() => setPagina(safePage + 1)}>›</button>
+                  <button className="std-pg-btn" disabled={safePage >= totalPages} onClick={() => setPagina(totalPages)}>»</button>
+                </div>
+                <span className="std-pg-total">Pág. <strong>{safePage}</strong> / {totalPages}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
