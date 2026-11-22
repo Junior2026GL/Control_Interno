@@ -61,7 +61,7 @@ const MODULOS_LABELS = {
   'fardos-confites':         'Entrega de Fardos de Confites',
   'viaticos-nacionales':     'Viáticos Nacionales',
   'viaticos-seguridad':      'Viáticos Seguridad de Presidencia',
-  'viaticos-reportes':       'Reportes de Viáticos',
+  'viaticos-reportes':       'Estadísticas y Reportes de Viáticos',
 };
 
 const ROL_META = {

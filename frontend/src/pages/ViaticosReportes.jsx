@@ -86,7 +86,7 @@ export default function ViaticosReportes() {
           <div className="vr-hero__left">
             <div className="vr-hero__icon"><LuChartColumn size={28} strokeWidth={1.8} /></div>
             <div>
-              <h1 className="vr-hero__title">Reportes de Viáticos</h1>
+              <h1 className="vr-hero__title">Estadísticas de Viáticos</h1>
               <p className="vr-hero__sub">Viáticos Nacionales Individual — monto pagado por mes</p>
             </div>
           </div>

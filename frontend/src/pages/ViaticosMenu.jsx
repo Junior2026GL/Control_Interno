@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronRight } from 'react-icons/fi';
-import { LuPlane, LuChartColumn, LuLuggage, LuMapPinned } from 'react-icons/lu';
+import { LuPlane, LuChartColumn, LuLuggage, LuMapPinned, LuFileText } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import './ConstanciaTransferencia.css';
@@ -25,12 +25,21 @@ const OPCIONES = [
     desc: 'Recibos de viáticos por misiones dentro del país, en Lempiras.',
   },
   {
-    path: '/viaticos/reportes',
+    path: '/viaticos/estadisticas',
     modulo: 'viaticos-reportes',
     icon: <LuChartColumn size={26} />,
     color: 'amber',
+    titulo: 'Estadísticas de Viáticos',
+    desc: 'Monto pagado por mes, giras por lugar y totales — Viáticos Nacionales Individual.',
+  },
+  {
+    path: '/viaticos/reportes',
+    modulo: 'viaticos-reportes',
+    icon: <LuFileText size={26} />,
+    color: 'red',
     titulo: 'Reportes de Viáticos',
-    desc: 'Monto pagado por mes, con gráficas — Viáticos Nacionales Individual.',
+    desc: 'Reportes en PDF y Excel. Próximamente.',
+    deshabilitado: true,
   },
 ];
 
