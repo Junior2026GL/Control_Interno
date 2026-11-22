@@ -27,7 +27,9 @@ export default function SnowEffect() {
       fase: Math.random() * Math.PI * 2,   // balanceo
       amp: Math.random() * 0.6 + 0.2,
       op: Math.random() * 0.5 + 0.4,
-      glifo: Math.random() < 0.35 ? GLIFOS[Math.floor(Math.random() * GLIFOS.length)] : null,
+      pino: Math.random() < 0.2,
+      dorado: Math.random() < 0.5,
+      glifo: Math.random() < 0.3 ? GLIFOS[Math.floor(Math.random() * GLIFOS.length)] : null,
       giro: Math.random() * Math.PI * 2,
       vgiro: (Math.random() - 0.5) * 0.02,
     });
@@ -57,7 +59,31 @@ export default function SnowEffect() {
         if (f.x > w + 5) f.x = -5;
         if (f.x < -5) f.x = w + 5;
         ctx.fillStyle = `rgba(${color},${f.op})`;
-        if (f.glifo) {
+        if (f.pino) {
+          // Pinito que cae meciéndose; blanco como la nieve o dorado como las estrellas
+          const h = f.r * 5 + 11;
+          const ancho = h * 0.7;
+          ctx.fillStyle = f.dorado ? `rgba(251,191,36,${f.op + 0.15})` : `rgba(${color},${f.op})`;
+          ctx.save();
+          ctx.translate(f.x, f.y);
+          ctx.rotate(Math.sin(f.fase) * 0.3);
+          ctx.beginPath();
+          ctx.moveTo(0, -h / 2);
+          ctx.lineTo(-ancho * 0.35, -h * 0.1);
+          ctx.lineTo(ancho * 0.35, -h * 0.1);
+          ctx.closePath();
+          ctx.moveTo(0, -h * 0.3);
+          ctx.lineTo(-ancho * 0.5, h * 0.15);
+          ctx.lineTo(ancho * 0.5, h * 0.15);
+          ctx.closePath();
+          ctx.moveTo(0, -h * 0.05);
+          ctx.lineTo(-ancho * 0.65, h * 0.4);
+          ctx.lineTo(ancho * 0.65, h * 0.4);
+          ctx.closePath();
+          ctx.rect(-ancho * 0.08, h * 0.4, ancho * 0.16, h * 0.12);
+          ctx.fill();
+          ctx.restore();
+        } else if (f.glifo) {
           // Copo con forma de estrella de nieve, girando despacio
           f.giro += f.vgiro;
           ctx.save();

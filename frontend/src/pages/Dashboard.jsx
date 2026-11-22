@@ -10,6 +10,7 @@ import {
 import Navbar from '../components/Navbar';
 import SnowEffect from '../components/SnowEffect';
 import ChristmasLights from '../components/ChristmasLights';
+import ChristmasScenery from '../components/ChristmasScenery';
 import { AuthContext } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -286,6 +287,7 @@ export default function Dashboard() {
   return (
     <div className="app-shell">
       <SnowEffect />
+      <ChristmasScenery />
       <Navbar />
       <main className="launcher-main">
 
