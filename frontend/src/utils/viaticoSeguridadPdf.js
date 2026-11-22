@@ -130,7 +130,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const etiqueta = 'Recibí de la Pagaduría Especial, la cantidad de:';
   const montoTxt = `L ${miles(montoVal)}`;
   const fsEtq = F(10.5), fsMonto = F(16);
-  const etqW = medir(etiqueta, 'times', 'bolditalic', fsEtq) + 9;
+  const etqW = medir(etiqueta, 'helvetica', 'bold', fsEtq) + 9;
   const montoW = medir(montoTxt, 'helvetica', 'bold', fsMonto) + 12;
   const letrasX = M + etqW + montoW + 7;
   const letrasW = M + CW - letrasX - 3;
@@ -142,9 +142,9 @@ function dibujar(doc, rec, logoDataUrl, k) {
     if (lineasL.length <= 2 || fsLetras <= 6) break;
     fsLetras -= 0.25;
   }
-  // 1) etiqueta: bloque azul con letra blanca (serif, negrita cursiva)
+  // 1) etiqueta: bloque azul con letra blanca (Helvetica en negrita, sin cursiva)
   doc.setFillColor(...AZUL); doc.rect(M, y, etqW, RB, 'F');
-  doc.setFont('times', 'bolditalic'); doc.setFontSize(fsEtq); doc.setTextColor(...BLANCO);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(fsEtq); doc.setTextColor(...BLANCO);
   doc.text(etiqueta, M + etqW / 2, y + RB / 2 + fsEtq * 0.3528 * 0.33, { align: 'center' });
   // 2) monto: recuadro blanco con borde, número grande
   const mx = M + etqW + 3.5, my = y + 1.4, mh = RB - 2.8;

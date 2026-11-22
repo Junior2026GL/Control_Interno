@@ -3,7 +3,7 @@ import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiPrinter,
   FiUsers, FiRefreshCw, FiEye, FiCalendar, FiArrowLeft,
   FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
-  FiMapPin, FiBriefcase, FiUser, FiCheck,
+  FiMapPin, FiBriefcase, FiUser, FiCheck, FiClock,
 } from 'react-icons/fi';
 import { LuShieldCheck } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
@@ -124,6 +124,38 @@ function DiasBadge({ n }) {
       <strong>{pagados}</strong>
       <span>{pagados === 1 ? 'dia' : 'dias'}</span>
       {n > 1 && <small>{n} de calendario · ultimo dia medio</small>}
+    </div>
+  );
+}
+
+/* Horas exactas (sin minutos): de 5:00 AM a 11:00 PM y después 12:00 AM a 4:00 AM */
+const HORAS_EXACTAS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4]
+  .map(h => String(h).padStart(2, '0') + ':00');
+const horaTxt = hhmm => {
+  const [h, m] = String(hhmm).split(':').map(Number);
+  return String(h % 12 || 12).padStart(2, '0') + ':' + String(m || 0).padStart(2, '0') + ' ' + (h >= 12 ? 'PM' : 'AM');
+};
+
+/* Selector de hora exacta: una lista de horas y botones con las más usadas (se guarda como HH:MM, igual que antes) */
+function HoraExacta({ valor, onCambio, rapidas }) {
+  const antigua = valor && !HORAS_EXACTAS.includes(valor) ? valor : null;   // recibos viejos con minutos
+  return (
+    <div className="vs-hora">
+      <div className="vs-icon-field">
+        <FiClock size={15} className="vs-icon" />
+        <select className="vs-input vs-has-icon vs-hora-select" value={valor || ''} onChange={e => onCambio(e.target.value)}>
+          <option value="">Sin hora</option>
+          {antigua && <option value={antigua}>{horaTxt(antigua)}</option>}
+          {HORAS_EXACTAS.map(h => <option key={h} value={h}>{horaTxt(h)}</option>)}
+        </select>
+      </div>
+      <div className="vs-hora-chips">
+        {rapidas.map(h => (
+          <button key={h} type="button" className={'vs-chip' + (valor === h ? ' vs-chip--on' : '')} onClick={() => onCambio(valor === h ? '' : h)}>
+            {horaTxt(h)}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -749,11 +781,13 @@ export default function ViaticosSeguridad() {
                       </div>
                       <div className="vs-field">
                         <label className="vs-label">Hora de Salida</label>
-                        <input type="time" className="vs-input" name="hora_salida" value={form.hora_salida} onChange={handleField} />
+                        <HoraExacta valor={form.hora_salida} rapidas={['06:00', '07:00', '08:00', '09:00']}
+                          onCambio={v => setForm(prev => ({ ...prev, hora_salida: v }))} />
                       </div>
                       <div className="vs-field">
                         <label className="vs-label">Hora de Regreso</label>
-                        <input type="time" className="vs-input" name="hora_regreso" value={form.hora_regreso} onChange={handleField} />
+                        <HoraExacta valor={form.hora_regreso} rapidas={['12:00', '15:00', '17:00', '20:00']}
+                          onCambio={v => setForm(prev => ({ ...prev, hora_regreso: v }))} />
                       </div>
                     </div>
                   </Seccion>

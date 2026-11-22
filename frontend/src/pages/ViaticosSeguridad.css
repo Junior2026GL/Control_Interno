@@ -265,3 +265,10 @@
   .vs-quien > *:nth-child(-n+3), .vs-quien > *:nth-child(n+4) { grid-column: auto; }
 }
 @media (max-width: 600px) { .vs-quien { grid-template-columns: 1fr; } }
+
+/* Selector de hora exacta: lista de horas + botones con las más usadas */
+.vs-hora { display: flex; flex-direction: column; gap: 8px; }
+.vs-hora-select { cursor: pointer; font-weight: 600; }
+.vs-hora-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.vs-hora-chips .vs-chip { padding: 4px 10px; }
+.vs-chip--on, .vs-chip--on:hover { background: #274C8D; border-color: #274C8D; color: #fff; }
