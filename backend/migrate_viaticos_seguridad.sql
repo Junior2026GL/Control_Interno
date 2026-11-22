@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS viaticos_seguridad (
   detalle_alimentacion  TEXT          NULL COMMENT 'JSON: [{nombre, cargo, dias:[{fecha, monto}]}]',
   detalle_hospedaje     TEXT          NULL COMMENT 'JSON: [{detalle, cantidad, dias:[{fecha, monto}]}]',
   detalle_combustible   TEXT          NULL COMMENT 'JSON: [{nombre, detalle, monto}]',
+  detalle_resumen       TEXT          NULL COMMENT 'JSON: [{descripcion, monto, auto}] (resumen de gastos editable)',
   observaciones         TEXT          NULL,
   usuario_id            INT           NOT NULL,
   creado_en             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -37,3 +38,13 @@ CREATE TABLE IF NOT EXISTS viaticos_seguridad (
   INDEX idx_vs_nombre    (nombre_beneficiario(80))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Recibos de viáticos de Seguridad de Presidencia';
+
+
+-- ------------------------------------------------------------
+-- Actualización (resumen de gastos editable)
+-- Para bases de datos que ya tenían la tabla creada:
+-- ALTER TABLE viaticos_seguridad
+--   ADD COLUMN detalle_resumen TEXT NULL
+--   COMMENT 'JSON: [{descripcion, monto, auto}] (resumen de gastos editable)'
+--   AFTER detalle_combustible;
+-- ------------------------------------------------------------

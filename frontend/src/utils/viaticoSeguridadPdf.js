@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { numeroALetras } from './numeroLetras';
+import { resumenDeRegistro } from './viaticoSeguridadResumen';
 
 const AZUL = [39, 76, 141], AZUL_OSC = [24, 48, 92], NEGRO = [30, 30, 30], BLANCO = [255, 255, 255];
 const GRIS = [238, 242, 250], GRIS2 = [248, 250, 254], AZUL_L = [205, 218, 240], FINDE = [255, 243, 214];
@@ -91,7 +92,6 @@ function dibujar(doc, rec, logoDataUrl, k) {
 
   const alimentacion = rec.detalle_alimentacion || [];
   const hospedaje    = rec.detalle_hospedaje || [];
-  const combustible  = rec.detalle_combustible || [];
 
   /* ─ ENCABEZADO ─ */
   const HH = V(23), LW = HH + 4, TW = 80, MIDW = CW - LW - TW;
@@ -187,24 +187,14 @@ function dibujar(doc, rec, logoDataUrl, k) {
   cell('HORA DE REGRESO', fmtHora(rec.hora_regreso) || '-', PL + 3 * q, q, 28);
   y += RH + V(2);
 
-  /* ─ RESUMEN DE GASTOS (izquierda) + COMBUSTIBLE (derecha) ─ */
+  /* ─ RESUMEN DE GASTOS (una sola tabla, filas editables) ─ */
   const pad = { top: V(1.2), bottom: V(1.2), left: 2.5, right: 2.5 };
-  const gastosW = Math.round(CW * 0.42), gapT = 4, combW = CW - gastosW - gapT;
-  const yTablas = y;
-  // Lo que se agrega en la tabla DETALLE (derecha) pasa también al resumen (izquierda)
-  const textoDet = r => sa((r.detalle || r.nombre || '').toUpperCase());
-  const itemsDet = combustible.filter(r => textoDet(r) || num(r.monto) > 0);
-  const filasResumen = [
-    ['', dash(rec.monto_hospedaje)],
-    ['HOSPEDAJE Y ALIMENTACION', dash(rec.monto_alimentacion)],
-    ...(itemsDet.length ? itemsDet.map(r => [textoDet(r), cellMonto(r.monto)]) : [['', dash(rec.monto_combustible)]]),
-    ['', dash(rec.monto_imprevistos)],
-    ['', dash(rec.monto_otros)],
-  ].map((f, i) => [String(i + 1), ...f]);
+  const filas = resumenDeRegistro(rec).map(r => [sa((r.descripcion || '').toUpperCase()), cellMonto(r.monto)]);
+  while (filas.length < 5) filas.push(['', '']);
   autoTable(doc, {
-    startY: y, margin: { left: M, right: W - M - gastosW, bottom: MB }, tableWidth: gastosW,
+    startY: y, margin: { left: M, right: M, bottom: MB }, tableWidth: CW,
     head: [['No.', 'Detalle', 'TOTAL']],
-    body: filasResumen,
+    body: filas.map((f, i) => [String(i + 1), ...f]),
     foot: [[
       { content: 'GRAN TOTAL:', colSpan: 2, styles: { halign: 'right' } },
       { content: fmt(rec.gran_total), styles: { halign: 'right' } },
@@ -214,29 +204,9 @@ function dibujar(doc, rec, logoDataUrl, k) {
     footStyles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(9), cellPadding: pad },
     alternateRowStyles: { fillColor: GRIS2 },
     styles: { lineColor: AZUL_L, lineWidth: 0.2 },
-    columnStyles: { 0: { cellWidth: 11, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 36, halign: 'right' } },
+    columnStyles: { 0: { cellWidth: 11, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 46, halign: 'right' } },
   });
-  const yGastos = doc.lastAutoTable.finalY;
-
-  const cbody = combustible.map((r, i) => [String(i + 1), textoDet(r), cellMonto(r.monto)]);
-  while (cbody.length < 3) cbody.push([String(cbody.length + 1), '', '']);
-  const cpad = { top: V(1.2), bottom: V(1.2), left: 1.5, right: 1.5 };
-  autoTable(doc, {
-    startY: yTablas, margin: { left: M + gastosW + gapT, right: M, bottom: MB }, tableWidth: combW,
-    head: [
-      [{ content: 'DETALLE', colSpan: 3, styles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
-      ['#', 'DETALLE', 'TOTAL'],
-    ],
-    body: cbody,
-    foot: [['', 'TOTAL:', { content: dash(rec.monto_combustible), styles: { halign: 'center' } }]],
-    headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: F(6.5), halign: 'center', cellPadding: cpad },
-    bodyStyles: { fontSize: F(7), textColor: NEGRO, cellPadding: cpad },
-    footStyles: { fillColor: GRIS, textColor: NEGRO, fontSize: F(7), fontStyle: 'bold', cellPadding: cpad },
-    styles: { lineColor: AZUL_L, lineWidth: 0.2 },
-    alternateRowStyles: { fillColor: GRIS2 },
-    columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 28, halign: 'center' } },
-  });
-  y = Math.max(yGastos, doc.lastAutoTable.finalY) + V(2.5);
+  y = doc.lastAutoTable.finalY + V(2.5);
 
   /* ─ TABLAS CON COLUMNAS POR DÍA (alimentación / hospedaje) ─ */
   const tablaDias = ({ titulo, cols, rows, mult }) => {

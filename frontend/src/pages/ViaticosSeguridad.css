@@ -160,3 +160,16 @@
   .vs-resumen { grid-template-columns: repeat(2, 1fr); }
   .vs-footer { justify-content: center; }
 }
+
+/* ── Resumen de gastos (tabla editable) ───────────────────── */
+.vs-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
+.vs-chips .vs-hint { flex-basis: auto; margin-right: 2px; }
+.vs-chip {
+  padding: 5px 11px; border-radius: 999px; border: 1.5px solid #cdd9ee; background: #f4f7fd;
+  color: #274C8D; font-size: .72rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.vs-chip:hover { background: #274C8D; border-color: #274C8D; color: #fff; }
+.vs-select { min-width: 190px; cursor: pointer; }
+.vs-tbl .vs-in--monto { min-width: 110px; }
+.vs-in--auto { background: #eef6ee !important; border-color: #b7dfbf !important; color: #166534; font-weight: 700; }

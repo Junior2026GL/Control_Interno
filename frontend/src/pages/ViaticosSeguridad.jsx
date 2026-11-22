@@ -11,6 +11,7 @@ import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import { generarReciboSeguridadPdf, limitesContenido } from '../utils/viaticoSeguridadPdf';
+import { resumenDeRegistro, SUGERENCIAS } from '../utils/viaticoSeguridadResumen';
 import './Bodegas.css';
 import './ViaticosNacionales.css';
 import './ViaticosSeguridad.css';
@@ -64,8 +65,10 @@ function buildEmpty() {
     periodo_desde: f, periodo_hasta: f, hora_salida: '', hora_regreso: '',
     alimentacion: [{ nombre: '', cargo: '', dias: syncDias(fechas) }],
     hospedaje:    [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fechas) }],
-    combustible:  [{ nombre: '', detalle: '', monto: '' }],
-    monto_imprevistos: '', otros_descripcion: '', monto_otros: '',
+    resumen: [
+      { descripcion: 'HOSPEDAJE Y ALIMENTACION', monto: '', auto: 'ah' },
+      { descripcion: '', monto: '', auto: null },
+    ],
     observaciones: '',
   };
 }
@@ -249,11 +252,10 @@ export default function ViaticosSeguridad() {
   const totales = useMemo(() => {
     const alimentacion = form.alimentacion.reduce((s, r) => s + totalAlim(r), 0);
     const hospedaje    = form.hospedaje.reduce((s, r) => s + totalHosp(r), 0);
-    const combustible  = form.combustible.reduce((s, r) => s + num(r.monto), 0);
-    const imprevistos  = num(form.monto_imprevistos);
-    const otros        = num(form.monto_otros);
-    return { alimentacion, hospedaje, combustible, imprevistos, otros,
-      gran: alimentacion + hospedaje + combustible + imprevistos + otros };
+    const autoValor = { ah: alimentacion + hospedaje, a: alimentacion, h: hospedaje };
+    const valorFila = r => (r.auto ? autoValor[r.auto] : num(r.monto));
+    return { alimentacion, hospedaje, autoValor, valorFila,
+      gran: form.resumen.reduce((s, r) => s + valorFila(r), 0) };
   }, [form]);
 
   const availableYears = useMemo(() => {
@@ -301,12 +303,12 @@ export default function ViaticosSeguridad() {
         hospedaje: r.detalle_hospedaje.length
           ? r.detalle_hospedaje.map(x => ({ ...x, cantidad: String(x.cantidad ?? 1), dias: syncDias(fs, x.dias) }))
           : [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fs) }],
-        combustible: r.detalle_combustible.length
-          ? r.detalle_combustible.map(x => ({ ...x, monto: x.monto || '' }))
-          : [{ nombre: '', detalle: '', monto: '' }],
-        monto_imprevistos: r.monto_imprevistos > 0 ? r.monto_imprevistos : '',
-        otros_descripcion: r.otros_descripcion || '',
-        monto_otros: r.monto_otros > 0 ? r.monto_otros : '',
+        resumen: (() => {
+          const filas = resumenDeRegistro(r).map(x => ({
+            descripcion: x.descripcion, auto: x.auto, monto: x.auto ? '' : (x.monto > 0 ? x.monto : ''),
+          }));
+          return filas.length ? filas : [{ descripcion: 'HOSPEDAJE Y ALIMENTACION', monto: '', auto: 'ah' }];
+        })(),
         observaciones: r.observaciones || '',
       });
       setAplicarAlim(''); setAplicarHosp(''); setAddDni(''); setAddDniError('');
@@ -330,6 +332,21 @@ export default function ViaticosSeguridad() {
         : { ...r, dias: r.dias.map(d => (d.fecha === fecha ? { ...d, monto } : d)) })),
     }));
   const addRow = (key, row) => setForm(f => ({ ...f, [key]: [...f[key], row] }));
+  const agregarSugerencia = (sug) => setForm(f => {
+    if (f.resumen.length >= 15 && !f.resumen.some(r => !r.descripcion && !r.monto && !r.auto)) return f;
+    const nueva = { descripcion: sug.texto, monto: '', auto: sug.auto };
+    const vacia = f.resumen.findIndex(r => !r.descripcion && !r.monto && !r.auto);
+    return { ...f, resumen: vacia >= 0 ? f.resumen.map((r, i) => (i === vacia ? nueva : r)) : [...f.resumen, nueva] };
+  });
+  const cambiarOrigen = (idx, origen) => setForm(f => ({
+    ...f,
+    resumen: f.resumen.map((r, i) => {
+      if (i !== idx) return r;
+      if (origen) return { ...r, auto: origen, monto: '' };
+      const actual = r.auto ? totales.autoValor[r.auto] : num(r.monto);
+      return { ...r, auto: null, monto: actual > 0 ? actual.toFixed(2) : '' };
+    }),
+  }));
   const delRow = (key, idx) => setForm(f => ({ ...f, [key]: f[key].filter((_, i) => i !== idx) }));
 
   const aplicarMonto = (key, valor, soloNoches) => {
@@ -364,10 +381,9 @@ export default function ViaticosSeguridad() {
         detalle_hospedaje: form.hospedaje.map(r => ({
           detalle: up(r.detalle), cantidad: cantHosp(r.cantidad), dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
         })),
-        detalle_combustible: form.combustible.map(r => ({ nombre: up(r.nombre), detalle: up(r.detalle), monto: num(r.monto) })),
-        monto_imprevistos: num(form.monto_imprevistos),
-        otros_descripcion: up(form.otros_descripcion),
-        monto_otros: num(form.monto_otros),
+        detalle_resumen: form.resumen
+          .map(r => ({ descripcion: up(r.descripcion), monto: r.auto ? 0 : num(r.monto), auto: r.auto || null }))
+          .filter(r => r.descripcion || r.monto > 0 || r.auto),
         observaciones: form.observaciones,
       };
       if (editing) { await api.put(`/viaticos-seguridad/${editing}`, payload, { headers: authHeaders() }); showToast('Registro actualizado correctamente.', 'ok'); }
@@ -550,11 +566,9 @@ export default function ViaticosSeguridad() {
                   <div className="bod-view-field"><span className="bod-view-label">Mision</span><span className="bod-view-value">{viewing.mision}</span></div>
                   <div className="bod-view-field"><span className="bod-view-label">Lugar</span><span className="bod-view-value">{viewing.lugar}</span></div>
                   <div className="bod-view-field"><span className="bod-view-label">Periodo</span><span className="bod-view-value">{fmtFecha(viewing.periodo_desde)} → {fmtFecha(viewing.periodo_hasta)}</span></div>
-                  <div className="bod-view-field"><span className="bod-view-label">Hospedaje</span><span className="bod-view-value">{fmtMonto(viewing.monto_hospedaje)}</span></div>
-                  <div className="bod-view-field"><span className="bod-view-label">Alimentacion</span><span className="bod-view-value">{fmtMonto(viewing.monto_alimentacion)}</span></div>
-                  <div className="bod-view-field"><span className="bod-view-label">Combustible</span><span className="bod-view-value">{fmtMonto(viewing.monto_combustible)}</span></div>
-                  <div className="bod-view-field"><span className="bod-view-label">Imprevisto</span><span className="bod-view-value">{fmtMonto(viewing.monto_imprevistos)}</span></div>
-                  <div className="bod-view-field"><span className="bod-view-label">Otros</span><span className="bod-view-value">{fmtMonto(viewing.monto_otros)}</span></div>
+                  {resumenDeRegistro(viewing).map((r, i) => (
+                    <div key={i} className="bod-view-field"><span className="bod-view-label">{r.descripcion || 'Sin descripcion'}</span><span className="bod-view-value">{fmtMonto(r.monto)}</span></div>
+                  ))}
                   <div className="bod-view-field"><span className="bod-view-label">Gran Total</span><span className="bod-view-value bod-view-value--big">{fmtMonto(viewing.gran_total)}</span></div>
                 </div>
                 <div className="bod-view-footer">
@@ -765,51 +779,47 @@ export default function ViaticosSeguridad() {
                     <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('hospedaje', { detalle: '', cantidad: '1', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar renglon</button>
                   </Seccion>
 
-                  {/* 5 · Combustible */}
-                  <Seccion n={5} titulo="Detalle de combustible" desc="Conductores, vehiculos y monto">
+                  {/* 5 · Resumen de gastos */}
+                  <Seccion n={5} titulo="Resumen de gastos" desc="Escriba cada concepto y su monto; todo es editable">
+                    <div className="vs-chips">
+                      <span className="vs-hint">Agregar:</span>
+                      {SUGERENCIAS.map(s => (
+                        <button key={s.texto} type="button" className="vs-chip" onClick={() => agregarSugerencia(s)}>+ {s.texto}</button>
+                      ))}
+                    </div>
+                    <datalist id="vs-sug">
+                      {SUGERENCIAS.map(s => <option key={s.texto} value={s.texto} />)}
+                    </datalist>
                     <div className="vs-scroll">
                       <table className="vs-tbl">
-                        <thead><tr><th>#</th><th>Nombre</th><th>Detalle / Vehiculos</th><th>Monto (L)</th><th /></tr></thead>
+                        <thead><tr><th>#</th><th>Descripcion</th><th>Origen del monto</th><th>Monto (L)</th><th /></tr></thead>
                         <tbody>
-                          {form.combustible.map((r, i) => (
+                          {form.resumen.map((r, i) => (
                             <tr key={i}>
                               <td>{i + 1}</td>
-                              <td><input className="vs-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('combustible', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
-                              <td><input className="vs-input vs-in vs-in--name" value={r.detalle} onChange={e => setRow('combustible', i, { detalle: e.target.value })} placeholder="Ej. VEHICULO 1" /></td>
-                              <td><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={r.monto} onChange={e => setRow('combustible', i, { monto: e.target.value })} placeholder="0.00" /></td>
-                              <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('combustible', i)} disabled={form.combustible.length === 1}><FiX size={14} /></button></td>
+                              <td><input className="vs-input vs-in vs-in--name" list="vs-sug" value={r.descripcion} onChange={e => setRow('resumen', i, { descripcion: e.target.value })} placeholder="Ej. ALIMENTACION 200" /></td>
+                              <td>
+                                <select className="vs-input vs-in vs-select" value={r.auto || ''} onChange={e => cambiarOrigen(i, e.target.value)}>
+                                  <option value="">Manual</option>
+                                  <option value="ah">Hospedaje + alimentacion</option>
+                                  <option value="a">Solo alimentacion</option>
+                                  <option value="h">Solo hospedaje</option>
+                                </select>
+                              </td>
+                              <td>
+                                <input type="number" min="0" step="0.01" className={'vs-input vs-in vs-in--monto' + (r.auto ? ' vs-in--auto' : '')}
+                                  value={r.auto ? totales.autoValor[r.auto].toFixed(2) : r.monto}
+                                  onChange={e => setRow('resumen', i, { auto: null, monto: e.target.value })} placeholder="0.00" />
+                              </td>
+                              <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('resumen', i)} disabled={form.resumen.length === 1}><FiX size={14} /></button></td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
-                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('combustible', { nombre: '', detalle: '', monto: '' })}><FiPlus size={13} /> Agregar renglon</button>
-                  </Seccion>
-
-                  {/* 6 · Otros gastos y resumen */}
-                  <Seccion n={6} titulo="Otros gastos y resumen" desc="Imprevisto, otros y totales del recibo">
-                    <div className="vs-row-3">
-                      <div className="vs-field">
-                        <label className="vs-label">Imprevisto — Monto</label>
-                        <div className="vs-lps-field"><span className="vs-lps-tag">Lps.</span><input type="number" min="0" step="0.01" className="vs-input vs-has-lps" name="monto_imprevistos" value={form.monto_imprevistos} onChange={handleField} placeholder="0.00" /></div>
-                      </div>
-                      <div className="vs-field">
-                        <label className="vs-label">Otros — Descripcion</label>
-                        <input className="vs-input" name="otros_descripcion" value={form.otros_descripcion} onChange={handleField} placeholder="Ej. 4 PEAJES" />
-                      </div>
-                      <div className="vs-field">
-                        <label className="vs-label">Otros — Monto</label>
-                        <div className="vs-lps-field"><span className="vs-lps-tag">Lps.</span><input type="number" min="0" step="0.01" className="vs-input vs-has-lps" name="monto_otros" value={form.monto_otros} onChange={handleField} placeholder="0.00" /></div>
-                      </div>
-                    </div>
-                    <div className="vs-resumen">
-                      <div><span>Hospedaje</span><strong>{fmtMonto(totales.hospedaje)}</strong></div>
-                      <div><span>Alimentacion</span><strong>{fmtMonto(totales.alimentacion)}</strong></div>
-                      <div><span>Combustible</span><strong>{fmtMonto(totales.combustible)}</strong></div>
-                      <div><span>Imprevisto</span><strong>{fmtMonto(totales.imprevistos)}</strong></div>
-                      <div><span>Otros</span><strong>{fmtMonto(totales.otros)}</strong></div>
-                    </div>
-                    <div className="vs-field">
+                    <button type="button" className="vs-btn-soft vs-add" disabled={form.resumen.length >= 15} onClick={() => addRow('resumen', { descripcion: '', monto: '', auto: null })}><FiPlus size={13} /> Agregar renglon</button>
+                    <span className="vs-hint">Con origen automatico el monto se toma de las tablas de alimentacion y hospedaje; si lo escribe a mano pasa a Manual.</span>
+                    <div className="vs-field" style={{ marginTop: 14 }}>
                       <label className="vs-label">Observaciones</label>
                       <textarea className="vs-input vs-textarea" name="observaciones" value={form.observaciones} onChange={handleField} rows={2} maxLength={500} placeholder="Observaciones (opcional)" />
                     </div>

@@ -40,6 +40,19 @@ function normCombustible(arr) {
     .filter(r => r.nombre || r.detalle || r.monto > 0);
 }
 
+// Resumen de gastos (tabla editable): [{ descripcion, monto, auto }]
+// auto: 'ah' = hospedaje + alimentación, 'a' = alimentación, 'h' = hospedaje (el monto lo calcula el servidor)
+function normResumen(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.slice(0, 15)
+    .map(r => ({
+      descripcion: sanitize(r.descripcion).toUpperCase().slice(0, 200),
+      monto: toDecimal(r.monto),
+      auto: ['ah', 'a', 'h'].includes(r.auto) ? r.auto : null,
+    }))
+    .filter(r => r.descripcion || r.monto > 0 || r.auto);
+}
+
 // Valida el cuerpo y calcula los totales en el servidor
 function buildRecord(body) {
   const dni    = sanitize(body.numero_identidad).replace(/\D/g, '');
@@ -62,10 +75,26 @@ function buildRecord(body) {
 
   const monto_alimentacion = round2(alimentacion.reduce((s, r) => s + sumDias(r.dias), 0));
   const monto_hospedaje    = round2(hospedaje.reduce((s, r) => s + r.cantidad * sumDias(r.dias), 0));
-  const monto_combustible  = round2(combustible.reduce((s, r) => s + r.monto, 0));
-  const monto_imprevistos  = round2(toDecimal(body.monto_imprevistos));
-  const monto_otros        = round2(toDecimal(body.monto_otros));
-  const gran_total = round2(monto_alimentacion + monto_hospedaje + monto_combustible + monto_imprevistos + monto_otros);
+  let monto_combustible = round2(combustible.reduce((s, r) => s + r.monto, 0));
+  let monto_imprevistos = round2(toDecimal(body.monto_imprevistos));
+  let monto_otros       = round2(toDecimal(body.monto_otros));
+  let otros_descripcion = sanitize(body.otros_descripcion) || null;
+  let gran_total = round2(monto_alimentacion + monto_hospedaje + monto_combustible + monto_imprevistos + monto_otros);
+  let detalleCombustible = combustible;
+  let detalleResumen = null;
+
+  // Formato nuevo: el resumen de gastos reemplaza combustible / imprevisto / otros
+  if (Array.isArray(body.detalle_resumen)) {
+    const autoValor = { ah: monto_alimentacion + monto_hospedaje, a: monto_alimentacion, h: monto_hospedaje };
+    const resumen = normResumen(body.detalle_resumen).map(r => ({
+      ...r,
+      monto: round2(r.auto ? autoValor[r.auto] : r.monto),
+    }));
+    detalleResumen = resumen;
+    gran_total = round2(resumen.reduce((s, r) => s + r.monto, 0));
+    monto_combustible = 0; monto_imprevistos = 0; monto_otros = 0; otros_descripcion = null;
+    detalleCombustible = [];
+  }
 
   return {
     values: {
@@ -81,11 +110,12 @@ function buildRecord(body) {
       hora_salida: sanitize(body.hora_salida) || null,
       hora_regreso: sanitize(body.hora_regreso) || null,
       monto_hospedaje, monto_alimentacion, monto_combustible, monto_imprevistos,
-      otros_descripcion: sanitize(body.otros_descripcion) || null,
+      otros_descripcion,
       monto_otros, gran_total,
       detalle_alimentacion: JSON.stringify(alimentacion),
       detalle_hospedaje:    JSON.stringify(hospedaje),
-      detalle_combustible:  JSON.stringify(combustible),
+      detalle_combustible:  JSON.stringify(detalleCombustible),
+      detalle_resumen:      detalleResumen ? JSON.stringify(detalleResumen) : null,
       observaciones: sanitize(body.observaciones).slice(0, 1000) || null,
     },
   };
@@ -140,6 +170,7 @@ exports.getById = (req, res) => {
       rec.detalle_alimentacion = parseJson(rec.detalle_alimentacion);
       rec.detalle_hospedaje    = parseJson(rec.detalle_hospedaje);
       rec.detalle_combustible  = parseJson(rec.detalle_combustible);
+      rec.detalle_resumen      = parseJson(rec.detalle_resumen);
       res.json(rec);
     }
   );
