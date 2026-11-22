@@ -66,7 +66,7 @@ function buildEmpty() {
     alimentacion: [{ nombre: '', cargo: '', dias: syncDias(fechas) }],
     hospedaje:    [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fechas) }],
     resumen: [
-      { descripcion: 'HOSPEDAJE Y ALIMENTACION', monto: '', auto: 'ah' },
+      { descripcion: 'ALIMENTACION', monto: '', auto: 'a' },
       { descripcion: '', monto: '', auto: null },
     ],
     observaciones: '',
@@ -158,6 +158,7 @@ export default function ViaticosSeguridad() {
   const dniEditado = useRef(false);   // true solo cuando el usuario escribe el DNI (no al abrir un recibo)
   const dniRef     = useRef('');
   const autoRef    = useRef(null);    // nombre cargado por la última búsqueda automática
+  const [verHosp, setVerHosp] = useState(false);  // la sección de hospedaje solo se ve al editar recibos antiguos que la usan
   const [printLoading, setPrintLoading] = useState(null);
   const [aplicarAlim, setAplicarAlim] = useState('');
   const [aplicarHosp, setAplicarHosp] = useState('');
@@ -314,7 +315,7 @@ export default function ViaticosSeguridad() {
 
   const openNew = () => {
     setEditing(null); setForm(buildEmpty()); setDniError(''); setFormErrors({});
-    setAplicarAlim(''); setAplicarHosp(''); setModal(true);
+    setVerHosp(false); setAplicarAlim(''); setAplicarHosp(''); setModal(true);
   };
 
   const openEdit = async (id) => {
@@ -345,6 +346,7 @@ export default function ViaticosSeguridad() {
         })(),
         observaciones: r.observaciones || '',
       });
+      setVerHosp((r.detalle_hospedaje || []).some(x => (x.dias || []).some(d => num(d.monto) > 0)));
       setAplicarAlim(''); setAplicarHosp('');
       setDniError(''); setFormErrors({}); setModal(true);
     } catch { showToast('Error al cargar el registro.'); }
@@ -368,7 +370,8 @@ export default function ViaticosSeguridad() {
   const addRow = (key, row) => setForm(f => ({ ...f, [key]: [...f[key], row] }));
   const agregarSugerencia = (sug) => setForm(f => {
     if (f.resumen.length >= 15 && !f.resumen.some(r => !r.descripcion && !r.monto && !r.auto)) return f;
-    const nueva = { descripcion: sug.texto, monto: '', auto: sug.auto };
+    // Sin la sección de hospedaje, solo la alimentación puede calcularse sola; lo demás se escribe a mano
+    const nueva = { descripcion: sug.texto, monto: '', auto: verHosp || sug.auto === 'a' ? sug.auto : null };
     const vacia = f.resumen.findIndex(r => !r.descripcion && !r.monto && !r.auto);
     return { ...f, resumen: vacia >= 0 ? f.resumen.map((r, i) => (i === vacia ? nueva : r)) : [...f.resumen, nueva] };
   });
@@ -383,13 +386,19 @@ export default function ViaticosSeguridad() {
   }));
   const delRow = (key, idx) => setForm(f => ({ ...f, [key]: f[key].filter((_, i) => i !== idx) }));
 
-  const aplicarMonto = (key, valor, soloNoches) => {
+  // soloNoches: el último día queda vacío (hospedaje). ultimoMedio: el último día (regreso) lleva la mitad del monto.
+  const aplicarMonto = (key, valor, soloNoches, ultimoMedio = false) => {
     if (valor === '') return;
     setForm(f => ({
       ...f,
       [key]: f[key].map(r => ({
         ...r,
-        dias: r.dias.map((d, i) => ({ ...d, monto: soloNoches && r.dias.length > 1 && i === r.dias.length - 1 ? '' : valor })),
+        dias: r.dias.map((d, i) => {
+          const esUltimo = r.dias.length > 1 && i === r.dias.length - 1;
+          if (soloNoches && esUltimo) return { ...d, monto: '' };
+          if (ultimoMedio && esUltimo) return { ...d, monto: String(Math.round(num(valor) * 50) / 100) };
+          return { ...d, monto: valor };
+        }),
       })),
     }));
   };
@@ -412,7 +421,7 @@ export default function ViaticosSeguridad() {
         detalle_alimentacion: form.alimentacion.map(r => ({
           nombre: up(r.nombre), cargo: up(r.cargo), dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
         })),
-        detalle_hospedaje: form.hospedaje.map(r => ({
+        detalle_hospedaje: !verHosp ? [] : form.hospedaje.map(r => ({
           detalle: up(r.detalle), cantidad: cantHosp(r.cantidad), dias: r.dias.map(d => ({ fecha: d.fecha, monto: num(d.monto) })),
         })),
         detalle_resumen: form.resumen
@@ -738,12 +747,21 @@ export default function ViaticosSeguridad() {
                     <div className="vs-tools">
                       <label className="vs-label">Monto por dia (L)</label>
                       <input type="number" min="0" step="0.01" className="vs-input vs-tool-input" value={aplicarAlim} onChange={e => setAplicarAlim(e.target.value)} placeholder="Ej. 600" />
-                      <button type="button" className="vs-btn-soft" onClick={() => aplicarMonto('alimentacion', aplicarAlim, false)} disabled={aplicarAlim === ''}>Aplicar a todos los dias</button>
-                      <div className="vs-dias-badge" title="Dias del periodo seleccionado">
-                        <FiCalendar size={17} />
-                        <strong>{fechas.length}</strong>
-                        <span>{fechas.length === 1 ? 'dia' : 'dias'}</span>
-                      </div>
+                      <button type="button" className="vs-btn-soft" onClick={() => aplicarMonto('alimentacion', aplicarAlim, false, true)} disabled={aplicarAlim === ''}>Aplicar a todos los dias</button>
+                      {(() => {
+                        // El último día (regreso) se paga a la mitad: 4 días de calendario = 3.5 días de viático
+                        const n = fechas.length;
+                        const pagados = n > 1 ? n - 0.5 : n;
+                        return (
+                          <div className="vs-dias-badge" title="Dias de viatico: el ultimo dia (regreso) cuenta como medio dia">
+                            <FiCalendar size={17} />
+                            <strong>{pagados}</strong>
+                            <span>{pagados === 1 ? 'dia' : 'dias'}</span>
+                            {n > 1 && <small>{n} de calendario · ultimo dia medio</small>}
+                          </div>
+                        );
+                      })()}
+                      <span className="vs-hint">Al aplicar el monto, el ultimo dia (regreso) se llena con la mitad.</span>
                     </div>
                     <div className="vs-scroll">
                       <table className="vs-tbl">
@@ -768,10 +786,10 @@ export default function ViaticosSeguridad() {
                         </tbody>
                       </table>
                     </div>
-                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('alimentacion', { nombre: '', cargo: '', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar persona</button>
                   </Seccion>
 
-                  {/* 4 · Hospedaje */}
+                  {/* 4 · Hospedaje (solo al editar recibos antiguos que lo tengan) */}
+                  {verHosp && (
                   <Seccion n={4} titulo="Detalle de hospedaje" desc="Habitaciones y precio por noche">
                     <div className="vs-tools">
                       <label className="vs-label">Precio por noche (L)</label>
@@ -804,9 +822,10 @@ export default function ViaticosSeguridad() {
                     </div>
                     <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('hospedaje', { detalle: '', cantidad: '1', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar renglon</button>
                   </Seccion>
+                  )}
 
                   {/* 5 · Resumen de gastos */}
-                  <Seccion n={5} titulo="Resumen de gastos" desc="Escriba cada concepto y su monto; todo es editable">
+                  <Seccion n={verHosp ? 5 : 4} titulo="Resumen de gastos" desc="Escriba cada concepto y su monto; todo es editable">
                     <div className="vs-chips">
                       <span className="vs-hint">Agregar:</span>
                       {SUGERENCIAS.map(s => (
@@ -827,9 +846,9 @@ export default function ViaticosSeguridad() {
                               <td>
                                 <select className="vs-input vs-in vs-select" value={r.auto || ''} onChange={e => cambiarOrigen(i, e.target.value)}>
                                   <option value="">Manual</option>
-                                  <option value="ah">Hospedaje + alimentacion</option>
-                                  <option value="a">Solo alimentacion</option>
-                                  <option value="h">Solo hospedaje</option>
+                                  {(verHosp || r.auto === 'ah') && <option value="ah">Hospedaje + alimentacion</option>}
+                                  <option value="a">{verHosp ? 'Solo alimentacion' : 'Alimentacion (calculada)'}</option>
+                                  {(verHosp || r.auto === 'h') && <option value="h">Solo hospedaje</option>}
                                 </select>
                               </td>
                               <td>

@@ -203,3 +203,4 @@
 }
 .vs-dias-badge strong { font-size: 1.45rem; font-weight: 800; line-height: 1; }
 .vs-dias-badge span { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .9; }
+.vs-dias-badge small { font-size: .62rem; font-weight: 600; opacity: .85; padding-left: 8px; margin-left: 2px; border-left: 1px solid rgba(255,255,255,.4); line-height: 1.2; max-width: 110px; }
