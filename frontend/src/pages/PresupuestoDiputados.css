@@ -2064,3 +2064,7 @@
   color: #274C8D;
 }
 .ps-modal-ayuda .ps-avail-badge .ps-lbl-L { color: #047857; font-size: 14px; }
+
+/* Chip de teléfono: clic para copiar */
+.ps-dip-chip--copy { font: inherit; text-align: left; cursor: pointer; }
+.ps-dip-chip--copy:active { transform: translateY(0) scale(.98); }

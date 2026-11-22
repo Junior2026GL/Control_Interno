@@ -288,6 +288,20 @@ export default function PresupuestoDiputados() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
+  const [telCopiado, setTelCopiado] = useState(false);
+  const copiarTelefono = async (texto) => {
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(texto);
+      else {
+        const ta = document.createElement('textarea');
+        ta.value = texto; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      setTelCopiado(true);
+      setTimeout(() => setTelCopiado(false), 1800);
+    } catch { /* sin permiso del portapapeles */ }
+  };
+
   const showToast = (msg, type = 'error') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4500);
@@ -2113,13 +2127,18 @@ export default function PresupuestoDiputados() {
                       </span>
                     )}
                     {selectedDip.telefono && (
-                      <span className="ps-dip-chip ps-dip-chip--tel">
+                      <button
+                        type="button"
+                        className="ps-dip-chip ps-dip-chip--tel ps-dip-chip--copy"
+                        title="Clic para copiar el teléfono"
+                        onClick={() => copiarTelefono(selectedDip.telefono)}
+                      >
                         <span className="ps-dip-chip-icon"><HiOutlinePhone size={18} /></span>
                         <span className="ps-dip-chip-body">
-                          <span className="ps-dip-chip-label">Teléfono</span>
+                          <span className="ps-dip-chip-label">{telCopiado ? '¡Copiado!' : 'Teléfono · clic para copiar'}</span>
                           <span className="ps-dip-chip-value">{selectedDip.telefono}</span>
                         </span>
-                      </span>
+                      </button>
                     )}
                     {dipBirthday && (() => {
                       const [, mo, dy] = dipBirthday.split('-');
