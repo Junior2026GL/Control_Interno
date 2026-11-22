@@ -18,6 +18,7 @@ import ReportesPresupuesto from './pages/ReportesPresupuesto';
 import Viaticos from './pages/Viaticos';
 import ViaticosMenu from './pages/ViaticosMenu';
 import ViaticosSeguridad from './pages/ViaticosSeguridad';
+import ViaticosReportes from './pages/ViaticosReportes';
 import ConstanciaTransferencia from './pages/ConstanciaTransferencia';
 import Ayudas from './pages/Ayudas';
 import AyudasAlcaldias from './pages/AyudasAlcaldias';
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="/viaticos" element={<ModuleRoute modulo={['viaticos', 'viaticos-nacionales', 'viaticos-seguridad', 'viaticos-reportes']}><ViaticosMenu /></ModuleRoute>} />
             <Route path="/viaticos/internacional" element={<ModuleRoute modulo="viaticos"><Viaticos /></ModuleRoute>} />
             <Route path="/viaticos/seguridad-presidencia" element={<ModuleRoute modulo="viaticos-seguridad"><ViaticosSeguridad /></ModuleRoute>} />
+            <Route path="/viaticos/reportes" element={<ModuleRoute modulo="viaticos-reportes"><ViaticosReportes /></ModuleRoute>} />
             <Route path="/constancia-transferencia" element={<ModuleRoute modulo="constancia-transferencia"><ConstanciaTransferencia /></ModuleRoute>} />
             <Route path="/ayudas" element={<ModuleRoute modulo="ayudas"><Ayudas /></ModuleRoute>} />
             <Route path="/ayudas-alcaldias" element={<ModuleRoute modulo="ayudas_alcaldias"><AyudasAlcaldias /></ModuleRoute>} />

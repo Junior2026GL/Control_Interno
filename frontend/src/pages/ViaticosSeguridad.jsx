@@ -5,7 +5,7 @@ import {
   FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
   FiMapPin, FiBriefcase, FiUser, FiCheck, FiClock, FiRepeat,
 } from 'react-icons/fi';
-import { LuShieldCheck } from 'react-icons/lu';
+import { LuShieldCheck, LuMapPinned } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -556,7 +556,7 @@ export default function ViaticosSeguridad() {
 
         <div className="bod-page-header">
           <div className="bod-page-header__left">
-            <div className="bod-page-icon"><LuShieldCheck size={26} /></div>
+            <div className="bod-page-icon vs-page-icon"><LuMapPinned size={28} strokeWidth={1.8} /></div>
             <div>
               <h1 className="bod-page-title">Viáticos Nacionales Individual</h1>
               <p className="bod-page-sub">Recibos de viaticos — Pagaduria Especial</p>
@@ -573,13 +573,6 @@ export default function ViaticosSeguridad() {
           <div className="bod-stat">
             <div className="bod-stat__icon bod-stat__icon--blue"><FiUsers size={20} /></div>
             <div className="bod-stat__body"><span className="bod-stat__label">Total Registros</span><span className="bod-stat__value">{registros.length}</span></div>
-          </div>
-          <div className="bod-stat">
-            <div className="bod-stat__icon bod-stat__icon--green"><span className="vs-lps">Lps.</span></div>
-            <div className="bod-stat__body">
-              <span className="bod-stat__label">Total Pagado</span>
-              <span className="bod-stat__value bod-stat__value--green">{fmtMonto(registros.reduce((s, r) => s + num(r.gran_total), 0))}</span>
-            </div>
           </div>
           <div className="bod-stat">
             <div className="bod-stat__icon bod-stat__icon--amber"><FiCalendar size={20} /></div>

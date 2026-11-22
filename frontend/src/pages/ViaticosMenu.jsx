@@ -30,8 +30,7 @@ const OPCIONES = [
     icon: <LuChartColumn size={26} />,
     color: 'amber',
     titulo: 'Reportes de Viáticos',
-    desc: 'Próximamente.',
-    deshabilitado: true,
+    desc: 'Monto pagado por mes, con gráficas — Viáticos Nacionales Individual.',
   },
 ];
 

@@ -283,3 +283,12 @@
 .vs-repetir--on, .vs-repetir--on:hover {
   background: linear-gradient(135deg, #274C8D, #3a66b5); border-color: #274C8D; color: #fff; box-shadow: 0 3px 10px rgba(39, 76, 141, .28);
 }
+
+/* ── Logo del encabezado ─────────────────────────────────── */
+.vs-page-icon {
+  width: 54px; height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #1b3a73 0%, #274C8D 45%, #4a7fd4 100%);
+  box-shadow: 0 8px 18px rgba(39, 76, 141, .35), inset 0 1px 0 rgba(255, 255, 255, .28);
+  border: 1px solid rgba(255, 255, 255, .18);
+}
