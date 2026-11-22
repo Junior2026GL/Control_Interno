@@ -8,6 +8,7 @@ const audit       = require('../middleware/audit');
 const ADMINS = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 
 router.get('/',       verifyToken,                            ctrl.getAll);
+router.get('/persona/:dni', verifyToken,                      ctrl.getByDni);
 router.get('/:id',    verifyToken,                            ctrl.getById);
 router.post('/',      verifyToken, checkRole(ADMINS), audit, ctrl.create);
 router.put('/:id',    verifyToken, checkRole(ADMINS), audit, ctrl.update);

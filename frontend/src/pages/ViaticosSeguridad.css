@@ -173,3 +173,6 @@
 .vs-select { min-width: 190px; cursor: pointer; }
 .vs-tbl .vs-in--monto { min-width: 110px; }
 .vs-in--auto { background: #eef6ee !important; border-color: #b7dfbf !important; color: #166534; font-weight: 700; }
+
+/* Aviso de datos cargados automáticamente al buscar el DNI */
+.vs-ok { font-size: .74rem; font-weight: 600; color: #15803d; }

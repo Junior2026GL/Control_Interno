@@ -147,6 +147,32 @@ exports.getAll = (req, res) => {
   );
 };
 
+// ── GET última información guardada de una persona (por DNI) ──
+// Sirve para autocompletar nombre, cargo y dependencia al escribir el DNI.
+exports.getByDni = (req, res) => {
+  const dni = sanitize(req.params.dni).replace(/\D/g, '');
+  if (dni.length < 13 || dni.length > 17)
+    return res.status(400).json({ message: 'DNI inválido.' });
+
+  db.query(
+    `SELECT nombre_beneficiario, cargo, dependencia, creado_en
+     FROM viaticos_seguridad
+     WHERE numero_identidad = ?
+     ORDER BY id DESC
+     LIMIT 1`,
+    [dni],
+    (err, rows) => {
+      if (err) {
+        console.error('[viaticos_seguridad] getByDni:', err);
+        return res.status(500).json({ message: 'Error interno del servidor.' });
+      }
+      if (!rows || rows.length === 0)
+        return res.status(404).json({ message: 'Sin recibos anteriores.' });
+      res.json(rows[0]);
+    }
+  );
+};
+
 // ── GET by ID ─────────────────────────────────────────────
 exports.getById = (req, res) => {
   const id = parseInt(req.params.id, 10);

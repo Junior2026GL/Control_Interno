@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useContext, useMemo } from 'react';
+import { useEffect, useState, useCallback, useContext, useMemo, useRef } from 'react';
 import {
   FiPlus, FiTrash2, FiEdit2, FiX, FiSearch, FiPrinter,
   FiUsers, FiRefreshCw, FiEye, FiCalendar, FiArrowLeft,
@@ -154,6 +154,9 @@ export default function ViaticosSeguridad() {
   const [page, setPage]             = useState(1);
   const [dniLoading, setDniLoading] = useState(false);
   const [dniError, setDniError]     = useState('');
+  const [dniInfo, setDniInfo]       = useState('');
+  const dniEditado = useRef(false);   // true solo cuando el usuario escribe el DNI (no al abrir un recibo)
+  const dniRef     = useRef('');
   const [printLoading, setPrintLoading] = useState(null);
   const [aplicarAlim, setAplicarAlim] = useState('');
   const [aplicarHosp, setAplicarHosp] = useState('');
@@ -176,7 +179,8 @@ export default function ViaticosSeguridad() {
   useEffect(() => { fetchRegistros(); }, [fetchRegistros]);
   useEffect(() => { setPage(1); }, [busqueda, filtroAnio]);
 
-  const closeModal = () => { setModal(false); setEditing(null); setDniError(''); };
+  const closeModal = () => { setModal(false); setEditing(null); setDniError(''); setDniInfo(''); dniEditado.current = false; };
+  dniRef.current = (form.numero_identidad || '').replace(/\D/g, '');
 
   useEffect(() => {
     const h = (e) => {
@@ -204,27 +208,66 @@ export default function ViaticosSeguridad() {
     }));
   }, [fechas]);
 
-  const handleDniSearch = async () => {
-    const dni = (form.numero_identidad || '').replace(/\D/g, '');
-    if (dni.length !== 13) { setDniError('Ingrese los 13 digitos del DNI.'); return; }
-    setDniLoading(true); setDniError('');
+  /* Busca por DNI: 1) en los recibos guardados (nombre, cargo, dependencia);
+     2) si no está, en el censo (solo el nombre). Sin argumento usa el DNI del formulario. */
+  const handleDniSearch = async (dniArg) => {
+    const dni = (typeof dniArg === 'string' ? dniArg : form.numero_identidad || '').replace(/\D/g, '');
+    if (dni.length < 13 || dni.length > 17) { setDniError('Ingrese el DNI completo (13 a 17 digitos).'); return; }
+    setDniLoading(true); setDniError(''); setDniInfo('');
+
+    let nombre = '', cargo = '', dependencia = '', origen = '', censoErr = '';
     try {
-      const res = await api.get(`/censo/${encodeURIComponent(dni)}`, { headers: authHeaders() });
-      const nombre = res.data.nombreCompleto;
-      setForm(f => ({
-        ...f,
-        nombre_beneficiario: nombre,
-        // El encargado de la misión es, por defecto, quien recibe (se puede editar después)
-        encargado_mision: !f.encargado_mision || f.encargado_mision === f.nombre_beneficiario
-          ? nombre : f.encargado_mision,
-        alimentacion: f.alimentacion.length === 1 && !f.alimentacion[0].nombre
-          ? [{ ...f.alimentacion[0], nombre: nombre.toUpperCase() }]
-          : f.alimentacion,
-      }));
-      setFormErrors(prev => ({ ...prev, nombre_beneficiario: undefined, numero_identidad: undefined }));
-    } catch (err) { setDniError(err.response?.data?.message || 'Persona no encontrada en el censo.'); }
-    finally { setDniLoading(false); }
+      const g = await api.get(`/viaticos-seguridad/persona/${encodeURIComponent(dni)}`, { headers: authHeaders() });
+      nombre = (g.data.nombre_beneficiario || '').trim();
+      cargo = (g.data.cargo || '').trim();
+      dependencia = (g.data.dependencia || '').trim();
+      origen = 'recibo';
+    } catch { /* sin recibos anteriores: se prueba con el censo */ }
+
+    if (!nombre && dni.length === 13) {
+      try {
+        const c = await api.get(`/censo/${encodeURIComponent(dni)}`, { headers: authHeaders() });
+        nombre = (c.data.nombreCompleto || '').trim();
+        origen = 'censo';
+      } catch (err) { censoErr = err.response?.data?.message || 'Persona no encontrada en el censo.'; }
+    }
+
+    // Si el usuario siguió escribiendo y el DNI ya es otro, se descarta este resultado
+    if (dniRef.current !== dni) { setDniLoading(false); return; }
+
+    if (!nombre) {
+      setDniError(censoErr || 'No hay recibos anteriores con ese DNI. Escriba el nombre manualmente.');
+      setDniLoading(false);
+      return;
+    }
+    setForm(f => ({
+      ...f,
+      nombre_beneficiario: nombre,
+      cargo: cargo || f.cargo,
+      dependencia: dependencia || f.dependencia,
+      // El encargado de la misión es, por defecto, quien recibe (se puede editar después)
+      encargado_mision: !f.encargado_mision || f.encargado_mision === f.nombre_beneficiario
+        ? nombre : f.encargado_mision,
+      // Primera fila de alimentación: la misma persona, con su cargo
+      alimentacion: f.alimentacion.length === 1
+        && (!f.alimentacion[0].nombre.trim() || f.alimentacion[0].nombre.trim().toUpperCase() === (f.nombre_beneficiario || '').trim().toUpperCase())
+        ? [{ ...f.alimentacion[0], nombre: nombre.toUpperCase(), cargo: (cargo || f.alimentacion[0].cargo || '').toUpperCase() }]
+        : f.alimentacion,
+    }));
+    setDniInfo(origen === 'recibo' ? 'Datos cargados de un recibo anterior de esta persona.' : 'Nombre cargado del censo.');
+    setFormErrors(prev => ({ ...prev, nombre_beneficiario: undefined, numero_identidad: undefined }));
+    setDniLoading(false);
   };
+
+  /* Búsqueda automática: cuando el usuario deja de escribir un DNI completo */
+  useEffect(() => {
+    if (!modal || !dniEditado.current) return undefined;
+    const dni = (form.numero_identidad || '').replace(/\D/g, '');
+    if (dni.length < 13 || dni.length > 17) return undefined;
+    const t = setTimeout(() => handleDniSearch(dni), 600);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.numero_identidad, modal]);
 
   /* Agrega una persona a la alimentación buscándola por DNI en el censo */
   const handleAgregarPersona = async () => {
@@ -606,7 +649,7 @@ export default function ViaticosSeguridad() {
                       <div className="vs-dni-row">
                         <input className={`vs-input ${formErrors.numero_identidad ? 'vs-input--error' : ''}`}
                           name="numero_identidad" value={form.numero_identidad}
-                          onChange={e => { handleField(e); setDniError(''); }}
+                          onChange={e => { dniEditado.current = true; handleField(e); setDniError(''); setDniInfo(''); }}
                           onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleDniSearch())}
                           placeholder="0000-0000-00000  (13 a 17 digitos)" maxLength={20} />
                         <button type="button" className="vs-btn-buscar" onClick={handleDniSearch} disabled={dniLoading}>
@@ -616,6 +659,7 @@ export default function ViaticosSeguridad() {
                       </div>
                       {formErrors.numero_identidad && <span className="vs-error">{formErrors.numero_identidad}</span>}
                       {dniError && <span className="vs-error">{dniError}</span>}
+                      {dniInfo && <span className="vs-ok">{dniInfo}</span>}
                     </div>
                     <div className="vs-row-2">
                       <div className="vs-field">
