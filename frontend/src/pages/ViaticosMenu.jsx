@@ -1,21 +1,13 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronRight } from 'react-icons/fi';
-import { LuPlane, LuCar, LuChartColumn, LuLuggage, LuShieldCheck } from 'react-icons/lu';
+import { LuPlane, LuChartColumn, LuLuggage, LuMapPinned } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 import './ConstanciaTransferencia.css';
 import './ViaticosMenu.css';
 
 const OPCIONES = [
-  {
-    path: '/viaticos-nacionales',
-    modulo: 'viaticos-nacionales',
-    icon: <LuCar size={26} />,
-    color: 'teal',
-    titulo: 'Viáticos Nacionales',
-    desc: 'Recibos de viáticos para empleados con consulta al censo nacional.',
-  },
   {
     path: '/viaticos/internacional',
     modulo: 'viaticos',
@@ -27,10 +19,10 @@ const OPCIONES = [
   {
     path: '/viaticos/seguridad-presidencia',
     modulo: 'viaticos-seguridad',
-    icon: <LuShieldCheck size={26} />,
-    color: 'red',
-    titulo: 'Viáticos Seguridad de Presidencia',
-    desc: 'Recibos de viáticos del personal de seguridad de Presidencia, en Lempiras.',
+    icon: <LuMapPinned size={26} />,
+    color: 'teal',
+    titulo: 'Viáticos Nacionales',
+    desc: 'Recibos de viáticos por misiones dentro del país, en Lempiras.',
   },
   {
     path: '/viaticos/reportes',
