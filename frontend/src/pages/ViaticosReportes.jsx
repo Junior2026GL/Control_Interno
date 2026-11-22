@@ -58,7 +58,7 @@ export default function ViaticosReportes() {
   const porLugar = useMemo(() => {
     const mapa = {};
     delAnio.forEach(r => {
-      const k = (r.mision || r.lugar || 'SIN GIRA').trim().toUpperCase();
+      const k = (r.lugar || 'SIN LUGAR').trim().toUpperCase();
       mapa[k] = (mapa[k] || 0) + num(r.gran_total);
     });
     return Object.entries(mapa)
@@ -154,7 +154,7 @@ export default function ViaticosReportes() {
 
         <div className="vr-grid2">
           <div className="vr-card">
-            <div className="vr-card__head"><h3>Giras con mayor monto</h3><span>Top 8</span></div>
+            <div className="vr-card__head"><h3>Giras por lugar</h3><span>Top 8</span></div>
             {porLugar.length === 0 ? <p className="vr-empty">Sin datos.</p> : (
               <ResponsiveContainer width="100%" height={Math.max(220, porLugar.length * 40)}>
                 <BarChart data={porLugar} layout="vertical" margin={{ top: 0, right: 56, left: 0, bottom: 0 }}>
