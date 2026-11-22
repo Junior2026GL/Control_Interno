@@ -192,7 +192,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   const filas = resumenDeRegistro(rec).map(r => [sa((r.descripcion || '').toUpperCase()), cellMonto(r.monto)]);
   while (filas.length < 5) filas.push(['', '']);
   autoTable(doc, {
-    startY: y, margin: { left: M, right: M, bottom: MB }, tableWidth: CW,
+    startY: y, margin: { left: M, right: W - M - Math.round(CW * 0.42), bottom: MB }, tableWidth: Math.round(CW * 0.42),
     head: [['No.', 'Detalle', 'TOTAL']],
     body: filas.map((f, i) => [String(i + 1), ...f]),
     foot: [[
@@ -204,7 +204,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
     footStyles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(9), cellPadding: pad },
     alternateRowStyles: { fillColor: GRIS2 },
     styles: { lineColor: AZUL_L, lineWidth: 0.2 },
-    columnStyles: { 0: { cellWidth: 11, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 46, halign: 'right' } },
+    columnStyles: { 0: { cellWidth: 11, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 36, halign: 'right' } },
   });
   y = doc.lastAutoTable.finalY + V(2.5);
 
@@ -256,7 +256,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   };
 
   tablaDias({
-    titulo: 'VIATICOS HOSPEDAJE Y ALIMENTACION', mult: false,
+    titulo: 'DETALLES DEL VIATICO', mult: false,
     cols: { head: ['Nombre', 'Cargo'], ancho: 38, alineo: 'left', fila: r => [sa((r.nombre || '').toUpperCase()), sa((r.cargo || '').toUpperCase())] },
     rows: alimentacion,
   });

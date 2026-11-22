@@ -9,6 +9,7 @@ export const SUGERENCIAS = [
   { texto: 'ALIMENTACION',             auto: 'a'  },
   { texto: 'HOSPEDAJE',                auto: 'h'  },
   { texto: 'COMBUSTIBLE',              auto: null },
+  { texto: 'KILOMETRAJE',              auto: null },
   { texto: 'PEAJES',                   auto: null },
   { texto: 'IMPREVISTOS',              auto: null },
 ];
