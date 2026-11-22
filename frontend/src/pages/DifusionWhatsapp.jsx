@@ -19,6 +19,8 @@ function authHeaders() {
 const norm = (s) =>
   (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
+const clave = (s) => norm(s).replace(/\s+/g, ' ').trim();
+
 // Teléfono hondureño → 504XXXXXXXX (o null si no es válido)
 function normalizarTelefono(raw) {
   const digits = (raw || '').replace(/\D/g, '');
@@ -81,14 +83,22 @@ export default function DifusionWhatsapp() {
     })();
   }, []);
 
-  const partidos = useMemo(
-    () => [...new Set(datos.map((d) => (d.partido || '').trim()).filter(Boolean))].sort(),
-    [datos]
-  );
-  const departamentos = useMemo(
-    () => [...new Set(datos.map((d) => (d.departamento || '').trim()).filter(Boolean))].sort(),
-    [datos]
-  );
+  // Agrupa variantes del mismo texto (mayúsculas, tildes, espacios de más)
+  const opciones = (campo) => {
+    const mapa = new Map();
+    datos.forEach((d) => {
+      const texto = (d[campo] || '').trim();
+      const k = clave(texto);
+      if (!k) return;
+      const actual = mapa.get(k);
+      if (!actual || (texto === texto.toUpperCase() && actual !== actual.toUpperCase())) mapa.set(k, texto);
+    });
+    return [...mapa.entries()]
+      .map(([k, label]) => ({ k, label: label.toUpperCase() }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  };
+  const partidos = useMemo(() => opciones('partido'), [datos]); // eslint-disable-line react-hooks/exhaustive-deps
+  const departamentos = useMemo(() => opciones('departamento'), [datos]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Individual ───────────────────────────────────────────
   const resultadosBusqueda = useMemo(() => {
@@ -107,8 +117,8 @@ export default function DifusionWhatsapp() {
     () =>
       datos.filter(
         (d) =>
-          (fPartido === 'ALL' || (d.partido || '').trim() === fPartido) &&
-          (fDept === 'ALL' || (d.departamento || '').trim() === fDept) &&
+          (fPartido === 'ALL' || clave(d.partido) === fPartido) &&
+          (fDept === 'ALL' || clave(d.departamento) === fDept) &&
           (fTipo === 'ALL' || d.tipo === fTipo)
       ),
     [datos, fPartido, fDept, fTipo]
@@ -245,14 +255,14 @@ export default function DifusionWhatsapp() {
                         <span>Partido</span>
                         <select value={fPartido} onChange={(e) => { setFPartido(e.target.value); setAbiertos({}); setPagina(1); }}>
                           <option value="ALL">Todos los partidos</option>
-                          {partidos.map((p) => <option key={p} value={p}>{p}</option>)}
+                          {partidos.map((p) => <option key={p.k} value={p.k}>{p.label}</option>)}
                         </select>
                       </label>
                       <label className="dif-field">
                         <span>Departamento</span>
                         <select value={fDept} onChange={(e) => { setFDept(e.target.value); setAbiertos({}); setPagina(1); }}>
                           <option value="ALL">Todos los departamentos</option>
-                          {departamentos.map((p) => <option key={p} value={p}>{p}</option>)}
+                          {departamentos.map((p) => <option key={p.k} value={p.k}>{p.label}</option>)}
                         </select>
                       </label>
                       <label className="dif-field">
