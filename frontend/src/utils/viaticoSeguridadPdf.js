@@ -128,23 +128,27 @@ function dibujar(doc, rec, logoDataUrl, k) {
   // Todo en una sola línea y del mismo tamaño de letra: "Recibi de la Pagaduria…" + cantidad en letras + monto pegado
   const etiqueta = 'Recibi de la Pagaduria Especial, la cantidad de:';
   const montoTxt = `(L ${miles(montoVal)})`;
-  const medir = (txt, estilo, tam) => { doc.setFont('helvetica', estilo); doc.setFontSize(tam); return doc.getTextWidth(txt); };
+  const medir = (txt, fuente, estilo, tam) => { doc.setFont(fuente, estilo); doc.setFontSize(tam); return doc.getTextWidth(txt); };
   const hueco = 3, disponible = CW - 5;
-  let fsTexto = F(9), fsMonto = F(14);
-  while (fsTexto > 5 && medir(etiqueta, 'normal', fsTexto) + hueco + medir(letras, 'bold', fsTexto) + hueco + medir(montoTxt, 'bold', fsMonto) > disponible) {
+  // La etiqueta resalta: letra más grande, serif en negrita cursiva y azul oscuro
+  let fsTexto = F(9), fsEtq = F(11.5), fsMonto = F(14);
+  while (fsTexto > 5 && medir(etiqueta, 'times', 'bolditalic', fsEtq) + hueco + medir(montoTxt, 'helvetica', 'bold', fsMonto) + hueco + medir(letras, 'helvetica', 'bold', fsTexto) > disponible) {
     fsTexto -= 0.25;
+    fsEtq -= 0.3;
     if (fsMonto > F(10)) fsMonto -= 0.25;
   }
   const base = y + RB * 0.68;
   let px = M + 2.5;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(fsTexto); doc.setTextColor(80, 80, 80);
+  doc.setFont('times', 'bolditalic'); doc.setFontSize(fsEtq); doc.setTextColor(...AZUL_OSC);
   doc.text(etiqueta, px, base);
   px += doc.getTextWidth(etiqueta) + hueco;
+  // Orden: etiqueta, monto en números y, al final, la cantidad en letras
   doc.setFont('helvetica', 'bold'); doc.setTextColor(...AZUL);
-  doc.text(letras, px, base);
-  px += doc.getTextWidth(letras) + hueco;
   doc.setFontSize(fsMonto);
   doc.text(montoTxt, px, base);
+  px += doc.getTextWidth(montoTxt) + hueco;
+  doc.setFontSize(fsTexto);
+  doc.text(letras, px, base);
   y += RB + V(1);
 
   /* ─ CAMPOS ─ */
@@ -321,10 +325,17 @@ function dibujar(doc, rec, logoDataUrl, k) {
     const maxH = FR * 3.75 + ESPACIO_FIRMA - sep;      // no pasa del final del bloque de firma
     const th = V(5), pad = 2.5;                        // franja del título y margen interno
     // El texto se escribe completo; si no cabe en el espacio, se reduce la letra
+    const anchoTxt = bw - 6;
+    const parrafos = obs.split(/\r?\n/);
+    // Cada línea guarda si es la última de su párrafo (esa no se justifica, igual que en Word)
+    const envolver = () => parrafos.flatMap(p => {
+      const ls = p.trim() ? doc.splitTextToSize(p, anchoTxt) : [''];
+      return ls.map((t, i) => ({ t, ultima: i === ls.length - 1 }));
+    });
     let fs = F(8.5), lineas = [];
     for (;;) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(fs);
-      lineas = doc.splitTextToSize(obs, bw - 6);
+      lineas = envolver();
       if (th + pad * 2 + lineas.length * fs * 0.3528 * 1.25 <= maxH || fs <= 5) break;
       fs -= 0.5;
     }
@@ -339,7 +350,19 @@ function dibujar(doc, rec, logoDataUrl, k) {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(F(6.5)); doc.setTextColor(...ETIQ);
     doc.text('OBSERVACIONES:', bx + 2, by + th * 0.7);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(fs); doc.setTextColor(...NEGRO);
-    mostradas.forEach((l, i) => doc.text(l, bx + 3, by + th + pad + (i + 0.8) * lh));
+    // Texto justificado (tipo Word): el espacio sobrante se reparte entre las palabras de cada línea
+    const anchoEspacio = doc.getTextWidth(' ');
+    mostradas.forEach((ln, i) => {
+      const yy = by + th + pad + (i + 0.8) * lh;
+      const palabras = ln.t.split(' ').filter(Boolean);
+      if (ln.ultima || palabras.length < 2) { doc.text(ln.t, bx + 3, yy); return; }
+      const suma = palabras.reduce((s, p) => s + doc.getTextWidth(p), 0);
+      const espacio = (anchoTxt - suma) / (palabras.length - 1);
+      // Si habría que separar demasiado las palabras (líneas con muy pocas), se deja alineada a la izquierda
+      if (espacio > anchoEspacio * 4) { doc.text(ln.t, bx + 3, yy); return; }
+      let xx = bx + 3;
+      palabras.forEach(p => { doc.text(p, xx, yy); xx += doc.getTextWidth(p) + espacio; });
+    });
   }
 
   /* ─ PIE DE PÁGINA (todas las hojas) ─ */
