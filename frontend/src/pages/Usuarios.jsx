@@ -56,6 +56,7 @@ const MODULOS_LABELS = {
   'censo':                   'Censo',
   'chat':                    'Asistente IA (Chat)',
   'cumpleanos-diputados':    'Cumpleaños de Diputados',
+  'difusion-whatsapp':       'Mensajes por WhatsApp',
   'estado-liquidacion':      'Estado de Liquidación',
   'fardos-confites':         'Entrega de Fardos de Confites',
   'viaticos-nacionales':     'Viáticos Nacionales',

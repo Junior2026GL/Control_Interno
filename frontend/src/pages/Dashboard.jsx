@@ -5,7 +5,7 @@ import {
   LuBrainCircuit, LuShieldCheck, LuSquareActivity,
   LuSun, LuSunset, LuMoon, LuLandmark, LuBell, LuFileSpreadsheet, LuPlane, LuHandCoins, LuHeartHandshake,
   LuUserCheck, LuArrowLeftRight, LuMapPin, LuVote, LuStore, LuListOrdered,
-  LuFileCheck2, LuCake, LuChartNoAxesCombined, LuPrinter, LuReceiptText,
+  LuFileCheck2, LuCake, LuMessageCircle, LuChartNoAxesCombined, LuPrinter, LuReceiptText,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
@@ -193,6 +193,14 @@ const ALL_MODULES = [
     description: 'Calendario de fechas de nacimiento de diputados según el censo nacional',
     icon: LuCake,
     gradient: 'linear-gradient(135deg, #be185d 0%, #ec4899 100%)',
+  },
+  {
+    path: '/difusion-whatsapp',
+    label: 'Mensajes por WhatsApp',
+    clave: 'difusion-whatsapp',
+    description: 'Mensajes individuales y de difusión a diputados por partido o departamento',
+    icon: LuMessageCircle,
+    gradient: 'linear-gradient(135deg, #15803d 0%, #22c55e 100%)',
   },
   {
     path: '/beneficiarios-ayuda',

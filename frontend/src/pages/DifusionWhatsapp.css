@@ -1,0 +1,45 @@
+/* Mensajes por WhatsApp (individual y difusión) */
+.dif-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.dif-tab {
+  padding: 9px 18px; border-radius: 10px; border: 1.5px solid #dde3ef;
+  background: #fff; color: #4a5568; font-weight: 600; font-size: 14px; cursor: pointer;
+}
+.dif-tab.active { background: #274C8D; border-color: #274C8D; color: #fff; }
+
+.dif-card {
+  background: #fff; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px;
+  box-shadow: 0 2px 10px rgba(26, 58, 82, .07);
+}
+.dif-label { display: block; font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #6b7a8c; margin-bottom: 8px; }
+.dif-textarea {
+  width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #dde3ef;
+  border-radius: 10px; font: inherit; font-size: 14px; resize: vertical;
+}
+.dif-textarea:focus { outline: none; border-color: #274C8D; }
+.dif-hint { margin: 8px 0 0; font-size: 12px; color: #8a99aa; }
+
+.dif-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+.dif-summary { display: flex; gap: 18px; flex-wrap: wrap; margin: 14px 0 4px; font-size: 13px; color: #4a5568; }
+.dif-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.dif-wa-btn { background: #16a34a; }
+.dif-wa-btn small { font-weight: 500; opacity: .9; margin-left: 4px; }
+.dif-row-btn { padding: 6px 10px; }
+
+.dif-bad { color: #b91c1c; display: inline-flex; align-items: center; gap: 4px; }
+.dif-sub { font-size: 13px; color: #6b7a8c; margin-top: 2px; }
+
+.dif-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #eef2f7; color: #4a5568; }
+.dif-pill--ok  { background: #dcfce7; color: #166534; }
+.dif-pill--bad { background: #fee2e2; color: #991b1b; }
+
+.dif-chosen { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1.5px solid #dde3ef; border-radius: 10px; background: #f8fafc; }
+
+.dif-results { list-style: none; margin: 8px 0 0; padding: 0; border: 1.5px solid #e5eaf2; border-radius: 10px; overflow: hidden; }
+.dif-results li + li { border-top: 1px solid #eef2f7; }
+.dif-results button { width: 100%; text-align: left; padding: 10px 14px; background: #fff; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 2px; font: inherit; }
+.dif-results button:hover { background: #f1f5fb; }
+.dif-results button span { font-size: 12px; color: #6b7a8c; }
+
+.dif-alert { padding: 10px 14px; border-radius: 10px; font-size: 13px; margin: 12px 0 0; }
+.dif-alert--ok    { background: #f0fdf4; color: #14532d; }
+.dif-alert--error { background: #fff1f2; color: #991b1b; margin-bottom: 14px; }
