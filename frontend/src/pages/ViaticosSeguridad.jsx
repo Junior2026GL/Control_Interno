@@ -61,7 +61,7 @@ function buildEmpty() {
   const fechas = [f];
   return {
     numero_identidad: '', nombre_beneficiario: '', mision: '', lugar: '',
-    dependencia: 'PRESIDENCIA', cargo: '', encargado_mision: '',
+    dependencia: '', cargo: '', encargado_mision: '',
     periodo_desde: f, periodo_hasta: f, hora_salida: '', hora_regreso: '',
     alimentacion: [{ nombre: '', cargo: '', dias: syncDias(fechas) }],
     hospedaje:    [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fechas) }],
@@ -243,7 +243,7 @@ export default function ViaticosSeguridad() {
       if (previo) {
         setForm(f => (f.nombre_beneficiario !== previo ? f : {
           ...f,
-          nombre_beneficiario: '', cargo: '', dependencia: 'PRESIDENCIA',
+          nombre_beneficiario: '', cargo: '', dependencia: '',
           encargado_mision: f.encargado_mision === f.nombre_beneficiario ? '' : f.encargado_mision,
           alimentacion: f.alimentacion.length === 1 && f.alimentacion[0].nombre.trim().toUpperCase() === previo.trim().toUpperCase()
             ? [{ ...f.alimentacion[0], nombre: '', cargo: '' }]
@@ -260,7 +260,7 @@ export default function ViaticosSeguridad() {
       ...f,
       nombre_beneficiario: nombre,
       cargo,
-      dependencia: dependencia || 'PRESIDENCIA',
+      dependencia,
       // El encargado de la misión es, por defecto, quien recibe (se puede editar después)
       encargado_mision: !f.encargado_mision || f.encargado_mision === f.nombre_beneficiario
         ? nombre : f.encargado_mision,
