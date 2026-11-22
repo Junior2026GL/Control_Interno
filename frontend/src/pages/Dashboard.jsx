@@ -8,6 +8,7 @@ import {
   LuFileCheck2, LuCake, LuMessageCircle, LuChartNoAxesCombined, LuPrinter, LuReceiptText,
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
+import SnowEffect from '../components/SnowEffect';
 import { AuthContext } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -283,6 +284,7 @@ export default function Dashboard() {
 
   return (
     <div className="app-shell">
+      <SnowEffect />
       <Navbar />
       <main className="launcher-main">
 
