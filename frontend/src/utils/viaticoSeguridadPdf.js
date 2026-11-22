@@ -122,33 +122,41 @@ function dibujar(doc, rec, logoDataUrl, k) {
   /* ─ "RECIBI DE LA PAGADURIA…" ─ */
   const montoVal = num(rec.gran_total);
   const letras = sa(numeroALetras(montoVal));
-  const RB = V(8);
+  const RB = V(11);
   doc.setFillColor(...GRIS2); doc.setDrawColor(...AZUL); doc.setLineWidth(0.4);
   doc.rect(M, y, CW, RB, 'FD');
-  // Todo en una sola línea y del mismo tamaño de letra: "Recibi de la Pagaduria…" + cantidad en letras + monto pegado
-  const etiqueta = 'Recibí de la Pagaduría Especial, la cantidad de:';
-  const montoTxt = `(L ${miles(montoVal)})`;
   const medir = (txt, fuente, estilo, tam) => { doc.setFont(fuente, estilo); doc.setFontSize(tam); return doc.getTextWidth(txt); };
-  const hueco = 3, disponible = CW - 5;
-  // La etiqueta resalta: letra más grande, serif en negrita cursiva y azul oscuro
-  let fsTexto = F(9), fsEtq = F(11.5), fsMonto = F(14);
-  while (fsTexto > 5 && medir(etiqueta, 'times', 'bolditalic', fsEtq) + hueco + medir(montoTxt, 'helvetica', 'bold', fsMonto) + hueco + medir(letras, 'helvetica', 'bold', fsTexto) > disponible) {
-    fsTexto -= 0.25;
-    fsEtq -= 0.3;
-    if (fsMonto > F(10)) fsMonto -= 0.25;
+  // Tres partes: [ etiqueta en recuadro azul ] [ monto en recuadro blanco ] [ cantidad en letras ]
+  const etiqueta = 'Recibí de la Pagaduría Especial, la cantidad de:';
+  const montoTxt = `L ${miles(montoVal)}`;
+  const fsEtq = F(10.5), fsMonto = F(16);
+  const etqW = medir(etiqueta, 'times', 'bolditalic', fsEtq) + 9;
+  const montoW = medir(montoTxt, 'helvetica', 'bold', fsMonto) + 12;
+  const letrasX = M + etqW + montoW + 7;
+  const letrasW = M + CW - letrasX - 3;
+  // La cantidad en letras usa hasta dos renglones; la letra solo se reduce si aun así no cabe
+  let fsLetras = F(10), lineasL = [];
+  for (;;) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(fsLetras);
+    lineasL = doc.splitTextToSize(letras, letrasW);
+    if (lineasL.length <= 2 || fsLetras <= 6) break;
+    fsLetras -= 0.25;
   }
-  const base = y + RB * 0.68;
-  let px = M + 2.5;
-  doc.setFont('times', 'bolditalic'); doc.setFontSize(fsEtq); doc.setTextColor(...AZUL_OSC);
-  doc.text(etiqueta, px, base);
-  px += doc.getTextWidth(etiqueta) + hueco;
-  // Orden: etiqueta, monto en números y, al final, la cantidad en letras
-  doc.setFont('helvetica', 'bold'); doc.setTextColor(...AZUL);
-  doc.setFontSize(fsMonto);
-  doc.text(montoTxt, px, base);
-  px += doc.getTextWidth(montoTxt) + hueco;
-  doc.setFontSize(fsTexto);
-  doc.text(letras, px, base);
+  // 1) etiqueta: bloque azul con letra blanca (serif, negrita cursiva)
+  doc.setFillColor(...AZUL); doc.rect(M, y, etqW, RB, 'F');
+  doc.setFont('times', 'bolditalic'); doc.setFontSize(fsEtq); doc.setTextColor(...BLANCO);
+  doc.text(etiqueta, M + etqW / 2, y + RB / 2 + fsEtq * 0.3528 * 0.33, { align: 'center' });
+  // 2) monto: recuadro blanco con borde, número grande
+  const mx = M + etqW + 3.5, my = y + 1.4, mh = RB - 2.8;
+  doc.setFillColor(255, 255, 255); doc.setDrawColor(...AZUL); doc.setLineWidth(0.35);
+  doc.roundedRect(mx, my, montoW, mh, 1.2, 1.2, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(fsMonto); doc.setTextColor(...AZUL);
+  doc.text(montoTxt, mx + montoW / 2, my + mh / 2 + fsMonto * 0.3528 * 0.34, { align: 'center' });
+  // 3) cantidad en letras, centrada en vertical
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(fsLetras); doc.setTextColor(...AZUL_OSC);
+  const lhL = fsLetras * 0.3528 * 1.2;
+  const y0 = y + (RB - lineasL.length * lhL) / 2 + lhL * 0.78;
+  lineasL.forEach((l, i) => doc.text(l, letrasX, y0 + i * lhL));
   y += RB + V(1);
 
   /* ─ CAMPOS ─ */
@@ -232,8 +240,31 @@ function dibujar(doc, rec, logoDataUrl, k) {
     const n = fechas.length;
     const nc = cols.head.length;                      // columnas de texto (antes de los días)
     const b = 1 + nc;                                 // índice de la primera columna de día
-    const fijo = 8 + cols.anchos.filter(a => typeof a === 'number').reduce((x, y) => x + y, 0) + 28;  // # + columnas fijas + total
-    const fw = n > 0 ? Math.min(24, Math.max(17,Math.floor((CW - fijo - 70) / n))) : 0;
+    // Cada columna de texto mide lo que ocupa su contenido (el más largo de sus filas o su título);
+    // después todo se reparte para llenar el ancho de la hoja, sin que una sola columna acapare el sobrante.
+    const medirTxt = (txt, estilo, tam) => { doc.setFont('helvetica', estilo); doc.setFontSize(tam); return doc.getTextWidth(String(txt || '')); };
+    let anchosTxt = cols.head.map((h, ci) => Math.max(
+      medirTxt(h, 'bold', F(6.5)),
+      ...rows.map(r => medirTxt(cols.fila(r)[ci], 'normal', F(7))),
+    ) + 6);                                             // relleno de la celda + un poco de aire
+    let fw = n > 0 ? 19 : 0, anchoTot = 26;
+    const ANCHO_NUM = 8;                                // columna "#"
+    const sumaAnchos = () => ANCHO_NUM + anchosTxt.reduce((x, y) => x + y, 0) + n * fw + anchoTot;
+    if (sumaAnchos() > CW) {                            // falta espacio: primero se achican los días, luego el texto
+      if (n > 0) fw = Math.max(14, fw - (sumaAnchos() - CW) / n);
+      if (sumaAnchos() > CW) {
+        // La primera columna (Detalle) se respeta completa; se achican las demás (nombre, cargo)
+        const [primera, ...resto] = anchosTxt;
+        const sobra = CW - ANCHO_NUM - n * fw - anchoTot - (resto.length ? primera : 0);
+        const base = resto.length ? resto : [primera];
+        const tot = base.reduce((x, y) => x + y, 0);
+        const nuevos = base.map(w => (w * sobra) / tot);
+        anchosTxt = resto.length ? [primera, ...nuevos] : nuevos;
+      }
+    } else {                                            // sobra espacio: se reparte de forma proporcional
+      const k = (CW - ANCHO_NUM) / (sumaAnchos() - ANCHO_NUM);
+      anchosTxt = anchosTxt.map(w => w * k); fw *= k; anchoTot *= k;
+    }
     const totalCol = b + n;
     const cantidad = r => (mult ? cantHosp(r.cantidad) : 1);
     const montoFila = r => cantidad(r) * fechas.reduce((s, f) => s + montoDia(r, f), 0);
@@ -264,9 +295,9 @@ function dibujar(doc, rec, logoDataUrl, k) {
       styles: { lineColor: AZUL_L, lineWidth: 0.2, overflow: 'linebreak' },
       columnStyles: {
         0: { cellWidth: 8, halign: 'center' },
-        ...Object.fromEntries(cols.anchos.map((w, i) => [i + 1, { cellWidth: w, halign: cols.alineos[i] }])),
+        ...Object.fromEntries(anchosTxt.map((w, i) => [i + 1, { cellWidth: w, halign: cols.alineos[i] }])),
         ...Object.fromEntries(fechas.map((_, i) => [i + b, { cellWidth: fw, halign: 'center' }])),
-        [totalCol]: { cellWidth: 28, halign: 'right' },
+        [totalCol]: { cellWidth: anchoTot, halign: 'right' },
       },
       didParseCell(data) {
         const ci = data.column.index;
