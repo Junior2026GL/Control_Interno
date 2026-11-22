@@ -46,14 +46,20 @@ function normCombustible(arr) {
 }
 
 // Resumen de gastos (tabla editable): [{ descripcion, monto, auto }]
-// auto: 'ah' = hospedaje + alimentación, 'a' = alimentación, 'h' = hospedaje (el monto lo calcula el servidor)
+// auto (el monto lo calcula el servidor):
+//   'g:NOMBRE' = suma de las personas cuyo "Detalle" es NOMBRE (HOSPEDAJE, ALIMENTACION, ALIMENTACION Y HOSPEDAJE…)
+//   'ah' / 'a' / 'h' = hospedaje + alimentación / alimentación / hospedaje (recibos hechos antes)
+const AUTO_FIJOS = ['ah', 'a', 'h'];
+const esAutoGrupo = a => typeof a === 'string' && a.startsWith('g:');
+const claveDetalle = d => (sanitize(d) || 'ALIMENTACION').toUpperCase();
 function normResumen(arr) {
   if (!Array.isArray(arr)) return [];
   return arr.slice(0, 15)
     .map(r => ({
       descripcion: sanitize(r.descripcion).toUpperCase().slice(0, 200),
       monto: toDecimal(r.monto),
-      auto: ['ah', 'a', 'h'].includes(r.auto) ? r.auto : null,
+      auto: AUTO_FIJOS.includes(r.auto) ? r.auto
+        : (esAutoGrupo(r.auto) ? 'g:' + sanitize(r.auto.slice(2)).toUpperCase().slice(0, 60) : null),
     }))
     .filter(r => r.descripcion || r.monto > 0 || r.auto);
 }
@@ -91,10 +97,23 @@ function buildRecord(body) {
   // Formato nuevo: el resumen de gastos reemplaza combustible / imprevisto / otros
   if (Array.isArray(body.detalle_resumen)) {
     const autoValor = { ah: monto_alimentacion + monto_hospedaje, a: monto_alimentacion, h: monto_hospedaje };
-    const resumen = normResumen(body.detalle_resumen).map(r => ({
-      ...r,
-      monto: round2(r.auto ? autoValor[r.auto] : r.monto),
-    }));
+    // Las filas por "Detalle" no las manda el formulario: se generan aquí con la tabla de personas
+    // (una fila por cada Detalle usado: HOSPEDAJE, ALIMENTACION…, con la suma de sus personas).
+    // Los recibos hechos con orígenes anteriores (ah/a/h) se calculan como antes, sin duplicar.
+    const entrantes = normResumen(body.detalle_resumen).filter(r => !esAutoGrupo(r.auto));
+    const hayAnteriores = entrantes.some(r => AUTO_FIJOS.includes(r.auto));
+    const grupos = new Map();
+    if (!hayAnteriores) {
+      alimentacion.forEach(r => {
+        const k = claveDetalle(r.detalle);
+        grupos.set(k, (grupos.get(k) || 0) + sumDias(r.dias));
+      });
+    }
+    const derivadas = [...grupos].map(([k, t]) => ({ descripcion: k, monto: round2(t), auto: 'g:' + k })).filter(r => r.monto > 0);
+    const manuales = entrantes
+      .map(r => ({ ...r, monto: round2(r.auto ? (autoValor[r.auto] || 0) : r.monto) }))
+      .filter(r => r.monto > 0);
+    const resumen = [...derivadas, ...manuales];
     detalleResumen = resumen;
     gran_total = round2(resumen.reduce((s, r) => s + r.monto, 0));
     monto_combustible = 0; monto_imprevistos = 0; monto_otros = 0; otros_descripcion = null;

@@ -20,6 +20,7 @@ import './ViaticosSeguridad.css';
 const today = () => new Date().toISOString().split('T')[0];
 /* Qué cubre el viático de cada persona (columna "Detalle") */
 const DETALLES_VIATICO = ['ALIMENTACION', 'HOSPEDAJE', 'ALIMENTACION Y HOSPEDAJE'];
+const esAutoGrupo = a => typeof a === 'string' && a.startsWith('g:');
 const num = v => parseFloat(v) || 0;
 
 function fmtFecha(s) {
@@ -67,10 +68,7 @@ function buildEmpty() {
     periodo_desde: f, periodo_hasta: f, hora_salida: '', hora_regreso: '',
     alimentacion: [{ detalle: '', nombre: '', cargo: '', dias: syncDias(fechas) }],
     hospedaje:    [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fechas) }],
-    resumen: [
-      { descripcion: 'ALIMENTACION', monto: '', auto: 'a' },
-      { descripcion: '', monto: '', auto: null },
-    ],
+    resumen: [],   // los gastos adicionales se agregan con las sugerencias o con "Agregar renglon"
     observaciones: '',
   };
 }
@@ -290,9 +288,13 @@ export default function ViaticosSeguridad() {
     const alimentacion = form.alimentacion.reduce((s, r) => s + totalAlim(r), 0);
     const hospedaje    = form.hospedaje.reduce((s, r) => s + totalHosp(r), 0);
     const autoValor = { ah: alimentacion + hospedaje, a: alimentacion, h: hospedaje };
-    const valorFila = r => (r.auto ? autoValor[r.auto] : num(r.monto));
-    return { alimentacion, hospedaje, autoValor, valorFila,
-      gran: form.resumen.reduce((s, r) => s + valorFila(r), 0) };
+    const valorFila = r => (r.auto ? (autoValor[r.auto] || 0) : num(r.monto));
+    // Recibos con orígenes anteriores (ah/a/h): todo sale de las filas del resumen, como antes.
+    // Recibos nuevos: lo de la columna Detalle se suma solo y las filas del resumen son gastos escritos a mano.
+    const hayAnteriores = form.resumen.some(r => ['ah', 'a', 'h'].includes(r.auto));
+    const porDetalle = hayAnteriores ? 0 : form.alimentacion.reduce((t, r) => t + totalAlim(r), 0);
+    return { alimentacion, hospedaje, autoValor, valorFila, porDetalle, hayAnteriores,
+      gran: porDetalle + form.resumen.reduce((s, r) => s + valorFila(r), 0) };
   }, [form]);
 
   const availableYears = useMemo(() => {
@@ -341,10 +343,10 @@ export default function ViaticosSeguridad() {
           ? r.detalle_hospedaje.map(x => ({ ...x, cantidad: String(x.cantidad ?? 1), dias: syncDias(fs, x.dias) }))
           : [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fs) }],
         resumen: (() => {
-          const filas = resumenDeRegistro(r).map(x => ({
+          const filas = resumenDeRegistro(r).filter(x => !esAutoGrupo(x.auto)).map(x => ({
             descripcion: x.descripcion, auto: x.auto, monto: x.auto ? '' : (x.monto > 0 ? x.monto : ''),
           }));
-          return filas.length ? filas : [{ descripcion: 'HOSPEDAJE Y ALIMENTACION', monto: '', auto: 'ah' }];
+          return filas;
         })(),
         observaciones: r.observaciones || '',
       });
@@ -372,8 +374,7 @@ export default function ViaticosSeguridad() {
   const addRow = (key, row) => setForm(f => ({ ...f, [key]: [...f[key], row] }));
   const agregarSugerencia = (sug) => setForm(f => {
     if (f.resumen.length >= 15 && !f.resumen.some(r => !r.descripcion && !r.monto && !r.auto)) return f;
-    // Sin la sección de hospedaje, solo la alimentación puede calcularse sola; lo demás se escribe a mano
-    const nueva = { descripcion: sug.texto, monto: '', auto: verHosp || sug.auto === 'a' ? sug.auto : null };
+    const nueva = { descripcion: sug.texto, monto: '', auto: null };   // las sugerencias se llenan a mano
     const vacia = f.resumen.findIndex(r => !r.descripcion && !r.monto && !r.auto);
     return { ...f, resumen: vacia >= 0 ? f.resumen.map((r, i) => (i === vacia ? nueva : r)) : [...f.resumen, nueva] };
   });
@@ -382,11 +383,10 @@ export default function ViaticosSeguridad() {
     resumen: f.resumen.map((r, i) => {
       if (i !== idx) return r;
       if (origen) return { ...r, auto: origen, monto: '' };
-      const actual = r.auto ? totales.autoValor[r.auto] : num(r.monto);
+      const actual = totales.valorFila(r);
       return { ...r, auto: null, monto: actual > 0 ? actual.toFixed(2) : '' };
     }),
   }));
-  const delRow = (key, idx) => setForm(f => ({ ...f, [key]: f[key].filter((_, i) => i !== idx) }));
 
   // soloNoches: el último día queda vacío (hospedaje). ultimoMedio: el último día (regreso) lleva la mitad del monto.
   const aplicarMonto = (key, valor, soloNoches, ultimoMedio = false) => {
@@ -682,6 +682,13 @@ export default function ViaticosSeguridad() {
                         {formErrors.nombre_beneficiario && <span className="vs-error">{formErrors.nombre_beneficiario}</span>}
                       </div>
                       <div className="vs-field">
+                        <label className="vs-label">Encargado de la Mision</label>
+                        <div className="vs-icon-field">
+                          <FiUser size={14} className="vs-icon" />
+                          <input className="vs-input vs-has-icon" name="encargado_mision" value={form.encargado_mision} onChange={handleField} placeholder="Se llena con quien recibe" />
+                        </div>
+                      </div>
+                      <div className="vs-field">
                         <label className="vs-label">Dependencia</label>
                         <div className="vs-icon-field">
                           <FiBriefcase size={14} className="vs-icon" />
@@ -699,23 +706,14 @@ export default function ViaticosSeguridad() {
                   </Seccion>
 
                   {/* 2 · Datos del viaje */}
-                  <Seccion n={2} titulo="Datos del viaje" desc="Encargado, lugar, mision y periodo de la comision">
-                    <div className="vs-row-2">
-                      <div className="vs-field">
-                        <label className="vs-label">Encargado de la Mision</label>
-                        <div className="vs-icon-field">
-                          <FiUser size={14} className="vs-icon" />
-                          <input className="vs-input vs-has-icon" name="encargado_mision" value={form.encargado_mision} onChange={handleField} placeholder="Se llena con quien recibe; puede cambiarlo" />
-                        </div>
+                  <Seccion n={2} titulo="Datos del viaje" desc="Lugar, mision y periodo de la comision">
+                    <div className="vs-field">
+                      <label className="vs-label">Lugar <span className="vs-req">*</span></label>
+                      <div className="vs-icon-field">
+                        <FiMapPin size={14} className="vs-icon" />
+                        <input className={`vs-input vs-has-icon ${formErrors.lugar ? 'vs-input--error' : ''}`} name="lugar" value={form.lugar} onChange={handleField} placeholder="Ciudad / Departamento" />
                       </div>
-                      <div className="vs-field">
-                        <label className="vs-label">Lugar <span className="vs-req">*</span></label>
-                        <div className="vs-icon-field">
-                          <FiMapPin size={14} className="vs-icon" />
-                          <input className={`vs-input vs-has-icon ${formErrors.lugar ? 'vs-input--error' : ''}`} name="lugar" value={form.lugar} onChange={handleField} placeholder="Ciudad / Departamento" />
-                        </div>
-                        {formErrors.lugar && <span className="vs-error">{formErrors.lugar}</span>}
-                      </div>
+                      {formErrors.lugar && <span className="vs-error">{formErrors.lugar}</span>}
                     </div>
                     <div className="vs-field">
                       <label className="vs-label">Mision <span className="vs-req">*</span></label>
@@ -834,7 +832,7 @@ export default function ViaticosSeguridad() {
                   )}
 
                   {/* 5 · Resumen de gastos */}
-                  <Seccion n={verHosp ? 5 : 4} titulo="Resumen de gastos" desc="Escriba cada concepto y su monto; todo es editable">
+                  <Seccion n={verHosp ? 5 : 4} titulo="Resumen de gastos" desc="Combustible, kilometraje, peajes, imprevistos u otros gastos">
                     <div className="vs-chips">
                       <span className="vs-hint">Agregar:</span>
                       {SUGERENCIAS.map(s => (
@@ -844,35 +842,41 @@ export default function ViaticosSeguridad() {
                     <datalist id="vs-sug">
                       {SUGERENCIAS.map(s => <option key={s.texto} value={s.texto} />)}
                     </datalist>
+                    {form.resumen.length > 0 && (
                     <div className="vs-scroll">
                       <table className="vs-tbl">
-                        <thead><tr><th>#</th><th>Descripcion</th><th>Origen del monto</th><th>Monto (L)</th><th /></tr></thead>
+                        <thead><tr><th>#</th><th>Descripcion</th>{totales.hayAnteriores && <th>Origen del monto</th>}<th>Monto (L)</th><th /></tr></thead>
                         <tbody>
                           {form.resumen.map((r, i) => (
                             <tr key={i}>
                               <td>{i + 1}</td>
-                              <td><input className="vs-input vs-in vs-in--name" list="vs-sug" value={r.descripcion} onChange={e => setRow('resumen', i, { descripcion: e.target.value })} placeholder="Ej. ALIMENTACION 200" /></td>
-                              <td>
-                                <select className="vs-input vs-in vs-select" value={r.auto || ''} onChange={e => cambiarOrigen(i, e.target.value)}>
-                                  <option value="">Manual</option>
-                                  {(verHosp || r.auto === 'ah') && <option value="ah">Hospedaje + alimentacion</option>}
-                                  <option value="a">{verHosp ? 'Solo alimentacion' : 'Alimentacion (calculada)'}</option>
-                                  {(verHosp || r.auto === 'h') && <option value="h">Solo hospedaje</option>}
-                                </select>
-                              </td>
+                              <td><input className="vs-input vs-in vs-in--name" list="vs-sug" value={r.descripcion} onChange={e => setRow('resumen', i, { descripcion: e.target.value })} placeholder="Ej. COMBUSTIBLE" /></td>
+                              {totales.hayAnteriores && (
+                                <td>
+                                  <select className="vs-input vs-in vs-select" value={r.auto || ''} onChange={e => cambiarOrigen(i, e.target.value)}>
+                                    <option value="">Manual</option>
+                                    {(verHosp || r.auto === 'ah') && <option value="ah">Hospedaje + alimentacion</option>}
+                                    {(verHosp || r.auto === 'a') && <option value="a">Solo alimentacion</option>}
+                                    {(verHosp || r.auto === 'h') && <option value="h">Solo hospedaje</option>}
+                                  </select>
+                                </td>
+                              )}
                               <td>
                                 <input type="number" min="0" step="0.01" className={'vs-input vs-in vs-in--monto' + (r.auto ? ' vs-in--auto' : '')}
-                                  value={r.auto ? totales.autoValor[r.auto].toFixed(2) : r.monto}
+                                  value={r.auto ? totales.valorFila(r).toFixed(2) : r.monto}
                                   onChange={e => setRow('resumen', i, { auto: null, monto: e.target.value })} placeholder="0.00" />
                               </td>
-                              <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('resumen', i)} disabled={form.resumen.length === 1}><FiX size={14} /></button></td>
+                              <td><button type="button" className="vs-del" title="Quitar" onClick={() => delRow('resumen', i)}><FiX size={14} /></button></td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
+                    )}
                     <button type="button" className="vs-btn-soft vs-add" disabled={form.resumen.length >= 15} onClick={() => addRow('resumen', { descripcion: '', monto: '', auto: null })}><FiPlus size={13} /> Agregar renglon</button>
-                    <span className="vs-hint">Con origen automatico el monto se toma de las tablas de alimentacion y hospedaje; si lo escribe a mano pasa a Manual.</span>
+                    <span className="vs-hint">{totales.hayAnteriores
+                      ? 'Con origen automatico el monto se toma de las tablas de alimentacion y hospedaje; si lo escribe a mano pasa a Manual.'
+                      : 'Lo que elija en la columna Detalle de cada persona (seccion 3) se suma solo al total y sale en el cuadro de resumen del PDF.'}</span>
                     <div className="vs-field" style={{ marginTop: 14 }}>
                       <label className="vs-label">Observaciones</label>
                       <textarea className="vs-input vs-textarea" name="observaciones" value={form.observaciones} onChange={handleField} rows={2} maxLength={500} placeholder="Observaciones (opcional)" />

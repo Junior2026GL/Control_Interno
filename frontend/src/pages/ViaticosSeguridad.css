@@ -207,3 +207,8 @@
 .vs-dias-badge span { font-size: .95rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; opacity: .95; }
 .vs-dias-badge small { font-size: .78rem; font-weight: 600; opacity: .92; padding-left: 12px; margin-left: 4px; border-left: 1px solid rgba(255,255,255,.45); line-height: 1.3; max-width: 150px; }
 .vs-in--detalle { min-width: 190px; cursor: pointer; }
+
+/* Sección 1 con 5 campos: DNI + Buscar | Nombre | Encargado | Dependencia | Cargo */
+.vs-quien { grid-template-columns: minmax(250px, 290px) 1.4fr 1.2fr 1fr 1fr; }
+@media (max-width: 1250px) { .vs-quien { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px)  { .vs-quien { grid-template-columns: 1fr; } }
