@@ -2065,6 +2065,13 @@
 }
 .ps-modal-ayuda .ps-avail-badge .ps-lbl-L { color: #047857; font-size: 14px; }
 
-/* Chip de teléfono: clic para copiar */
-.ps-dip-chip--copy { font: inherit; text-align: left; cursor: pointer; }
-.ps-dip-chip--copy:active { transform: translateY(0) scale(.98); }
+/* Botón de copiar teléfono (dentro del chip) */
+.ps-copy-btn {
+  align-self: center; margin-right: 8px; width: 28px; height: 28px; border-radius: 8px;
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+  background: #dcfce7; color: #15803d; border: 1px solid #86efac;
+  transition: background .15s, transform .15s;
+}
+.ps-copy-btn:hover { background: #bbf7d0; transform: scale(1.08); }
+.ps-copy-btn:active { transform: scale(.94); }
+.ps-copy-btn.is-ok { background: #15803d; color: #fff; border-color: #15803d; }

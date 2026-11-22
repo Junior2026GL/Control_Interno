@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fi';
 import {
   HiOutlineMapPin, HiOutlineCheckBadge, HiOutlineUsers,
-  HiOutlineIdentification, HiOutlinePhone, HiOutlineHandRaised,
+  HiOutlineIdentification, HiOutlinePhone, HiOutlineCheck, HiOutlineClipboardDocument, HiOutlineHandRaised,
 } from 'react-icons/hi2';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -2127,18 +2127,22 @@ export default function PresupuestoDiputados() {
                       </span>
                     )}
                     {selectedDip.telefono && (
-                      <button
-                        type="button"
-                        className="ps-dip-chip ps-dip-chip--tel ps-dip-chip--copy"
-                        title="Clic para copiar el teléfono"
-                        onClick={() => copiarTelefono(selectedDip.telefono)}
-                      >
+                      <span className="ps-dip-chip ps-dip-chip--tel">
                         <span className="ps-dip-chip-icon"><HiOutlinePhone size={18} /></span>
                         <span className="ps-dip-chip-body">
-                          <span className="ps-dip-chip-label">{telCopiado ? '¡Copiado!' : 'Teléfono · clic para copiar'}</span>
+                          <span className="ps-dip-chip-label">Teléfono</span>
                           <span className="ps-dip-chip-value">{selectedDip.telefono}</span>
                         </span>
-                      </button>
+                        <button
+                          type="button"
+                          className={`ps-copy-btn${telCopiado ? ' is-ok' : ''}`}
+                          title={telCopiado ? '¡Copiado!' : 'Copiar teléfono'}
+                          aria-label="Copiar teléfono"
+                          onClick={() => copiarTelefono(selectedDip.telefono)}
+                        >
+                          {telCopiado ? <HiOutlineCheck size={16} /> : <HiOutlineClipboardDocument size={16} />}
+                        </button>
+                      </span>
                     )}
                     {dipBirthday && (() => {
                       const [, mo, dy] = dipBirthday.split('-');
