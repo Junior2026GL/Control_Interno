@@ -558,7 +558,7 @@ export default function ViaticosSeguridad() {
           <div className="bod-page-header__left">
             <div className="bod-page-icon"><LuShieldCheck size={26} /></div>
             <div>
-              <h1 className="bod-page-title">Viaticos Seguridad de Presidencia</h1>
+              <h1 className="bod-page-title">Viáticos Nacionales Individual</h1>
               <p className="bod-page-sub">Recibos de viaticos — Pagaduria Especial</p>
             </div>
           </div>
