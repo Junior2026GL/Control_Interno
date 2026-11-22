@@ -58,11 +58,11 @@ export default function ViaticosReportes() {
   const porLugar = useMemo(() => {
     const mapa = {};
     delAnio.forEach(r => {
-      const k = (r.lugar || 'SIN LUGAR').trim().toUpperCase();
+      const k = (r.mision || r.lugar || 'SIN GIRA').trim().toUpperCase();
       mapa[k] = (mapa[k] || 0) + num(r.gran_total);
     });
     return Object.entries(mapa)
-      .map(([lugar, total]) => ({ lugar: lugar.length > 22 ? lugar.slice(0, 21) + '…' : lugar, total: Math.round(total * 100) / 100 }))
+      .map(([lugar, total]) => ({ lugar: lugar.length > 30 ? lugar.slice(0, 29) + '…' : lugar, total: Math.round(total * 100) / 100 }))
       .sort((a, b) => b.total - a.total).slice(0, 8);
   }, [delAnio]);
 
@@ -154,13 +154,13 @@ export default function ViaticosReportes() {
 
         <div className="vr-grid2">
           <div className="vr-card">
-            <div className="vr-card__head"><h3>Lugares con mayor monto</h3><span>Top 8</span></div>
+            <div className="vr-card__head"><h3>Giras con mayor monto</h3><span>Top 8</span></div>
             {porLugar.length === 0 ? <p className="vr-empty">Sin datos.</p> : (
               <ResponsiveContainer width="100%" height={Math.max(220, porLugar.length * 40)}>
                 <BarChart data={porLugar} layout="vertical" margin={{ top: 0, right: 56, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e9f2" />
                   <XAxis type="number" tickFormatter={fmtCorto} tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <YAxis type="category" dataKey="lugar" width={150} tickLine={false} axisLine={false} tick={{ fill: '#334155', fontSize: 12 }} />
+                  <YAxis type="category" dataKey="lugar" width={200} tickLine={false} axisLine={false} tick={{ fill: '#334155', fontSize: 12 }} />
                   <Tooltip content={tip} cursor={{ fill: 'rgba(13,148,136,.07)' }} />
                   <Bar dataKey="total" fill="#0d9488" radius={[0, 8, 8, 0]} maxBarSize={24}>
                     <LabelList dataKey="total" position="right" formatter={fmtCorto} style={{ fontSize: 12, fontWeight: 600, fill: '#334155' }} />
