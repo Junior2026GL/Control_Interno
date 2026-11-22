@@ -176,3 +176,11 @@
 
 /* Aviso de datos cargados automáticamente al buscar el DNI */
 .vs-ok { font-size: .74rem; font-weight: 600; color: #15803d; }
+
+/* ── Sección 1: DNI + Buscar, nombre, dependencia y cargo en una sola fila ── */
+.vs-quien { display: grid; grid-template-columns: minmax(250px, 290px) 1.7fr 1fr 1fr; gap: 14px; align-items: start; }
+.vs-quien .vs-dni-row { gap: 8px; }
+.vs-quien .vs-dni-row .vs-input { min-width: 0; }
+.vs-quien .vs-btn-buscar { padding: 0 14px; }
+@media (max-width: 1100px) { .vs-quien { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px)  { .vs-quien { grid-template-columns: 1fr; } }

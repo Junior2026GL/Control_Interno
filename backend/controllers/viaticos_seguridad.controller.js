@@ -155,11 +155,11 @@ exports.getByDni = (req, res) => {
     return res.status(400).json({ message: 'DNI inválido.' });
 
   db.query(
-    `SELECT nombre_beneficiario, cargo, dependencia, creado_en
+    `SELECT nombre_beneficiario, cargo, dependencia, detalle_alimentacion, creado_en
      FROM viaticos_seguridad
      WHERE numero_identidad = ?
      ORDER BY id DESC
-     LIMIT 1`,
+     LIMIT 20`,
     [dni],
     (err, rows) => {
       if (err) {
@@ -168,7 +168,22 @@ exports.getByDni = (req, res) => {
       }
       if (!rows || rows.length === 0)
         return res.status(404).json({ message: 'Sin recibos anteriores.' });
-      res.json(rows[0]);
+
+      // El nombre sale del recibo más reciente; el cargo y la dependencia, del más reciente que los tenga escritos
+      const nombre = rows[0].nombre_beneficiario;
+      const clave = s => (s || '').trim().toUpperCase();
+      const primero = campo => (rows.find(r => (r[campo] || '').trim()) || {})[campo] || '';
+
+      let cargo = primero('cargo').trim();
+      if (!cargo) {
+        // Si ningún recibo tiene cargo, se busca el de esta persona en las tablas de alimentación
+        for (const r of rows) {
+          const fila = parseJson(r.detalle_alimentacion)
+            .find(x => clave(x.nombre) === clave(nombre) && (x.cargo || '').trim());
+          if (fila) { cargo = fila.cargo.trim(); break; }
+        }
+      }
+      res.json({ nombre_beneficiario: nombre, cargo, dependencia: primero('dependencia').trim() });
     }
   );
 };

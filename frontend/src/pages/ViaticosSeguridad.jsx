@@ -644,27 +644,27 @@ export default function ViaticosSeguridad() {
 
                   {/* 1 · Quien recibe */}
                   <Seccion n={1} titulo="Datos de quien recibe" desc="Identificacion de la persona que recibe el viatico">
-                    <div className="vs-field">
-                      <label className="vs-label">Numero de Identidad (DNI) <span className="vs-req">*</span></label>
-                      <div className="vs-dni-row">
-                        <input className={`vs-input ${formErrors.numero_identidad ? 'vs-input--error' : ''}`}
-                          name="numero_identidad" value={form.numero_identidad}
-                          onChange={e => { dniEditado.current = true; handleField(e); setDniError(''); setDniInfo(''); }}
-                          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleDniSearch())}
-                          placeholder="0000-0000-00000  (13 a 17 digitos)" maxLength={20} />
-                        <button type="button" className="vs-btn-buscar" onClick={handleDniSearch} disabled={dniLoading}>
-                          {dniLoading ? <span className="bod-btn-spinner" /> : <FiSearch size={15} />}
-                          {dniLoading ? ' Buscando…' : ' Buscar'}
-                        </button>
+                    <div className="vs-quien">
+                      <div className="vs-field">
+                        <label className="vs-label">Numero de Identidad (DNI) <span className="vs-req">*</span></label>
+                        <div className="vs-dni-row">
+                          <input className={'vs-input' + (formErrors.numero_identidad ? ' vs-input--error' : '')}
+                            name="numero_identidad" value={form.numero_identidad}
+                            onChange={e => { dniEditado.current = true; handleField(e); setDniError(''); setDniInfo(''); }}
+                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleDniSearch())}
+                            placeholder="0000-0000-00000" maxLength={20} />
+                          <button type="button" className="vs-btn-buscar" onClick={() => handleDniSearch()} disabled={dniLoading}>
+                            {dniLoading ? <span className="bod-btn-spinner" /> : <FiSearch size={15} />}
+                            {dniLoading ? ' ...' : ' Buscar'}
+                          </button>
+                        </div>
+                        {formErrors.numero_identidad && <span className="vs-error">{formErrors.numero_identidad}</span>}
+                        {dniError && <span className="vs-error">{dniError}</span>}
+                        {dniInfo && <span className="vs-ok">{dniInfo}</span>}
                       </div>
-                      {formErrors.numero_identidad && <span className="vs-error">{formErrors.numero_identidad}</span>}
-                      {dniError && <span className="vs-error">{dniError}</span>}
-                      {dniInfo && <span className="vs-ok">{dniInfo}</span>}
-                    </div>
-                    <div className="vs-row-2">
                       <div className="vs-field">
                         <label className="vs-label">Nombre de quien recibe <span className="vs-req">*</span></label>
-                        <input className={`vs-input ${formErrors.nombre_beneficiario ? 'vs-input--error' : ''}`}
+                        <input className={'vs-input' + (formErrors.nombre_beneficiario ? ' vs-input--error' : '')}
                           name="nombre_beneficiario" value={form.nombre_beneficiario}
                           onChange={e => {
                             const v = e.target.value;
@@ -676,8 +676,15 @@ export default function ViaticosSeguridad() {
                             }));
                             setFormErrors(prev => ({ ...prev, nombre_beneficiario: undefined }));
                           }}
-                          placeholder="Busque el DNI o escriba el nombre manualmente" />
+                          placeholder="Busque el DNI o escriba el nombre" />
                         {formErrors.nombre_beneficiario && <span className="vs-error">{formErrors.nombre_beneficiario}</span>}
+                      </div>
+                      <div className="vs-field">
+                        <label className="vs-label">Dependencia</label>
+                        <div className="vs-icon-field">
+                          <FiBriefcase size={14} className="vs-icon" />
+                          <input className="vs-input vs-has-icon" name="dependencia" value={form.dependencia} onChange={handleField} placeholder="Dependencia" />
+                        </div>
                       </div>
                       <div className="vs-field">
                         <label className="vs-label">Cargo</label>
@@ -706,18 +713,11 @@ export default function ViaticosSeguridad() {
                         {formErrors.lugar && <span className="vs-error">{formErrors.lugar}</span>}
                       </div>
                       <div className="vs-field">
-                        <label className="vs-label">Dependencia</label>
+                        <label className="vs-label">Encargado de la Mision</label>
                         <div className="vs-icon-field">
-                          <FiBriefcase size={14} className="vs-icon" />
-                          <input className="vs-input vs-has-icon" name="dependencia" value={form.dependencia} onChange={handleField} placeholder="Dependencia" />
+                          <FiUser size={14} className="vs-icon" />
+                          <input className="vs-input vs-has-icon" name="encargado_mision" value={form.encargado_mision} onChange={handleField} placeholder="Se llena con quien recibe; puede cambiarlo" />
                         </div>
-                      </div>
-                    </div>
-                    <div className="vs-field">
-                      <label className="vs-label">Encargado de la Mision</label>
-                      <div className="vs-icon-field">
-                        <FiUser size={14} className="vs-icon" />
-                        <input className="vs-input vs-has-icon" name="encargado_mision" value={form.encargado_mision} onChange={handleField} placeholder="Se llena con quien recibe; puede cambiarlo" />
                       </div>
                     </div>
                     <div className="vs-row-4">
