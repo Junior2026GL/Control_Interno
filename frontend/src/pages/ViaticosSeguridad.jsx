@@ -402,6 +402,8 @@ export default function ViaticosSeguridad() {
     }),
   }));
 
+  const delRow = (key, idx) => setForm(f => ({ ...f, [key]: f[key].filter((_, i) => i !== idx) }));
+
   // soloNoches: el último día queda vacío (hospedaje). ultimoMedio: el último día (regreso) lleva la mitad del monto.
   const aplicarMonto = (key, valor, soloNoches, ultimoMedio = false) => {
     if (valor === '') return;
