@@ -7,8 +7,8 @@ const AZUL = [39, 76, 141], AZUL_OSC = [24, 48, 92], NEGRO = [30, 30, 30], BLANC
 const GRIS = [238, 242, 250], GRIS2 = [248, 250, 254], AZUL_L = [205, 218, 240], FINDE = [255, 243, 214];
 const ETIQ = [55, 85, 145];
 
-const sa = s => (s || '').replace(/[ÁÉÍÓÚÑáéíóúñ]/g,
-  c => ({ Á: 'A', É: 'E', Í: 'I', Ó: 'O', Ú: 'U', Ñ: 'N', á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ñ: 'n' }[c] || c));
+/* Las fuentes del PDF (Helvetica / Times) soportan tildes y Ñ, así que el texto se escribe tal cual */
+const sa = s => (s || '');
 
 const num = v => parseFloat(v) || 0;
 const cantHosp = c => (c === '' || c == null || isNaN(parseFloat(c)) ? 1 : parseFloat(c));
@@ -32,7 +32,7 @@ function fmtHora(h) {
 const partes = iso => String(iso).split('T')[0].split('-').map(Number);
 function dayName(iso) {
   const [y, m, d] = partes(iso);
-  return ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'][new Date(y, m - 1, d).getDay()];
+  return ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'][new Date(y, m - 1, d).getDay()];
 }
 function dayHead(iso) {
   const [y, m, d] = partes(iso);
@@ -107,16 +107,16 @@ function dibujar(doc, rec, logoDataUrl, k) {
   doc.line(M + LW, y + 2, M + LW, y + HH - 2);
   const mX = M + LW + MIDW / 2;
   doc.setFont('helvetica', 'bold'); doc.setTextColor(...AZUL);
-  doc.setFontSize(F(10)); doc.text('REPUBLICA DE HONDURAS', mX, y + HH * 0.30, { align: 'center' });
+  doc.setFontSize(F(10)); doc.text('REPÚBLICA DE HONDURAS', mX, y + HH * 0.30, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(F(7.5));
   doc.text('CONGRESO NACIONAL DE HONDURAS', mX, y + HH * 0.54, { align: 'center' });
   doc.setFont('helvetica', 'bold'); doc.setFontSize(F(9));
-  doc.text('PAGADURIA ESPECIAL', mX, y + HH * 0.80, { align: 'center' });
+  doc.text('PAGADURÍA ESPECIAL', mX, y + HH * 0.80, { align: 'center' });
   const tX = M + LW + MIDW;
   doc.setFillColor(...AZUL); doc.rect(tX, y, TW, HH, 'F');
   doc.setTextColor(...BLANCO); doc.setFontSize(F(9));
   doc.text('RECIBO DE', tX + TW / 2, y + HH * 0.36, { align: 'center' });
-  doc.setFontSize(F(15)); doc.text('VIATICOS', tX + TW / 2, y + HH * 0.80, { align: 'center' });
+  doc.setFontSize(F(15)); doc.text('VIÁTICOS', tX + TW / 2, y + HH * 0.80, { align: 'center' });
   y += HH;
 
   /* ─ "RECIBI DE LA PAGADURIA…" ─ */
@@ -126,7 +126,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   doc.setFillColor(...GRIS2); doc.setDrawColor(...AZUL); doc.setLineWidth(0.4);
   doc.rect(M, y, CW, RB, 'FD');
   // Todo en una sola línea y del mismo tamaño de letra: "Recibi de la Pagaduria…" + cantidad en letras + monto pegado
-  const etiqueta = 'Recibi de la Pagaduria Especial, la cantidad de:';
+  const etiqueta = 'Recibí de la Pagaduría Especial, la cantidad de:';
   const montoTxt = `(L ${miles(montoVal)})`;
   const medir = (txt, fuente, estilo, tam) => { doc.setFont(fuente, estilo); doc.setFontSize(tam); return doc.getTextWidth(txt); };
   const hueco = 3, disponible = CW - 5;
@@ -189,16 +189,16 @@ function dibujar(doc, rec, logoDataUrl, k) {
     }
   };
 
-  y += cell('MISION', rec.mision, 0, CW, 34, RH, false, true) || RH;
+  y += cell('MISIÓN', rec.mision, 0, CW, 34, RH, false, true) || RH;
   cell('LUGAR', rec.lugar, 0, CW * 0.6); cell('DEPENDENCIA', rec.dependencia, CW * 0.6, CW * 0.4); y += RH;
   cell('NOMBRE DE QUIEN RECIBE', (rec.nombre_beneficiario || '').toUpperCase(), 0, CW * 0.68, 40, V(6.6), true);
   cell('IDENTIDAD', rec.numero_identidad, CW * 0.68, CW * 0.32, 22, V(6.6)); y += V(6.6);
-  cell('CARGO', rec.cargo, 0, CW / 2); cell('ENCARGADO DE LA MISION', rec.encargado_mision, CW / 2, CW / 2, 40); y += RH;
+  cell('CARGO', rec.cargo, 0, CW / 2); cell('ENCARGADO DE LA MISIÓN', rec.encargado_mision, CW / 2, CW / 2, 40); y += RH;
   const PL = 34, q = (CW - PL) / 4;
   doc.setFillColor(...GRIS); doc.rect(M, y, PL, RH, 'F');
   doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.2); doc.rect(M, y, PL, RH, 'S');
   doc.setFont('helvetica', 'bold'); doc.setFontSize(F(6)); doc.setTextColor(...ETIQ);
-  doc.text('PERIODO DE TIEMPO:', M + 1.5, y + RH * 0.66);
+  doc.text('PERÍODO DE TIEMPO:', M + 1.5, y + RH * 0.66);
   cell('DESDE', fmtFecha(rec.periodo_desde), PL, q, 14);
   cell('HASTA', fmtFecha(rec.periodo_hasta), PL + q, q, 14);
   cell('HORA DE SALIDA', fmtHora(rec.hora_salida) || '-', PL + 2 * q, q, 26);
@@ -277,7 +277,7 @@ function dibujar(doc, rec, logoDataUrl, k) {
   };
 
   tablaDias({
-    titulo: 'DETALLES DEL VIATICO', mult: false,
+    titulo: 'DETALLES DEL VIÁTICO', mult: false,
     cols: {
       head: ['Detalle', 'Nombre', 'Cargo'], anchos: [36, 'auto', 38], alineos: ['left', 'left', 'left'],
       fila: r => [sa((r.detalle || '').toUpperCase()), sa((r.nombre || '').toUpperCase()), sa((r.cargo || '').toUpperCase())],

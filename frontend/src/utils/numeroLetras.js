@@ -3,9 +3,9 @@ function enteroALetras(n) {
   if (n === 0) return 'CERO';
   if (n < 0)  return 'MENOS ' + enteroALetras(-n);
   const U = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
-    'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISEIS','DIECISIETE',
-    'DIECIOCHO','DIECINUEVE','VEINTE','VEINTIUN','VEINTIDOS','VEINTITRES',
-    'VEINTICUATRO','VEINTICINCO','VEINTISEIS','VEINTISIETE','VEINTIOCHO','VEINTINUEVE'];
+    'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE',
+    'DIECIOCHO','DIECINUEVE','VEINTE','VEINTIÚN','VEINTIDÓS','VEINTITRÉS',
+    'VEINTICUATRO','VEINTICINCO','VEINTISÉIS','VEINTISIETE','VEINTIOCHO','VEINTINUEVE'];
   const D = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
   const C = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS',
     'SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
@@ -19,7 +19,7 @@ function enteroALetras(n) {
     return r === 0 ? pre : pre + ' ' + enteroALetras(r);
   }
   const mill = Math.floor(n / 1000000), r = n % 1000000;
-  const pre = mill === 1 ? 'UN MILLON' : enteroALetras(mill) + ' MILLONES';
+  const pre = mill === 1 ? 'UN MILLÓN' : enteroALetras(mill) + ' MILLONES';
   return r === 0 ? pre : pre + ' ' + enteroALetras(r);
 }
 
@@ -28,7 +28,10 @@ export function numeroALetras(monto) {
   const lempiras = Math.floor(total / 100);
   const centavos = total % 100;
   const base = enteroALetras(lempiras);
+  // UN LEMPIRA (singular) y, en millones exactos, "DE LEMPIRAS" (UN MILLÓN DE LEMPIRAS)
+  const moneda = lempiras === 1 ? 'LEMPIRA'
+    : (lempiras >= 1000000 && lempiras % 1000000 === 0 ? 'DE LEMPIRAS' : 'LEMPIRAS');
   return centavos === 0
-    ? `${base} LEMPIRAS EXACTOS`
-    : `${base} LEMPIRAS CON ${String(centavos).padStart(2, '0')}/100 CENTAVOS`;
+    ? `${base} ${moneda} ${lempiras === 1 ? 'EXACTO' : 'EXACTOS'}`
+    : `${base} ${moneda} CON ${String(centavos).padStart(2, '0')}/100 CENTAVOS`;
 }

@@ -21,7 +21,7 @@ const OPCIONES = [
     modulo: 'viaticos-seguridad',
     icon: <LuMapPinned size={26} />,
     color: 'teal',
-    titulo: 'Viáticos Nacionales',
+    titulo: 'Viáticos Nacionales Individual',
     desc: 'Recibos de viáticos por misiones dentro del país, en Lempiras.',
   },
   {
