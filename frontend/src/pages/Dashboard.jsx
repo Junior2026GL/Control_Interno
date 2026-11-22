@@ -9,6 +9,7 @@ import {
 } from 'react-icons/lu';
 import Navbar from '../components/Navbar';
 import SnowEffect from '../components/SnowEffect';
+import ChristmasLights from '../components/ChristmasLights';
 import { AuthContext } from '../context/AuthContext';
 import './Dashboard.css';
 
@@ -291,6 +292,7 @@ export default function Dashboard() {
         {/* ── Banner institucional ────────────────────────────── */}
         <div className="dash-banner">
           <img src="/BannerPrincipal.jpg" alt="Congreso Nacional" className="dash-banner-img" />
+          <ChristmasLights />
         </div>
 
         <div className="launcher-header">
@@ -303,6 +305,7 @@ export default function Dashboard() {
               <greeting.Icon size={22} color={greeting.color} style={{ marginRight: 6, verticalAlign: 'middle' }} />
               {greeting.text}, <span>{user?.nombre}</span>
             </h2>
+            <div className="xmas-greeting">🎄 ¡Feliz Navidad! ✨</div>
             <div className="launcher-datetime">
               <span className="launcher-date">{formatDate(now)}</span>
               <span className="launcher-sep">·</span>

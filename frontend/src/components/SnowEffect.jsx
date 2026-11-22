@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+const GLIFOS = ['❄', '❅', '❆'];
+
 /**
  * Nieve navideña sobre el fondo. No recibe clics (pointer-events: none)
  * y se desactiva si el usuario pidió reducir el movimiento.
@@ -25,6 +27,9 @@ export default function SnowEffect() {
       fase: Math.random() * Math.PI * 2,   // balanceo
       amp: Math.random() * 0.6 + 0.2,
       op: Math.random() * 0.5 + 0.4,
+      glifo: Math.random() < 0.35 ? GLIFOS[Math.floor(Math.random() * GLIFOS.length)] : null,
+      giro: Math.random() * Math.PI * 2,
+      vgiro: (Math.random() - 0.5) * 0.02,
     });
 
     const ajustar = () => {
@@ -51,10 +56,23 @@ export default function SnowEffect() {
         if (f.y > h + 5) { f.y = -5; f.x = Math.random() * w; }
         if (f.x > w + 5) f.x = -5;
         if (f.x < -5) f.x = w + 5;
-        ctx.beginPath();
-        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${color},${f.op})`;
-        ctx.fill();
+        if (f.glifo) {
+          // Copo con forma de estrella de nieve, girando despacio
+          f.giro += f.vgiro;
+          ctx.save();
+          ctx.translate(f.x, f.y);
+          ctx.rotate(f.giro);
+          ctx.font = `${Math.round(f.r * 6 + 6)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(f.glifo, 0, 0);
+          ctx.restore();
+        } else {
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
       raf = requestAnimationFrame(dibujar);
     };
