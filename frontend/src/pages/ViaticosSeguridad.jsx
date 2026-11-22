@@ -157,6 +157,7 @@ export default function ViaticosSeguridad() {
   const [dniInfo, setDniInfo]       = useState('');
   const dniEditado = useRef(false);   // true solo cuando el usuario escribe el DNI (no al abrir un recibo)
   const dniRef     = useRef('');
+  const autoRef    = useRef(null);    // nombre cargado por la última búsqueda automática
   const [printLoading, setPrintLoading] = useState(null);
   const [aplicarAlim, setAplicarAlim] = useState('');
   const [aplicarHosp, setAplicarHosp] = useState('');
@@ -179,7 +180,7 @@ export default function ViaticosSeguridad() {
   useEffect(() => { fetchRegistros(); }, [fetchRegistros]);
   useEffect(() => { setPage(1); }, [busqueda, filtroAnio]);
 
-  const closeModal = () => { setModal(false); setEditing(null); setDniError(''); setDniInfo(''); dniEditado.current = false; };
+  const closeModal = () => { setModal(false); setEditing(null); setDniError(''); setDniInfo(''); dniEditado.current = false; autoRef.current = null; };
   dniRef.current = (form.numero_identidad || '').replace(/\D/g, '');
 
   useEffect(() => {
@@ -236,22 +237,37 @@ export default function ViaticosSeguridad() {
     if (dniRef.current !== dni) { setDniLoading(false); return; }
 
     if (!nombre) {
+      // Si lo que había en pantalla lo cargó una búsqueda anterior (otra persona), se limpia
+      const previo = autoRef.current;
+      autoRef.current = null;
+      if (previo) {
+        setForm(f => (f.nombre_beneficiario !== previo ? f : {
+          ...f,
+          nombre_beneficiario: '', cargo: '', dependencia: 'PRESIDENCIA',
+          encargado_mision: f.encargado_mision === f.nombre_beneficiario ? '' : f.encargado_mision,
+          alimentacion: f.alimentacion.length === 1 && f.alimentacion[0].nombre.trim().toUpperCase() === previo.trim().toUpperCase()
+            ? [{ ...f.alimentacion[0], nombre: '', cargo: '' }]
+            : f.alimentacion,
+        }));
+      }
       setDniError(censoErr || 'No hay recibos anteriores con ese DNI. Escriba el nombre manualmente.');
       setDniLoading(false);
       return;
     }
+    autoRef.current = nombre;
+    // Cada búsqueda reemplaza cargo y dependencia: nunca se arrastran los de otra persona
     setForm(f => ({
       ...f,
       nombre_beneficiario: nombre,
-      cargo: cargo || f.cargo,
-      dependencia: dependencia || f.dependencia,
+      cargo,
+      dependencia: dependencia || 'PRESIDENCIA',
       // El encargado de la misión es, por defecto, quien recibe (se puede editar después)
       encargado_mision: !f.encargado_mision || f.encargado_mision === f.nombre_beneficiario
         ? nombre : f.encargado_mision,
       // Primera fila de alimentación: la misma persona, con su cargo
       alimentacion: f.alimentacion.length === 1
         && (!f.alimentacion[0].nombre.trim() || f.alimentacion[0].nombre.trim().toUpperCase() === (f.nombre_beneficiario || '').trim().toUpperCase())
-        ? [{ ...f.alimentacion[0], nombre: nombre.toUpperCase(), cargo: (cargo || f.alimentacion[0].cargo || '').toUpperCase() }]
+        ? [{ ...f.alimentacion[0], nombre: nombre.toUpperCase(), cargo: cargo.toUpperCase() }]
         : f.alimentacion,
     }));
     setDniInfo(origen === 'recibo' ? 'Datos cargados de un recibo anterior de esta persona.' : 'Nombre cargado del censo.');
@@ -697,13 +713,15 @@ export default function ViaticosSeguridad() {
                   </Seccion>
 
                   {/* 2 · Datos del viaje */}
-                  <Seccion n={2} titulo="Datos del viaje" desc="Mision, lugar y periodo de la comision">
-                    <div className="vs-field">
-                      <label className="vs-label">Mision <span className="vs-req">*</span></label>
-                      <textarea className={`vs-input vs-textarea ${formErrors.mision ? 'vs-input--error' : ''}`} name="mision" value={form.mision} onChange={handleField} rows={2} placeholder="Descripcion de la mision…" />
-                      {formErrors.mision && <span className="vs-error">{formErrors.mision}</span>}
-                    </div>
+                  <Seccion n={2} titulo="Datos del viaje" desc="Encargado, lugar, mision y periodo de la comision">
                     <div className="vs-row-2">
+                      <div className="vs-field">
+                        <label className="vs-label">Encargado de la Mision</label>
+                        <div className="vs-icon-field">
+                          <FiUser size={14} className="vs-icon" />
+                          <input className="vs-input vs-has-icon" name="encargado_mision" value={form.encargado_mision} onChange={handleField} placeholder="Se llena con quien recibe; puede cambiarlo" />
+                        </div>
+                      </div>
                       <div className="vs-field">
                         <label className="vs-label">Lugar <span className="vs-req">*</span></label>
                         <div className="vs-icon-field">
@@ -712,13 +730,11 @@ export default function ViaticosSeguridad() {
                         </div>
                         {formErrors.lugar && <span className="vs-error">{formErrors.lugar}</span>}
                       </div>
-                      <div className="vs-field">
-                        <label className="vs-label">Encargado de la Mision</label>
-                        <div className="vs-icon-field">
-                          <FiUser size={14} className="vs-icon" />
-                          <input className="vs-input vs-has-icon" name="encargado_mision" value={form.encargado_mision} onChange={handleField} placeholder="Se llena con quien recibe; puede cambiarlo" />
-                        </div>
-                      </div>
+                    </div>
+                    <div className="vs-field">
+                      <label className="vs-label">Mision <span className="vs-req">*</span></label>
+                      <textarea className={`vs-input vs-textarea ${formErrors.mision ? 'vs-input--error' : ''}`} name="mision" value={form.mision} onChange={handleField} rows={2} placeholder="Descripcion de la mision…" />
+                      {formErrors.mision && <span className="vs-error">{formErrors.mision}</span>}
                     </div>
                     <div className="vs-row-4">
                       <div className="vs-field">
