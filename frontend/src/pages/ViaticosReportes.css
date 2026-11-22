@@ -46,7 +46,7 @@
 }
 .vr-kpi__label { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; }
 .vr-kpi__value { display: block; font-size: 1.3rem; font-weight: 800; color: #0f2044; line-height: 1.2; }
-.vr-kpi__hint { color: #64748b; font-size: .78rem; }
+.vr-kpi__hint { display: block; font-family: inherit; font-size: 1.05rem; font-weight: 700; color: #7c3aed; margin-top: .1rem; }
 .vr-kpi--green  { --c: #16a34a; --bg: #dcfce7; }
 .vr-kpi--blue   { --c: #274C8D; --bg: #dce8f8; }
 .vr-kpi--amber  { --c: #ca8a04; --bg: #fef3c7; }
