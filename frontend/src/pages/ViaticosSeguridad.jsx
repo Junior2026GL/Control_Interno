@@ -128,8 +128,8 @@ function DiasBadge({ n }) {
   );
 }
 
-/* Datos del viaje que se repiten en el siguiente recibo (se recuerdan en este navegador) */
-const CLAVE_VIAJE = 'vs_viaje_repetido', CLAVE_REPETIR = 'vs_repetir_viaje';
+/* Datos del viaje del último recibo guardado (se recuerdan en este navegador) para poder cargarlos con un clic */
+const CLAVE_VIAJE = 'vs_viaje_repetido';
 const leerLS = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
 const escribirLS = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
 const datosViaje = f => ({
@@ -213,7 +213,6 @@ export default function ViaticosSeguridad() {
   const dniEditado = useRef(false);   // true solo cuando el usuario escribe el DNI (no al abrir un recibo)
   const dniRef     = useRef('');
   const autoRef    = useRef(null);    // nombre cargado por la última búsqueda automática
-  const [repetirViaje, setRepetirViaje] = useState(() => !!leerLS(CLAVE_REPETIR));   // repetir los datos del viaje en el siguiente recibo
   const [verHosp, setVerHosp] = useState(false);  // la sección de hospedaje solo se ve al editar recibos antiguos que la usan
   const [printLoading, setPrintLoading] = useState(null);
   const [aplicarAlim, setAplicarAlim] = useState('');
@@ -373,17 +372,29 @@ export default function ViaticosSeguridad() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const alternarRepetir = () => {
-    const nuevo = !repetirViaje;
-    setRepetirViaje(nuevo);
-    escribirLS(CLAVE_REPETIR, nuevo ? true : null);
-    if (!nuevo) escribirLS(CLAVE_VIAJE, null);       // al apagarlo se olvidan los datos guardados
+  /* Carga en la sección 2 los datos del viaje del último recibo guardado (si no hay ninguno recordado,
+     toma el recibo más reciente de la lista). Solo ocurre al pulsar el botón; si no, la sección 2 sale limpia. */
+  const cargarViajeAnterior = async () => {
+    let v = leerLS(CLAVE_VIAJE);
+    if (!v && registros[0]) {
+      try {
+        const res = await api.get(`/viaticos-seguridad/${registros[0].id}`, { headers: authHeaders() });
+        const r = res.data;
+        v = {
+          lugar: r.lugar || '', mision: r.mision || '',
+          periodo_desde: String(r.periodo_desde).split('T')[0], periodo_hasta: String(r.periodo_hasta).split('T')[0],
+          hora_salida: r.hora_salida || '', hora_regreso: r.hora_regreso || '',
+        };
+      } catch { /* se avisa abajo */ }
+    }
+    if (!v) { showToast('Todavia no hay un viaje anterior para cargar.', 'error'); return; }
+    setForm(f => ({ ...f, ...v }));
+    setFormErrors(prev => ({ ...prev, lugar: undefined, mision: undefined, periodo_desde: undefined, periodo_hasta: undefined }));
+    showToast('Datos del viaje cargados del recibo anterior.', 'ok');
   };
 
   const openNew = () => {
-    const guardado = repetirViaje ? leerLS(CLAVE_VIAJE) : null;
-    setEditing(null); setForm(guardado ? { ...buildEmpty(), ...guardado } : buildEmpty()); setDniError(''); setFormErrors({});
-    if (guardado) showToast('Datos del viaje cargados del recibo anterior.', 'ok');
+    setEditing(null); setForm(buildEmpty()); setDniError(''); setFormErrors({});
     setVerHosp(false); setAplicarAlim(''); setAplicarHosp(''); setModal(true);
   };
 
@@ -501,7 +512,7 @@ export default function ViaticosSeguridad() {
       if (editing) { await api.put(`/viaticos-seguridad/${editing}`, payload, { headers: authHeaders() }); showToast('Registro actualizado correctamente.', 'ok'); }
       else         {
         await api.post('/viaticos-seguridad', payload, { headers: authHeaders() });
-        if (repetirViaje) escribirLS(CLAVE_VIAJE, datosViaje(form));
+        escribirLS(CLAVE_VIAJE, datosViaje(form));   // para poder cargarlo con un clic en el siguiente recibo
         showToast('Viatico registrado correctamente.', 'ok');
       }
       closeModal(); fetchRegistros();
@@ -779,10 +790,9 @@ export default function ViaticosSeguridad() {
                   {/* 2 · Datos del viaje */}
                   <Seccion n={2} titulo="Datos del viaje" desc="Lugar, mision y periodo de la comision"
                     extra={!editing && (
-                      <button type="button" className={'vs-repetir' + (repetirViaje ? ' vs-repetir--on' : '')} onClick={alternarRepetir}
-                        title={repetirViaje ? 'Al guardar, el siguiente recibo nuevo traera estos datos. Pulse para desactivar.' : 'Pulse para que, al guardar, el siguiente recibo nuevo traiga estos datos del viaje.'}>
-                        {repetirViaje ? <FiCheck size={15} /> : <FiRepeat size={15} />}
-                        {repetirViaje ? 'Se repetira en el siguiente' : 'Repetir en el siguiente recibo'}
+                      <button type="button" className="vs-repetir" onClick={cargarViajeAnterior}
+                        title="Carga lugar, mision, periodo y horas del ultimo recibo guardado">
+                        <FiRepeat size={15} /> Cargar datos del viaje anterior
                       </button>
                     )}>
                     <div className="vs-field">
