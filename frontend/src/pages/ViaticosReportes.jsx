@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell,
 } from 'recharts';
-import { FiArrowLeft, FiRefreshCw, FiCalendar, FiUsers } from 'react-icons/fi';
+import { FiArrowLeft, FiRefreshCw, FiCalendar, FiUsers, FiTrendingUp } from 'react-icons/fi';
 import { LuChartColumn } from 'react-icons/lu';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import './Bodegas.css';
 import './ViaticosSeguridad.css';
+import './ViaticosReportes.css';
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const MESES_LARGO = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -80,107 +81,109 @@ export default function ViaticosReportes() {
   return (
     <div className="page-shell">
       <Navbar />
-      <div className="bod-page">
-        <div className="bod-page-header">
-          <div className="bod-page-header__left">
-            <div className="bod-page-icon vs-page-icon"><LuChartColumn size={28} strokeWidth={1.8} /></div>
+      <div className="bod-container vr-wrap">
+        <div className="vr-hero">
+          <div className="vr-hero__left">
+            <div className="vr-hero__icon"><LuChartColumn size={28} strokeWidth={1.8} /></div>
             <div>
-              <h1 className="bod-page-title">Reportes de Viáticos</h1>
-              <p className="bod-page-sub">Viáticos Nacionales Individual — monto pagado por mes</p>
+              <h1 className="vr-hero__title">Reportes de Viáticos</h1>
+              <p className="vr-hero__sub">Viáticos Nacionales Individual — monto pagado por mes</p>
             </div>
           </div>
-          <div className="bod-page-header__right">
-            <button className="bod-btn bod-btn--outline" onClick={() => navigate('/viaticos')}><FiArrowLeft size={15} /> Volver</button>
-            <button className="bod-btn bod-btn--outline" onClick={cargar} title="Actualizar"><FiRefreshCw size={15} /></button>
+          <div className="vr-hero__right">
+            <label className="vr-year">
+              <FiCalendar size={14} />
+              <span>Año</span>
+              <select value={anio} onChange={e => setAnio(e.target.value)}>
+                <option value="">Todos</option>
+                {anios.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </label>
+            <button className="vr-btn" onClick={() => navigate('/viaticos')}><FiArrowLeft size={15} /> Volver</button>
+            <button className="vr-btn vr-btn--icon" onClick={cargar} title="Actualizar"><FiRefreshCw size={15} /></button>
           </div>
         </div>
 
-        <div className="bod-filter-card">
-          <div className="bod-filter-row">
-            <div className="bod-filter-dates">
-              <div className="bod-filter-date-group">
-                <FiCalendar size={13} className="bod-filter-date-icon" />
-                <span className="bod-filter-date-label">Año</span>
-                <select className="bod-filter-date-input" value={anio} onChange={e => setAnio(e.target.value)} style={{ width: 80 }}>
-                  <option value="">Todos</option>
-                  {anios.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-            </div>
+        {error && <p className="vr-error">{error}</p>}
+
+        <div className="vr-kpis">
+          <div className="vr-kpi vr-kpi--green">
+            <div className="vr-kpi__icon"><span className="vs-lps">Lps.</span></div>
+            <div><span className="vr-kpi__label">Total pagado {anio || '(todos)'}</span><strong className="vr-kpi__value">{fmt(totalAnio)}</strong></div>
+          </div>
+          <div className="vr-kpi vr-kpi--blue">
+            <div className="vr-kpi__icon"><FiUsers size={20} /></div>
+            <div><span className="vr-kpi__label">Recibos</span><strong className="vr-kpi__value">{delAnio.length}</strong></div>
+          </div>
+          <div className="vr-kpi vr-kpi--amber">
+            <div className="vr-kpi__icon"><FiCalendar size={20} /></div>
+            <div><span className="vr-kpi__label">Promedio mensual</span><strong className="vr-kpi__value">{fmt(mesesConDatos ? totalAnio / mesesConDatos : 0)}</strong></div>
+          </div>
+          <div className="vr-kpi vr-kpi--violet">
+            <div className="vr-kpi__icon"><FiTrendingUp size={20} /></div>
+            <div><span className="vr-kpi__label">Mes de mayor gasto</span><strong className="vr-kpi__value">{totalAnio > 0 ? mejorMes.nombre : '—'}</strong>{totalAnio > 0 && <small className="vr-kpi__hint">{fmt(mejorMes.total)}</small>}</div>
           </div>
         </div>
 
-        {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
-
-        <div className="bod-stats">
-          <div className="bod-stat">
-            <div className="bod-stat__icon bod-stat__icon--green"><span className="vs-lps">Lps.</span></div>
-            <div className="bod-stat__body"><span className="bod-stat__label">Total pagado {anio || 'todos los años'}</span><span className="bod-stat__value bod-stat__value--green">{fmt(totalAnio)}</span></div>
+        <div className="vr-card">
+          <div className="vr-card__head">
+            <h3>Monto pagado por mes</h3>
+            <span>{loading ? 'Cargando…' : totalAnio > 0 ? `${delAnio.length} recibos en ${mesesConDatos} mes(es)` : 'Sin registros para este período'}</span>
           </div>
-          <div className="bod-stat">
-            <div className="bod-stat__icon bod-stat__icon--blue"><FiUsers size={20} /></div>
-            <div className="bod-stat__body"><span className="bod-stat__label">Recibos</span><span className="bod-stat__value">{delAnio.length}</span></div>
-          </div>
-          <div className="bod-stat">
-            <div className="bod-stat__icon bod-stat__icon--amber"><FiCalendar size={20} /></div>
-            <div className="bod-stat__body">
-              <span className="bod-stat__label">Promedio mensual</span>
-              <span className="bod-stat__value">{fmt(mesesConDatos ? totalAnio / mesesConDatos : 0)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bod-card" style={{ padding: '1.2rem', marginBottom: '1rem' }}>
-          <h3 style={{ margin: '0 0 .2rem', color: '#0f2044' }}>Monto pagado por mes</h3>
-          <p className="bod-page-sub" style={{ marginBottom: '1rem' }}>
-            {loading ? 'Cargando…' : totalAnio > 0 ? `Mes con mayor gasto: ${mejorMes.nombre} (${fmt(mejorMes.total)})` : 'Sin registros para este período.'}
-          </p>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={porMes} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-              <XAxis dataKey="mes" tickLine={false} axisLine={false} />
-              <YAxis tickFormatter={fmtCorto} tickLine={false} axisLine={false} width={55} />
-              <Tooltip content={tip} cursor={{ fill: 'rgba(39,76,141,.06)' }} />
-              <Bar dataKey="total" fill="#274C8D" radius={[6, 6, 0, 0]} maxBarSize={48}>
-                <LabelList dataKey="total" position="top" formatter={v => (v > 0 ? fmtCorto(v) : '')} style={{ fontSize: 11, fill: '#475569' }} />
+          <ResponsiveContainer width="100%" height={340}>
+            <BarChart data={porMes} margin={{ top: 24, right: 12, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="vrBar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#4a7fd4" /><stop offset="100%" stopColor="#1b3a73" />
+                </linearGradient>
+                <linearGradient id="vrBest" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#0d9488" />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e9f2" />
+              <XAxis dataKey="mes" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+              <YAxis tickFormatter={fmtCorto} tickLine={false} axisLine={false} width={50} tick={{ fill: '#64748b', fontSize: 12 }} />
+              <Tooltip content={tip} cursor={{ fill: 'rgba(39,76,141,.07)' }} />
+              <Bar dataKey="total" radius={[8, 8, 0, 0]} maxBarSize={56}>
+                {porMes.map(m => <Cell key={m.mes} fill={totalAnio > 0 && m.mes === mejorMes.mes ? 'url(#vrBest)' : 'url(#vrBar)'} />)}
+                <LabelList dataKey="total" position="top" formatter={v => (v > 0 ? fmtCorto(v) : '')} style={{ fontSize: 12, fontWeight: 600, fill: '#334155' }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bod-card" style={{ padding: '1.2rem', marginBottom: '1rem' }}>
-          <h3 style={{ margin: '0 0 1rem', color: '#0f2044' }}>Lugares con mayor monto pagado</h3>
-          {porLugar.length === 0 ? <p className="bod-page-sub">Sin datos.</p> : (
-            <ResponsiveContainer width="100%" height={Math.max(180, porLugar.length * 38)}>
-              <BarChart data={porLugar} layout="vertical" margin={{ top: 0, right: 60, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
-                <XAxis type="number" tickFormatter={fmtCorto} tickLine={false} axisLine={false} />
-                <YAxis type="category" dataKey="lugar" width={150} tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-                <Tooltip content={tip} cursor={{ fill: 'rgba(39,76,141,.06)' }} />
-                <Bar dataKey="total" fill="#0d9488" radius={[0, 6, 6, 0]} maxBarSize={22}>
-                  <LabelList dataKey="total" position="right" formatter={fmtCorto} style={{ fontSize: 11, fill: '#475569' }} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+        <div className="vr-grid2">
+          <div className="vr-card">
+            <div className="vr-card__head"><h3>Lugares con mayor monto</h3><span>Top 8</span></div>
+            {porLugar.length === 0 ? <p className="vr-empty">Sin datos.</p> : (
+              <ResponsiveContainer width="100%" height={Math.max(220, porLugar.length * 40)}>
+                <BarChart data={porLugar} layout="vertical" margin={{ top: 0, right: 56, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e9f2" />
+                  <XAxis type="number" tickFormatter={fmtCorto} tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <YAxis type="category" dataKey="lugar" width={150} tickLine={false} axisLine={false} tick={{ fill: '#334155', fontSize: 12 }} />
+                  <Tooltip content={tip} cursor={{ fill: 'rgba(13,148,136,.07)' }} />
+                  <Bar dataKey="total" fill="#0d9488" radius={[0, 8, 8, 0]} maxBarSize={24}>
+                    <LabelList dataKey="total" position="right" formatter={fmtCorto} style={{ fontSize: 12, fontWeight: 600, fill: '#334155' }} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
 
-        <div className="bod-card" style={{ overflowX: 'auto' }}>
-          <table className="bod-table">
-            <thead><tr><th>Mes</th><th style={{ textAlign: 'right' }}>Recibos</th><th style={{ textAlign: 'right' }}>Total pagado</th></tr></thead>
-            <tbody>
-              {porMes.map(m => (
-                <tr key={m.mes}>
-                  <td>{m.nombre}</td>
-                  <td style={{ textAlign: 'right' }}>{m.cantidad}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 600 }}>{fmt(m.total)}</td>
-                </tr>
-              ))}
-              <tr style={{ background: '#f4f6fb', fontWeight: 700 }}>
-                <td>Total</td><td style={{ textAlign: 'right' }}>{delAnio.length}</td><td style={{ textAlign: 'right' }}>{fmt(totalAnio)}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="vr-card">
+            <div className="vr-card__head"><h3>Detalle por mes</h3><span>{anio || 'Todos los años'}</span></div>
+            <table className="vr-table">
+              <thead><tr><th>Mes</th><th>Recibos</th><th>Total pagado</th></tr></thead>
+              <tbody>
+                {porMes.map(m => (
+                  <tr key={m.mes} className={m.cantidad === 0 ? 'is-empty' : ''}>
+                    <td>{m.nombre}</td><td>{m.cantidad}</td><td>{fmt(m.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot><tr><td>Total</td><td>{delAnio.length}</td><td>{fmt(totalAnio)}</td></tr></tfoot>
+            </table>
+          </div>
         </div>
       </div>
     </div>
