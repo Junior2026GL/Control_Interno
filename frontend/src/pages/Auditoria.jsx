@@ -28,7 +28,7 @@ const MODULOS = [
   'auth', 'BASE_DATOS', 'caja', 'diputados', 'alcaldes', 'proveedores',
   'ayudas', 'ayudas_alcaldias', 'autorizaciones', 'constancias',
   'presupuesto', 'viaticos', 'ordenes-pago',
-  'checklist', 'orden-checklist', 'bodegas', 'fardos-confites',
+  'checklist', 'orden-checklist', 'orden-sap-transferencia', 'bodegas', 'fardos-confites',
   'auditoria', 'users', 'modulos', 'chat',
 ];
 

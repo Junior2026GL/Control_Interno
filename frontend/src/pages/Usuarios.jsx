@@ -50,6 +50,7 @@ const MODULOS_LABELS = {
   'proveedores':             'Base de Datos Proveedores',
   'checklist':               'Check List Expedientes',
   'orden-checklist':         'Órdenes de Checklist',
+  'orden-sap-transferencia': 'Órdenes de SAP Transferencia',
   'ordenes-pago':            'Órdenes de Pago',
   'imprimir-firma':          'Imprimir Firma',
   'constancias':             'Constancias',

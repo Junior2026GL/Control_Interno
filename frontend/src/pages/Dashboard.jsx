@@ -150,6 +150,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
   },
   {
+    path: '/orden-sap-transferencia',
+    label: 'Órdenes de SAP Transferencia',
+    clave: 'orden-sap-transferencia',
+    description: 'Control de correlativos de SAP Transferencia por año',
+    icon: LuListOrdered,
+    gradient: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+  },
+  {
     path: '/ordenes-pago',
     label: 'Órdenes de Pago',
     clave: 'ordenes-pago',

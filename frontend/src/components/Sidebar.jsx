@@ -31,6 +31,7 @@ export default function Sidebar() {
     { path: '/alcaldes',                 label: 'Alcaldes Municipales',      icon: FiUserCheck,     clave: 'alcaldes',                  soloSuperAdmin: false },
     { path: '/checklist',               label: 'Check List Expedientes',    icon: FiClipboard,     clave: 'checklist',                 soloSuperAdmin: false },
     { path: '/orden-checklist',          label: 'Órdenes de Checklist',       icon: FiClipboard,     clave: 'orden-checklist',           soloSuperAdmin: false },
+    { path: '/orden-sap-transferencia',  label: 'Órdenes de SAP Transferencia', icon: FiClipboard, clave: 'orden-sap-transferencia',  soloSuperAdmin: false },
     { path: '/bodegas',                  label: 'Control de Entrega de Canastas', icon: FiPackage,  clave: 'bodegas',                   soloSuperAdmin: false },
     { path: '/fardos-confites',           label: 'Entrega de Fardos de Confites',  icon: FiPackage,  clave: 'fardos-confites',           soloSuperAdmin: false },
     { path: '/imprimir-firma',           label: 'Imprimir Firma',            icon: FiPrinter,       clave: 'imprimir-firma',            soloSuperAdmin: false },

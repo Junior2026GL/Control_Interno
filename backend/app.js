@@ -81,6 +81,7 @@ app.use('/api/alcaldes',         require('./routes/alcaldes.routes'));
 app.use('/api/proveedores',      require('./routes/proveedores.routes'));
 app.use('/api/checklist',        require('./routes/checklist.routes'));
 app.use('/api/orden-checklist',  require('./routes/orden_checklist.routes'));
+app.use('/api/orden-sap-transferencia', require('./routes/orden_sap_transferencia.routes'));
 app.use('/api/bodegas',          require('./routes/bodegas.routes'));
 app.use('/api/fardos-confites',  require('./routes/fardos_confites.routes'));
 app.use('/api/viaticos-seguridad',  require('./routes/viaticos_seguridad.routes'));
