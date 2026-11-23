@@ -100,9 +100,15 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
   doc.line(infoX, y + 4, infoX, y + HDR_H - 4);
   fuente('bold', 11, AZUL); doc.text('SAP TRANSFERENCIA', infoMid, y + 8, { align: 'center' });
   doc.setDrawColor(210, 220, 235); doc.setLineWidth(0.2); doc.line(infoX + 3, y + 10, infoX + INFO_W - 3, y + 10);
-  doc.setFillColor(...BLANCO); doc.setDrawColor(...AZUL); doc.setLineWidth(0.5);
-  doc.rect(infoX + 4, y + 13, INFO_W - 8, 11, 'FD');
-  fuente('bold', 14, AZUL); doc.text(numero, infoMid, y + 13 + 11 - 2, { align: 'center' });
+  // Recuadro del número: fondo suave, borde doble y letra tipo código, centrado en horizontal y en vertical
+  const NB_X = infoX + 4, NB_Y = y + 12, NB_W = INFO_W - 8, NB_H = 13, NB_FS = 18;
+  doc.setFillColor(...GBKG); doc.setDrawColor(...AZUL); doc.setLineWidth(0.7);
+  doc.rect(NB_X, NB_Y, NB_W, NB_H, 'FD');
+  doc.setDrawColor(130, 155, 205); doc.setLineWidth(0.2);
+  doc.rect(NB_X + 1, NB_Y + 1, NB_W - 2, NB_H - 2, 'S');
+  doc.setFont('courier', 'bold'); doc.setFontSize(NB_FS); doc.setTextColor(...AZUL);
+  const altoDigito = NB_FS * 0.3528 * 0.62;                       // alto aproximado de un dígito, en mm
+  doc.text(numero, NB_X + NB_W / 2, NB_Y + NB_H / 2 + altoDigito / 2, { align: 'center' });
   doc.setDrawColor(210, 220, 235); doc.setLineWidth(0.2); doc.line(infoX + 3, y + 27, infoX + INFO_W - 3, y + 27);
   fuente('bold', 7, [100, 120, 160]); doc.text('GENERADO POR', infoMid, y + 31.5, { align: 'center' });
   fuente('bold', 8, AZUL); doc.text(String(generadoPor || 'Sistema').toUpperCase(), infoMid, y + 37, { align: 'center' });
@@ -116,52 +122,78 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
   doc.text('SOLICITUD DE ASIGNACIÓN PRESUPUESTARIA (SAP) - TRANSFERENCIA', L + CW / 2, y + 7.5, { align: 'center' });
   y += TBAR_H + 12;
 
-  // ── Datos de la solicitud: etiqueta a la izquierda, valor en recuadro ──
-  const LAB_W = 62, BOX_X = L + LAB_W, BOX_W = CW - LAB_W, BOX_H = 11;
-  const filaDato = (etiqueta, valor) => {
-    fuente('bold', 10); doc.text(etiqueta, L, y + 7.5);
-    doc.setFillColor(...GBKG); doc.setDrawColor(...NEGRO); doc.setLineWidth(0.4);
-    doc.rect(BOX_X, y, BOX_W, BOX_H, 'FD');
-    fuente('bold', 11.5); doc.text(valor, BOX_X + BOX_W / 2, y + 7.6, { align: 'center' });
-    y += BOX_H + 8;
+  // ── Ayudas de dibujo ──
+  // jsPDF reutiliza el color del texto como relleno si no se fija antes de cada figura; por eso `caja` siempre fija sus colores.
+  const MUTED = [100, 120, 160], BORDE_SUAVE = [150, 170, 210];
+  const caja = (x, yy, w, h, { relleno = BLANCO, borde = NEGRO, grosor = 0.4, radio = 0 } = {}) => {
+    doc.setFillColor(...relleno); doc.setDrawColor(...borde); doc.setLineWidth(grosor);
+    if (radio) doc.roundedRect(x, yy, w, h, radio, radio, 'FD'); else doc.rect(x, yy, w, h, 'FD');
   };
-  filaDato('Fecha de Solicitud:', fechaLarga(sap.fecha_solicitud));
-  filaDato('Unidad/Departamento Solicitante:', String(sap.unidad_solicitante || '').toUpperCase());
-  filaDato('Monto según Cotización:', montoTxt(sap.monto_cotizacion));
+  const baseTexto = (centroY, tam) => centroY + (tam * 0.3528 * 0.711) / 2;   // baseline para centrar el texto en vertical
+  const etiqueta = (txt, x, yy) => { fuente('bold', 7.5, MUTED); doc.text(txt, x, yy); };
+  const tituloSeccion = (txt, yy) => {
+    caja(L, yy - 4, 1.6, 5.4, { relleno: AZUL, borde: AZUL, grosor: 0 });
+    fuente('bold', 9.5, AZUL); doc.text(txt, L + 4.5, yy);
+    doc.setDrawColor(...BORDE_SUAVE); doc.setLineWidth(0.25); doc.line(L, yy + 2.4, L + CW, yy + 2.4);
+  };
 
-  // ── Aprobación del Departamento de Contabilidad (se llena a mano) ──
-  y += 4;
-  fuente('bold', 10); doc.text('Aprobación Departamento de Contabilidad:', L, y + 6);
-  const opciones = ['SI', 'NO', 'PENDIENTE'];
-  let ox = L + 86;
-  doc.setLineWidth(0.4); doc.setDrawColor(...NEGRO);
-  opciones.forEach((txt) => {
-    fuente('bold', 9.5); doc.text(txt, ox, y + 6);
-    const tx = ox + doc.getTextWidth(txt) + 3;
-    doc.setFillColor(...BLANCO); doc.rect(tx, y, 16, 9, 'FD');
-    ox = tx + 16 + 8;
+  // ── Sección 1: datos de la solicitud (etiqueta arriba, valor en recuadro) ──
+  tituloSeccion('DATOS DE LA SOLICITUD', y);
+  y += 9;
+  const GAP = 6, MITAD = (CW - GAP) / 2, CAMPO_H = 12;
+  const campo = (etq, valor, x, w, { tam = 11.5, color = NEGRO, centrado = false } = {}) => {
+    etiqueta(etq, x, y);
+    caja(x, y + 2, w, CAMPO_H, { relleno: GBKG, borde: BORDE_SUAVE, grosor: 0.35, radio: 1.5 });
+    fuente('bold', tam, color);
+    const base = baseTexto(y + 2 + CAMPO_H / 2, tam);
+    if (centrado) doc.text(valor, x + w / 2, base, { align: 'center' }); else doc.text(valor, x + 4, base);
+  };
+  campo('FECHA DE SOLICITUD', fechaLarga(sap.fecha_solicitud), L, MITAD);
+  campo('MONTO SEGÚN COTIZACIÓN', montoTxt(sap.monto_cotizacion), L + MITAD + GAP, MITAD, { tam: 14, color: AZUL, centrado: true });
+  y += CAMPO_H + 10;
+  campo('UNIDAD / DEPARTAMENTO SOLICITANTE', String(sap.unidad_solicitante || '').toUpperCase(), L, CW);
+  y += CAMPO_H + 12;
+
+  // ── Sección 2: Departamento de Contabilidad (se llena a mano) ──
+  const CARD_Y = y, CARD_H = 70;
+  caja(L, CARD_Y, CW, CARD_H, { relleno: BLANCO, borde: BORDE_SUAVE, grosor: 0.35, radio: 1.5 });
+  caja(L + 0.4, CARD_Y + 0.4, CW - 0.8, 8, { relleno: GBKG, borde: GBKG, grosor: 0 });
+  fuente('bold', 9, AZUL);
+  doc.text('DEPARTAMENTO DE CONTABILIDAD', L + 5, baseTexto(CARD_Y + 4.4, 9));
+  fuente('normal', 7.5, MUTED);
+  doc.text('Uso exclusivo', L + CW - 5, baseTexto(CARD_Y + 4.4, 7.5), { align: 'right' });
+
+  // Aprobación: SI / NO / PENDIENTE
+  const filaA = CARD_Y + 17;
+  fuente('bold', 9.5); doc.text('Aprobación:', L + 5, baseTexto(filaA, 9.5));
+  let ox = L + 34;
+  ['SI', 'NO', 'PENDIENTE'].forEach((txt) => {
+    caja(ox, filaA - 3.5, 7, 7, { relleno: BLANCO, borde: NEGRO, grosor: 0.45 });
+    fuente('bold', 9.5); doc.text(txt, ox + 10, baseTexto(filaA, 9.5));
+    ox += 10 + doc.getTextWidth(txt) + 12;
   });
-  y += 20;
 
-  // ── Monto aprobado / fecha de aprobación (izquierda) y código de cuenta (derecha) ──
-  const colIzqW = CW * 0.52, colDerX = L + colIzqW + 8, colDerW = CW - colIzqW - 8;
-  fuente('bold', 10); doc.text('Monto Aprobado', L, y + 4);
-  doc.setFillColor(...BLANCO); doc.setDrawColor(...NEGRO); doc.setLineWidth(0.4);
-  doc.rect(L + 38, y - 3, colIzqW - 38, 10, 'FD');
-  fuente('bold', 10); doc.text('Código de Cuenta', colDerX, y + 4);
-  const cuentaY = y + 8;
-  doc.rect(colDerX, cuentaY, colDerW, 40, 'FD');
-  fuente('bold', 10); doc.text('Fecha de Aprobación', L, y + 28);
-  doc.setLineWidth(0.4); doc.line(L + 45, y + 29, L + colIzqW, y + 29);
+  // Monto aprobado y fecha de aprobación (izquierda) / código de cuenta (derecha)
+  const colX = L + 5, colW = 84, derX = colX + colW + 8, derW = CW - 5 - (derX - L);
+  const filaB = CARD_Y + 28;
+  etiqueta('MONTO APROBADO', colX, filaB);
+  caja(colX, filaB + 2, colW, 11, { relleno: BLANCO, borde: NEGRO, grosor: 0.4, radio: 1 });
+  fuente('bold', 10, MUTED); doc.text('L', colX + 3.5, baseTexto(filaB + 2 + 5.5, 10));
+  etiqueta('FECHA DE APROBACIÓN', colX, filaB + 19);
+  caja(colX, filaB + 21, colW, 11, { relleno: BLANCO, borde: NEGRO, grosor: 0.4, radio: 1 });
+  fuente('normal', 9, [170, 180, 200]); doc.text('dd  /  mm  /  aaaa', colX + colW / 2, baseTexto(filaB + 21 + 5.5, 9), { align: 'center' });
+  etiqueta('CÓDIGO DE CUENTA', derX, filaB);
+  caja(derX, filaB + 2, derW, 30, { relleno: BLANCO, borde: NEGRO, grosor: 0.4, radio: 1 });
+  y = CARD_Y + CARD_H;
 
   // ── Firmas ──
-  const firmaY = Math.max(y + 60, PH - 52);
+  const firmaY = Math.max(y + 22, PH - 52);
   const firmaW = 78;
-  const dibujaFirma = (x, linea1, linea2, linea3) => {
+  const dibujaFirma = (x, titulo, cargo, nombre) => {
     doc.setDrawColor(...NEGRO); doc.setLineWidth(0.4); doc.line(x, firmaY, x + firmaW, firmaY);
-    fuente('bold', 10); doc.text(linea1, x + firmaW / 2, firmaY + 6, { align: 'center' });
-    fuente('bold', 9.5); doc.text(linea2, x + firmaW / 2, firmaY + 11.5, { align: 'center' });
-    fuente('bold', 9.5); doc.text(linea3, x + firmaW / 2, firmaY + 17, { align: 'center' });
+    fuente('bold', 10.5, AZUL); doc.text(titulo, x + firmaW / 2, firmaY + 6, { align: 'center' });
+    fuente('normal', 9, NEGRO); doc.text(cargo, x + firmaW / 2, firmaY + 11, { align: 'center' });
+    fuente('bold', 9.5, NEGRO); doc.text(nombre, x + firmaW / 2, firmaY + 16, { align: 'center' });
   };
   dibujaFirma(L + 4, 'Solicita', FIRMA_SOLICITA.cargo, FIRMA_SOLICITA.nombre);
   dibujaFirma(L + CW - firmaW - 4, 'Vo.Bo. SAP', FIRMA_VOBO.cargo, FIRMA_VOBO.nombre);
