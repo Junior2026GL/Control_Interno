@@ -247,35 +247,49 @@ function dibujar(doc, rec, logoDataUrl, k) {
       medirTxt(h, 'bold', F(6.5)),
       ...rows.map(r => medirTxt(cols.fila(r)[ci], 'normal', F(7))),
     ) + 6);                                             // relleno de la celda + un poco de aire
-    let fw = n > 0 ? 19 : 0, anchoTot = 26;
+    const cantidad = r => (mult ? cantHosp(r.cantidad) : 1);
+    const montoFila = r => cantidad(r) * fechas.reduce((s, f) => s + montoDia(r, f), 0);
+    const totDia = fechas.map(f => rows.reduce((s, r) => s + cantidad(r) * montoDia(r, f), 0));
+    const totalGeneral = rows.reduce((s, r) => s + montoFila(r), 0);
+    // Ancho mínimo de cada columna de día y del total: lo que mide su contenido (fecha, día de la semana y montos),
+    // para que las fechas y los montos nunca se partan en dos renglones.
+    const medirNeg = (txt, tam) => medirTxt(txt, 'bold', tam);
+    const dayW = n > 0 ? Math.max(...fechas.flatMap(f => [
+      ...String(dayHead(f)).split('\n').map(l => medirNeg(l, F(6.5))),
+      ...rows.map(r => medirNeg(cellMonto(montoDia(r, f)), F(7))),
+      medirNeg(cellMonto(rows.reduce((t, r) => t + cantidad(r) * montoDia(r, f), 0)), F(7)),
+    ])) + 3.8 : 0;
+    let fw = n > 0 ? Math.max(19, dayW) : 0;
+    let anchoTot = Math.max(18, medirNeg(fmt(totalGeneral), F(7)) + 3.8, medirNeg('TOTAL', F(6.5)) + 3.8);
     const ANCHO_NUM = 8;                                // columna "#"
     const sumaAnchos = () => ANCHO_NUM + anchosTxt.reduce((x, y) => x + y, 0) + n * fw + anchoTot;
-    if (sumaAnchos() > CW) {                            // falta espacio: primero se achican los días, luego el texto
-      if (n > 0) fw = Math.max(14, fw - (sumaAnchos() - CW) / n);
-      if (sumaAnchos() > CW) {
-        // La primera columna (Detalle) se respeta completa; se achican las demás (nombre, cargo)
-        const [primera, ...resto] = anchosTxt;
-        const sobra = CW - ANCHO_NUM - n * fw - anchoTot - (resto.length ? primera : 0);
-        const base = resto.length ? resto : [primera];
-        const tot = base.reduce((x, y) => x + y, 0);
-        const nuevos = base.map(w => (w * sobra) / tot);
-        anchosTxt = resto.length ? [primera, ...nuevos] : nuevos;
+    if (sumaAnchos() > CW) {                            // falta espacio: primero se achican los días (sin partir fechas ni montos)
+      if (n > 0) fw = Math.max(dayW, fw - (sumaAnchos() - CW) / n);
+      let falta = sumaAnchos() - CW;
+      if (falta > 0) {
+        // Se recorta primero de las últimas columnas (Cargo) hasta el 55 % de su ancho natural, dejando el Nombre completo
+        // en una sola línea mientras se pueda; la primera columna (Detalle) se respeta.
+        const orden = anchosTxt.map((_, i) => i).filter(i => i > 0 || anchosTxt.length === 1).reverse();
+        for (const i of orden) {
+          const quita = Math.min(falta, anchosTxt[i] * 0.45);
+          anchosTxt[i] -= quita; falta -= quita;
+        }
+        if (falta > 0.01) {                             // aún falta: se reparte entre esas columnas
+          const tot = orden.reduce((x, i) => x + anchosTxt[i], 0);
+          orden.forEach(i => { anchosTxt[i] -= (anchosTxt[i] / tot) * falta; });
+        }
       }
     } else {                                            // sobra espacio: se reparte de forma proporcional
       const k = (CW - ANCHO_NUM) / (sumaAnchos() - ANCHO_NUM);
       anchosTxt = anchosTxt.map(w => w * k); fw *= k; anchoTot *= k;
     }
     const totalCol = b + n;
-    const cantidad = r => (mult ? cantHosp(r.cantidad) : 1);
-    const montoFila = r => cantidad(r) * fechas.reduce((s, f) => s + montoDia(r, f), 0);
     const body = rows.map((r, i) => [
       String(i + 1), ...cols.fila(r),
       ...fechas.map(f => cellMonto(montoDia(r, f))),
       { content: fmt(montoFila(r)), styles: { fontStyle: 'bold', textColor: AZUL } },
     ]);
     if (!body.length) body.push(['1', ...cols.head.map(() => ''), ...fechas.map(() => ''), '']);
-    const totDia = fechas.map(f => rows.reduce((s, r) => s + cantidad(r) * montoDia(r, f), 0));
-    const totalGeneral = rows.reduce((s, r) => s + montoFila(r), 0);
     const cp = { top: V(1.3), bottom: V(1.3), left: 1.5, right: 1.5 };
 
     if (y > FY - 40) { doc.addPage(); y = M; }
