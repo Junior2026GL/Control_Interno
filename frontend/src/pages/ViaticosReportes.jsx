@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, ReferenceLine,
 } from 'recharts';
 import { FiArrowLeft, FiRefreshCw, FiCalendar, FiUsers, FiTrendingUp } from 'react-icons/fi';
 import { LuChartColumn } from 'react-icons/lu';
@@ -59,11 +59,13 @@ export default function ViaticosReportes() {
     const mapa = {};
     delAnio.forEach(r => {
       const k = (r.lugar || 'SIN LUGAR').trim().toUpperCase();
-      mapa[k] = (mapa[k] || 0) + num(r.gran_total);
+      mapa[k] = mapa[k] || { total: 0, cantidad: 0 };
+      mapa[k].total += num(r.gran_total); mapa[k].cantidad += 1;
     });
+    const suma = Object.values(mapa).reduce((t, v) => t + v.total, 0) || 1;
     return Object.entries(mapa)
-      .map(([lugar, total]) => ({ lugar: lugar.length > 30 ? lugar.slice(0, 29) + '…' : lugar, total: Math.round(total * 100) / 100 }))
-      .sort((a, b) => b.total - a.total).slice(0, 8);
+      .map(([lugar, v]) => ({ lugar, total: Math.round(v.total * 100) / 100, cantidad: v.cantidad, pct: (v.total / suma) * 100 }))
+      .sort((x, y) => y.total - x.total).slice(0, 8);
   }, [delAnio]);
 
   const totalAnio = delAnio.reduce((s, r) => s + num(r.gran_total), 0);
@@ -141,12 +143,13 @@ export default function ViaticosReportes() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e9f2" />
-              <XAxis dataKey="mes" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-              <YAxis tickFormatter={fmtCorto} tickLine={false} axisLine={false} width={50} tick={{ fill: '#64748b', fontSize: 12 }} />
+              <XAxis dataKey="mes" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12, fontFamily: 'inherit' }} />
+              <YAxis tickFormatter={fmtCorto} tickLine={false} axisLine={false} width={50} tick={{ fill: '#64748b', fontSize: 12, fontFamily: 'inherit' }} />
               <Tooltip content={tip} cursor={{ fill: 'rgba(39,76,141,.07)' }} />
+              {totalAnio > 0 && <ReferenceLine y={totalAnio / mesesConDatos} stroke="#f59e0b" strokeDasharray="6 4" label={{ value: 'Promedio ' + fmtCorto(Math.round(totalAnio / mesesConDatos)), position: 'insideTopRight', fill: '#b45309', fontSize: 12, fontWeight: 600 }} />}
               <Bar dataKey="total" radius={[8, 8, 0, 0]} maxBarSize={56}>
                 {porMes.map(m => <Cell key={m.mes} fill={totalAnio > 0 && m.mes === mejorMes.mes ? 'url(#vrBest)' : 'url(#vrBar)'} />)}
-                <LabelList dataKey="total" position="top" formatter={v => (v > 0 ? fmtCorto(v) : '')} style={{ fontSize: 12, fontWeight: 600, fill: '#334155' }} />
+                <LabelList dataKey="total" position="top" formatter={v => (v > 0 ? fmtCorto(v) : '')} style={{ fontSize: 12, fontWeight: 700, fill: '#334155', fontFamily: 'inherit' }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -154,19 +157,23 @@ export default function ViaticosReportes() {
 
         <div className="vr-grid2">
           <div className="vr-card">
-            <div className="vr-card__head"><h3>Giras por lugar</h3><span>Top 8</span></div>
+            <div className="vr-card__head"><h3>Monto por lugar</h3><span>Top 8 · {anio || 'todos los años'}</span></div>
             {porLugar.length === 0 ? <p className="vr-empty">Sin datos.</p> : (
-              <ResponsiveContainer width="100%" height={Math.max(220, porLugar.length * 40)}>
-                <BarChart data={porLugar} layout="vertical" margin={{ top: 0, right: 56, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e9f2" />
-                  <XAxis type="number" tickFormatter={fmtCorto} tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <YAxis type="category" dataKey="lugar" width={200} tickLine={false} axisLine={false} tick={{ fill: '#334155', fontSize: 12 }} />
-                  <Tooltip content={tip} cursor={{ fill: 'rgba(13,148,136,.07)' }} />
-                  <Bar dataKey="total" fill="#0d9488" radius={[0, 8, 8, 0]} maxBarSize={24}>
-                    <LabelList dataKey="total" position="right" formatter={fmtCorto} style={{ fontSize: 12, fontWeight: 600, fill: '#334155' }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <ol className="vr-rank">
+                {porLugar.map((l, i) => (
+                  <li key={l.lugar} className="vr-rank__item">
+                    <span className="vr-rank__pos">{i + 1}</span>
+                    <div className="vr-rank__body">
+                      <div className="vr-rank__top">
+                        <span className="vr-rank__name">{l.lugar}</span>
+                        <strong className="vr-rank__amount">{fmt(l.total)}</strong>
+                      </div>
+                      <div className="vr-rank__track"><div className="vr-rank__fill" style={{ width: `${Math.max(2, (l.total / porLugar[0].total) * 100)}%` }} /></div>
+                      <span className="vr-rank__meta">{l.cantidad} recibo(s) · {l.pct.toLocaleString('es-HN', { maximumFractionDigits: 1 })} % del total</span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             )}
           </div>
 

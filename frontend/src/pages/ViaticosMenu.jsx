@@ -30,7 +30,7 @@ const OPCIONES = [
     icon: <LuChartColumn size={26} />,
     color: 'amber',
     titulo: 'Estadísticas de Viáticos',
-    desc: 'Monto pagado por mes, giras por lugar y totales — Viáticos Nacionales Individual.',
+    desc: 'Monto pagado por mes, monto por lugar y totales — Viáticos Nacionales Individual.',
   },
   {
     path: '/viaticos/reportes',
