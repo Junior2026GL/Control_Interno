@@ -21,7 +21,7 @@ export default function Sidebar() {
     { path: '/diputados',               label: 'Diputados',                 icon: FiUserCheck,     clave: 'diputados',                 soloSuperAdmin: false },
     { path: '/presupuesto-social',      label: 'Presupuesto Social',        icon: FiBriefcase,     clave: 'presupuesto-social',        soloSuperAdmin: false },
     { path: '/reportes-presupuesto',    label: 'Reportes Presupuesto',      icon: FiEye,           clave: 'reportes-presupuesto',      soloSuperAdmin: false },
-    { path: '/viaticos',                label: 'Viáticos',                  icon: FiDollarSign,    clave: 'viaticos',                  soloSuperAdmin: false },
+    { path: '/viaticos',                label: 'Viáticos',                  icon: FiDollarSign,    clave: ['viaticos', 'viaticos-seguridad', 'viaticos-reportes'],                soloSuperAdmin: false },
     { path: '/busqueda-ayudas',         label: 'Consulta de Ayudas',        icon: FiEye,           clave: 'busqueda-ayudas',           soloSuperAdmin: false },
     { path: '/constancia-transferencia',label: 'Constancias',  icon: FiRepeat,        clave: 'constancia-transferencia',  soloSuperAdmin: false },
     { path: '/ayudas',                  label: 'Ayudas',                    icon: FiGift,          clave: 'ayudas',                    soloSuperAdmin: false },
@@ -42,7 +42,7 @@ export default function Sidebar() {
     if (item.soloSuperAdmin) return user?.rol === 'SUPER_ADMIN';
     if (!item.clave) return true; // Dashboard siempre
     if (user?.rol === 'SUPER_ADMIN') return true;
-    return user?.modulos?.includes(item.clave);
+    return [].concat(item.clave).some(c => user?.modulos?.includes(c));
   });
 
   const handleLogout = () => {

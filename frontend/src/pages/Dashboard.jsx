@@ -72,7 +72,7 @@ const ALL_MODULES = [
   },
   {    path: '/viaticos',
     label: 'Viáticos',
-    clave: 'viaticos',
+    clave: ['viaticos', 'viaticos-seguridad', 'viaticos-reportes'],
     description: 'Cuadro de cálculos de viáticos — Pagaduía Especial',
     icon: LuPlane,
     gradient: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
@@ -273,7 +273,7 @@ export default function Dashboard() {
   const modules = ALL_MODULES.filter(m => {
     if (m.soloSuperAdmin) return user?.rol === 'SUPER_ADMIN';
     if (user?.rol === 'SUPER_ADMIN') return true;
-    return user?.modulos?.includes(m.clave);
+    return [].concat(m.clave).some(c => user?.modulos?.includes(c));
   });
 
   return (
