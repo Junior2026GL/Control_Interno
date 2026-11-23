@@ -66,7 +66,7 @@ function buildEmpty() {
     numero_identidad: '', nombre_beneficiario: '', mision: '', lugar: '',
     dependencia: '', cargo: '', encargado_mision: '',
     periodo_desde: f, periodo_hasta: f, hora_salida: '', hora_regreso: '',
-    alimentacion: [{ detalle: '', nombre: '', cargo: '', dias: syncDias(fechas) }],
+    alimentacion: [{ detalle: 'ALIMENTACION Y HOSPEDAJE', nombre: '', cargo: '', dias: syncDias(fechas) }],
     hospedaje:    [{ detalle: 'HABITACION SENCILLA', cantidad: '1', dias: syncDias(fechas) }],
     resumen: [],   // los gastos adicionales se agregan con las sugerencias o con "Agregar renglon"
     observaciones: '',
