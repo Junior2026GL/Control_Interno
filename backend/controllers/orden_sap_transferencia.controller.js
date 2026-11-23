@@ -24,9 +24,17 @@ setInterval(() => {
 exports.getByAnio = (req, res) => {
   const anio = parseInt(req.query.anio, 10) || new Date().getFullYear();
   db.query(
-    `SELECT o.*, u.nombre AS usuario_nombre, o.estado AS estado_visual
+    `SELECT o.*, COALESCE(u.nombre, us.nombre) AS usuario_nombre,
+            s.numero AS sap_numero, s.estado AS sap_estado, s.creado_en AS sap_fecha_creacion,
+            CASE
+              WHEN o.estado = 'reservado' THEN 'reservado'
+              WHEN s.id IS NOT NULL THEN CASE WHEN s.estado = 'anulado' THEN 'anulado' ELSE 'usado' END
+              ELSE o.estado
+            END AS estado_visual
      FROM orden_sap_transferencia o
      LEFT JOIN usuarios u ON u.id = o.usuario_id
+     LEFT JOIN sap_transferencia s ON s.id = o.sap_id
+     LEFT JOIN usuarios us ON us.id = s.creado_por
      WHERE o.anio = ?
      ORDER BY o.numero ASC`,
     [anio],

@@ -158,6 +158,14 @@ const ALL_MODULES = [
     gradient: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
   },
   {
+    path: '/sap-transferencia',
+    label: 'SAP Transferencia',
+    clave: 'sap-transferencia',
+    description: 'Solicitud de Asignación Presupuestaria — Transferencia',
+    icon: LuClipboardCheck,
+    gradient: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+  },
+  {
     path: '/ordenes-pago',
     label: 'Órdenes de Pago',
     clave: 'ordenes-pago',
