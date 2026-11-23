@@ -14,7 +14,7 @@ const fechaLarga = (s) => {
   if (!y || !m || !d) return '';
   return `${String(d).padStart(2, '0')} DE ${MESES[m - 1]} ${y}`;
 };
-const montoTxt = v => 'L' + (parseFloat(v) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const montoTxt = v => 'L ' + (parseFloat(v) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const cargarFuente = async (url) => {
   const resp = await fetch(url);
@@ -78,24 +78,26 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
 
   // ── Borde exterior ──
   doc.setDrawColor(...AZUL); doc.setLineWidth(1.2);
-  doc.rect(L - 4, 10, CW + 8, PH - 20, 'S');
+  doc.rect(L - 4, 5, CW + 8, PH - 10, 'S');          // igual que Autorizaciones: borde a 5 mm arriba y abajo
 
   // ── Encabezado: logo | institución | número ──
   let y = 10;
-  const LOGO_W = 50, INFO_W = 62, CENT_W = CW - LOGO_W - INFO_W, HDR_H = 42;
+  // Encabezado y franja con el mismo margen interior que Autorizaciones: 4 mm de cada lado del borde
+  const HL = L, HW = CW;
+  const LOGO_W = 50, INFO_W = 62, CENT_W = HW - LOGO_W - INFO_W, HDR_H = 42;
   doc.setFillColor(...BLANCO); doc.setDrawColor(...AZUL); doc.setLineWidth(0.5);
-  doc.rect(L, y, CW, HDR_H, 'FD');
-  if (logo) { const s = HDR_H - 6; doc.addImage(logo, 'JPEG', L + (LOGO_W - s) / 2, y + 3, s, s); }
+  doc.rect(HL, y, HW, HDR_H, 'FD');
+  if (logo) { const s = HDR_H - 6; doc.addImage(logo, 'JPEG', HL + (LOGO_W - s) / 2, y + 3, s, s); }
 
   doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
-  doc.line(L + LOGO_W, y + 4, L + LOGO_W, y + HDR_H - 4);
-  const cx = L + LOGO_W + CENT_W / 2;
+  doc.line(HL + LOGO_W, y + 4, HL + LOGO_W, y + HDR_H - 4);
+  const cx = HL + LOGO_W + CENT_W / 2;
   fuente('bold', 13, AZUL);  doc.text('REPÚBLICA DE HONDURAS', cx, y + 11, { align: 'center' });
   fuente('normal', 10, AZUL); doc.text('CONGRESO NACIONAL', cx, y + 18, { align: 'center' });
   fuente('bold', 15, AZUL);  doc.text('PAGADURÍA ESPECIAL', cx, y + 28, { align: 'center' });
   fuente('normal', 8.5, AZUL); doc.text('UNIDAD DE ADQUISICIONES Y COMPRAS', cx, y + 34.5, { align: 'center' });
 
-  const infoX = L + LOGO_W + CENT_W, infoMid = infoX + INFO_W / 2;
+  const infoX = HL + LOGO_W + CENT_W, infoMid = infoX + INFO_W / 2;
   doc.setDrawColor(180, 200, 235); doc.setLineWidth(0.3);
   doc.line(infoX, y + 4, infoX, y + HDR_H - 4);
   fuente('bold', 11, AZUL); doc.text('SAP TRANSFERENCIA', infoMid, y + 8, { align: 'center' });
@@ -117,7 +119,7 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
   y += HDR_H;
   const TBAR_H = 11;
   doc.setFillColor(...AZUL); doc.setDrawColor(...AZUL); doc.setLineWidth(0);
-  doc.rect(L, y, CW, TBAR_H, 'FD');
+  doc.rect(HL, y, HW, TBAR_H, 'FD');
   fuente('bold', 10.5, BLANCO);
   doc.text('SOLICITUD DE ASIGNACIÓN PRESUPUESTARIA (SAP) - TRANSFERENCIA', L + CW / 2, y + 7.5, { align: 'center' });
   y += TBAR_H + 12;
@@ -213,7 +215,7 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
   const total = doc.internal.getNumberOfPages();
   for (let p = 1; p <= total; p++) {
     doc.setPage(p);
-    const FH = 9, FY = PH - 10 - FH;
+    const FH = 9, FY = PH - 5 - FH;                    // el pie termina justo en el borde azul, como en Autorizaciones
     doc.setFillColor(...AZUL); doc.rect(L - 4, FY, CW + 8, FH, 'F');
     fuente('normal', 9.5, BLANCO);
     doc.text('Congreso Nacional - Pagaduría Especial', L - 1, FY + 5.8);
