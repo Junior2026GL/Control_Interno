@@ -35,7 +35,7 @@ const MODULOS_LABELS = {
   'autorizaciones':          'Autorizaciones de Pago',
   'asistente-ia':            'Asistente IA',
   'diputados':               'Diputados',
-  'viaticos':                'Viáticos',
+  'viaticos':                'Viáticos Internacionales',
   'reportes-presupuesto':    'Reportes Presupuesto',
   'presupuesto':             'Presupuesto Social',
   'presupuesto-social':      'Presupuesto Social',
@@ -60,7 +60,7 @@ const MODULOS_LABELS = {
   'estado-liquidacion':      'Estado de Liquidación',
   'fardos-confites':         'Entrega de Fardos de Confites',
   'viaticos-nacionales':     'Viáticos Nacionales',
-  'viaticos-seguridad':      'Viáticos Seguridad de Presidencia',
+  'viaticos-seguridad':      'Viáticos Nacionales Individual',
   'viaticos-reportes':       'Estadísticas y Reportes de Viáticos',
 };
 
