@@ -59,7 +59,6 @@ const MODULOS_LABELS = {
   'difusion-whatsapp':       'Mensajes por WhatsApp',
   'estado-liquidacion':      'Estado de Liquidación',
   'fardos-confites':         'Entrega de Fardos de Confites',
-  'viaticos-nacionales':     'Viáticos Nacionales',
   'viaticos-seguridad':      'Viáticos Nacionales Individual',
   'viaticos-reportes':       'Estadísticas y Reportes de Viáticos',
 };

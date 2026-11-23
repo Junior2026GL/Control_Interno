@@ -29,7 +29,6 @@ import CheckList from './pages/CheckList';
 import OrdenChecklist from './pages/OrdenChecklist';
 import Bodegas from './pages/Bodegas';
 import FardosConfites from './pages/FardosConfites';
-import ViaticosNacionales from './pages/ViaticosNacionales';
 import BusquedaAyudas from './pages/BusquedaAyudas';
 import OrdenesPago from './pages/OrdenesPago';
 import EstadoLiquidacion from './pages/EstadoLiquidacion';
@@ -62,7 +61,7 @@ export default function App() {
             <Route path="/diputados" element={<ModuleRoute modulo="diputados"><Diputados /></ModuleRoute>} />
             <Route path="/presupuesto-social" element={<ModuleRoute modulo="presupuesto-social"><PresupuestoDiputados /></ModuleRoute>} />
             <Route path="/reportes-presupuesto" element={<ModuleRoute modulo="reportes-presupuesto"><ReportesPresupuesto /></ModuleRoute>} />
-            <Route path="/viaticos" element={<ModuleRoute modulo={['viaticos', 'viaticos-nacionales', 'viaticos-seguridad', 'viaticos-reportes']}><ViaticosMenu /></ModuleRoute>} />
+            <Route path="/viaticos" element={<ModuleRoute modulo={['viaticos', 'viaticos-seguridad', 'viaticos-reportes']}><ViaticosMenu /></ModuleRoute>} />
             <Route path="/viaticos/internacional" element={<ModuleRoute modulo="viaticos"><Viaticos /></ModuleRoute>} />
             <Route path="/viaticos/seguridad-presidencia" element={<ModuleRoute modulo="viaticos-seguridad"><ViaticosSeguridad /></ModuleRoute>} />
             <Route path="/viaticos/estadisticas" element={<ModuleRoute modulo="viaticos-reportes"><ViaticosReportes /></ModuleRoute>} />
@@ -76,7 +75,6 @@ export default function App() {
             <Route path="/orden-checklist" element={<ModuleRoute modulo="orden-checklist"><OrdenChecklist /></ModuleRoute>} />
             <Route path="/bodegas" element={<ModuleRoute modulo="bodegas"><Bodegas /></ModuleRoute>} />
             <Route path="/fardos-confites" element={<ModuleRoute modulo="fardos-confites"><FardosConfites /></ModuleRoute>} />
-            <Route path="/viaticos-nacionales" element={<ModuleRoute modulo="viaticos-nacionales"><ViaticosNacionales /></ModuleRoute>} />
             <Route path="/busqueda-ayudas" element={<ModuleRoute modulo="busqueda-ayudas"><BusquedaAyudas /></ModuleRoute>} />
             <Route path="/ordenes-pago" element={<ModuleRoute modulo="ordenes-pago"><OrdenesPago /></ModuleRoute>} />
             <Route path="/imprimir-firma" element={<ModuleRoute modulo="imprimir-firma"><ImprimirFirma /></ModuleRoute>} />
