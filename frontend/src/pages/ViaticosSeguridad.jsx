@@ -128,15 +128,6 @@ function DiasBadge({ n }) {
   );
 }
 
-/* Datos del viaje del último recibo guardado (se recuerdan en este navegador) para poder cargarlos con un clic */
-const CLAVE_VIAJE = 'vs_viaje_repetido';
-const leerLS = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
-const escribirLS = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
-const datosViaje = f => ({
-  lugar: f.lugar, mision: f.mision, periodo_desde: f.periodo_desde, periodo_hasta: f.periodo_hasta,
-  hora_salida: f.hora_salida, hora_regreso: f.hora_regreso,
-});
-
 /* Horas exactas (sin minutos): de 5:00 AM a 11:00 PM y después 12:00 AM a 4:00 AM */
 const HORAS_EXACTAS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4]
   .map(h => String(h).padStart(2, '0') + ':00');
@@ -372,21 +363,23 @@ export default function ViaticosSeguridad() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  /* Carga en la sección 2 los datos del viaje del último recibo guardado (si no hay ninguno recordado,
-     toma el recibo más reciente de la lista). Solo ocurre al pulsar el botón; si no, la sección 2 sale limpia. */
+  /* Carga en la sección 2 los datos del viaje del último recibo guardado por cualquier usuario
+     (se consulta al servidor al pulsar el botón, así que siempre es el más reciente). Si no, la sección 2 sale limpia. */
   const cargarViajeAnterior = async () => {
-    let v = leerLS(CLAVE_VIAJE);
-    if (!v && registros[0]) {
-      try {
-        const res = await api.get(`/viaticos-seguridad/${registros[0].id}`, { headers: authHeaders() });
+    let v = null;
+    try {
+      const lista = await api.get('/viaticos-seguridad', { headers: authHeaders() });
+      const ultimo = lista.data[0];   // la lista viene ordenada del más nuevo al más antiguo
+      if (ultimo) {
+        const res = await api.get(`/viaticos-seguridad/${ultimo.id}`, { headers: authHeaders() });
         const r = res.data;
         v = {
           lugar: r.lugar || '', mision: r.mision || '',
           periodo_desde: String(r.periodo_desde).split('T')[0], periodo_hasta: String(r.periodo_hasta).split('T')[0],
           hora_salida: r.hora_salida || '', hora_regreso: r.hora_regreso || '',
         };
-      } catch { /* se avisa abajo */ }
-    }
+      }
+    } catch { /* se avisa abajo */ }
     if (!v) { showToast('Todavia no hay un viaje anterior para cargar.', 'error'); return; }
     setForm(f => ({ ...f, ...v }));
     setFormErrors(prev => ({ ...prev, lugar: undefined, mision: undefined, periodo_desde: undefined, periodo_hasta: undefined }));
@@ -512,7 +505,6 @@ export default function ViaticosSeguridad() {
       if (editing) { await api.put(`/viaticos-seguridad/${editing}`, payload, { headers: authHeaders() }); showToast('Registro actualizado correctamente.', 'ok'); }
       else         {
         await api.post('/viaticos-seguridad', payload, { headers: authHeaders() });
-        escribirLS(CLAVE_VIAJE, datosViaje(form));   // para poder cargarlo con un clic en el siguiente recibo
         showToast('Viatico registrado correctamente.', 'ok');
       }
       closeModal(); fetchRegistros();
