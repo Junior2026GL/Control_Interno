@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useContext } from 'react';
-import { FiPlus, FiX, FiEye, FiEdit2, FiSearch, FiRefreshCw, FiFileText, FiSlash } from 'react-icons/fi';
+import { FiPlus, FiX, FiEye, FiEdit2, FiSearch, FiRefreshCw, FiFileText, FiSlash, FiPrinter, FiDownload } from 'react-icons/fi';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
+import { generarSapPdf } from '../utils/sapTransferenciaPdf';
 import './CheckList.css';
 
 const ROLES_ADMIN = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
@@ -100,6 +101,12 @@ export default function SapTransferencia() {
   })();
   const totalPages    = Math.max(1, Math.ceil(listaMostrada.length / PAGE_SIZE));
   const listaPaginada = listaMostrada.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // ── PDF ──
+  const generarPDF = async (s, imprimir) => {
+    try { await generarSapPdf(s, user?.nombre, imprimir); }
+    catch (err) { console.error('[generarSapPdf]', err); showToast('Error al generar el PDF: ' + (err?.message || 'Error desconocido')); }
+  };
 
   // ── Crear: reserva la próxima orden libre al abrir; la libera si se cancela ──
   const openCrear = async () => {
@@ -283,6 +290,8 @@ export default function SapTransferencia() {
                     <td>
                       <div className="cl-actions">
                         <button className="cl-act-btn cl-act-btn--view" title="Ver detalle" onClick={() => setVerItem(s)}><FiEye size={13} /></button>
+                        <button className="cl-act-btn cl-act-btn--print" title="Imprimir PDF" onClick={() => generarPDF(s, true)}><FiPrinter size={13} /></button>
+                        <button className="cl-act-btn cl-act-btn--dl" title="Descargar PDF" onClick={() => generarPDF(s, false)}><FiDownload size={13} /></button>
                         {s.estado !== 'anulado' && (
                           <button className="cl-act-btn cl-act-btn--edit" title="Editar" onClick={() => openEditar(s)}><FiEdit2 size={13} /></button>
                         )}
@@ -398,7 +407,8 @@ export default function SapTransferencia() {
                 </>
               )}
               <div className="cl-modal-footer" style={{ paddingLeft: 0, paddingRight: 0 }}>
-                <button className="btn-secondary" onClick={() => setVerItem(null)}>Cerrar</button>
+                <button className="btn-secondary" onClick={() => generarPDF(verItem, false)}><FiDownload size={14} /> Descargar PDF</button>
+                <button className="btn-primary" onClick={() => generarPDF(verItem, true)}><FiPrinter size={14} /> Imprimir</button>
               </div>
             </div>
           </div>
