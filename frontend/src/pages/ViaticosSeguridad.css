@@ -292,3 +292,5 @@
   box-shadow: 0 8px 18px rgba(39, 76, 141, .35), inset 0 1px 0 rgba(255, 255, 255, .28);
   border: 1px solid rgba(255, 255, 255, .18);
 }
+
+.vs-registrado { font-size: 12.5px; font-weight: 600; color: #475569; }

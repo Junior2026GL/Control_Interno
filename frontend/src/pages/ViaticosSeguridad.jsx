@@ -615,7 +615,7 @@ export default function ViaticosSeguridad() {
                   <thead><tr>
                     <th className="bod-th-num">N°</th>
                     <th>Identidad</th><th>Nombre de quien recibe</th>
-                    <th>Mision / Lugar</th><th>Periodo</th>
+                    <th>Mision / Lugar</th><th>Periodo</th><th>Registrado por</th>
                     <th className="bod-th-center">Gran Total</th>
                     <th className="bod-th-actions">Acciones</th>
                   </tr></thead>
@@ -627,6 +627,7 @@ export default function ViaticosSeguridad() {
                         <td><span className="bod-name">{r.nombre_beneficiario}</span></td>
                         <td><div className="vn-mision">{r.mision}</div><span className="bod-depto-chip">{r.lugar}</span></td>
                         <td><span className="bod-fecha">{fmtFecha(r.periodo_desde)}</span><span className="vn-sep">→</span><span className="bod-fecha">{fmtFecha(r.periodo_hasta)}</span></td>
+                        <td><span className="vs-registrado">{r.registrado_por || "—"}</span></td>
                         <td className="bod-td-center"><span className="vn-total">{fmtMonto(r.gran_total)}</span></td>
                         <td>
                           <div className="bod-actions">
