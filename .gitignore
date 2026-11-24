@@ -28,3 +28,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Historial personal del proyecto (no subir a GitHub)
+HISTORIAL.md
+CLAUDE.local.md
