@@ -7,7 +7,7 @@ import printJS from 'print-js';
 
 const MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
 const FIRMA_SOLICITA = { cargo: 'Dirección Administrativa', nombre: 'Lic. Emerson Alvarez' };
-const FIRMA_VOBO     = { cargo: 'Dirección Financiera',     nombre: 'Lic. Luis Fernando Rodríguez' };
+const FIRMA_VOBO     = { cargo: 'Dirección Financiera',     nombre: 'Lic. Nolvia Julissa Martínez' };
 
 const fechaLarga = (s) => {
   const [y, m, d] = String(s || '').split('T')[0].split('-').map(Number);
