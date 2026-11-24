@@ -180,7 +180,7 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
   const filaB = CARD_Y + 28;
   etiqueta('MONTO APROBADO', colX, filaB);
   caja(colX, filaB + 2, colW, 11, { relleno: BLANCO, borde: NEGRO, grosor: 0.4, radio: 1 });
-  fuente('bold', 11, AZUL); doc.text(montoTxt(sap.monto_cotizacion), colX + 3.5, baseTexto(filaB + 2 + 5.5, 11));
+  fuente('bold', 14, AZUL); doc.text(montoTxt(sap.monto_cotizacion), colX + 3.5, baseTexto(filaB + 2 + 5.5, 14));
   etiqueta('FECHA DE APROBACIÓN', colX, filaB + 19);
   caja(colX, filaB + 21, colW, 11, { relleno: BLANCO, borde: NEGRO, grosor: 0.4, radio: 1 });
   fuente('normal', 9, [170, 180, 200]); doc.text('dd  /  mm  /  aaaa', colX + colW / 2, baseTexto(filaB + 21 + 5.5, 9), { align: 'center' });
@@ -189,7 +189,7 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
   y = CARD_Y + CARD_H;
 
   // ── Firmas ──
-  const firmaY = Math.max(y + 22, PH - 52);
+  const firmaY = Math.max(y + 22, PH - 38);
   const firmaW = 78;
   const dibujaFirma = (x, titulo, cargo, nombre) => {
     doc.setDrawColor(...NEGRO); doc.setLineWidth(0.4); doc.line(x, firmaY, x + firmaW, firmaY);
