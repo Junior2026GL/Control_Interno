@@ -110,7 +110,7 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
   doc.rect(NB_X + 1, NB_Y + 1, NB_W - 2, NB_H - 2, 'S');
   doc.setFont('courier', 'bold'); doc.setFontSize(NB_FS); doc.setTextColor(...AZUL);
   const altoDigito = NB_FS * 0.3528 * 0.62;                       // alto aproximado de un dígito, en mm
-  doc.text(numero, NB_X + NB_W / 2, NB_Y + NB_H / 2 + altoDigito / 2, { align: 'center' });
+  doc.text(String(sap.numero || 0).padStart(4, '0'), NB_X + NB_W / 2, NB_Y + NB_H / 2 + altoDigito / 2, { align: 'center' });
   doc.setDrawColor(210, 220, 235); doc.setLineWidth(0.2); doc.line(infoX + 3, y + 27, infoX + INFO_W - 3, y + 27);
   fuente('bold', 7, [100, 120, 160]); doc.text('GENERADO POR', infoMid, y + 31.5, { align: 'center' });
   fuente('bold', 8, AZUL); doc.text(String(generadoPor || 'Sistema').toUpperCase(), infoMid, y + 37, { align: 'center' });
@@ -180,7 +180,7 @@ export async function generarSapPdf(sap, generadoPor, imprimir = false) {
   const filaB = CARD_Y + 28;
   etiqueta('MONTO APROBADO', colX, filaB);
   caja(colX, filaB + 2, colW, 11, { relleno: BLANCO, borde: NEGRO, grosor: 0.4, radio: 1 });
-  fuente('bold', 10, MUTED); doc.text('L', colX + 3.5, baseTexto(filaB + 2 + 5.5, 10));
+  fuente('bold', 11, AZUL); doc.text(montoTxt(sap.monto_cotizacion), colX + 3.5, baseTexto(filaB + 2 + 5.5, 11));
   etiqueta('FECHA DE APROBACIÓN', colX, filaB + 19);
   caja(colX, filaB + 21, colW, 11, { relleno: BLANCO, borde: NEGRO, grosor: 0.4, radio: 1 });
   fuente('normal', 9, [170, 180, 200]); doc.text('dd  /  mm  /  aaaa', colX + colW / 2, baseTexto(filaB + 21 + 5.5, 9), { align: 'center' });
