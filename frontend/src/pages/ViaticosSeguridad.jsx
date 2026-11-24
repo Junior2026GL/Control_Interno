@@ -351,12 +351,23 @@ export default function ViaticosSeguridad() {
   const filtered = useMemo(() => {
     let f = [...registros];
     if (filtroAnio) f = f.filter(r => String(r.periodo_desde).slice(0, 4) === filtroAnio);
-    const q = busqueda.trim().toLowerCase();
-    if (q) f = f.filter(r =>
-      (r.nombre_beneficiario || '').toLowerCase().includes(q) ||
-      (r.numero_identidad || '').includes(q) ||
-      (r.lugar || '').toLowerCase().includes(q) ||
-      (r.mision || '').toLowerCase().includes(q));
+    // Búsqueda precisa: sin acentos ni mayúsculas; cada palabra escrita debe coincidir con el INICIO de una palabra
+    // (así "ana" no encuentra "Mariana" ni "Hernández"). Los nombres van primero en los resultados.
+    const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const tokens = norm(busqueda).split(/\s+/).filter(Boolean);
+    if (tokens.length) {
+      const coincide = (texto) => {
+        const palabras = norm(texto).split(/[^a-z0-9]+/).filter(Boolean);
+        return tokens.every(t => palabras.some(p => p.startsWith(t)));
+      };
+      const porNombre = new Set();
+      f = f.filter(r => {
+        if (coincide(r.nombre_beneficiario)) { porNombre.add(r); return true; }
+        return (r.numero_identidad || '').includes(tokens.join('')) ||
+               coincide(r.lugar) || coincide(r.mision);
+      });
+      f.sort((a, b) => (porNombre.has(b) ? 1 : 0) - (porNombre.has(a) ? 1 : 0));
+    }
     return f;
   }, [registros, busqueda, filtroAnio]);
 
