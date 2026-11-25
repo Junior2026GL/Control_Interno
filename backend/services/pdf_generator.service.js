@@ -210,6 +210,104 @@ async function cargarFirma() {
 }
 
 /**
+ * Dibuja la firma del presidente como vector (trazos del SVG) directamente en
+ * la página, sin convertirla en imagen: la impresora la traza con su propia
+ * resolución. Ocupa el mismo lugar y tamaño que la versión en imagen
+ * (ajuste "contain" sobre un lienzo de 1200 × 450 estirado a la caja).
+ *
+ * Admite solo lo que usa el archivo actual: <path> con comandos absolutos
+ * M, L, C, Z y, opcionalmente, transform="matrix(...)". Ante cualquier otra
+ * cosa lanza un error antes de dibujar, para que se use la versión en imagen.
+ *
+ * @param {import('pdf-lib').PDFPage} page
+ * @param {{x:number, y:number, width:number, height:number}} caja
+ */
+function dibujarFirmaVectorial(page, caja) {
+  const {
+    PDFOperator, PDFOperatorNames, pushGraphicsState, popGraphicsState,
+    setFillingGrayscaleColor, moveTo, lineTo, appendBezierCurve, closePath,
+  } = require('pdf-lib');
+
+  const svg = fs.readFileSync(FIRMA_SVG_PATH, 'utf8');
+
+  const viewBox = svg.match(/\sviewBox="([^"]+)"/);
+  if (!viewBox) throw new Error('El SVG no tiene viewBox');
+  const [vbX, vbY, vbW, vbH] = viewBox[1].trim().split(/[\s,]+/).map(Number);
+
+  const elementos = svg.match(/<[a-zA-Z][^>]*>/g) || [];
+  const noAdmitido = elementos.find(e => !/^<(svg|path)\b/.test(e));
+  if (noAdmitido) throw new Error(`Elemento SVG no admitido: ${noAdmitido.slice(0, 40)}`);
+
+  const LIENZO_W = 1200;
+  const LIENZO_H = 450;
+  const escala = Math.min(LIENZO_W / vbW, LIENZO_H / vbH);
+  const margenX = (LIENZO_W - vbW * escala) / 2;
+  const margenY = (LIENZO_H - vbH * escala) / 2;
+
+  const operadores = [];
+  for (const elemento of elementos.filter(e => e.startsWith('<path'))) {
+    const d = elemento.match(/\sd="([^"]+)"/);
+    if (!d) continue;
+
+    let matriz = [1, 0, 0, 1, 0, 0];
+    const transform = elemento.match(/\stransform="([^"]+)"/);
+    if (transform) {
+      const m = transform[1].trim().match(/^matrix\(([^)]+)\)$/);
+      if (!m) throw new Error(`Transformación SVG no admitida: ${transform[1]}`);
+      matriz = m[1].trim().split(/[\s,]+/).map(Number);
+    }
+
+    // Punto del SVG → punto de la página (en PDF el eje Y crece hacia arriba)
+    const punto = (x, y) => {
+      const [ma, mb, mc, md, me, mf] = matriz;
+      const u = ma * x + mc * y + me - vbX;
+      const v = mb * x + md * y + mf - vbY;
+      return [
+        caja.x + (margenX + u * escala) * caja.width / LIENZO_W,
+        caja.y + caja.height - (margenY + v * escala) * caja.height / LIENZO_H,
+      ];
+    };
+
+    if (/[^MLCZz0-9eE\s,.+-]/.test(d[1])) throw new Error('Comando de trazo SVG no admitido');
+
+    for (const [, comando, args] of d[1].matchAll(/([MLCZz])([^MLCZz]*)/g)) {
+      const n = (args.match(/[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/g) || []).map(Number);
+      if (comando === 'Z' || comando === 'z') {
+        operadores.push(closePath());
+        continue;
+      }
+      const porPaso = comando === 'C' ? 6 : 2;
+      if (!n.length || n.length % porPaso !== 0) throw new Error('Trazo SVG incompleto');
+      for (let i = 0; i < n.length; i += porPaso) {
+        if (comando === 'C') {
+          operadores.push(appendBezierCurve(
+            ...punto(n[i], n[i + 1]),
+            ...punto(n[i + 2], n[i + 3]),
+            ...punto(n[i + 4], n[i + 5]),
+          ));
+        } else {
+          // En SVG, los pares que siguen a una M son líneas
+          const op = comando === 'M' && i === 0 ? moveTo : lineTo;
+          operadores.push(op(...punto(n[i], n[i + 1])));
+        }
+      }
+    }
+
+    // Relleno "evenodd": respeta los huecos de letras como la "o" y la "a"
+    operadores.push(PDFOperator.of(PDFOperatorNames.FillEvenOdd));
+  }
+
+  if (!operadores.length) throw new Error('El SVG no tiene trazos');
+
+  page.pushOperators(
+    pushGraphicsState(),
+    setFillingGrayscaleColor(0), // negro puro
+    ...operadores,
+    popGraphicsState(),
+  );
+}
+
+/**
  * Genera el PDF de una Orden de Pago — solo estampa la firma del presidente.
  * El resto del contenido ya está en el papel preimpreso físico.
  *
@@ -226,17 +324,30 @@ async function generarOrdenPagoPDF(datos) {
   const page = pdfDoc.addPage([612, 792]); // Carta
 
   // ── Firma del presidente (derecha) ─────────────────────────────────────
-  try {
-    const firma = await cargarFirma();
-    if (firma) {
-      const img = await pdfDoc.embedPng(firma.buffer);
-      const fc  = applyOffset(COORDS.firma_presidente);
-      page.drawImage(img, { x: fc.x, y: fc.y, width: fc.width, height: fc.height, opacity: fc.opacity });
-    } else {
-      console.warn('[pdf_generator] Firma del presidente no encontrada.');
+  // Primero como vector; si no se puede, como imagen.
+  let firmaDibujada = false;
+  if (fs.existsSync(FIRMA_SVG_PATH)) {
+    try {
+      dibujarFirmaVectorial(page, applyOffset(COORDS.firma_presidente));
+      firmaDibujada = true;
+    } catch (err) {
+      console.warn('[pdf_generator] No se pudo dibujar la firma como vector:', err.message);
     }
-  } catch (err) {
-    console.error('[pdf_generator] Error al incrustar firma presidente:', err.message);
+  }
+
+  if (!firmaDibujada) {
+    try {
+      const firma = await cargarFirma();
+      if (firma) {
+        const img = await pdfDoc.embedPng(firma.buffer);
+        const fc  = applyOffset(COORDS.firma_presidente);
+        page.drawImage(img, { x: fc.x, y: fc.y, width: fc.width, height: fc.height, opacity: fc.opacity });
+      } else {
+        console.warn('[pdf_generator] Firma del presidente no encontrada.');
+      }
+    } catch (err) {
+      console.error('[pdf_generator] Error al incrustar firma presidente:', err.message);
+    }
   }
 
   // ── Firma izquierda (frontend/public/firma.png) ──────────────────────────

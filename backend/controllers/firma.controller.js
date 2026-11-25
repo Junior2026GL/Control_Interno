@@ -70,8 +70,7 @@ exports.historial = async (req, res) => {
          GROUP BY usuario_id
        ) totales ON totales.usuario_id = fi.usuario_id
        ${where}
-       ORDER BY fi.fecha_hora DESC
-       LIMIT 500`,
+       ORDER BY fi.fecha_hora DESC`,
       params,
     );
     return res.json(rows);
