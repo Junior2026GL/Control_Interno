@@ -1,6 +1,22 @@
 ﻿import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { limitesContenido } from './viaticoSeguridadPdf';
 
+/* PDF de Viáticos Internacionales, con el mismo estilo que el recibo de Viáticos Nacionales */
+
+const AZUL = [39, 76, 141], AZUL_OSC = [24, 48, 92], NEGRO = [30, 30, 30], BLANCO = [255, 255, 255];
+const GRIS = [238, 242, 250], GRIS2 = [248, 250, 254], AZUL_L = [205, 218, 240], FINDE = [255, 243, 214];
+const ETIQ = [55, 85, 145];
+const DIAS_POR_TABLA = 10;   // con más días la tabla continúa en otra, para que no se partan fechas ni montos
+
+const num = v => parseFloat(v) || 0;
+const miles = v => num(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const usd = v => `$${miles(v)}`;
+const usdCelda = v => (num(v) > 0 ? usd(v) : '');
+const mayus = s => String(s || '').toUpperCase();
+const sumar = dias => dias.reduce((s, d) => s + num(d.monto), 0);
+
+/* Carga el logo y le recorta el margen blanco para que llene el encabezado */
 async function loadImg(url) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -8,8 +24,14 @@ async function loadImg(url) {
     img.onload = () => {
       const c = document.createElement('canvas');
       c.width = img.width; c.height = img.height;
-      c.getContext('2d').drawImage(img, 0, 0);
-      resolve(c.toDataURL('image/png'));
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const b = limitesContenido(ctx, c.width, c.height);
+      if (!b) { resolve(c.toDataURL('image/png')); return; }
+      const r = document.createElement('canvas');
+      r.width = b.ancho; r.height = b.alto;
+      r.getContext('2d').drawImage(c, b.x, b.y, b.ancho, b.alto, 0, 0, b.ancho, b.alto);
+      resolve(r.toDataURL('image/png'));
     };
     img.onerror = () => resolve(null);
     img.src = url;
@@ -22,500 +44,373 @@ function fmtFecha(isoStr) {
   return (dd || '') + '/' + (mm || '') + '/' + (yy || '');
 }
 
-function getDayName(isoStr) {
-  const s = (isoStr || '').substring(0, 10);
-  const [yy, mm, dd] = s.split('-');
-  const d = new Date(parseInt(yy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
-  const days = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
-  return days[d.getDay()];
+const fechaLocal = iso => { const [y, m, d] = String(iso).substring(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
+const DIAS_SEMANA = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+const esFinDeSemana = iso => [0, 6].includes(fechaLocal(iso).getDay());
+function dayHead(iso) {
+  const d = fechaLocal(iso);
+  return `${DIAS_SEMANA[d.getDay()]}\n${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 
-// Calcula los anchos de columna adaptativos para una tabla con `diaCount` días
-function computeColStyles(CW, diaCount) {
-  const FIXED_NO = 7;
-  const MIN_DATE = 13;
-  const MIN_TOT  = 16;
-  let nombreW  = 54;
-  let detalleW = 44;
-  let fechaW   = 22;
-
-  if (diaCount > 0) {
-    const avail = CW - FIXED_NO - nombreW - detalleW;
-    const raw   = Math.floor(avail / (diaCount + 1));
-    if (raw < MIN_DATE) {
-      const totalND = CW - FIXED_NO - MIN_DATE * (diaCount + 1);
-      nombreW  = Math.max(40, Math.round(totalND * 0.55));
-      detalleW = Math.max(30, totalND - nombreW);
-      fechaW   = MIN_DATE;
-    } else {
-      fechaW = Math.min(22, raw);
-      const surplus = CW - FIXED_NO - nombreW - detalleW - fechaW * diaCount - MIN_TOT;
-      if (surplus > 0) {
-        nombreW  = Math.min(75, nombreW  + Math.round(surplus * 0.6));
-        detalleW = Math.min(60, detalleW + Math.round(surplus * 0.4));
-      }
-    }
-  }
-  const FIXED_TOT = CW - FIXED_NO - nombreW - detalleW - fechaW * diaCount;
-  return {
-    0: { cellWidth: FIXED_NO,  halign: 'center' },
-    1: { cellWidth: nombreW,   halign: 'center' },
-    2: { cellWidth: detalleW,  halign: 'left'   },
-    ...Object.fromEntries(Array.from({ length: diaCount }, (_, i) => [i + 3, { cellWidth: fechaW, halign: 'center' }])),
-    [3 + diaCount]: { cellWidth: FIXED_TOT, halign: 'right' },
-  };
-}
-
-export async function generarPdfViatico(v, nombreUsuario) {
-  const logoData = await loadImg('/logo-congreso.png.png');
-
-  // Separar días de viaje (RESUMEN) y días de estadía (DETALLE)
-  const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
-  const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
-  // Fallback: si no hay días de estadía, mostrar los mismos días de viaje en DETALLE
-  const diasDetalle = diasEstadia.length ? diasEstadia : diasViaje;
-
-  // Auto-switch: carta (≤7 días) o legal/oficio (>7 días)
-  const totalDias = Math.max(diasViaje.length, diasDetalle.length);
-  const formato   = totalDias > 7 ? 'legal' : 'letter';
-
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: formato });
-  const W  = doc.internal.pageSize.getWidth();
-  const H  = doc.internal.pageSize.getHeight();
-  const M  = 10;   // márgenes laterales
-  const CW = W - M * 2;
-
-  const C_AZUL_OSC = [22,  51, 110];
-  const C_AZUL     = [39,  76, 141];
-  const C_AZUL_CLR = [58,  96, 165];
-  const C_GRIS     = [243, 244, 248];
-  const C_NEGRO    = [25,  25,  25];
-  const C_BLANCO   = [255, 255, 255];
-  const C_LINEA    = [200, 210, 228];
-  const C_CELDA    = [235, 242, 255];
-
+/* ══════════════════════════════════════════════════════════
+   Dibuja el cuadro con la escala `k` (1 = tamaño normal).
+══════════════════════════════════════════════════════════ */
+function dibujar(doc, v, nombreUsuario, logoData, k) {
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 10, CW = W - M * 2;
+  const FH = 8, FY = H - 5 - FH;            // franja del pie de página
+  const MB = H - FY + 2;                    // margen inferior para las tablas
+  const V = x => x * k;                     // longitudes verticales
+  const F = x => Math.max(5, x * k);        // tamaños de letra (mínimo legible)
   let y = M;
 
-  // -------------------------------------------------------
-  // ENCABEZADO  (más compacto)
-  // -------------------------------------------------------
-  const HH     = 30;
-  const LOGO_W = 38;
+  // Días de viaje (resumen) y de estadía (detalle); sin estadía, el detalle usa los de viaje
+  const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
+  const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
+  const totalUSD    = sumar(diasViaje);
+  const nombre      = v.diputado_nombre || '';
 
-  // Caja del encabezado
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(...C_AZUL);
-  doc.setLineWidth(0.5);
+  /* ─ ENCABEZADO ─ */
+  const HH = V(24), LW = HH + 4, TW = 80, MIDW = CW - LW - TW;
+  doc.setFillColor(255, 255, 255); doc.setDrawColor(...AZUL); doc.setLineWidth(0.5);
   doc.rect(M, y, CW, HH, 'FD');
-
-  // Logo
   if (logoData) {
-    const lSize = HH - 6;
-    doc.addImage(logoData, 'PNG', M + (LOGO_W - lSize) / 2, y + 3, lSize, lSize);
+    const p = doc.getImageProperties(logoData);
+    const hL = HH - 0.8, wL = Math.min(LW - 1, hL * p.width / p.height);
+    doc.addImage(logoData, 'PNG', M + (LW - wL) / 2, y + 0.4, wL, hL);
   }
+  doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.3);
+  doc.line(M + LW, y + 2, M + LW, y + HH - 2);
+  const mX = M + LW + MIDW / 2;
+  const titulo = (txt, estilo, tam, alto) => {
+    doc.setFont('helvetica', estilo); doc.setFontSize(F(tam)); doc.setTextColor(...AZUL);
+    doc.text(txt, mX, y + HH * alto, { align: 'center' });
+  };
+  titulo('REPÚBLICA DE HONDURAS', 'bold', 10, 0.24);
+  titulo('CONGRESO NACIONAL DE HONDURAS', 'normal', 7.5, 0.45);
+  titulo('PAGADURÍA ESPECIAL', 'bold', 9, 0.67);
+  titulo('DETALLE DE CÁLCULO DE VIÁTICOS AL EXTERIOR', 'normal', 7.5, 0.88);
+  const tX = M + LW + MIDW;
+  doc.setFillColor(...AZUL); doc.rect(tX, y, TW, HH, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(...BLANCO);
+  doc.setFontSize(F(9));  doc.text('CUADRO DE CÁLCULOS', tX + TW / 2, y + HH * 0.28, { align: 'center' });
+  doc.setFontSize(F(15)); doc.text('VIÁTICOS', tX + TW / 2, y + HH * 0.64, { align: 'center' });
+  doc.setFontSize(F(8));  doc.text('AL EXTERIOR', tX + TW / 2, y + HH * 0.88, { align: 'center' });
+  y += HH + V(1.5);
 
-  // Línea divisoria logo | texto
-  doc.setDrawColor(180, 200, 235);
-  doc.setLineWidth(0.3);
-  doc.line(M + LOGO_W, y + 4, M + LOGO_W, y + HH - 4);
-
-  // Títulos centrados en la mitad derecha
-  const hCX = M + LOGO_W + (CW - LOGO_W) / 2;
-  doc.setTextColor(...C_AZUL_OSC);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('REPÚBLICA DE HONDURAS', hCX, y + 7, { align: 'center' });
-  doc.setFontSize(9);
-  doc.text('CONGRESO NACIONAL', hCX, y + 12, { align: 'center' });
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('PAGADURÍA ESPECIAL', hCX, y + 18, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...C_AZUL);
-  doc.text('CUADRO DE CALCULOS DE VIÁTICOS', hCX, y + 23, { align: 'center' });
-  doc.text('DETALLE DE CALCULO DE VIATICOS AL EXTERIOR', hCX, y + 28, { align: 'center' });
-
-  y += HH + 1;
-
-  // -------------------------------------------------------
-  // DATOS GENERALES (2 columnas)
-  // -------------------------------------------------------
-  const datos = [
-    ['MOTIVO DEL VIAJE:', (v.motivo_viaje || '').toUpperCase()],
-    ['LUGAR:',            (v.lugar        || '').toUpperCase()],
-    ['NOMBRE:',           (v.diputado_nombre || '').toUpperCase()],
-    ['DNI:',              v.identidad || ''],
-    ['PERIODO DE TIEMPO:', String(v.periodo_dias) + ' dias'],
-    ['CARGO:',            (v.cargo || '').toUpperCase()],
-  ];
-
-  // Fondo gris filas pares
-  const LBL_W = 44;
-  const ROW_H = 5.0;
-  const HALF  = CW / 2;
-
-  datos.forEach(([lbl, val], i) => {
-    if (i % 2 === 0) {
-      doc.setFillColor(...C_GRIS);
-      doc.rect(M, y, CW, ROW_H, 'F');
+  /* ─ CAMPOS ─ */
+  const RH = V(5.2);
+  const cell = (lbl, val, ox, w, lblW = 34, h = RH, big = false, wrap = false) => {
+    // Con wrap, el texto largo baja a más renglones y la celda crece en alto
+    let lineas = null;
+    const lh = F(8) * 0.3528 * 1.2;
+    if (wrap) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(F(8));
+      lineas = doc.splitTextToSize(val || '', w - lblW - 4);
+      h = Math.max(h, lineas.length * lh + V(1.8));
     }
-    // Etiqueta
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(...C_AZUL_OSC);
-    doc.text(lbl, M + 2, y + ROW_H * 0.68);
+    doc.setFillColor(...GRIS); doc.rect(M + ox, y, lblW, h, 'F');
+    doc.setFillColor(255, 255, 255); doc.rect(M + ox + lblW, y, w - lblW, h, 'F');
+    doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.2);
+    doc.rect(M + ox, y, w, h, 'S'); doc.line(M + ox + lblW, y, M + ox + lblW, y + h);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(F(6)); doc.setTextColor(...ETIQ);
+    doc.text(lbl + ':', M + ox + 1.5, y + (lineas ? RH : h) * 0.66);
+    if (lineas) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(F(8)); doc.setTextColor(...NEGRO);
+      lineas.forEach((l, i) => doc.text(l, M + ox + lblW + 2, y + RH * 0.68 + i * lh));
+      return h;
+    }
+    // El texto se escribe completo en una línea; si no cabe, se reduce la letra
+    const txt = String(val || '');
+    const maxW = w - lblW - (big ? 3 : 4);
+    let fs = F(big ? 10.5 : 8);
+    doc.setFont('helvetica', big ? 'bold' : 'normal'); doc.setFontSize(fs);
+    while (fs > 4 && doc.getTextWidth(txt) > maxW) { fs -= 0.25; doc.setFontSize(fs); }
+    if (big) {
+      doc.setTextColor(...AZUL);
+      doc.text(txt, M + ox + lblW + (w - lblW) / 2, y + h * 0.68, { align: 'center' });
+    } else {
+      doc.setTextColor(...NEGRO);
+      doc.text(txt, M + ox + lblW + 2, y + h * 0.68);
+    }
+    return h;
+  };
 
-    // Valor centrado y en negrita
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(...C_NEGRO);
-    const shown = doc.splitTextToSize(val, CW - LBL_W - 4)[0] || '';
-    const centerX = M + LBL_W + (CW - LBL_W) / 2;
-    doc.text(shown, centerX, y + ROW_H * 0.68, { align: 'center' });
+  y += cell('MOTIVO DEL VIAJE', mayus(v.motivo_viaje), 0, CW, 34, RH, false, true);
+  cell('LUGAR', mayus(v.lugar), 0, CW * 0.6); cell('CARGO', mayus(v.cargo), CW * 0.6, CW * 0.4); y += RH;
+  cell('NOMBRE', mayus(nombre), 0, CW * 0.68, 34, V(6.8), true);
+  cell('IDENTIDAD', v.identidad || '', CW * 0.68, CW * 0.32, 22, V(6.8)); y += V(6.8);
+  const PL = 34, tercio = (CW - PL) / 3;
+  doc.setFillColor(...GRIS); doc.rect(M, y, PL, RH, 'F');
+  doc.setDrawColor(...AZUL_L); doc.setLineWidth(0.2); doc.rect(M, y, PL, RH, 'S');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(F(6)); doc.setTextColor(...ETIQ);
+  doc.text('PERÍODO DE TIEMPO:', M + 1.5, y + RH * 0.66);
+  cell('DESDE', fmtFecha(v.fecha_inicio), PL, tercio, 14);
+  cell('HASTA', fmtFecha(v.fecha_fin), PL + tercio, tercio, 14);
+  cell('DÍAS', v.periodo_dias != null ? String(num(v.periodo_dias)) : '', PL + 2 * tercio, tercio, 14);
+  y += RH + V(2.5);
 
-    doc.setDrawColor(...C_LINEA);
-    doc.setLineWidth(0.15);
-    doc.line(M, y + ROW_H, M + CW, y + ROW_H);
-    y += ROW_H;
+  /* ─ CUADRITO DE RESUMEN ─ */
+  const pad = { top: V(1.2), bottom: V(1.2), left: 2.5, right: 2.5 };
+  const anchoRes = Math.round(CW * 0.42);
+  autoTable(doc, {
+    startY: y, margin: { left: M, right: W - M - anchoRes, bottom: MB }, tableWidth: anchoRes,
+    head: [['No.', 'Detalle', 'TOTAL']],
+    body: [
+      ['1', 'ALIMENTACIÓN Y HOSPEDAJE', usd(totalUSD)],
+      ['2', 'COMPLEMENTO', usd(0)],
+      ['3', 'OTROS', usd(0)],
+    ],
+    foot: [[
+      { content: 'GRAN TOTAL:', colSpan: 2, styles: { halign: 'right' } },
+      { content: usd(totalUSD), styles: { halign: 'right' } },
+    ]],
+    headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: F(7), cellPadding: pad },
+    bodyStyles: { fontSize: F(7.5), textColor: NEGRO, cellPadding: pad },
+    footStyles: { fillColor: AZUL_OSC, textColor: BLANCO, fontStyle: 'bold', fontSize: F(9), cellPadding: pad },
+    alternateRowStyles: { fillColor: GRIS2 },
+    styles: { lineColor: AZUL_L, lineWidth: 0.2 },
+    columnStyles: { 0: { cellWidth: 11, halign: 'center' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 36, halign: 'right' } },
   });
+  y = doc.lastAutoTable.finalY + V(2.5);
 
-  // Borde exterior datos
-  doc.setDrawColor(...C_AZUL);
-  doc.setLineWidth(0.4);
-  doc.rect(M, y - datos.length * ROW_H, CW, datos.length * ROW_H);
+  /* ─ TABLAS CON COLUMNAS POR DÍA (los montos van en el primer renglón) ─ */
+  const tablaDias = (tituloTabla, filas, dias) => {
+    const total = sumar(dias);
+    const bloques = [];
+    for (let i = 0; i < dias.length; i += DIAS_POR_TABLA) bloques.push(dias.slice(i, i + DIAS_POR_TABLA));
+    if (!bloques.length) bloques.push([]);
+    const varios = bloques.length > 1;
+    bloques.forEach((bloque, nb) => {
+      const n = bloque.length;
+      const ultimo = nb === bloques.length - 1;
+      const cabeza = ['Detalle', 'Nombre', 'Cargo'];
+      const finales = varios ? (ultimo ? ['SUBTOTAL', 'TOTAL'] : ['SUBTOTAL']) : ['TOTAL'];
+      const valoresFin = varios ? (ultimo ? [sumar(bloque), total] : [sumar(bloque)]) : [total];
+      const medir = (txt, estilo, tam) => { doc.setFont('helvetica', estilo); doc.setFontSize(tam); return doc.getTextWidth(String(txt || '')); };
+      let anchosTxt = cabeza.map((h, c) => Math.max(medir(h, 'bold', F(6.5)), ...filas.map(f => medir(f[c], 'normal', F(7)))) + 6);
+      const dayW = n ? Math.max(...bloque.flatMap(d => [
+        ...dayHead(d.fecha).split('\n').map(l => medir(l, 'bold', F(6.5))),
+        medir(usd(d.monto), 'bold', F(7)),
+      ])) + 3.8 : 0;
+      let fw = n ? Math.max(19, dayW) : 0;
+      let anchoFin = Math.max(18, medir(usd(total), 'bold', F(7)) + 3.8, medir('SUBTOTAL', 'bold', F(6.5)) + 3.8);
+      const ANCHO_NUM = 8;
+      const suma = () => ANCHO_NUM + anchosTxt.reduce((a, b) => a + b, 0) + n * fw + finales.length * anchoFin;
+      if (suma() > CW) {             // falta espacio: primero se achican los días y luego las columnas de texto
+        if (n) fw = Math.max(dayW, fw - (suma() - CW) / n);
+        const falta = suma() - CW;
+        if (falta > 0) {
+          const tot = anchosTxt.reduce((a, b) => a + b, 0);
+          anchosTxt = anchosTxt.map(w => w - (w / tot) * falta);
+        }
+      } else {                       // sobra espacio: se reparte de forma proporcional
+        const r = (CW - ANCHO_NUM) / (suma() - ANCHO_NUM);
+        anchosTxt = anchosTxt.map(w => w * r); fw *= r; anchoFin *= r;
+      }
+      const b = 1 + cabeza.length;   // primera columna de día
+      const cp = { top: V(1.3), bottom: V(1.3), left: 1.5, right: 1.5 };
 
-  y += 2.5;
-
-  // -------------------------------------------------------
-  // COLUMNAS Y TOTALES POR TABLA
-  // -------------------------------------------------------
-  const maxDaysViaje   = Math.min(diasViaje.length, 13);
-  const maxDaysDetalle = Math.min(diasDetalle.length, 13);
-
-  function buildColFechas(arr, maxDays) {
-    return arr.slice(0, maxDays).map(d => {
-      const s = (d.fecha || '').substring(0, 10);
-      const [yy, mm, dd] = s.split('-');
-      return getDayName(s) + '\n' + parseInt(dd, 10) + '/' + parseInt(mm, 10) + '/' + yy;
+      if (y > FY - 30) { doc.addPage(); y = M; }
+      autoTable(doc, {
+        startY: y, margin: { left: M, right: M, bottom: MB }, tableWidth: CW,
+        head: [
+          [{ content: nb ? `${tituloTabla} (continuación)` : tituloTabla, colSpan: b + n + finales.length, styles: { fillColor: AZUL_OSC, fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
+          ['#', ...cabeza, ...bloque.map(d => dayHead(d.fecha)), ...finales],
+        ],
+        body: filas.map((f, i) => [
+          String(i + 1), ...f,
+          ...bloque.map(d => (i === 0 ? usdCelda(d.monto) : '')),
+          ...valoresFin.map(t => ({ content: usd(i === 0 ? t : 0), styles: { fontStyle: 'bold', textColor: AZUL } })),
+        ]),
+        foot: [['', 'TOTAL:', '', '',
+          ...bloque.map(d => ({ content: usdCelda(d.monto), styles: { halign: 'center' } })),
+          ...valoresFin.map(t => ({ content: usd(t), styles: { halign: 'right', textColor: AZUL } })),
+        ]],
+        showFoot: 'lastPage',
+        headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: F(6.5), halign: 'center', cellPadding: cp },
+        bodyStyles: { fontSize: F(7), textColor: NEGRO, cellPadding: cp },
+        footStyles: { fillColor: GRIS, textColor: NEGRO, fontSize: F(7), fontStyle: 'bold', cellPadding: cp },
+        alternateRowStyles: { fillColor: GRIS2 },
+        styles: { lineColor: AZUL_L, lineWidth: 0.2, overflow: 'linebreak' },
+        columnStyles: {
+          0: { cellWidth: ANCHO_NUM, halign: 'center' },
+          ...Object.fromEntries(anchosTxt.map((w, i) => [i + 1, { cellWidth: w, halign: 'left' }])),
+          ...Object.fromEntries(bloque.map((_, i) => [b + i, { cellWidth: fw, halign: 'center' }])),
+          ...Object.fromEntries(finales.map((_, i) => [b + n + i, { cellWidth: anchoFin, halign: 'right' }])),
+        },
+        didParseCell(data) {
+          const ci = data.column.index;
+          if (data.section !== 'head' && ci >= b && ci < b + n && esFinDeSemana(bloque[ci - b].fecha)) data.cell.styles.fillColor = FINDE;
+        },
+      });
+      y = doc.lastAutoTable.finalY + V(2.5);
     });
+  };
+
+  const filasDetalle = (v.detalle?.length ? v.detalle : [{}]).map((r, i) => [
+    mayus(r.detalle || (i === 0 ? 'ALIMENTACIÓN Y HOSPEDAJE' : '')),
+    mayus(r.nombre || (i === 0 ? nombre : '')),
+    mayus(r.cargo || (i === 0 ? v.cargo : '')),
+  ]);
+  // Si la estadía tiene días o montos distintos a los del viaje, se muestran las dos tablas
+  const huella = dias => dias.map(d => `${String(d.fecha).slice(0, 10)}:${num(d.monto)}`).join('|');
+  if (diasEstadia.length && huella(diasEstadia) !== huella(diasViaje)) {
+    tablaDias('DÍAS DE VIAJE', [['ALIMENTACIÓN Y HOSPEDAJE', filasDetalle[0][1], mayus(v.cargo)]], diasViaje);
+    tablaDias('DETALLE HOSPEDAJE Y ALIMENTACIÓN (ESTADÍA)', filasDetalle, diasEstadia);
+  } else {
+    tablaDias('DETALLES DEL VIÁTICO', filasDetalle, diasViaje);
   }
 
-  const colFechasViaje   = buildColFechas(diasViaje,   maxDaysViaje);
-  const colFechasDetalle = buildColFechas(diasDetalle, maxDaysDetalle);
-
-  const totalUSD         = diasViaje.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
-  const totalUSD_detalle = diasDetalle.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
-
-  const baseColStylesViaje   = computeColStyles(CW, maxDaysViaje);
-  const baseColStylesDetalle = computeColStyles(CW, maxDaysDetalle);
-
-  const headStyle = {
-    fillColor: C_AZUL,
-    textColor: C_BLANCO,
-    fontStyle: 'bold',
-    halign: 'center',
-    fontSize: 7,
-    cellPadding: { top: 1.0, bottom: 1.0, left: 1, right: 1 },
-  };
-  const bodyStyle = {
-    fontSize: 7.5,
-    cellPadding: { top: 1.0, bottom: 1.0, left: 1.2, right: 1.2 },
-    textColor: C_NEGRO,
-    lineColor: C_LINEA,
-    lineWidth: 0.2,
-  };
-
-  const nombrePrincipal = (v.detalle && v.detalle[0]?.nombre) || v.diputado_nombre || '';
-
-  // ---- TABLA 1: RESUMEN (3 filas fijas) -------------------
-  doc.setFillColor(...C_AZUL);
-  doc.rect(M, y, CW, 5, 'F');
-  doc.setTextColor(...C_BLANCO);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.text('RESUMEN DE VIATICOS:', M + 3, y + 3.6);
-  y += 5;
-
-  const RESUMEN_LABELS = ['ALIMENTACIÓN Y HOSPEDAJE', 'COMPLEMENTO', 'OTROS'];
-  const resumenBody = RESUMEN_LABELS.map((detalleLabel, idx) => {
-    const montos = diasViaje.slice(0, maxDaysViaje).map(d =>
-      idx === 0 && parseFloat(d.monto) > 0 ? '$' + parseFloat(d.monto).toFixed(2) : ''
-    );
-    const tot = idx === 0 ? '$' + totalUSD.toFixed(2) : '$0.00';
-    const nombre = idx === 0 ? nombrePrincipal.toUpperCase() : '';
-    return [String(idx + 1), nombre, detalleLabel, ...montos, tot];
-  });
-  resumenBody.push([
-    '', 'TOTAL:', '',
-    ...diasViaje.slice(0, maxDaysViaje).map(d => {
-      const m = parseFloat(d.monto) || 0;
-      return m > 0 ? '$' + m.toFixed(2) : '';
-    }),
-    '$' + totalUSD.toFixed(2),
-  ]);
-
-  autoTable(doc, {
-    startY: y,
-    head: [['No.', 'NOMBRE', 'DETALLE', ...colFechasViaje, 'TOTAL']],
-    body: resumenBody,
-    margin: { left: M, right: M },
-    tableWidth: CW,
-    styles: bodyStyle,
-    headStyles: headStyle,
-    columnStyles: baseColStylesViaje,
-    didParseCell: ({ row, cell, column }) => {
-      if (row.section === 'body') {
-        if (row.index === resumenBody.length - 1) {
-          cell.styles.fontStyle = 'bold';
-          cell.styles.fillColor = C_CELDA;
-          cell.styles.textColor = C_AZUL_OSC;
-        } else if (row.index % 2 === 1) {
-          cell.styles.fillColor = [250, 252, 255];
-        }
-        if (column.index === 3 + colFechasViaje.length) {
-          cell.styles.textColor = C_AZUL;
-          cell.styles.fontStyle = 'bold';
-        }
-      }
-    },
-  });
-  y = doc.lastAutoTable.finalY + 1.5;
-
-  // ---- TABLA 2: DETALLE (mín. 3 filas) -------------------
-  doc.setFillColor(...C_AZUL);
-  doc.rect(M, y, CW, 5, 'F');
-  doc.setTextColor(...C_BLANCO);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.text('DETALLE HOSPEDAJE Y ALIMENTACION', M + 3, y + 3.6);
-  y += 5;
-
-  // Rellenar hasta mínimo 3 filas
-  const detalleRows = [...(v.detalle || [])];
-  while (detalleRows.length < 3) detalleRows.push({ nombre: '', cargo: '', detalle: '' });
-
-  const detalleBody = detalleRows.map((row, idx) => {
-    const montos = diasDetalle.slice(0, maxDaysDetalle).map(d =>
-      idx === 0 && parseFloat(d.monto) > 0 ? '$' + parseFloat(d.monto).toFixed(2) : ''
-    );
-    const tot = idx === 0 ? '$' + totalUSD_detalle.toFixed(2) : '$0.00';
-    const nombre = (row.nombre || (idx === 0 ? nombrePrincipal : '')).toUpperCase();
-    const cargo  = (row.cargo  || (idx === 0 ? v.cargo || '' : '')).toUpperCase();
-    return [String(idx + 1), nombre, cargo, ...montos, tot];
-  });
-  detalleBody.push([
-    '', 'TOTAL:', '',
-    ...diasDetalle.slice(0, maxDaysDetalle).map(d => {
-      const m = parseFloat(d.monto) || 0;
-      return m > 0 ? '$' + m.toFixed(2) : '';
-    }),
-    '$' + totalUSD_detalle.toFixed(2),
-  ]);
-
-  autoTable(doc, {
-    startY: y,
-    head: [['No.', 'NOMBRE', 'CARGO', ...colFechasDetalle, 'TOTAL']],
-    body: detalleBody,
-    margin: { left: M, right: M },
-    tableWidth: CW,
-    styles: bodyStyle,
-    headStyles: headStyle,
-    columnStyles: baseColStylesDetalle,
-    didParseCell: ({ row, cell, column }) => {
-      if (row.section === 'body') {
-        if (row.index === detalleBody.length - 1) {
-          cell.styles.fontStyle = 'bold';
-          cell.styles.fillColor = C_CELDA;
-          cell.styles.textColor = C_AZUL_OSC;
-        } else if (row.index % 2 === 1) {
-          cell.styles.fillColor = [250, 252, 255];
-        }
-        if (column.index === 3 + colFechasDetalle.length) {
-          cell.styles.textColor = C_AZUL;
-          cell.styles.fontStyle = 'bold';
-        }
-      }
-    },
-  });
-
-  // -------------------------------------------------------
-  // TOTALES + NOTAS  — dibujado con autoTable para bordes uniformes
-  // -------------------------------------------------------
+  /* ─ DÓLARES, TASA, LEMPIRAS, DETALLE + NOTAS (este bloque no cambia de tamaño) ─ */
   const tasa    = parseFloat(v.tasa_cambio) || 1;
   const lps     = totalUSD * tasa;
   const TOT_W   = Math.round(CW * 0.30);
   const NOTA_W  = CW - TOT_W;
   const NOTE_FS = 6.0;
   const NOTE_LINE_H = 3.5;
-  const NOTE_PAD_BOT = 3;
   const NOTA_TXT_W = NOTA_W - 8;
+  const tw = Math.floor((TOT_W - 5) / 4);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(NOTE_FS);
   const n1 = doc.splitTextToSize(v.nota1 || '', NOTA_TXT_W);
   const n2 = doc.splitTextToSize(v.nota2 || '', NOTA_TXT_W);
+  const obsLineas = doc.splitTextToSize(mayus(v.obs_detalle), tw - 2);
   const notaLinesH = (n1.length + (n2.length ? n2.length + 0.5 : 0)) * NOTE_LINE_H;
-  const BLOQUE_H   = Math.max(22, 10 + notaLinesH + NOTE_PAD_BOT);
+  const BLOQUE_H = Math.max(22, 13 + notaLinesH, 13 + obsLineas.length * NOTE_LINE_H);
 
-  const tcw_each = Math.floor((TOT_W - 5) / 4);
-  const tcw_arr  = [tcw_each, tcw_each, tcw_each, tcw_each];
   const PILL_LABELS = ['DOLARES', 'TASA DE CAMBIO', 'LEMPIRAS', 'DETALLE'];
-  const obsDetalle  = (v.obs_detalle || '').toUpperCase();
-  const PILL_VALS   = [
+  const PILL_VALS = [
     '$' + totalUSD.toFixed(2),
     tasa.toFixed(4),
-    'L ' + lps.toLocaleString('es-HN', { minimumFractionDigits: 2 }),
-    obsDetalle,
+    'L ' + lps.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
   ];
 
+  if (y + BLOQUE_H > H - MB) { doc.addPage(); y = M; }
   autoTable(doc, {
-    startY: doc.lastAutoTable.finalY - 0.1,  // solapa 0.1mm → sin gap visible
+    startY: y,
     body: [['', '']],
-    margin: { left: M, right: M },
+    margin: { left: M, right: M, bottom: MB },
     tableWidth: CW,
-    styles: {
-      lineColor: C_AZUL,
-      lineWidth: 0.2,
-      cellPadding: 0,
-      minCellHeight: BLOQUE_H,
-    },
+    styles: { lineColor: AZUL, lineWidth: 0.2, cellPadding: 0, minCellHeight: BLOQUE_H },
     columnStyles: {
-      0: { cellWidth: TOT_W,  fillColor: C_GRIS },
+      0: { cellWidth: TOT_W,  fillColor: [243, 244, 248] },
       1: { cellWidth: NOTA_W, fillColor: [252, 253, 255] },
     },
-    didDrawCell: ({ column, cell }) => {
-      const cx = cell.x;
-      const cy = cell.y;
-      const ch = cell.height;
-
+    didDrawCell: ({ column, cell: c }) => {
+      const cx = c.x, cy = c.y, ch = c.height;
       if (column.index === 0) {
-        // Píldoras
-        tcw_arr.forEach((tw, i) => {
+        PILL_LABELS.forEach((etq, i) => {
           const px = cx + 1 + i * (tw + 1);
-          doc.setFillColor(...C_AZUL);
+          doc.setFillColor(...AZUL);
           doc.roundedRect(px, cy + 1.5, tw, 6, 1, 1, 'F');
-          doc.setTextColor(...C_BLANCO);
+          doc.setTextColor(...BLANCO);
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6);
-          doc.text(PILL_LABELS[i], px + tw / 2, cy + 5.8, { align: 'center' });
-        });
-        // Valores — el último (DETALLE) puede ser texto largo, se envuelve
-        tcw_arr.forEach((tw, i) => {
-          const px = cx + 1 + i * (tw + 1);
-          doc.setFont('helvetica', i === 3 ? 'normal' : 'bold');
-          doc.setFontSize(i === 3 ? 6 : 8);
-          doc.setTextColor(...C_AZUL_OSC);
-          if (i === 3) {
-            const lines = doc.splitTextToSize(PILL_VALS[i], tw - 2);
-            const startY = cy + 10;
-            lines.forEach((line, li) => doc.text(line, px + tw / 2, startY + li * 3.5, { align: 'center' }));
+          let fs = 6;
+          doc.setFontSize(fs);
+          while (fs > 4 && doc.getTextWidth(etq) > tw - 1) { fs -= 0.2; doc.setFontSize(fs); }   // que la etiqueta no se corte
+          doc.text(etq, px + tw / 2, cy + 5.8, { align: 'center' });
+          doc.setTextColor(...AZUL_OSC);
+          if (i === 3) {              // DETALLE: texto libre, puede ocupar varios renglones
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(6);
+            obsLineas.forEach((line, li) => doc.text(line, px + tw / 2, cy + 10 + li * 3.5, { align: 'center' }));
           } else {
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
             doc.text(PILL_VALS[i], px + tw / 2, cy + ch / 2 + 5, { align: 'center' });
           }
         });
       } else {
-        // Header NOTAS azul
-        doc.setFillColor(...C_AZUL);
-        doc.rect(cx, cy, cell.width, 6.5, 'F');
-        doc.setTextColor(...C_BLANCO);
+        doc.setFillColor(...AZUL);
+        doc.rect(cx, cy, c.width, 6.5, 'F');
+        doc.setTextColor(...BLANCO);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7.5);
         doc.text('NOTAS:', cx + 3, cy + 5.0);
-        // Texto notas
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(NOTE_FS);
         doc.setTextColor(40, 40, 40);
         doc.text(n1, cx + 3, cy + 10);
-        if (n2.length) {
-          doc.text(n2, cx + 3, cy + 10 + n1.length * NOTE_LINE_H + NOTE_LINE_H * 0.6);
-        }
+        if (n2.length) doc.text(n2, cx + 3, cy + 10 + n1.length * NOTE_LINE_H + NOTE_LINE_H * 0.6);
       }
     },
   });
+  y = doc.lastAutoTable.finalY + V(2);
 
-  y = doc.lastAutoTable.finalY + 4;
-
-  // -------------------------------------------------------
-  // FIRMAS  — etiquetas apiladas a la izquierda, elaborado por a la derecha
-  // -------------------------------------------------------
-  const firmaLabels  = ['FIRMA:', 'NOMBRE:', 'IDENTIDAD:', 'FECHA:', 'TELEFONO:'];
-  const firmaValues  = [
-    '',
-    (v.diputado_nombre || '').toUpperCase(),
-    v.identidad || '',
-    '',
-    v.telefono || '',
-  ];
-  const FIRMA_ROW_H  = 6;
-  const FIRMA_HALF   = CW * 0.50;
-  const FIRMA_TOTAL  = firmaLabels.length * FIRMA_ROW_H + 4;
-
-  const elab         = (nombreUsuario || v.elaborado_por_nombre || '').toUpperCase();
-
-  // Columna izquierda — etiquetas, valores y líneas cortas
-  const LBL_END_X  = M + 22;        // fin de la etiqueta
-  const LINE_END_X = M + FIRMA_HALF * 0.55; // línea corta (≈55% del ancho izq)
-
-  firmaLabels.forEach((lbl, i) => {
-    const fy  = y + i * FIRMA_ROW_H + 6;
-    const val = firmaValues[i] || '';
-
-    // Etiqueta
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(...C_AZUL);
-    doc.text(lbl, M + 2, fy);
-
-    // Valor pre-llenado centrado sobre la línea
-    if (val) {
+  /* ─ FIRMA (izquierda) y ELABORADO POR (derecha) ─ */
+  const FR = V(6.8);                         // alto de cada renglón de firma
+  const ESPACIO_FIRMA = V(7);                // espacio extra para firmar a mano
+  const ALTO_FIRMA = FR * 5 + ESPACIO_FIRMA;
+  if (y + ALTO_FIRMA > FY - 1) { doc.addPage(); y = M + 4; }
+  const lblW = 24, lineW = 70;
+  doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.3); doc.setTextColor(...NEGRO);
+  const renglon = (i, etiqueta, valor, extra = 0) => {
+    const base = y + FR * (i + 0.75) + extra;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(F(8));
+    doc.text(etiqueta, M, base);
+    if (valor) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(...C_NEGRO);
-      doc.text(val, (LBL_END_X + LINE_END_X) / 2, fy - 0.8, { align: 'center' });
+      let fs = F(8);
+      doc.setFontSize(fs);
+      while (fs > 5 && doc.getTextWidth(valor) > lineW - 1) { fs -= 0.5; doc.setFontSize(fs); }
+      doc.text(valor, M + lblW, base - 0.8);
     }
+    doc.line(M + lblW, base + 0.8, M + lblW + lineW, base + 0.8);
+  };
+  renglon(0, 'NOMBRE:', mayus(nombre));
+  renglon(1, 'IDENTIDAD:', v.identidad || '');
+  renglon(2, 'TELÉFONO:', v.telefono || '');
+  renglon(3, 'FECHA:', '');                  // se llena a mano
+  renglon(4, 'FIRMA:', '', ESPACIO_FIRMA);
 
-    // Línea corta
-    doc.setDrawColor(...C_AZUL);
-    doc.setLineWidth(0.4);
-    doc.line(LBL_END_X, fy + 1, LINE_END_X, fy + 1);
-  });
+  const cxR = M + CW * 0.75, mitad = 35;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(F(8)); doc.setTextColor(...NEGRO);
+  doc.text('Elaborado por:', cxR, y + V(9), { align: 'center' });
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(...AZUL);
+  doc.text(mayus(nombreUsuario || v.elaborado_por_nombre), cxR, y + V(15), { align: 'center' });
+  doc.line(cxR - mitad, y + V(16.5), cxR + mitad, y + V(16.5));
+  doc.line(cxR - mitad, y + V(31), cxR + mitad, y + V(31));
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(...NEGRO);
+  doc.text('Firma', cxR, y + V(35), { align: 'center' });
 
-  // Columna derecha — bloques de firma centrados
-  const FIRMAX   = M + CW;                  // borde derecho
-  const COL_R_X  = M + FIRMA_HALF + 4;      // inicio columna derecha
-  const COL_R_W  = FIRMAX - COL_R_X;        // ancho columna derecha
-  const R_CX     = COL_R_X + COL_R_W / 2;  // centro columna derecha
-  const LINE_W2  = Math.min(60, COL_R_W * 0.75); // ancho máx línea
-  const elabY    = y + FIRMA_TOTAL * 0.18;
+  /* ─ PIE DE PÁGINA (todas las hojas) ─ */
+  const totalPaginas = doc.getNumberOfPages();
+  for (let pg = 1; pg <= totalPaginas; pg++) {
+    doc.setPage(pg);
+    doc.setFillColor(...AZUL);
+    doc.rect(M, FY, CW, FH, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...BLANCO);
+    doc.text('Congreso Nacional - Pagaduría Especial', M + 3, FY + FH * 0.65);
+    doc.text(`Página ${pg} de ${totalPaginas}`, W / 2, FY + FH * 0.65, { align: 'center' });
+  }
+}
 
-  // --- Elaborado por (etiqueta + nombre centrado + línea) ---
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...C_NEGRO);
-  doc.text('Elaborado por:', R_CX, elabY + 4, { align: 'center' });
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...C_AZUL);
-  doc.text(elab, R_CX, elabY + 9.5, { align: 'center' });
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.4);
-  doc.line(R_CX - LINE_W2 / 2, elabY + 11, R_CX + LINE_W2 / 2, elabY + 11);
+export async function generarPdfViatico(v, nombreUsuario) {
+  const logoData = await loadImg('/logo-congreso.png.png');
 
-  // --- Firma (línea + etiqueta centrada) ---
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.4);
-  doc.line(R_CX - LINE_W2 / 2, elabY + 21, R_CX + LINE_W2 / 2, elabY + 21);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...C_NEGRO);
-  doc.text('Firma', R_CX, elabY + 25, { align: 'center' });
+  // Carta hasta 7 días; oficio (legal) si hay más
+  const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
+  const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
+  const formato = Math.max(diasViaje.length, diasEstadia.length) > 7 ? 'legal' : 'letter';
+  const nuevo = () => new jsPDF({ orientation: 'landscape', unit: 'mm', format: formato });
 
-  y += FIRMA_TOTAL + 2;
+  // Prueba escalas de mayor a menor hasta que todo quepa en una hoja
+  const K_MIN = 0.7;
+  let k = 1;
+  for (; k > K_MIN; k = Math.round((k - 0.04) * 100) / 100) {
+    const prueba = nuevo();
+    dibujar(prueba, v, nombreUsuario, null, k);
+    if (prueba.getNumberOfPages() === 1) break;
+  }
+  // Si ni con la escala mínima cabe, se usa tamaño normal en varias hojas
+  if (k <= K_MIN) {
+    const prueba = nuevo();
+    dibujar(prueba, v, nombreUsuario, null, K_MIN);
+    k = prueba.getNumberOfPages() === 1 ? K_MIN : 1;
+  }
 
-  // -------------------------------------------------------
-  // GUARDAR
-  // -------------------------------------------------------
-  const fname = 'viatico_' + (v.diputado_nombre || 'doc').replace(/\s+/g, '_') + '_' + fmtFecha(v.fecha_inicio) + '.pdf';
-  doc.save(fname);
+  const doc = nuevo();
+  dibujar(doc, v, nombreUsuario, logoData, k);
+  doc.save('viatico_' + (v.diputado_nombre || 'doc').replace(/\s+/g, '_') + '_' + fmtFecha(v.fecha_inicio) + '.pdf');
 }
