@@ -88,13 +88,22 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   const F = x => Math.max(5, x * k);        // tamaños de letra (mínimo legible)
   let y = M;
 
-  // Días de viaje (resumen) y de estadía (detalle); sin estadía, el detalle usa los de viaje
-  const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
-  const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
+  const diasViaje   = v.dias_viaje || (v.dias || []).filter(d => d.tipo === 'viaje' || !d.tipo);
   const totalDias   = sumar(diasViaje);
   const gastos      = v.detalle_resumen || [];           // otros, reembolso de boleto aéreo…
   const totalUSD    = totalDias + sumar(gastos);
   const nombre      = v.diputado_nombre || '';
+
+  // Renglones del detalle, cada uno con sus montos por día.
+  // Los viáticos anteriores no los tienen: los días de viaje van en el primer renglón.
+  const guardados  = v.detalle?.length ? v.detalle : [{}];
+  const porRenglon = guardados.some(r => r.dias?.length);
+  const filas = guardados.map((r, i) => ({
+    detalle: mayus(r.detalle || (i === 0 ? 'ALIMENTACIÓN Y HOSPEDAJE' : '')),
+    nombre:  mayus(r.nombre || (i === 0 ? nombre : '')),
+    cargo:   mayus(r.cargo || (i === 0 ? v.cargo : '')),
+    dias:    porRenglon ? (r.dias || []) : (i === 0 ? diasViaje : []),
+  }));
 
   /* ─ ENCABEZADO ─ */
   const HH = V(24), LW = HH + 4, TW = 80, MIDW = CW - LW - TW;
@@ -182,13 +191,18 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   /* ─ CUADRITO DE RESUMEN ─ */
   const pad = { top: V(1.2), bottom: V(1.2), left: 2.5, right: 2.5 };
   const anchoRes = Math.round(CW * 0.42);
+  const grupos = new Map();
+  filas.forEach(f => {
+    const clave = f.detalle || 'ALIMENTACIÓN Y HOSPEDAJE';
+    grupos.set(clave, (grupos.get(clave) || 0) + sumar(f.dias));
+  });
+  let conceptos = [...grupos].filter(([, total]) => total > 0);
+  if (!conceptos.length) conceptos = [['ALIMENTACIÓN Y HOSPEDAJE', totalDias]];
+  const filasResumen = [...conceptos, ...gastos.map(g => [mayus(g.descripcion), num(g.monto)])];
   autoTable(doc, {
     startY: y, margin: { left: M, right: W - M - anchoRes, bottom: MB }, tableWidth: anchoRes,
     head: [['No.', 'Detalle', 'TOTAL']],
-    body: [
-      ['1', 'ALIMENTACIÓN Y HOSPEDAJE', usd(totalDias)],
-      ...gastos.map((g, i) => [String(i + 2), mayus(g.descripcion), usd(g.monto)]),
-    ],
+    body: filasResumen.map(([concepto, total], i) => [String(i + 1), concepto, usd(total)]),
     foot: [[
       { content: 'GRAN TOTAL:', colSpan: 2, styles: { halign: 'right' } },
       { content: usd(totalUSD), styles: { halign: 'right' } },
@@ -202,8 +216,11 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   });
   y = doc.lastAutoTable.finalY + V(2.5);
 
-  /* ─ TABLAS CON COLUMNAS POR DÍA (los montos van en el primer renglón) ─ */
-  const tablaDias = (tituloTabla, filas, dias) => {
+  /* ─ TABLA CON COLUMNAS POR DÍA ─ */
+  const tablaDias = (tituloTabla, renglones, dias) => {
+    const montoDe = (r, fecha) => num(r.dias.find(d => String(d.fecha).slice(0, 10) === String(fecha).slice(0, 10))?.monto);
+    const totalDe = (r, lista) => lista.reduce((s, d) => s + montoDe(r, d.fecha), 0);
+    const textos = renglones.map(r => [r.detalle, r.nombre, r.cargo]);
     const total = sumar(dias);
     const bloques = [];
     for (let i = 0; i < dias.length; i += DIAS_POR_TABLA) bloques.push(dias.slice(i, i + DIAS_POR_TABLA));
@@ -216,7 +233,7 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
       const finales = varios ? (ultimo ? ['SUBTOTAL', 'TOTAL'] : ['SUBTOTAL']) : ['TOTAL'];
       const valoresFin = varios ? (ultimo ? [sumar(bloque), total] : [sumar(bloque)]) : [total];
       const medir = (txt, estilo, tam) => { doc.setFont('helvetica', estilo); doc.setFontSize(tam); return doc.getTextWidth(String(txt || '')); };
-      let anchosTxt = cabeza.map((h, c) => Math.max(medir(h, 'bold', F(6.5)), ...filas.map(f => medir(f[c], 'normal', F(7)))) + 6);
+      let anchosTxt = cabeza.map((h, c) => Math.max(medir(h, 'bold', F(6.5)), ...textos.map(f => medir(f[c], 'normal', F(7)))) + 6);
       const dayW = n ? Math.max(...bloque.flatMap(d => [
         ...dayHead(d.fecha).split('\n').map(l => medir(l, 'bold', F(6.5))),
         medir(usd(d.monto), 'bold', F(7)),
@@ -246,10 +263,11 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
           [{ content: nb ? `${tituloTabla} (continuación)` : tituloTabla, colSpan: b + n + finales.length, styles: { fillColor: AZUL_OSC, fontSize: F(7.5), halign: 'left', cellPadding: { top: V(1.4), bottom: V(1.4), left: 3, right: 3 } } }],
           ['#', ...cabeza, ...bloque.map(d => dayHead(d.fecha)), ...finales],
         ],
-        body: filas.map((f, i) => [
-          String(i + 1), ...f,
-          ...bloque.map(d => (i === 0 ? usdCelda(d.monto) : '')),
-          ...valoresFin.map(t => ({ content: usd(i === 0 ? t : 0), styles: { fontStyle: 'bold', textColor: AZUL } })),
+        body: renglones.map((r, i) => [
+          String(i + 1), ...textos[i],
+          ...bloque.map(d => usdCelda(montoDe(r, d.fecha))),
+          ...(varios ? (ultimo ? [totalDe(r, bloque), totalDe(r, dias)] : [totalDe(r, bloque)]) : [totalDe(r, dias)])
+            .map(t => ({ content: usd(t), styles: { fontStyle: 'bold', textColor: AZUL } })),
         ]),
         foot: [['', 'TOTAL:', '', '',
           ...bloque.map(d => ({ content: usdCelda(d.monto), styles: { halign: 'center' } })),
@@ -276,19 +294,7 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
     });
   };
 
-  const filasDetalle = (v.detalle?.length ? v.detalle : [{}]).map((r, i) => [
-    mayus(r.detalle || (i === 0 ? 'ALIMENTACIÓN Y HOSPEDAJE' : '')),
-    mayus(r.nombre || (i === 0 ? nombre : '')),
-    mayus(r.cargo || (i === 0 ? v.cargo : '')),
-  ]);
-  // Si la estadía tiene días o montos distintos a los del viaje, se muestran las dos tablas
-  const huella = dias => dias.map(d => `${String(d.fecha).slice(0, 10)}:${num(d.monto)}`).join('|');
-  if (diasEstadia.length && huella(diasEstadia) !== huella(diasViaje)) {
-    tablaDias('DÍAS DE VIAJE', [['ALIMENTACIÓN Y HOSPEDAJE', filasDetalle[0][1], mayus(v.cargo)]], diasViaje);
-    tablaDias('DETALLE HOSPEDAJE Y ALIMENTACIÓN (ESTADÍA)', filasDetalle, diasEstadia);
-  } else {
-    tablaDias('DETALLES DEL VIÁTICO', filasDetalle, diasViaje);
-  }
+  tablaDias('DETALLES DEL VIÁTICO', filas, diasViaje);
 
   /* ─ TABLA DÓLARES / TASA / LEMPIRAS + NOTAS (este bloque no cambia de tamaño) ─ */
   const tasa        = parseFloat(v.tasa_cambio) || 1;
@@ -389,9 +395,8 @@ export async function generarPdfViatico(v, nombreUsuario) {
   const logoData = await loadImg('/logo-congreso.png.png');
 
   // Carta hasta 7 días; oficio (legal) si hay más
-  const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
-  const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
-  const formato = Math.max(diasViaje.length, diasEstadia.length) > 7 ? 'legal' : 'letter';
+  const diasViaje = v.dias_viaje || (v.dias || []).filter(d => d.tipo === 'viaje' || !d.tipo);
+  const formato = diasViaje.length > 7 ? 'legal' : 'letter';
   const nuevo = () => new jsPDF({ orientation: 'landscape', unit: 'mm', format: formato });
 
   // Prueba escalas de mayor a menor hasta que todo quepa en una hoja

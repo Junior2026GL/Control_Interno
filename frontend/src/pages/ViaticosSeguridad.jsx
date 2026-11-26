@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import Seccion from '../components/SeccionFormulario';
+import DiasBadge from '../components/DiasBadge';
 import { AuthContext } from '../context/AuthContext';
 import { generarReciboSeguridadPdf, limitesContenido } from '../utils/viaticoSeguridadPdf';
 import { resumenDeRegistro, SUGERENCIAS } from '../utils/viaticoSeguridadResumen';
@@ -114,19 +115,6 @@ async function cargarLogo() {
       img.src = blobUrl;
     });
   } catch { return null; }
-}
-
-/* Cuadro con los días de viático: el último día (regreso) cuenta como medio día */
-function DiasBadge({ n }) {
-  const pagados = n > 1 ? n - 0.5 : n;
-  return (
-    <div className="vs-dias-badge" title="Dias de viatico: el ultimo dia (regreso) cuenta como medio dia">
-      <FiCalendar size={17} />
-      <strong>{pagados}</strong>
-      <span>{pagados === 1 ? 'dia' : 'dias'}</span>
-      {n > 1 && <small>{n} de calendario · ultimo dia medio</small>}
-    </div>
-  );
 }
 
 /* Horas exactas (sin minutos): de 5:00 AM a 11:00 PM y después 12:00 AM a 4:00 AM */

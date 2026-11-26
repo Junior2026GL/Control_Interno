@@ -148,22 +148,12 @@
 .vt-diputado .vs-dni-row .vs-input { min-width: 0; }
 .vt-diputado .vs-btn-buscar { padding: 0 14px; }
 .vs-input.vt-ro { background: #f1f5f9; color: #475569; font-weight: 700; cursor: default; }
-.vt-fechas-estadia { display: grid; grid-template-columns: repeat(2, minmax(0, 260px)); gap: 14px; }
 .vt-aplicar-input.vs-input { padding-left: 48px !important; }
-.vt-scroll-dias { align-self: flex-start; max-width: 100%; }
-.vt-tbl-dias { width: auto; min-width: 360px; }
-.vt-tbl-dias .vt-concepto { font-weight: 700; color: #0f2744; white-space: nowrap; padding: .3rem .8rem; }
-.vt-sin-dias {
-  margin: 0; padding: 14px 16px; border: 1.5px dashed #cdd6e6; border-radius: 12px;
-  background: #f8fafc; color: #94a3b8; font-size: 13px; text-align: center;
-}
 .vt-col-num { width: 40px; text-align: center; }
 .vt-chips { margin-bottom: 0; }
-.vt-in-texto { min-width: 190px; }
 .vt-nota { min-height: 120px; line-height: 1.45; }
 .vt-total-lps { font-size: .9rem; font-weight: 700; opacity: .9; }
 @media (max-width: 1000px) { .vt-diputado { grid-template-columns: 1fr; } }
-@media (max-width: 600px)  { .vt-fechas-estadia { grid-template-columns: 1fr; } }
 
 /* Días (ventana de detalle) */
 .vt-dias-grid {

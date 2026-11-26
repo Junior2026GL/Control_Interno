@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext, useCallback } from 'react';
 import {
   FiPlus, FiX, FiSearch, FiPrinter, FiTrash2, FiEye,
-  FiUser, FiCalendar, FiMapPin, FiDollarSign, FiEdit3,
+  FiUser, FiMapPin, FiDollarSign, FiEdit3,
   FiRefreshCw, FiArrowDown, FiArrowUp, FiArrowLeft, FiBriefcase, FiCheck,
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,7 @@ import { LuFileSpreadsheet, LuPlane } from 'react-icons/lu';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import Seccion from '../components/SeccionFormulario';
+import DiasBadge from '../components/DiasBadge';
 import { AuthContext } from '../context/AuthContext';
 import { generarPdfViatico } from '../utils/viaticoPdf';
 import './Bodegas.css';
@@ -66,37 +67,25 @@ const fmtUSD = v => '$ ' + v.toLocaleString('en-US', { minimumFractionDigits: 2,
 const fmtLps = v => 'L ' + v.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const diaCorto = iso => ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'][new Date(iso + 'T00:00:00Z').getUTCDay()];
 
-/* Tabla de montos en dólares: una columna por día */
-function TablaDias({ dias, onMonto }) {
-  const total = dias.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
-  return (
-    <div className="vs-scroll vt-scroll-dias">
-      <table className="vs-tbl vt-tbl-dias">
-        <thead><tr>
-          <th>Concepto</th>
-          {dias.map(d => <th key={d.fecha} className="vs-th-dia" title={formatDate(d.fecha)}>{diaCorto(d.fecha)}<br />{formatDate(d.fecha).slice(0, 5)}</th>)}
-          <th>Total</th>
-        </tr></thead>
-        <tbody>
-          <tr>
-            <td className="vt-concepto">Monto (USD)</td>
-            {dias.map((d, i) => (
-              <td key={d.fecha}><input type="number" step="0.01" min="0" className="vs-input vs-in vs-in--monto" aria-label={'Monto del ' + formatDate(d.fecha)}
-                value={d.monto} onChange={e => onMonto(i, e.target.value)} /></td>
-            ))}
-            <td className="vs-td-total">{fmtUSD(total)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 // Gastos adicionales que se pueden agregar al resumen (en dólares)
 const SUGERENCIAS_RESUMEN = ['OTROS', 'REEMBOLSO BOLETO AÉREO'];
 const sumaMontos = filas => (filas || []).reduce((s, r) => s + (parseFloat(r.monto) || 0), 0);
 
-const EMPTY_DETALLE = { nombre: '', cargo: '', detalle: 'ALIMENTACIÓN Y HOSPEDAJE' };
+/* Qué cubre cada renglón (columna "Detalle") */
+const DETALLES_VIATICO = ['ALIMENTACIÓN', 'HOSPEDAJE', 'ALIMENTACIÓN Y HOSPEDAJE'];
+const EMPTY_DETALLE = { nombre: '', cargo: '', detalle: '', dias: [] };
+const PRIMER_RENGLON = { ...EMPTY_DETALLE, detalle: 'ALIMENTACIÓN Y HOSPEDAJE' };
+/* El último día (regreso) cuenta como medio día */
+const diasPagados = n => (n > 1 ? n - 0.5 : n);
+/* Alinea los montos diarios de un renglón con las fechas del período */
+const syncDias = (fechas, dias = []) =>
+  fechas.map(fecha => ({ fecha, monto: dias.find(d => String(d.fecha).slice(0, 10) === fecha)?.monto ?? '' }));
+const totalFila = r => sumaMontos(r.dias);
+/* Suma de todos los renglones en cada fecha (son los días de viaje que se guardan) */
+const sumaPorFecha = filas => (filas[0]?.dias || []).map(({ fecha }) => ({
+  fecha,
+  monto: Math.round(filas.reduce((s, r) => s + (parseFloat(r.dias.find(d => d.fecha === fecha)?.monto) || 0), 0) * 100) / 100,
+}));
 
 function buildEmptyForm(userName) {
   return {
@@ -106,19 +95,15 @@ function buildEmptyForm(userName) {
     diputado_id: '',
     diputado_nombre: '',
     cargo: '',
-    periodo_dias: '',         // manual, permite decimal (ej: 3.5)
-    fecha_inicio: '',         // rango días de VIAJE → tabla RESUMEN
+    periodo_dias: '',         // se calcula con las fechas (último día medio) y se puede editar
+    fecha_inicio: '',         // período del viaje: una columna por día
     fecha_fin: '',
-    fecha_inicio_estadia: '', // rango días de ESTADÍA → tabla DETALLE
-    fecha_fin_estadia: '',
     tasa_cambio: '',
     nota1: NOTA1_DEFAULT,
     nota2: NOTA2_DEFAULT,
     elaborado_por: userName || '',
-    detalle: [{ ...EMPTY_DETALLE }],
+    detalle: [{ ...PRIMER_RENGLON }],   // [{ nombre, cargo, detalle, dias: [{ fecha, monto }] }]
     resumen: [],       // gastos adicionales: [{ descripcion, monto }]
-    dias_viaje:   [],  // [{ fecha, monto }] – usados en RESUMEN
-    dias_estadia: [],  // [{ fecha, monto }] – usados en DETALLE
     montoDefault: '',
     obs_detalle:  '',
   };
@@ -199,60 +184,56 @@ export default function Viaticos() {
         diputado_id:    d.id,
         diputado_nombre: d.nombre.toUpperCase(),
         cargo:          cargoLabel,
-        detalle:        [{ nombre: d.nombre.toUpperCase(), cargo: cargoLabel, detalle: 'ALIMENTACIÓN Y HOSPEDAJE' }],
+        detalle:        f.detalle.map((r, i) => (i !== 0 ? r
+          : { ...r, nombre: d.nombre.toUpperCase(), cargo: cargoLabel, detalle: r.detalle || 'ALIMENTACIÓN Y HOSPEDAJE' })),
       }));
     } catch (err) {
       setDniError(err.response?.data?.message || 'Diputado no encontrado.');
     } finally { setDniLoading(false); }
   };
 
-  // ── Auto-generar días de VIAJE (RESUMEN) cuando cambia fecha inicio/fin ──
+  // ── Una columna por día cuando cambian las fechas ──
   useEffect(() => {
     const fechas = getAllDates(form.fecha_inicio, form.fecha_fin);
     if (!fechas.length) return;   // fechas incompletas o rango inválido
-    const monto = parseFloat(form.montoDefault) || 0;
-    setForm(f => ({
-      ...f,
-      periodo_dias: String(fechas.length),
-      dias_viaje: fechas.map(fecha => {
-        const existing = f.dias_viaje.find(d => d.fecha === fecha);
-        return existing || { fecha, monto };
-      }),
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setForm(f => {
+      // Si las columnas ya son esas (al abrir un viático guardado) no se toca el período
+      const iguales = f.detalle.every(r => r.dias.length === fechas.length && r.dias.every((d, i) => d.fecha === fechas[i]));
+      if (iguales) return f;
+      return {
+        ...f,
+        periodo_dias: String(diasPagados(fechas.length)),
+        detalle: f.detalle.map(r => ({ ...r, dias: syncDias(fechas, r.dias) })),
+      };
+    });
   }, [form.fecha_inicio, form.fecha_fin]);
 
-  // ── Auto-generar días de ESTADÍA (DETALLE) cuando cambia fecha estadía ──
-  useEffect(() => {
-    const fechas = getAllDates(form.fecha_inicio_estadia, form.fecha_fin_estadia);
-    if (!fechas.length) return;
-    const monto = parseFloat(form.montoDefault) || 0;
-    setForm(f => ({
-      ...f,
-      dias_estadia: fechas.map(fecha => {
-        const existing = f.dias_estadia.find(d => d.fecha === fecha);
-        return existing || { fecha, monto };
-      }),
-    }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.fecha_inicio_estadia, form.fecha_fin_estadia]);
-
-  // Aplicar monto default a TODOS los días (viaje y estadía)
+  // Aplica el monto a todos los días; el último (regreso) lleva la mitad
   const applyDefaultMonto = () => {
-    const monto = parseFloat(form.montoDefault) || 0;
+    const valor = form.montoDefault;
+    if (valor === '') return;
+    const mitad = String(Math.round((parseFloat(valor) || 0) * 50) / 100);
     setForm(f => ({
       ...f,
-      dias_viaje:   f.dias_viaje.map(d => ({ ...d, monto })),
-      dias_estadia: f.dias_estadia.map(d => ({ ...d, monto })),
+      detalle: f.detalle.map(r => ({
+        ...r,
+        dias: r.dias.map((d, i) => ({ ...d, monto: r.dias.length > 1 && i === r.dias.length - 1 ? mitad : valor })),
+      })),
     }));
   };
 
-  /* Edición de campos, montos por día y renglones del detalle */
+  /* Edición de campos, renglones del detalle y montos por día */
   const setCampo = (campo, valor) => setForm(f => ({ ...f, [campo]: valor }));
-  const setDia = (clave, idx, monto) =>
-    setForm(f => ({ ...f, [clave]: f[clave].map((d, i) => (i === idx ? { ...d, monto } : d)) }));
   const setDet = (idx, campo, valor) =>
     setForm(f => ({ ...f, detalle: f.detalle.map((r, i) => (i === idx ? { ...r, [campo]: valor } : r)) }));
+  const setMonto = (idx, fecha, monto) =>
+    setForm(f => ({
+      ...f,
+      detalle: f.detalle.map((r, i) => (i !== idx ? r : { ...r, dias: r.dias.map(d => (d.fecha === fecha ? { ...d, monto } : d)) })),
+    }));
+  const agregarRenglon = () =>
+    setForm(f => (f.detalle.length >= 30 ? f
+      : { ...f, detalle: [...f.detalle, { ...EMPTY_DETALLE, dias: syncDias((f.detalle[0]?.dias || []).map(d => d.fecha)) }] }));
 
   const setGasto = (idx, campo, valor) =>
     setForm(f => ({ ...f, resumen: f.resumen.map((r, i) => (i === idx ? { ...r, [campo]: valor } : r)) }));
@@ -267,8 +248,7 @@ export default function Viaticos() {
     if (!form.lugar.trim())        return setFormErr('El lugar es requerido.');
     if (!form.diputado_id)         return setFormErr('Busca al diputado por DNI primero.');
     if (!form.fecha_inicio || !form.fecha_fin) return setFormErr('Las fechas de viaje son requeridas.');
-    const errFechas = errorRango(form.fecha_inicio, form.fecha_fin)
-      || errorRango(form.fecha_inicio_estadia, form.fecha_fin_estadia);
+    const errFechas = errorRango(form.fecha_inicio, form.fecha_fin);
     if (errFechas)                 return setFormErr(errFechas);
     if (!form.periodo_dias)        return setFormErr('El período de tiempo es requerido.');
     if (!form.tasa_cambio)         return setFormErr('La tasa de cambio es requerida.');
@@ -285,14 +265,14 @@ export default function Viaticos() {
       nota2:        form.nota2,
       periodo_dias: parseFloat(form.periodo_dias) || 1,
       obs_detalle:  form.obs_detalle,
-      detalle:      form.detalle,
+      detalle:      form.detalle.map(r => ({
+        nombre: r.nombre, cargo: r.cargo, detalle: r.detalle,
+        dias: r.dias.map(d => ({ fecha: d.fecha, monto: parseFloat(d.monto) || 0 })),
+      })),
       detalle_resumen: form.resumen
         .map(r => ({ descripcion: r.descripcion.trim().toUpperCase(), monto: parseFloat(r.monto) || 0 }))
         .filter(r => r.monto > 0),
-      dias: [
-        ...form.dias_viaje.map(d => ({ fecha: d.fecha, monto: parseFloat(d.monto) || 0, tipo: 'viaje' })),
-        ...form.dias_estadia.map(d => ({ fecha: d.fecha, monto: parseFloat(d.monto) || 0, tipo: 'estadia' })),
-      ],
+      dias: sumaPorFecha(form.detalle).map(d => ({ ...d, tipo: 'viaje' })),
     };
     setSaving(true);
     try {
@@ -351,7 +331,8 @@ export default function Viaticos() {
     (v.motivo_viaje || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalUSD  = sumaMontos(form.dias_viaje) + sumaMontos(form.resumen);   // días de viaje + gastos adicionales
+  const columnas  = (form.detalle[0]?.dias || []).map(d => d.fecha);
+  const totalUSD  = form.detalle.reduce((s, r) => s + totalFila(r), 0) + sumaMontos(form.resumen);   // renglones + gastos adicionales
   const totalLPS  = totalUSD * (parseFloat(form.tasa_cambio) || 0);
 
   const openModal = () => {
@@ -365,10 +346,15 @@ export default function Viaticos() {
     try {
       const res = await api.get(`/viaticos/${id}`, { headers: authHeaders() });
       const v = res.data;
-      const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
-      const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
-      const fecEstStart = diasEstadia.length ? (diasEstadia[0].fecha || '').substring(0, 10) : '';
-      const fecEstEnd   = diasEstadia.length ? (diasEstadia[diasEstadia.length - 1].fecha || '').substring(0, 10) : '';
+      const diasViaje = v.dias_viaje || (v.dias || []).filter(d => d.tipo === 'viaje' || !d.tipo);
+      const fechas    = getAllDates((v.fecha_inicio || '').substring(0, 10), (v.fecha_fin || '').substring(0, 10));
+      const guardados = v.detalle?.length ? v.detalle : [PRIMER_RENGLON];
+      // Los viáticos anteriores no tienen montos por renglón: los días de viaje van en el primero
+      const porRenglon = guardados.some(r => r.dias?.length);
+      const filas = guardados.map((r, i) => ({
+        nombre: r.nombre || '', cargo: r.cargo || '', detalle: r.detalle || '',
+        dias: syncDias(fechas, porRenglon ? (r.dias || []) : (i === 0 ? diasViaje : [])),
+      }));
       setForm({
         motivo_viaje:   v.motivo_viaje || '',
         lugar:          v.lugar || '',
@@ -379,15 +365,11 @@ export default function Viaticos() {
         periodo_dias:   v.periodo_dias != null ? String(v.periodo_dias) : '',
         fecha_inicio:   (v.fecha_inicio || '').substring(0, 10),
         fecha_fin:      (v.fecha_fin || '').substring(0, 10),
-        fecha_inicio_estadia: fecEstStart,
-        fecha_fin_estadia:    fecEstEnd,
         tasa_cambio:    v.tasa_cambio || '',
         nota1:          v.nota1 || '',
         nota2:          v.nota2 || '',
         elaborado_por:  me?.nombre || '',
-        detalle:    v.detalle?.length ? v.detalle : [{ nombre: '', cargo: '', detalle: '' }],
-        dias_viaje:   diasViaje.map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
-        dias_estadia: diasEstadia.map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
+        detalle:    filas,
         resumen:      (v.detalle_resumen || []).map(r => ({ descripcion: r.descripcion || '', monto: r.monto })),
         montoDefault: '',
         obs_detalle:  v.obs_detalle || '',
@@ -568,24 +550,9 @@ export default function Viaticos() {
               {/* Días de viaje */}
               {(viewData.dias_viaje || viewData.dias || []).length > 0 && (
                 <>
-                  <div className="vt-view-subtitle">Días de Viaje (RESUMEN)</div>
+                  <div className="vt-view-subtitle">Días de Viaje</div>
                   <div className="vt-dias-grid">
                     {(viewData.dias_viaje || viewData.dias).map((d, i) => (
-                      <div key={i} className="vt-dia-cell">
-                        <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
-                        <span className="vt-dia-monto">${parseFloat(d.monto || 0).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* Días de estadía */}
-              {(viewData.dias_estadia || []).length > 0 && (
-                <>
-                  <div className="vt-view-subtitle">Días de Estadía (DETALLE)</div>
-                  <div className="vt-dias-grid">
-                    {viewData.dias_estadia.map((d, i) => (
                       <div key={i} className="vt-dia-cell">
                         <span className="vt-dia-fecha">{formatDate(d.fecha)}</span>
                         <span className="vt-dia-monto">${parseFloat(d.monto || 0).toFixed(2)}</span>
@@ -601,7 +568,7 @@ export default function Viaticos() {
                   <div className="vt-view-subtitle">Detalle de Personas</div>
                   <table className="vt-view-table">
                     <thead>
-                      <tr><th>#</th><th>Nombre</th><th>Cargo</th><th>Detalle</th></tr>
+                      <tr><th>#</th><th>Nombre</th><th>Cargo</th><th>Detalle</th><th>Total</th></tr>
                     </thead>
                     <tbody>
                       {viewData.detalle.map((row, i) => (
@@ -610,6 +577,7 @@ export default function Viaticos() {
                           <td>{row.nombre}</td>
                           <td>{row.cargo}</td>
                           <td>{row.detalle}</td>
+                          <td>{row.dias?.length ? `$${totalFila(row).toFixed(2)}` : '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -688,8 +656,8 @@ export default function Viaticos() {
                   </div>
                 </Seccion>
 
-                {/* 2 · Información del viaje */}
-                <Seccion n={2} titulo="Datos del viaje" desc="Lugar y motivo del viaje">
+                {/* 2 · Datos del viaje */}
+                <Seccion n={2} titulo="Datos del viaje" desc="Lugar, motivo, período y tasa de cambio">
                   <div className="vs-field">
                     <label className="vs-label">Lugar <span className="vs-req">*</span></label>
                     <div className="vs-icon-field">
@@ -704,17 +672,6 @@ export default function Viaticos() {
                       placeholder="Ej: DIPLOMADO INTERNACIONAL EN DIRECCIÓN DE EMPRESA…"
                       onChange={e => setCampo('motivo_viaje', e.target.value)} />
                   </div>
-                </Seccion>
-
-                {/* 3 · Días de viaje (tabla RESUMEN) */}
-                <Seccion n={3} titulo="Días de viaje — tabla RESUMEN" desc="Período, tasa de cambio y monto en dólares por cada día"
-                  extra={form.dias_viaje.length > 0 && (
-                    <div className="vs-dias-badge" title="Período de tiempo del viaje">
-                      <FiCalendar size={17} />
-                      <strong>{form.periodo_dias || 0}</strong>
-                      <span>{parseFloat(form.periodo_dias) === 1 ? 'día' : 'días'}</span>
-                    </div>
-                  )}>
                   <div className="vs-row-4">
                     <div className="vs-field">
                       <label className="vs-label">Fecha inicio <span className="vs-req">*</span></label>
@@ -743,6 +700,11 @@ export default function Viaticos() {
                   {errorRango(form.fecha_inicio, form.fecha_fin) && (
                     <div className="vt-form-err" role="alert">{errorRango(form.fecha_inicio, form.fecha_fin)}</div>
                   )}
+                </Seccion>
+
+                {/* 3 · Detalle: renglones con un monto por cada día */}
+                <Seccion n={3} titulo="Detalle del viático" desc="Concepto y monto en dólares por cada día del período"
+                  extra={columnas.length > 0 && <DiasBadge n={columnas.length} />}>
                   <div className="vs-aplicar">
                     <div className="vs-aplicar-field">
                       <label className="vs-label">Monto por día (USD)</label>
@@ -753,90 +715,48 @@ export default function Viaticos() {
                       </div>
                     </div>
                     <button type="button" className="vs-btn-aplicar" onClick={applyDefaultMonto}
-                      disabled={!form.montoDefault || (form.dias_viaje.length === 0 && form.dias_estadia.length === 0)}>
+                      disabled={form.montoDefault === '' || columnas.length === 0}>
                       <FiCheck size={15} /> Aplicar a todos los días
                     </button>
-                    <p className="vs-aplicar-hint">Se aplica a los días de viaje y a los de estadía.</p>
+                    <p className="vs-aplicar-hint">{columnas.length
+                      ? 'El último día (regreso) se llena con la mitad del monto.'
+                      : 'Elija las fechas en el paso 2 para ver los días.'}</p>
                   </div>
-                  {form.dias_viaje.length > 0
-                    ? <TablaDias dias={form.dias_viaje} onMonto={(i, v) => setDia('dias_viaje', i, v)} />
-                    : <p className="vt-sin-dias">Elija la fecha inicio y la fecha fin para ver los días.</p>}
-                </Seccion>
-
-                {/* 4 · Estadía (tabla DETALLE) */}
-                <Seccion n={4} titulo="Estadía — tabla DETALLE" desc="Opcional: días de estadía y monto en dólares">
-                  <div className="vt-fechas-estadia">
-                    <div className="vs-field">
-                      <label className="vs-label">Fecha inicio estadía</label>
-                      <input type="date" className="vs-input" min="2000-01-01" max="2099-12-31" value={form.fecha_inicio_estadia}
-                        onChange={e => setCampo('fecha_inicio_estadia', e.target.value)} />
-                    </div>
-                    <div className="vs-field">
-                      <label className="vs-label">Fecha fin estadía</label>
-                      <input type="date" className="vs-input" min="2000-01-01" max="2099-12-31" value={form.fecha_fin_estadia}
-                        onChange={e => setCampo('fecha_fin_estadia', e.target.value)} />
-                    </div>
-                  </div>
-                  {errorRango(form.fecha_inicio_estadia, form.fecha_fin_estadia) && (
-                    <div className="vt-form-err" role="alert">{errorRango(form.fecha_inicio_estadia, form.fecha_fin_estadia)}</div>
-                  )}
-                  {form.dias_estadia.length > 0
-                    ? <TablaDias dias={form.dias_estadia} onMonto={(i, v) => setDia('dias_estadia', i, v)} />
-                    : <p className="vt-sin-dias">Sin días de estadía.</p>}
-                </Seccion>
-
-                {/* 5 · Resumen de gastos adicionales */}
-                <Seccion n={5} titulo="Resumen de gastos" desc="Otros gastos o reembolso de boleto aéreo, en dólares">
-                  <div className="vs-chips vt-chips">
-                    <span className="vs-hint">Agregar:</span>
-                    {SUGERENCIAS_RESUMEN.map(s => (
-                      <button key={s} type="button" className="vs-chip" disabled={form.resumen.length >= 10} onClick={() => agregarGasto(s)}>+ {s}</button>
-                    ))}
-                  </div>
-                  {form.resumen.length > 0 && (
-                    <>
-                      <div className="vs-scroll vs-scroll--gastos">
-                        <table className="vs-tbl">
-                          <thead><tr><th>#</th><th>Descripción</th><th>Monto (USD)</th><th /></tr></thead>
-                          <tbody>
-                            {form.resumen.map((r, i) => (
-                              <tr key={i}>
-                                <td className="vt-col-num">{i + 1}</td>
-                                <td><input className="vs-input vs-in vs-in--name" maxLength={200} value={r.descripcion} aria-label="Descripción del gasto"
-                                  onChange={e => setGasto(i, 'descripcion', e.target.value)} /></td>
-                                <td><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={r.monto} placeholder="0.00" aria-label="Monto del gasto"
-                                  onChange={e => setGasto(i, 'monto', e.target.value)} /></td>
-                                <td className="vt-col-num">
-                                  <button type="button" className="vs-del" title="Quitar"
-                                    onClick={() => setForm(f => ({ ...f, resumen: f.resumen.filter((_, j) => j !== i) }))}>
-                                    <FiX size={14} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <span className="vs-hint">Se suman al total del viaje y salen en el cuadro de resumen del PDF. Las filas sin monto no se guardan.</span>
-                    </>
-                  )}
-                </Seccion>
-
-                {/* 6 · Detalle de personas */}
-                <Seccion n={6} titulo="Detalle — resumen de viáticos" desc="Personas, cargo y concepto que aparecen en el cuadro">
                   <div className="vs-scroll">
                     <table className="vs-tbl">
-                      <thead><tr><th className="vt-col-num">#</th><th>Nombre</th><th>Cargo</th><th>Detalle</th><th className="vt-col-num" /></tr></thead>
+                      <thead><tr>
+                        <th>#</th><th>Detalle</th><th>Nombre</th><th>Cargo</th>
+                        {columnas.map(f => <th key={f} className="vs-th-dia" title={formatDate(f)}>{diaCorto(f)}<br />{formatDate(f).slice(0, 5)}</th>)}
+                        <th>Total</th><th />
+                      </tr></thead>
                       <tbody>
-                        {form.detalle.map((row, idx) => (
-                          <tr key={idx}>
-                            <td className="vt-col-num">{idx + 1}</td>
-                            <td><input className="vs-input vs-in vt-in-texto" value={row.nombre} placeholder="Nombre completo" onChange={e => setDet(idx, 'nombre', e.target.value)} /></td>
-                            <td><input className="vs-input vs-in vt-in-texto" value={row.cargo} placeholder="Cargo" onChange={e => setDet(idx, 'cargo', e.target.value)} /></td>
-                            <td><input className="vs-input vs-in vt-in-texto" value={row.detalle} placeholder="Detalle" onChange={e => setDet(idx, 'detalle', e.target.value)} /></td>
-                            <td className="vt-col-num">
-                              <button type="button" className="vs-del" title="Quitar"
-                                onClick={() => setForm(f => ({ ...f, detalle: f.detalle.filter((_, i) => i !== idx) }))}>
+                        {form.detalle.map((r, i) => (
+                          <tr key={i}>
+                            <td className="vt-col-num">{i + 1}</td>
+                            <td>
+                              <select className="vs-input vs-in vs-in--detalle" value={r.detalle} aria-label="Detalle" onChange={e => setDet(i, 'detalle', e.target.value)}>
+                                <option value="">Seleccione…</option>
+                                {r.detalle && !DETALLES_VIATICO.includes(r.detalle) && <option value={r.detalle}>{r.detalle}</option>}
+                                {DETALLES_VIATICO.map(d => <option key={d} value={d}>{d}</option>)}
+                              </select>
+                            </td>
+                            {/* Nombre y cargo en el primer renglón y en los que ya los tengan */}
+                            {i === 0 || r.nombre || r.cargo ? (
+                              <>
+                                <td><input className="vs-input vs-in vs-in--name" value={r.nombre} placeholder="Nombre" onChange={e => setDet(i, 'nombre', e.target.value)} /></td>
+                                <td><input className="vs-input vs-in vs-in--cargo" value={r.cargo} placeholder="Cargo" onChange={e => setDet(i, 'cargo', e.target.value)} /></td>
+                              </>
+                            ) : (
+                              <><td /><td /></>
+                            )}
+                            {r.dias.map(d => (
+                              <td key={d.fecha}><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={d.monto} placeholder="0"
+                                aria-label={'Monto del ' + formatDate(d.fecha)} onChange={e => setMonto(i, d.fecha, e.target.value)} /></td>
+                            ))}
+                            <td className="vs-td-total">{fmtUSD(totalFila(r))}</td>
+                            <td>
+                              <button type="button" className="vs-del" title="Quitar" disabled={form.detalle.length === 1}
+                                onClick={() => setForm(f => ({ ...f, detalle: f.detalle.filter((_, k) => k !== i) }))}>
                                 <FiX size={14} />
                               </button>
                             </td>
@@ -845,19 +765,56 @@ export default function Viaticos() {
                       </tbody>
                     </table>
                   </div>
-                  <button type="button" className="vs-btn-soft vs-add"
-                    onClick={() => setForm(f => ({ ...f, detalle: [...f.detalle, { ...EMPTY_DETALLE }] }))}>
+                  <button type="button" className="vs-btn-soft vs-add" disabled={form.detalle.length >= 30} onClick={agregarRenglon}>
                     <FiPlus size={13} /> Agregar renglon
                   </button>
+                </Seccion>
+
+                {/* 4 · Resumen de gastos adicionales */}
+                <Seccion n={4} titulo="Resumen de gastos" desc="Otros gastos o reembolso de boleto aéreo, en dólares">
+                  <div className="vs-chips vt-chips">
+                    <span className="vs-hint">Agregar:</span>
+                    {SUGERENCIAS_RESUMEN.map(s => (
+                      <button key={s} type="button" className="vs-chip" disabled={form.resumen.length >= 10} onClick={() => agregarGasto(s)}>+ {s}</button>
+                    ))}
+                  </div>
+                  {form.resumen.length > 0 && (
+                    <div className="vs-scroll vs-scroll--gastos">
+                      <table className="vs-tbl">
+                        <thead><tr><th>#</th><th>Descripción</th><th>Monto (USD)</th><th /></tr></thead>
+                        <tbody>
+                          {form.resumen.map((r, i) => (
+                            <tr key={i}>
+                              <td className="vt-col-num">{i + 1}</td>
+                              <td><input className="vs-input vs-in vs-in--name" maxLength={200} value={r.descripcion} aria-label="Descripción del gasto"
+                                onChange={e => setGasto(i, 'descripcion', e.target.value)} /></td>
+                              <td><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={r.monto} placeholder="0.00" aria-label="Monto del gasto"
+                                onChange={e => setGasto(i, 'monto', e.target.value)} /></td>
+                              <td className="vt-col-num">
+                                <button type="button" className="vs-del" title="Quitar"
+                                  onClick={() => setForm(f => ({ ...f, resumen: f.resumen.filter((_, k) => k !== i) }))}>
+                                  <FiX size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <button type="button" className="vs-btn-soft vs-add" disabled={form.resumen.length >= 10} onClick={() => agregarGasto('')}>
+                    <FiPlus size={13} /> Agregar renglon
+                  </button>
+                  <span className="vs-hint">Se suman al total del viaje y salen en el cuadro de resumen del PDF. Las filas sin monto no se guardan.</span>
                   <div className="vs-field">
-                    <label className="vs-label">Observación (aparece en la sección DETALLE del PDF)</label>
-                    <textarea className="vs-input vs-textarea" rows={2} value={form.obs_detalle} placeholder="Texto libre de observación…"
+                    <label className="vs-label">Observación (no se imprime en el PDF)</label>
+                    <textarea className="vs-input vs-textarea" rows={2} value={form.obs_detalle} placeholder="Observación (opcional)"
                       onChange={e => setCampo('obs_detalle', e.target.value)} />
                   </div>
                 </Seccion>
 
-                {/* 7 · Notas */}
-                <Seccion n={7} titulo="Notas del cuadro" desc="Textos que salen en el PDF; puede editarlos">
+                {/* 5 · Notas */}
+                <Seccion n={5} titulo="Notas del cuadro" desc="Textos que salen en el PDF; puede editarlos">
                   <div className="vs-row-2">
                     <div className="vs-field">
                       <label className="vs-label">Nota 1</label>
