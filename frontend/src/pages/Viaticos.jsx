@@ -92,6 +92,10 @@ function TablaDias({ dias, onMonto }) {
   );
 }
 
+// Gastos adicionales que se pueden agregar al resumen (en dólares)
+const SUGERENCIAS_RESUMEN = ['OTROS', 'REEMBOLSO BOLETO AÉREO'];
+const sumaMontos = filas => (filas || []).reduce((s, r) => s + (parseFloat(r.monto) || 0), 0);
+
 const EMPTY_DETALLE = { nombre: '', cargo: '', detalle: 'ALIMENTACIÓN Y HOSPEDAJE' };
 
 function buildEmptyForm(userName) {
@@ -112,6 +116,7 @@ function buildEmptyForm(userName) {
     nota2: NOTA2_DEFAULT,
     elaborado_por: userName || '',
     detalle: [{ ...EMPTY_DETALLE }],
+    resumen: [],       // gastos adicionales: [{ descripcion, monto }]
     dias_viaje:   [],  // [{ fecha, monto }] – usados en RESUMEN
     dias_estadia: [],  // [{ fecha, monto }] – usados en DETALLE
     montoDefault: '',
@@ -249,6 +254,11 @@ export default function Viaticos() {
   const setDet = (idx, campo, valor) =>
     setForm(f => ({ ...f, detalle: f.detalle.map((r, i) => (i === idx ? { ...r, [campo]: valor } : r)) }));
 
+  const setGasto = (idx, campo, valor) =>
+    setForm(f => ({ ...f, resumen: f.resumen.map((r, i) => (i === idx ? { ...r, [campo]: valor } : r)) }));
+  const agregarGasto = descripcion =>
+    setForm(f => (f.resumen.length >= 10 ? f : { ...f, resumen: [...f.resumen, { descripcion, monto: '' }] }));
+
   // ── Guardar ──────────────────────────────────────────────────────
   const handleSave = async (e) => {
     e.preventDefault();
@@ -276,6 +286,9 @@ export default function Viaticos() {
       periodo_dias: parseFloat(form.periodo_dias) || 1,
       obs_detalle:  form.obs_detalle,
       detalle:      form.detalle,
+      detalle_resumen: form.resumen
+        .map(r => ({ descripcion: r.descripcion.trim().toUpperCase(), monto: parseFloat(r.monto) || 0 }))
+        .filter(r => r.monto > 0),
       dias: [
         ...form.dias_viaje.map(d => ({ fecha: d.fecha, monto: parseFloat(d.monto) || 0, tipo: 'viaje' })),
         ...form.dias_estadia.map(d => ({ fecha: d.fecha, monto: parseFloat(d.monto) || 0, tipo: 'estadia' })),
@@ -338,7 +351,7 @@ export default function Viaticos() {
     (v.motivo_viaje || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalUSD  = form.dias_viaje.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
+  const totalUSD  = sumaMontos(form.dias_viaje) + sumaMontos(form.resumen);   // días de viaje + gastos adicionales
   const totalLPS  = totalUSD * (parseFloat(form.tasa_cambio) || 0);
 
   const openModal = () => {
@@ -375,6 +388,7 @@ export default function Viaticos() {
         detalle:    v.detalle?.length ? v.detalle : [{ nombre: '', cargo: '', detalle: '' }],
         dias_viaje:   diasViaje.map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
         dias_estadia: diasEstadia.map(d => ({ fecha: (d.fecha || '').substring(0, 10), monto: d.monto })),
+        resumen:      (v.detalle_resumen || []).map(r => ({ descripcion: r.descripcion || '', monto: r.monto })),
         montoDefault: '',
         obs_detalle:  v.obs_detalle || '',
       });
@@ -537,8 +551,14 @@ export default function Viaticos() {
                 </div>
                 <div className="vt-view-row">
                   <span className="vt-view-lbl">Total USD</span>
-                  <span className="vt-view-val vt-view-total">${((viewData.dias_viaje || viewData.dias || []).reduce((s, d) => s + (parseFloat(d.monto) || 0), 0)).toFixed(2)}</span>
+                  <span className="vt-view-val vt-view-total">${(sumaMontos(viewData.dias_viaje || viewData.dias) + sumaMontos(viewData.detalle_resumen)).toFixed(2)}</span>
                 </div>
+                {(viewData.detalle_resumen || []).map((r, i) => (
+                  <div key={i} className="vt-view-row">
+                    <span className="vt-view-lbl">Incluye: {r.descripcion}</span>
+                    <span className="vt-view-val">${(parseFloat(r.monto) || 0).toFixed(2)}</span>
+                  </div>
+                ))}
                 <div className="vt-view-row">
                   <span className="vt-view-lbl">Elaborado por</span>
                   <span className="vt-view-val">{viewData.elaborado_por_nombre}</span>
@@ -765,8 +785,45 @@ export default function Viaticos() {
                     : <p className="vt-sin-dias">Sin días de estadía.</p>}
                 </Seccion>
 
-                {/* 5 · Detalle de personas */}
-                <Seccion n={5} titulo="Detalle — resumen de viáticos" desc="Personas, cargo y concepto que aparecen en el cuadro">
+                {/* 5 · Resumen de gastos adicionales */}
+                <Seccion n={5} titulo="Resumen de gastos" desc="Otros gastos o reembolso de boleto aéreo, en dólares">
+                  <div className="vs-chips vt-chips">
+                    <span className="vs-hint">Agregar:</span>
+                    {SUGERENCIAS_RESUMEN.map(s => (
+                      <button key={s} type="button" className="vs-chip" disabled={form.resumen.length >= 10} onClick={() => agregarGasto(s)}>+ {s}</button>
+                    ))}
+                  </div>
+                  {form.resumen.length > 0 && (
+                    <>
+                      <div className="vs-scroll vs-scroll--gastos">
+                        <table className="vs-tbl">
+                          <thead><tr><th>#</th><th>Descripción</th><th>Monto (USD)</th><th /></tr></thead>
+                          <tbody>
+                            {form.resumen.map((r, i) => (
+                              <tr key={i}>
+                                <td className="vt-col-num">{i + 1}</td>
+                                <td><input className="vs-input vs-in vs-in--name" maxLength={200} value={r.descripcion} aria-label="Descripción del gasto"
+                                  onChange={e => setGasto(i, 'descripcion', e.target.value)} /></td>
+                                <td><input type="number" min="0" step="0.01" className="vs-input vs-in vs-in--monto" value={r.monto} placeholder="0.00" aria-label="Monto del gasto"
+                                  onChange={e => setGasto(i, 'monto', e.target.value)} /></td>
+                                <td className="vt-col-num">
+                                  <button type="button" className="vs-del" title="Quitar"
+                                    onClick={() => setForm(f => ({ ...f, resumen: f.resumen.filter((_, j) => j !== i) }))}>
+                                    <FiX size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <span className="vs-hint">Se suman al total del viaje y salen en el cuadro de resumen del PDF. Las filas sin monto no se guardan.</span>
+                    </>
+                  )}
+                </Seccion>
+
+                {/* 6 · Detalle de personas */}
+                <Seccion n={6} titulo="Detalle — resumen de viáticos" desc="Personas, cargo y concepto que aparecen en el cuadro">
                   <div className="vs-scroll">
                     <table className="vs-tbl">
                       <thead><tr><th className="vt-col-num">#</th><th>Nombre</th><th>Cargo</th><th>Detalle</th><th className="vt-col-num" /></tr></thead>
@@ -799,8 +856,8 @@ export default function Viaticos() {
                   </div>
                 </Seccion>
 
-                {/* 6 · Notas */}
-                <Seccion n={6} titulo="Notas del cuadro" desc="Textos que salen en el PDF; puede editarlos">
+                {/* 7 · Notas */}
+                <Seccion n={7} titulo="Notas del cuadro" desc="Textos que salen en el PDF; puede editarlos">
                   <div className="vs-row-2">
                     <div className="vs-field">
                       <label className="vs-label">Nota 1</label>

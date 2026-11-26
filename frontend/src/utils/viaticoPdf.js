@@ -52,6 +52,29 @@ function dayHead(iso) {
   return `${DIAS_SEMANA[d.getDay()]}\n${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 
+/* Icono de viaje al exterior: globo terráqueo con un avión, dibujado en vector (centro cx, cy y radio r) */
+function iconoExterior(doc, cx, cy, r) {
+  doc.setDrawColor(...BLANCO); doc.setLineWidth(r * 0.075);
+  doc.circle(cx, cy, r, 'S');
+  doc.ellipse(cx, cy, r * 0.46, r, 'S');                           // meridiano
+  doc.line(cx - r, cy, cx + r, cy);                                // ecuador
+  [-0.5, 0.5].forEach(p => {                                       // paralelos
+    const medio = r * Math.sqrt(1 - p * p);
+    doc.line(cx - medio, cy + r * p, cx + medio, cy + r * p);
+  });
+  // Avión (silueta mirando hacia arriba, girada 45°) sobre la parte superior derecha
+  const silueta = [[0, -1], [0.13, -0.83], [0.15, -0.28], [0.98, 0.22], [0.98, 0.42], [0.15, 0.16], [0.12, 0.6], [0.4, 0.82], [0.4, 0.97],
+    [0, 0.85], [-0.4, 0.97], [-0.4, 0.82], [-0.12, 0.6], [-0.15, 0.16], [-0.98, 0.42], [-0.98, 0.22], [-0.15, -0.28], [-0.13, -0.83]];
+  const s = r * 0.66, c = Math.SQRT1_2, ax = cx + r * 0.78, ay = cy - r * 0.68;
+  const pts = silueta.map(([x, y]) => [ax + s * c * (x - y), ay + s * c * (x + y)]);
+  const lados = pts.slice(1).map((p, i) => [p[0] - pts[i][0], p[1] - pts[i][1]]);
+  doc.setDrawColor(...AZUL); doc.setLineWidth(r * 0.22); doc.setLineJoin('round');
+  doc.lines(lados, pts[0][0], pts[0][1], [1, 1], 'S', true);        // borde azul que lo separa del globo
+  doc.setFillColor(...BLANCO);
+  doc.lines(lados, pts[0][0], pts[0][1], [1, 1], 'F', true);
+  doc.setLineJoin('miter');
+}
+
 /* ══════════════════════════════════════════════════════════
    Dibuja el cuadro con la escala `k` (1 = tamaño normal).
 ══════════════════════════════════════════════════════════ */
@@ -68,7 +91,9 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   // Días de viaje (resumen) y de estadía (detalle); sin estadía, el detalle usa los de viaje
   const diasViaje   = v.dias_viaje   || (v.dias || []).filter(d => d.tipo === 'viaje'   || !d.tipo);
   const diasEstadia = v.dias_estadia || (v.dias || []).filter(d => d.tipo === 'estadia');
-  const totalUSD    = sumar(diasViaje);
+  const totalDias   = sumar(diasViaje);
+  const gastos      = v.detalle_resumen || [];           // otros, reembolso de boleto aéreo…
+  const totalUSD    = totalDias + sumar(gastos);
   const nombre      = v.diputado_nombre || '';
 
   /* ─ ENCABEZADO ─ */
@@ -93,10 +118,13 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   titulo('DETALLE DE CÁLCULO DE VIÁTICOS AL EXTERIOR', 'normal', 7.5, 0.88);
   const tX = M + LW + MIDW;
   doc.setFillColor(...AZUL); doc.rect(tX, y, TW, HH, 'F');
+  const radio = HH * 0.30, zonaIcono = radio * 2 + 9;
+  iconoExterior(doc, tX + 5 + radio, y + HH * 0.53, radio);
+  const cT = tX + zonaIcono + (TW - zonaIcono) / 2;      // los textos se centran en el espacio junto al icono
   doc.setFont('helvetica', 'bold'); doc.setTextColor(...BLANCO);
-  doc.setFontSize(F(9));  doc.text('CUADRO DE CÁLCULOS', tX + TW / 2, y + HH * 0.28, { align: 'center' });
-  doc.setFontSize(F(15)); doc.text('VIÁTICOS', tX + TW / 2, y + HH * 0.64, { align: 'center' });
-  doc.setFontSize(F(8));  doc.text('AL EXTERIOR', tX + TW / 2, y + HH * 0.88, { align: 'center' });
+  doc.setFontSize(F(9));  doc.text('CUADRO DE CÁLCULOS', cT, y + HH * 0.28, { align: 'center' });
+  doc.setFontSize(F(15)); doc.text('VIÁTICOS', cT, y + HH * 0.64, { align: 'center' });
+  doc.setFontSize(F(8));  doc.text('AL EXTERIOR', cT, y + HH * 0.88, { align: 'center' });
   y += HH + V(1.5);
 
   /* ─ CAMPOS ─ */
@@ -158,9 +186,8 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
     startY: y, margin: { left: M, right: W - M - anchoRes, bottom: MB }, tableWidth: anchoRes,
     head: [['No.', 'Detalle', 'TOTAL']],
     body: [
-      ['1', 'ALIMENTACIÓN Y HOSPEDAJE', usd(totalUSD)],
-      ['2', 'COMPLEMENTO', usd(0)],
-      ['3', 'OTROS', usd(0)],
+      ['1', 'ALIMENTACIÓN Y HOSPEDAJE', usd(totalDias)],
+      ...gastos.map((g, i) => [String(i + 2), mayus(g.descripcion), usd(g.monto)]),
     ],
     foot: [[
       { content: 'GRAN TOTAL:', colSpan: 2, styles: { halign: 'right' } },
@@ -263,80 +290,52 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
     tablaDias('DETALLES DEL VIÁTICO', filasDetalle, diasViaje);
   }
 
-  /* ─ DÓLARES, TASA, LEMPIRAS, DETALLE + NOTAS (este bloque no cambia de tamaño) ─ */
-  const tasa    = parseFloat(v.tasa_cambio) || 1;
-  const lps     = totalUSD * tasa;
-  const TOT_W   = Math.round(CW * 0.30);
-  const NOTA_W  = CW - TOT_W;
-  const NOTE_FS = 6.0;
+  /* ─ TABLA DÓLARES / TASA / LEMPIRAS + NOTAS (este bloque no cambia de tamaño) ─ */
+  const tasa        = parseFloat(v.tasa_cambio) || 1;
+  const lps         = totalUSD * tasa;
+  const TOT_W       = Math.round(CW * 0.34);
+  const SEP         = 2.5;                    // separación entre la tabla y las notas
+  const NOTA_W      = CW - TOT_W - SEP;
+  const CAB_H       = 7;                      // alto de los encabezados azules
+  const NOTE_FS     = 6.0;
   const NOTE_LINE_H = 3.5;
-  const NOTA_TXT_W = NOTA_W - 8;
-  const tw = Math.floor((TOT_W - 5) / 4);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(NOTE_FS);
-  const n1 = doc.splitTextToSize(v.nota1 || '', NOTA_TXT_W);
-  const n2 = doc.splitTextToSize(v.nota2 || '', NOTA_TXT_W);
-  const obsLineas = doc.splitTextToSize(mayus(v.obs_detalle), tw - 2);
+  const n1 = doc.splitTextToSize(v.nota1 || '', NOTA_W - 8);
+  const n2 = doc.splitTextToSize(v.nota2 || '', NOTA_W - 8);
   const notaLinesH = (n1.length + (n2.length ? n2.length + 0.5 : 0)) * NOTE_LINE_H;
-  const BLOQUE_H = Math.max(22, 13 + notaLinesH, 13 + obsLineas.length * NOTE_LINE_H);
-
-  const PILL_LABELS = ['DOLARES', 'TASA DE CAMBIO', 'LEMPIRAS', 'DETALLE'];
-  const PILL_VALS = [
-    '$' + totalUSD.toFixed(2),
-    tasa.toFixed(4),
-    'L ' + lps.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-  ];
+  const BLOQUE_H = Math.max(22, CAB_H + 6 + notaLinesH);
 
   if (y + BLOQUE_H > H - MB) { doc.addPage(); y = M; }
   autoTable(doc, {
     startY: y,
-    body: [['', '']],
-    margin: { left: M, right: M, bottom: MB },
-    tableWidth: CW,
-    styles: { lineColor: AZUL, lineWidth: 0.2, cellPadding: 0, minCellHeight: BLOQUE_H },
-    columnStyles: {
-      0: { cellWidth: TOT_W,  fillColor: [243, 244, 248] },
-      1: { cellWidth: NOTA_W, fillColor: [252, 253, 255] },
-    },
-    didDrawCell: ({ column, cell: c }) => {
-      const cx = c.x, cy = c.y, ch = c.height;
-      if (column.index === 0) {
-        PILL_LABELS.forEach((etq, i) => {
-          const px = cx + 1 + i * (tw + 1);
-          doc.setFillColor(...AZUL);
-          doc.roundedRect(px, cy + 1.5, tw, 6, 1, 1, 'F');
-          doc.setTextColor(...BLANCO);
-          doc.setFont('helvetica', 'bold');
-          let fs = 6;
-          doc.setFontSize(fs);
-          while (fs > 4 && doc.getTextWidth(etq) > tw - 1) { fs -= 0.2; doc.setFontSize(fs); }   // que la etiqueta no se corte
-          doc.text(etq, px + tw / 2, cy + 5.8, { align: 'center' });
-          doc.setTextColor(...AZUL_OSC);
-          if (i === 3) {              // DETALLE: texto libre, puede ocupar varios renglones
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(6);
-            obsLineas.forEach((line, li) => doc.text(line, px + tw / 2, cy + 10 + li * 3.5, { align: 'center' }));
-          } else {
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-            doc.text(PILL_VALS[i], px + tw / 2, cy + ch / 2 + 5, { align: 'center' });
-          }
-        });
-      } else {
-        doc.setFillColor(...AZUL);
-        doc.rect(cx, cy, c.width, 6.5, 'F');
-        doc.setTextColor(...BLANCO);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7.5);
-        doc.text('NOTAS:', cx + 3, cy + 5.0);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(NOTE_FS);
-        doc.setTextColor(40, 40, 40);
-        doc.text(n1, cx + 3, cy + 10);
-        if (n2.length) doc.text(n2, cx + 3, cy + 10 + n1.length * NOTE_LINE_H + NOTE_LINE_H * 0.6);
-      }
-    },
+    margin: { left: M, right: W - M - TOT_W, bottom: MB },
+    tableWidth: TOT_W,
+    head: [['DÓLARES', 'TASA DE CAMBIO', 'LEMPIRAS']],
+    body: [[
+      usd(totalUSD),
+      tasa.toFixed(4),
+      'L ' + miles(lps),
+    ]],
+    styles: { halign: 'center', valign: 'middle', lineColor: AZUL_L, lineWidth: 0.3, cellPadding: 1 },
+    headStyles: { fillColor: AZUL, textColor: BLANCO, fontStyle: 'bold', fontSize: 7.5, minCellHeight: CAB_H },
+    bodyStyles: { fillColor: GRIS2, textColor: AZUL_OSC, fontStyle: 'bold', fontSize: 11, minCellHeight: BLOQUE_H - CAB_H },
+    columnStyles: { 0: { cellWidth: TOT_W / 3 }, 1: { cellWidth: TOT_W / 3 }, 2: { cellWidth: TOT_W / 3 } },
+    tableLineColor: AZUL,
+    tableLineWidth: 0.3,
   });
-  y = doc.lastAutoTable.finalY + V(2);
+
+  const nx = M + TOT_W + SEP;
+  doc.setFillColor(255, 255, 255); doc.rect(nx, y, NOTA_W, BLOQUE_H, 'F');
+  doc.setFillColor(...AZUL); doc.rect(nx, y, NOTA_W, CAB_H, 'F');
+  doc.setDrawColor(...AZUL); doc.setLineWidth(0.3); doc.rect(nx, y, NOTA_W, BLOQUE_H, 'S');
+  doc.setTextColor(...BLANCO); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+  doc.text('NOTAS:', nx + 3, y + 4.8);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(NOTE_FS); doc.setTextColor(40, 40, 40);
+  doc.text(n1, nx + 3, y + CAB_H + 4);
+  if (n2.length) doc.text(n2, nx + 3, y + CAB_H + 4 + n1.length * NOTE_LINE_H + NOTE_LINE_H * 0.6);
+  y += BLOQUE_H + V(2);
 
   /* ─ FIRMA (izquierda) y ELABORADO POR (derecha) ─ */
   const FR = V(6.8);                         // alto de cada renglón de firma

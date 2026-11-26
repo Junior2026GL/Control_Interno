@@ -3,6 +3,37 @@ const { logEvent, getClientIP } = require('../middleware/audit');
 
 function sanitize(str) { return (str || '').toString().trim(); }
 
+// Gastos adicionales del resumen (otros, reembolso de boleto aéreo…), en dólares: [{ descripcion, monto }]
+function normResumen(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.slice(0, 10)
+    .map(r => ({
+      descripcion: sanitize(r?.descripcion).toUpperCase().slice(0, 200) || 'OTROS',
+      monto: Math.round((parseFloat(r?.monto) || 0) * 100) / 100,
+    }))
+    .filter(r => r.monto > 0);
+}
+function parseResumen(txt) {
+  try { const a = JSON.parse(txt || '[]'); return Array.isArray(a) ? a : []; } catch { return []; }
+}
+// Antes de guardar filas se comprueba que exista la columna, para no dejar un viático guardado a medias
+function revisarColumnaResumen(filas, res, seguir) {
+  if (!filas.length) return seguir();
+  db.query('SELECT detalle_resumen FROM viaticos LIMIT 0', (e) => {
+    if (!e) return seguir();
+    console.error('[viaticos] columna detalle_resumen:', e.message);
+    res.status(500).json({ message: e.code === 'ER_BAD_FIELD_ERROR'
+      ? 'Falta crear la columna detalle_resumen en la base de datos.' : 'Error al guardar el resumen de gastos.' });
+  });
+}
+// Solo se actualiza si el formulario envió el resumen (una pantalla antigua en caché no lo borra)
+function guardarResumen(id, body, cb) {
+  if (!Array.isArray(body.detalle_resumen)) return cb(null);
+  const filas = normResumen(body.detalle_resumen);
+  db.query('UPDATE viaticos SET detalle_resumen = ? WHERE id = ?', [filas.length ? JSON.stringify(filas) : null, id],
+    (e) => cb(e && !(e.code === 'ER_BAD_FIELD_ERROR' && !filas.length) ? e : null));
+}
+
 // Inserta un día con tipo si la columna ya existe; si no (migración pendiente),
 // inserta sin tipo para no bloquear la app.
 function insertDia(viatico_id, d, cb) {
@@ -127,7 +158,7 @@ exports.getOne = (req, res) => {
           if (e3) return res.status(500).json({ message: 'Error al obtener días.' });
           const dias_viaje   = dias.filter(d => d.tipo === 'viaje'   || !d.tipo);
           const dias_estadia = dias.filter(d => d.tipo === 'estadia');
-          res.json({ ...viatico, detalle, dias_viaje, dias_estadia });
+          res.json({ ...viatico, detalle, dias_viaje, dias_estadia, detalle_resumen: parseResumen(viatico.detalle_resumen) });
         });
       });
     }
@@ -168,7 +199,10 @@ exports.create = (req, res) => {
       const diasPromises = dias.map(d => new Promise((resolve, reject) =>
         insertDia(vId, d, (e) => e ? reject(e) : resolve())
       ));
-      Promise.all([...detallePromises, ...diasPromises])
+      const resumenPromise = new Promise((resolve, reject) =>
+        guardarResumen(vId, req.body, (e) => e ? reject(e) : resolve())
+      );
+      Promise.all([...detallePromises, ...diasPromises, resumenPromise])
         .then(() => {
           logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'CREAR', modulo: 'viaticos', detalle: `Creó viático — ${motivo_viaje}, ${lugar}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
           res.status(201).json({ message: 'Viático creado.', id: vId });
@@ -176,7 +210,7 @@ exports.create = (req, res) => {
         .catch((e) => { console.error('[viaticos] Error al guardar detalles al crear:', e); res.status(500).json({ message: e.message }); });
   };
 
-  db.query(
+  revisarColumnaResumen(normResumen(req.body.detalle_resumen), res, () => db.query(
     `INSERT INTO viaticos (motivo_viaje, lugar, diputado_id, periodo_dias, fecha_inicio, fecha_fin,
        cargo, tasa_cambio, nota1, nota2, obs_detalle, creado_por)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
@@ -198,7 +232,7 @@ exports.create = (req, res) => {
       if (err) return res.status(500).json({ message: err.message });
       afterInsert(result.insertId);
     }
-  );
+  ));
 };
 
 // DELETE /api/viaticos/:id
@@ -238,7 +272,7 @@ exports.update = (req, res) => {
   if (isNaN(periodo_dias) || periodo_dias <= 0)
     return res.status(400).json({ message: 'El período de tiempo es requerido.' });
 
-  db.query(
+  revisarColumnaResumen(normResumen(req.body.detalle_resumen), res, () => db.query(
     `UPDATE viaticos SET motivo_viaje=?, lugar=?, diputado_id=?, periodo_dias=?,
        fecha_inicio=?, fecha_fin=?, cargo=?, tasa_cambio=?, nota1=?, nota2=?, obs_detalle=?
      WHERE id=?`,
@@ -260,7 +294,7 @@ exports.update = (req, res) => {
       if (err) return res.status(500).json({ message: 'Error al actualizar viático.' });
       continueUpdate(r);
     }
-  );
+  ));
 
   function continueUpdate(r) {
       if (!r.affectedRows) return res.status(404).json({ message: 'Viático no encontrado.' });
@@ -282,7 +316,11 @@ exports.update = (req, res) => {
             insertDia(id, d, (e) => e ? reject(e) : resolve())
           ));
 
-          Promise.all([...detalleP, ...diasP])
+          const resumenP = new Promise((resolve, reject) =>
+            guardarResumen(id, req.body, (e) => e ? reject(e) : resolve())
+          );
+
+          Promise.all([...detalleP, ...diasP, resumenP])
             .then(() => {
               logEvent({ usuario_id: req.user.id, usuario_nombre: req.user.nombre || null, accion: 'ACTUALIZAR', modulo: 'viaticos', detalle: `Actualizó viático ID #${id} — ${motivo_viaje}`, ip: getClientIP(req), metodo: req.method, ruta: req.originalUrl, resultado: 'EXITO' });
               res.json({ message: 'Viático actualizado.' });
