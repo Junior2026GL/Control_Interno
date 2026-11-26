@@ -19,6 +19,9 @@ const fmtCorto = v => (v >= 1000 ? `${(v / 1000).toLocaleString('es-HN', { maxim
 const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` });
 // Año y mes del viaje según la fecha "desde" (sin convertir zona horaria)
 const partes = s => { const [y, m] = String(s || '').split('T')[0].split('-'); return { y: +y, m: +m }; };
+// El lugar se escribe a mano: para agrupar se ignoran tildes, espacios, guiones y signos
+const claveLugar = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const nombreLugar = s => String(s || '').trim().toUpperCase().replace(/\s*-\s*/g, ' - ').replace(/\s+/g, ' ');
 
 export default function ViaticosReportes() {
   const navigate = useNavigate();
@@ -58,13 +61,18 @@ export default function ViaticosReportes() {
   const porLugar = useMemo(() => {
     const mapa = {};
     delAnio.forEach(r => {
-      const k = (r.lugar || 'SIN LUGAR').trim().toUpperCase();
-      mapa[k] = mapa[k] || { total: 0, cantidad: 0 };
+      const k = claveLugar(r.lugar);
+      const nombre = k ? nombreLugar(r.lugar) : 'SIN LUGAR';
+      mapa[k] = mapa[k] || { total: 0, cantidad: 0, nombres: {} };
       mapa[k].total += num(r.gran_total); mapa[k].cantidad += 1;
+      mapa[k].nombres[nombre] = (mapa[k].nombres[nombre] || 0) + 1;
     });
     const suma = Object.values(mapa).reduce((t, v) => t + v.total, 0) || 1;
-    return Object.entries(mapa)
-      .map(([lugar, v]) => ({ lugar, total: Math.round(v.total * 100) / 100, cantidad: v.cantidad, pct: (v.total / suma) * 100 }))
+    return Object.values(mapa)
+      .map(v => ({
+        lugar: Object.entries(v.nombres).sort((a, b) => b[1] - a[1])[0][0],   // la forma más usada
+        total: Math.round(v.total * 100) / 100, cantidad: v.cantidad, pct: (v.total / suma) * 100,
+      }))
       .sort((x, y) => y.total - x.total).slice(0, 8);
   }, [delAnio]);
 
