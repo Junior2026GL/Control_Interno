@@ -66,10 +66,9 @@ const fmtUSD = v => '$ ' + v.toLocaleString('en-US', { minimumFractionDigits: 2,
 const fmtLps = v => 'L ' + v.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const diaCorto = iso => ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'][new Date(iso + 'T00:00:00Z').getUTCDay()];
 
-/* Tabla de montos: una columna por día; con tasa muestra además el equivalente en lempiras */
-function TablaDias({ dias, tasa, onMonto }) {
+/* Tabla de montos en dólares: una columna por día */
+function TablaDias({ dias, onMonto }) {
   const total = dias.reduce((s, d) => s + (parseFloat(d.monto) || 0), 0);
-  const cambio = parseFloat(tasa) || 0;
   return (
     <div className="vs-scroll vt-scroll-dias">
       <table className="vs-tbl vt-tbl-dias">
@@ -87,13 +86,6 @@ function TablaDias({ dias, tasa, onMonto }) {
             ))}
             <td className="vs-td-total">{fmtUSD(total)}</td>
           </tr>
-          {cambio > 0 && (
-            <tr>
-              <td className="vt-concepto">Equivalente (L)</td>
-              {dias.map(d => <td key={d.fecha} className="vt-lps">{((parseFloat(d.monto) || 0) * cambio).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>)}
-              <td className="vs-td-total">{fmtLps(total * cambio)}</td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
@@ -747,7 +739,7 @@ export default function Viaticos() {
                     <p className="vs-aplicar-hint">Se aplica a los días de viaje y a los de estadía.</p>
                   </div>
                   {form.dias_viaje.length > 0
-                    ? <TablaDias dias={form.dias_viaje} tasa={form.tasa_cambio} onMonto={(i, v) => setDia('dias_viaje', i, v)} />
+                    ? <TablaDias dias={form.dias_viaje} onMonto={(i, v) => setDia('dias_viaje', i, v)} />
                     : <p className="vt-sin-dias">Elija la fecha inicio y la fecha fin para ver los días.</p>}
                 </Seccion>
 
