@@ -9,6 +9,7 @@ import { LuShieldCheck, LuMapPinned } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
+import Seccion from '../components/SeccionFormulario';
 import { AuthContext } from '../context/AuthContext';
 import { generarReciboSeguridadPdf, limitesContenido } from '../utils/viaticoSeguridadPdf';
 import { resumenDeRegistro, SUGERENCIAS } from '../utils/viaticoSeguridadResumen';
@@ -157,23 +158,6 @@ function HoraExacta({ valor, onCambio, rapidas }) {
         ))}
       </div>
     </div>
-  );
-}
-
-/* Tarjeta numerada del formulario */
-function Seccion({ n, titulo, desc, extra, children }) {
-  return (
-    <section className="vs-sec">
-      <div className="vs-sec-head">
-        <span className="vs-step">{n}</span>
-        <div>
-          <h3 className="vs-sec-title">{titulo}</h3>
-          <p className="vs-sec-desc">{desc}</p>
-        </div>
-        {extra && <div className="vs-sec-extra">{extra}</div>}
-      </div>
-      <div className="vs-sec-body">{children}</div>
-    </section>
   );
 }
 

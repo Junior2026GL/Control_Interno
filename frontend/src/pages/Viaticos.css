@@ -142,118 +142,30 @@
 }
 .vt-modal-close:hover { background: #e2e8f0; }
 
-/* ── Form ── */
-.vt-form {
-  padding: 20px 24px 0;
-  display: flex; flex-direction: column; gap: 8px;
-  flex: 1; overflow-y: auto; overflow-x: hidden;
+/* ── Formulario (usa las tarjetas vs- de ViaticosSeguridad.css) ── */
+.vt-diputado { display: grid; grid-template-columns: minmax(280px, 340px) 1.4fr 1fr; gap: 14px; align-items: start; }
+.vt-diputado .vs-dni-row { gap: 8px; }
+.vt-diputado .vs-dni-row .vs-input { min-width: 0; }
+.vt-diputado .vs-btn-buscar { padding: 0 14px; }
+.vs-input.vt-ro { background: #f1f5f9; color: #475569; font-weight: 700; cursor: default; }
+.vt-fechas-estadia { display: grid; grid-template-columns: repeat(2, minmax(0, 260px)); gap: 14px; }
+.vt-aplicar-input.vs-input { padding-left: 48px !important; }
+.vt-scroll-dias { align-self: flex-start; max-width: 100%; }
+.vt-tbl-dias { width: auto; min-width: 360px; }
+.vt-tbl-dias .vt-concepto { font-weight: 700; color: #0f2744; white-space: nowrap; padding: .3rem .8rem; }
+.vt-tbl-dias .vt-lps { text-align: right; color: #475569; white-space: nowrap; padding-right: .6rem; }
+.vt-sin-dias {
+  margin: 0; padding: 14px 16px; border: 1.5px dashed #cdd6e6; border-radius: 12px;
+  background: #f8fafc; color: #94a3b8; font-size: 13px; text-align: center;
 }
+.vt-col-num { width: 40px; text-align: center; }
+.vt-in-texto { min-width: 190px; }
+.vt-nota { min-height: 120px; line-height: 1.45; }
+.vt-total-lps { font-size: .9rem; font-weight: 700; opacity: .9; }
+@media (max-width: 1000px) { .vt-diputado { grid-template-columns: 1fr; } }
+@media (max-width: 600px)  { .vt-fechas-estadia { grid-template-columns: 1fr; } }
 
-/* Dos columnas del formulario */
-.vt-form-cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
-}
-.vt-form-col {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-@media (max-width: 780px) {
-  .vt-form-cols { grid-template-columns: 1fr; }
-}
-
-/* Tarjeta por sección */
-.vt-card {
-  background: #ffffff;
-  border: 1.5px solid #e4eaf5;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 2px 10px rgba(39,76,141,0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.vt-section-title {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; font-weight: 700; color: #1e3a5f;
-  letter-spacing: 0.3px;
-  padding-bottom: 10px;
-  border-bottom: 1.5px solid #eef1f8;
-  margin: 0;
-}
-
-.vt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.vt-col-2 { grid-column: 1 / -1; }
-.vt-field { display: flex; flex-direction: column; gap: 5px; }
-.vt-field label {
-  font-size: 11px; font-weight: 600; color: #475569;
-  letter-spacing: 0.3px;
-}
-.vt-req { color: #e11d48; margin-left: 2px; font-weight: 700; }
-.vt-field input, .vt-field textarea, .vt-field select {
-  padding: 10px 12px; border: 1.5px solid #dde4f0; border-radius: 9px;
-  font-size: 13px; color: #1e293b; outline: none; font-family: inherit;
-  background: #f8faff;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.vt-field input:focus, .vt-field textarea:focus {
-  border-color: #274C8D;
-  box-shadow: 0 0 0 3px rgba(39,76,141,0.08);
-  background: #fff;
-}
-.vt-readonly { background: #f1f5f9 !important; color: #64748b !important; font-weight: 600; cursor: default; }
-.vt-field-err { font-size: 11px; color: #e11d48; margin-top: 2px; }
-
-.vt-input-icon {
-  display: flex; align-items: center; gap: 6px;
-  border: 1.5px solid #e2e8f0; border-radius: 9px; padding: 0 10px;
-  background: white; color: #64748b; font-size: 13px;
-  transition: border-color 0.2s;
-}
-.vt-input-icon:focus-within { border-color: #274C8D; }
-.vt-input-icon input {
-  border: none !important; padding: 9px 0 !important; outline: none; flex: 1;
-}
-
-.vt-input-icon.small { padding: 0 6px; }
-.vt-input-icon.small input { padding: 5px 0 !important; font-size: 12px; }
-
-/* DNI row */
-.vt-dni-row { display: flex; gap: 6px; }
-.vt-dni-row input { flex: 1; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 9px; font-size: 13px; outline: none; }
-.vt-btn-search {
-  padding: 9px 14px; background: #274C8D; color: white; border: none;
-  border-radius: 9px; cursor: pointer; display: flex; align-items: center;
-  transition: opacity 0.2s;
-}
-.vt-btn-search:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* Apply button */
-.vt-btn-apply {
-  padding: 9px 14px; background: #eff6ff; color: #2563eb;
-  border: 1.5px solid #93c5fd; border-radius: 9px;
-  font-size: 12px; font-weight: 700; cursor: pointer;
-  transition: all 0.15s; white-space: nowrap;
-}
-.vt-btn-apply:hover:not(:disabled) { background: #2563eb; color: white; border-color: #2563eb; }
-.vt-btn-apply:disabled { opacity: 0.5; cursor: not-allowed; }
-.vt-field-center { justify-content: flex-end; }
-
-/* Días grid */
-.vt-dias-wrap {
-  border: 1.5px solid #e8ecf4; border-radius: 12px; overflow: hidden; margin: 4px 0;
-}
-.vt-dias-header {
-  display: flex; justify-content: space-between; align-items: center;
-  background: #f8fafc; padding: 8px 14px;
-  font-size: 12px; font-weight: 700; color: #374151;
-}
-.vt-dias-total { font-size: 13px; }
-.vt-dias-total strong { color: #274C8D; }
+/* Días (ventana de detalle) */
 .vt-dias-grid {
   display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px;
   border-top: 1px solid #e8ecf4;
@@ -264,47 +176,12 @@
 }
 .vt-dia-fecha { font-size: 10px; font-weight: 700; color: #64748b; text-align: center; }
 
-/* Detalle rows */
-.vt-detalle-table { border: 1.5px solid #e8ecf4; border-radius: 10px; overflow: hidden; }
-.vt-det-head {
-  display: grid; grid-template-columns: 28px 1fr 1fr 1fr 28px;
-  gap: 6px; padding: 7px 10px;
-  background: #f1f5f9; font-size: 10px; font-weight: 800;
-  color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;
-}
-.vt-det-row {
-  display: grid; grid-template-columns: 28px 1fr 1fr 1fr 28px;
-  gap: 6px; padding: 6px 10px; align-items: center;
-  border-top: 1px solid #f0f4f8;
-}
-.vt-det-num { font-size: 12px; font-weight: 700; color: #94a3b8; text-align: center; }
-.vt-det-row input {
-  padding: 6px 8px; border: 1.5px solid #e8ecf4; border-radius: 7px;
-  font-size: 12px; outline: none; font-family: inherit;
-  transition: border-color 0.2s;
-}
-.vt-det-row input:focus { border-color: #274C8D; }
-.vt-del-row {
-  background: #fff1f2; border: 1.5px solid #fca5a5; color: #e11d48;
-  border-radius: 7px; padding: 4px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
-}
-.vt-del-row:hover { background: #e11d48; color: white; border-color: #e11d48; }
-.vt-add-row {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-weight: 700; color: #274C8D;
-  background: #eff6ff; border: 1.5px solid #93c5fd;
-  border-radius: 7px; padding: 3px 10px; cursor: pointer;
-  transition: all 0.15s;
-}
-.vt-add-row:hover { background: #274C8D; color: white; border-color: #274C8D; }
-
 .vt-form-err {
   background: #fff1f2; color: #e11d48;
   border: 1px solid #fecdd3; border-radius: 9px;
   padding: 10px 14px; font-size: 13px; font-weight: 500;
 }
+.vt-form-err--pie { margin: 8px 1.2rem; }
 .vt-modal-footer {
   display: flex;
   justify-content: flex-end;
