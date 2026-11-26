@@ -73,6 +73,7 @@ const sumaMontos = filas => (filas || []).reduce((s, r) => s + (parseFloat(r.mon
 
 /* Qué cubre cada renglón (columna "Detalle") */
 const DETALLES_VIATICO = ['ALIMENTACIÓN', 'HOSPEDAJE', 'ALIMENTACIÓN Y HOSPEDAJE'];
+const OPCIONES_NOTAS = [['1', 'Solo nota 1'], ['2', 'Solo nota 2'], ['ambas', 'Las dos']];
 const EMPTY_DETALLE = { nombre: '', cargo: '', detalle: '', dias: [] };
 const PRIMER_RENGLON = { ...EMPTY_DETALLE, detalle: 'ALIMENTACIÓN Y HOSPEDAJE' };
 /* El último día (regreso) cuenta como medio día */
@@ -99,6 +100,7 @@ function buildEmptyForm(userName) {
     fecha_inicio: '',         // período del viaje: una columna por día
     fecha_fin: '',
     tasa_cambio: '',
+    notas: '2',               // cuáles salen en el PDF: '1', '2' o 'ambas'
     nota1: NOTA1_DEFAULT,
     nota2: NOTA2_DEFAULT,
     elaborado_por: userName || '',
@@ -261,8 +263,8 @@ export default function Viaticos() {
       fecha_fin:    form.fecha_fin,
       cargo:        form.cargo,
       tasa_cambio:  parseFloat(form.tasa_cambio),
-      nota1:        form.nota1,
-      nota2:        form.nota2,
+      nota1:        form.notas === '2' ? '' : form.nota1,    // la nota no elegida se guarda vacía
+      nota2:        form.notas === '1' ? '' : form.nota2,
       periodo_dias: parseFloat(form.periodo_dias) || 1,
       obs_detalle:  form.obs_detalle,
       detalle:      form.detalle.map(r => ({
@@ -366,8 +368,9 @@ export default function Viaticos() {
         fecha_inicio:   (v.fecha_inicio || '').substring(0, 10),
         fecha_fin:      (v.fecha_fin || '').substring(0, 10),
         tasa_cambio:    v.tasa_cambio || '',
-        nota1:          v.nota1 || '',
-        nota2:          v.nota2 || '',
+        notas:          v.nota1?.trim() ? (v.nota2?.trim() ? 'ambas' : '1') : '2',
+        nota1:          v.nota1?.trim() ? v.nota1 : NOTA1_DEFAULT,
+        nota2:          v.nota2?.trim() ? v.nota2 : NOTA2_DEFAULT,
         elaborado_por:  me?.nombre || '',
         detalle:    filas,
         resumen:      (v.detalle_resumen || []).map(r => ({ descripcion: r.descripcion || '', monto: r.monto })),
@@ -806,24 +809,33 @@ export default function Viaticos() {
                     <FiPlus size={13} /> Agregar renglon
                   </button>
                   <span className="vs-hint">Se suman al total del viaje y salen en el cuadro de resumen del PDF. Las filas sin monto no se guardan.</span>
-                  <div className="vs-field">
-                    <label className="vs-label">Observación (no se imprime en el PDF)</label>
-                    <textarea className="vs-input vs-textarea" rows={2} value={form.obs_detalle} placeholder="Observación (opcional)"
-                      onChange={e => setCampo('obs_detalle', e.target.value)} />
-                  </div>
                 </Seccion>
 
                 {/* 5 · Notas */}
-                <Seccion n={5} titulo="Notas del cuadro" desc="Textos que salen en el PDF; puede editarlos">
-                  <div className="vs-row-2">
-                    <div className="vs-field">
-                      <label className="vs-label">Nota 1</label>
-                      <textarea className="vs-input vs-textarea vt-nota" rows={5} value={form.nota1} onChange={e => setCampo('nota1', e.target.value)} />
-                    </div>
-                    <div className="vs-field">
-                      <label className="vs-label">Nota 2</label>
-                      <textarea className="vs-input vs-textarea vt-nota" rows={5} value={form.nota2} onChange={e => setCampo('nota2', e.target.value)} />
-                    </div>
+                <Seccion n={5} titulo="Notas del cuadro" desc="Elija las notas que salen en el PDF; puede editar su texto">
+                  <div className="vs-chips vt-chips" role="group" aria-label="Notas que salen en el PDF">
+                    <span className="vs-hint">Incluir:</span>
+                    {OPCIONES_NOTAS.map(([valor, texto]) => (
+                      <button key={valor} type="button" aria-pressed={form.notas === valor}
+                        className={'vs-chip vt-chip-nota' + (form.notas === valor ? ' vs-chip--on' : '')}
+                        onClick={() => setCampo('notas', valor)}>
+                        {form.notas === valor && <FiCheck size={13} />} {texto}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={form.notas === 'ambas' ? 'vs-row-2' : undefined}>
+                    {form.notas !== '2' && (
+                      <div className="vs-field">
+                        <label className="vs-label">Nota 1</label>
+                        <textarea className="vs-input vs-textarea vt-nota" rows={5} value={form.nota1} onChange={e => setCampo('nota1', e.target.value)} />
+                      </div>
+                    )}
+                    {form.notas !== '1' && (
+                      <div className="vs-field">
+                        <label className="vs-label">Nota 2</label>
+                        <textarea className="vs-input vs-textarea vt-nota" rows={5} value={form.nota2} onChange={e => setCampo('nota2', e.target.value)} />
+                      </div>
+                    )}
                   </div>
                 </Seccion>
 

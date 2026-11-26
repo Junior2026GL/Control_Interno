@@ -308,9 +308,9 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(NOTE_FS);
-  const n1 = doc.splitTextToSize(v.nota1 || '', NOTA_W - 8);
-  const n2 = doc.splitTextToSize(v.nota2 || '', NOTA_W - 8);
-  const notaLinesH = (n1.length + (n2.length ? n2.length + 0.5 : 0)) * NOTE_LINE_H;
+  // Solo las notas elegidas (las no elegidas vienen vacías)
+  const notas = [v.nota1, v.nota2].filter(n => n && n.trim()).map(n => doc.splitTextToSize(n, NOTA_W - 8));
+  const notaLinesH = notas.reduce((s, l) => s + l.length + 0.6, 0) * NOTE_LINE_H;
   const BLOQUE_H = Math.max(22, CAB_H + 6 + notaLinesH);
 
   if (y + BLOQUE_H > H - MB) { doc.addPage(); y = M; }
@@ -339,8 +339,8 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   doc.setTextColor(...BLANCO); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
   doc.text('NOTAS:', nx + 3, y + 4.8);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(NOTE_FS); doc.setTextColor(40, 40, 40);
-  doc.text(n1, nx + 3, y + CAB_H + 4);
-  if (n2.length) doc.text(n2, nx + 3, y + CAB_H + 4 + n1.length * NOTE_LINE_H + NOTE_LINE_H * 0.6);
+  let yNota = y + CAB_H + 4;
+  notas.forEach(lineas => { doc.text(lineas, nx + 3, yNota); yNota += (lineas.length + 0.6) * NOTE_LINE_H; });
   y += BLOQUE_H + V(2);
 
   /* ─ FIRMA (izquierda) y ELABORADO POR (derecha) ─ */
