@@ -100,4 +100,4 @@
 .vr-rank__amount { font-family: inherit; font-size: .95rem; font-weight: 800; color: #0f766e; white-space: nowrap; }
 .vr-rank__track { height: 10px; margin: .4rem 0 .3rem; border-radius: 999px; background: #eef2f7; overflow: hidden; }
 .vr-rank__fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #0d9488, #34d399); transition: width .5s ease; }
-.vr-rank__meta { font-family: inherit; font-size: .75rem; color: #94a3b8; }
+.vr-rank__meta { font-family: inherit; font-size: .88rem; font-weight: 700; color: #334155; }
