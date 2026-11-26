@@ -28,21 +28,34 @@ function formatDate(dateStr) {
   return `${d}/${m}/${y}`;
 }
 
+// Todo en UTC: con la hora local, en zonas al este de UTC la fecha no avanzaba y la pantalla se quedaba pegada
 function addDays(dateStr, n) {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() + n);
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
 
+const MAX_DIAS = 366;
+// Mientras se escribe el año, el campo entrega valores como 0002-12-04: solo se aceptan años 2000–2099
+const fechaValida = s => /^20\d{2}-\d{2}-\d{2}$/.test(s || '');
+
 function getAllDates(inicio, fin) {
-  if (!inicio || !fin) return [];
+  if (!fechaValida(inicio) || !fechaValida(fin)) return [];
   const dates = [];
   let cur = inicio;
-  while (cur <= fin) {
+  while (cur <= fin && dates.length <= MAX_DIAS) {
     dates.push(cur);
     cur = addDays(cur, 1);
   }
-  return dates;
+  return dates.length > MAX_DIAS ? [] : dates;
+}
+
+function errorRango(inicio, fin) {
+  if (!inicio || !fin) return '';
+  if (!fechaValida(inicio) || !fechaValida(fin)) return 'Revise el año de las fechas.';
+  if (fin < inicio) return 'La fecha fin no puede ser anterior a la fecha de inicio.';
+  if (!getAllDates(inicio, fin).length) return `El período no puede pasar de ${MAX_DIAS} días.`;
+  return '';
 }
 
 const EMPTY_DETALLE = { nombre: '', cargo: '', detalle: 'ALIMENTACIÓN Y HOSPEDAJE' };
@@ -156,9 +169,8 @@ export default function Viaticos() {
 
   // ── Auto-generar días de VIAJE (RESUMEN) cuando cambia fecha inicio/fin ──
   useEffect(() => {
-    if (!form.fecha_inicio || !form.fecha_fin) return;
-    if (form.fecha_fin < form.fecha_inicio) return;
     const fechas = getAllDates(form.fecha_inicio, form.fecha_fin);
+    if (!fechas.length) return;   // fechas incompletas o rango inválido
     const monto = parseFloat(form.montoDefault) || 0;
     setForm(f => ({
       ...f,
@@ -173,9 +185,8 @@ export default function Viaticos() {
 
   // ── Auto-generar días de ESTADÍA (DETALLE) cuando cambia fecha estadía ──
   useEffect(() => {
-    if (!form.fecha_inicio_estadia || !form.fecha_fin_estadia) return;
-    if (form.fecha_fin_estadia < form.fecha_inicio_estadia) return;
     const fechas = getAllDates(form.fecha_inicio_estadia, form.fecha_fin_estadia);
+    if (!fechas.length) return;
     const monto = parseFloat(form.montoDefault) || 0;
     setForm(f => ({
       ...f,
@@ -205,6 +216,9 @@ export default function Viaticos() {
     if (!form.lugar.trim())        return setFormErr('El lugar es requerido.');
     if (!form.diputado_id)         return setFormErr('Busca al diputado por DNI primero.');
     if (!form.fecha_inicio || !form.fecha_fin) return setFormErr('Las fechas de viaje son requeridas.');
+    const errFechas = errorRango(form.fecha_inicio, form.fecha_fin)
+      || errorRango(form.fecha_inicio_estadia, form.fecha_fin_estadia);
+    if (errFechas)                 return setFormErr(errFechas);
     if (!form.periodo_dias)        return setFormErr('El período de tiempo es requerido.');
     if (!form.tasa_cambio)         return setFormErr('La tasa de cambio es requerida.');
 
@@ -674,12 +688,12 @@ export default function Viaticos() {
                     <div className="vt-grid-2">
                       <div className="vt-field">
                         <label>Fecha Inicio <span className="vt-req">*</span></label>
-                        <input type="date" value={form.fecha_inicio}
+                        <input type="date" min="2000-01-01" max="2099-12-31" value={form.fecha_inicio}
                           onChange={e => setForm({...form, fecha_inicio: e.target.value})} />
                       </div>
                       <div className="vt-field">
                         <label>Fecha Fin <span className="vt-req">*</span></label>
-                        <input type="date" value={form.fecha_fin}
+                        <input type="date" min="2000-01-01" max="2099-12-31" value={form.fecha_fin}
                           onChange={e => setForm({...form, fecha_fin: e.target.value})} />
                       </div>
                       <div className="vt-field">
@@ -714,6 +728,9 @@ export default function Viaticos() {
                         </button>
                       </div>
                     </div>
+                    {errorRango(form.fecha_inicio, form.fecha_fin) && (
+                      <div className="vt-form-err" role="alert">{errorRango(form.fecha_inicio, form.fecha_fin)}</div>
+                    )}
                     {form.dias_viaje.length > 0 && (
                       <div className="vt-dias-wrap">
                         <div className="vt-dias-header">
@@ -748,15 +765,18 @@ export default function Viaticos() {
                     <div className="vt-grid-2">
                       <div className="vt-field">
                         <label>Fecha Inicio Estadía</label>
-                        <input type="date" value={form.fecha_inicio_estadia}
+                        <input type="date" min="2000-01-01" max="2099-12-31" value={form.fecha_inicio_estadia}
                           onChange={e => setForm({...form, fecha_inicio_estadia: e.target.value})} />
                       </div>
                       <div className="vt-field">
                         <label>Fecha Fin Estadía</label>
-                        <input type="date" value={form.fecha_fin_estadia}
+                        <input type="date" min="2000-01-01" max="2099-12-31" value={form.fecha_fin_estadia}
                           onChange={e => setForm({...form, fecha_fin_estadia: e.target.value})} />
                       </div>
                     </div>
+                    {errorRango(form.fecha_inicio_estadia, form.fecha_fin_estadia) && (
+                      <div className="vt-form-err" role="alert">{errorRango(form.fecha_inicio_estadia, form.fecha_fin_estadia)}</div>
+                    )}
                     {form.dias_estadia.length > 0 && (
                       <div className="vt-dias-wrap">
                         <div className="vt-dias-header">
