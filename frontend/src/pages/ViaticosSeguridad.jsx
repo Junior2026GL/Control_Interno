@@ -208,6 +208,13 @@ export default function ViaticosSeguridad() {
   const [printLoading, setPrintLoading] = useState(null);
   const [aplicarAlim, setAplicarAlim] = useState('');
   const [aplicarHosp, setAplicarHosp] = useState('');
+  /* Agregar personas a la tabla buscándolas por DNI en el censo */
+  const [verAddDni, setVerAddDni]   = useState(false);
+  const [addDni, setAddDni]         = useState('');
+  const [addDniLoading, setAddDniLoading] = useState(false);
+  const [addDniMsg, setAddDniMsg]   = useState(null);   // { tipo: 'ok' | 'error', texto }
+  const addDniRef  = useRef(null);
+  const addDniTurno = useRef(0);      // cambia al cerrar el formulario: descarta búsquedas que lleguen tarde
 
   const PAGE_SIZE = 10;
   const canEdit   = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'].includes(user?.rol);
@@ -224,7 +231,10 @@ export default function ViaticosSeguridad() {
   useEffect(() => { fetchRegistros(); }, [fetchRegistros]);
   useEffect(() => { setPage(1); }, [busqueda, filtroAnio]);
 
-  const closeModal = () => { setModal(false); setEditing(null); setDniError(''); setDniInfo(''); dniEditado.current = false; autoRef.current = null; };
+  const closeModal = () => {
+    setModal(false); setEditing(null); setDniError(''); setDniInfo(''); dniEditado.current = false; autoRef.current = null;
+    setVerAddDni(false); setAddDni(''); setAddDniMsg(null); setAddDniLoading(false); addDniTurno.current += 1;
+  };
   dniRef.current = (form.numero_identidad || '').replace(/\D/g, '');
 
   useEffect(() => {
@@ -328,6 +338,46 @@ export default function ViaticosSeguridad() {
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.numero_identidad, modal]);
+
+  /* Agrega una persona a la tabla: nombre del censo y, si tiene recibos anteriores, su cargo */
+  const agregarPorDni = async () => {
+    if (addDniLoading) return;
+    const dni = addDni;
+    const error = texto => { setAddDniMsg({ tipo: 'error', texto }); addDniRef.current?.focus(); };
+    if (dni.length !== 13) { error('Ingrese los 13 digitos del DNI.'); return; }
+    if (form.alimentacion.length >= 60) { error('La tabla ya tiene el maximo de 60 renglones.'); return; }
+
+    const turno = addDniTurno.current;
+    setAddDniLoading(true); setAddDniMsg(null);
+    const [censo, recibo] = await Promise.allSettled([
+      api.get(`/censo/${encodeURIComponent(dni)}`, { headers: authHeaders() }),
+      api.get(`/viaticos-seguridad/persona/${encodeURIComponent(dni)}`, { headers: authHeaders() }),
+    ]);
+    if (turno !== addDniTurno.current) return;
+    setAddDniLoading(false);
+
+    const nombre = censo.status === 'fulfilled' ? (censo.value.data.nombreCompleto || '').trim().toUpperCase() : '';
+    if (!nombre) { error(censo.reason?.response?.data?.message || 'Persona no encontrada en el censo.'); return; }
+    const cargo = recibo.status === 'fulfilled' ? (recibo.value.data.cargo || '').trim().toUpperCase() : '';
+
+    const clave = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+    // Los renglones agregados por DNI se comparan por DNI (puede haber dos personas con el mismo nombre)
+    const repetida = form.alimentacion.some(r => (r.dni ? r.dni === dni : clave(r.nombre) === clave(nombre)));
+    if (repetida) { error(`${nombre} ya esta en la lista.`); return; }
+
+    setForm(f => {
+      const persona = { nombre, cargo, dni, persona: true };
+      const [primera] = f.alimentacion;
+      // Si la tabla solo tiene un renglón en blanco, se usa ese
+      if (f.alimentacion.length === 1 && !primera.nombre.trim() && !primera.cargo.trim() && !totalAlim(primera))
+        return { ...f, alimentacion: [{ ...primera, ...persona }] };
+      const dias = syncDias(getAllDates(f.periodo_desde, f.periodo_hasta));
+      return { ...f, alimentacion: [...f.alimentacion, { detalle: '', ...persona, dias }] };
+    });
+    setAddDni('');
+    setAddDniMsg({ tipo: 'ok', texto: `Se agrego: ${nombre}` });
+    addDniRef.current?.focus();
+  };
 
   /* Totales (mismo cálculo que el servidor) */
   const totales = useMemo(() => {
@@ -861,8 +911,8 @@ export default function ViaticosSeguridad() {
                                   {DETALLES_VIATICO.map(d => <option key={d} value={d}>{d}</option>)}
                                 </select>
                               </td>
-                              {/* Nombre y cargo solo en la primera fila (o en filas antiguas que ya los tengan) */}
-                              {i === 0 || r.nombre || r.cargo ? (
+                              {/* Nombre y cargo en la primera fila, en las personas agregadas por DNI y en filas que ya los tengan */}
+                              {i === 0 || r.persona || r.nombre || r.cargo ? (
                                 <>
                                   <td><input className="vs-input vs-in vs-in--name" value={r.nombre} onChange={e => setRow('alimentacion', i, { nombre: e.target.value })} placeholder="Nombre" /></td>
                                   <td><input className="vs-input vs-in vs-in--cargo" value={r.cargo} onChange={e => setRow('alimentacion', i, { cargo: e.target.value })} placeholder="Cargo" /></td>
@@ -880,7 +930,31 @@ export default function ViaticosSeguridad() {
                         </tbody>
                       </table>
                     </div>
-                    <button type="button" className="vs-btn-soft vs-add" onClick={() => addRow('alimentacion', { detalle: '', nombre: '', cargo: '', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar renglon</button>
+                    <div className="vs-add-row">
+                      <button type="button" className="vs-btn-soft" onClick={() => addRow('alimentacion', { detalle: '', nombre: '', cargo: '', dias: syncDias(fechas) })}><FiPlus size={13} /> Agregar renglon</button>
+                      <button type="button" className={'vs-btn-soft' + (verAddDni ? ' vs-btn-soft--on' : '')} aria-expanded={verAddDni}
+                        onClick={() => { setVerAddDni(v => !v); setAddDniMsg(null); }}>
+                        <FiUsers size={13} /> Agregar persona por DNI
+                      </button>
+                    </div>
+                    {verAddDni && (
+                      <div className="vs-add-person">
+                        <label className="vs-label" htmlFor="vs-add-dni">DNI de la persona (13 digitos)</label>
+                        <div className="vs-dni-row vs-add-person-row">
+                          <input id="vs-add-dni" ref={addDniRef} autoFocus inputMode="numeric" autoComplete="off"
+                            className="vs-input vs-dni-input" value={addDni} readOnly={addDniLoading}
+                            onChange={e => { setAddDni(e.target.value.replace(/\D/g, '').slice(0, 13)); setAddDniMsg(null); }}
+                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), agregarPorDni())}
+                            placeholder="0000000000000" />
+                          <button type="button" className="vs-btn-buscar" onClick={agregarPorDni} disabled={addDniLoading || addDni.length !== 13}>
+                            {addDniLoading ? <span className="bod-btn-spinner" /> : <FiSearch size={15} />}
+                            {addDniLoading ? ' Buscando…' : ' Buscar y agregar'}
+                          </button>
+                        </div>
+                        <span className="vs-add-person-count">{addDni.length} de 13 digitos</span>
+                        {addDniMsg && <span className={addDniMsg.tipo === 'ok' ? 'vs-ok' : 'vs-error'} role="status">{addDniMsg.texto}</span>}
+                      </div>
+                    )}
                   </Seccion>
 
                   {/* 4 · Hospedaje (solo al editar recibos antiguos que lo tengan) */}

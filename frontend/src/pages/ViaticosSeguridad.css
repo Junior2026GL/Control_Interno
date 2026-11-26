@@ -128,10 +128,14 @@
   display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;
   background: #eef3fc; border: 1.5px dashed #b9c9e8; border-radius: 12px;
 }
-.vs-link {
-  align-self: flex-start; border: none; background: none; padding: 0; cursor: pointer;
-  color: #274C8D; font-size: 12px; font-family: inherit; text-decoration: underline;
-}
+.vs-add-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.vs-btn-soft.vs-btn-soft--on { background: #eef3fc; border-color: #274C8D; }
+.vs-add-person-row { flex-wrap: wrap; }
+.vs-add-person-row .vs-input { flex: 0 1 280px; min-width: 0; }
+.vs-add-person-row .vs-btn-buscar { min-height: 44px; }
+.vs-add-person-row .vs-btn-buscar:disabled { cursor: not-allowed; }
+.vs-add-person-count { font-size: .72rem; color: #6b7280; }
+.vs-add-person .vs-ok, .vs-add-person .vs-error { font-size: .84rem; font-weight: 600; }
 
 /* ── Resumen y pie ───────────────────────────────────────── */
 .vs-resumen { display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem; }
