@@ -7,6 +7,8 @@ const MONTO_MAX   = 99_999_999;
 const ANIO_REGEX  = /^\d{4}$/; // valida año de 4 dígitos
 const FACTURA_REGEX = /^\d{3}-\d{3}-\d{2}-\d{8}$/;
 const CORRELATIVO_ID = 1;
+// Roles que consultan todas las autorizaciones (editar sigue controlado aparte)
+const ROLES_VEN_TODAS = ['SUPER_ADMIN', 'ADMIN', 'ASISTENTE'];
 const FECHA_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 // Devuelve 'YYYY-MM-DD' válida, null si viene vacía, o undefined si es inválida
@@ -176,10 +178,10 @@ exports.updateCorrelativoConfig = (req, res) => {
 };
 
 // ── GET /api/autorizaciones ───────────────────────────────────────────────────
-// SUPER_ADMIN / ADMIN: ve todas
-// ASISTENTE: solo las suyas
+// SUPER_ADMIN / ADMIN / ASISTENTE: ven todas
+// Otros roles: solo las suyas
 exports.getAll = (req, res) => {
-  const canSeeAll = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol);
+  const canSeeAll = ROLES_VEN_TODAS.includes(req.user.rol);
   const sql = canSeeAll
     ? `SELECT ap.*, DATE_FORMAT(ap.fecha_emision, '%Y-%m-%d') AS fecha_emision,
               u1.nombre AS creado_por_nombre,
@@ -207,7 +209,7 @@ exports.getAll = (req, res) => {
 exports.getOne = (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) return res.status(400).json({ message: 'ID inválido.' });
-  const canSeeAll = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.rol);
+  const canSeeAll = ROLES_VEN_TODAS.includes(req.user.rol);
   const sql = canSeeAll
     ? `SELECT ap.*, DATE_FORMAT(ap.fecha_emision, '%Y-%m-%d') AS fecha_emision, u1.nombre AS creado_por_nombre, u2.nombre AS autorizado_por_nombre
        FROM autorizaciones_pago ap
