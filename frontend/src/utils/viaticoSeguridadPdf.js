@@ -83,8 +83,8 @@ export function limitesContenido(ctx, w, h, umbral = 245, margen = 1) {
    Todo lo vertical (alturas, espacios, letras) se multiplica por k.
 ══════════════════════════════════════════════════════════ */
 function dibujar(doc, rec, logoDataUrl, k) {
-  const W = 279.4, H = 215.9, M = 10, CW = W - 2 * M;
-  const FH = 8, FY = H - 5 - FH;            // franja del pie de página
+  const W = 279.4, H = 215.9, M = 5, CW = W - 2 * M;   // M: margen igual en los cuatro bordes
+  const FH = 8, FY = H - M - FH;            // franja del pie de página
   const MB = H - FY + 2;                    // margen inferior para las tablas
   const V = v => v * k;                       // longitudes verticales
   const F = v => Math.max(5, v * k);          // tamaños de letra (mínimo legible)
