@@ -78,6 +78,47 @@ export function limitesContenido(ctx, w, h, umbral = 245, margen = 1) {
   return { x: x0, y: y0, ancho: x1 - x0 + 1, alto: y1 - y0 + 1 };
 }
 
+/* Contorno simplificado de Honduras [longitud, latitud], desde la frontera con Guatemala en el Caribe */
+const HONDURAS = [
+  [-88.23, 15.73], [-87.95, 15.86], [-87.65, 15.92], [-87.45, 15.77], [-86.80, 15.79], [-86.35, 15.78], [-86.02, 16.01],
+  [-85.70, 15.97], [-85.40, 15.86], [-84.95, 16.00], [-84.55, 15.84], [-84.25, 15.82], [-83.80, 15.42], [-83.40, 15.27],
+  [-83.14, 15.00], [-83.55, 15.00], [-83.90, 14.77], [-84.25, 14.74], [-84.48, 14.62], [-84.80, 14.82], [-85.05, 14.70],
+  [-85.18, 14.34], [-85.45, 14.22], [-85.73, 13.86], [-86.05, 14.04], [-86.33, 13.77], [-86.76, 13.75], [-86.70, 13.31],
+  [-86.93, 13.26], [-87.00, 13.02], [-87.32, 12.99], [-87.45, 13.40], [-87.78, 13.42], [-87.72, 13.80], [-87.82, 13.90],
+  [-88.10, 13.99], [-88.50, 13.85], [-88.72, 14.07], [-89.05, 14.34], [-89.35, 14.43], [-89.15, 14.60], [-89.22, 14.87],
+  [-89.15, 15.07], [-88.70, 15.28], [-88.55, 15.50],
+];
+
+/* Icono de viaje nacional: mapa de Honduras con un marcador de ubicación, dibujado en vector
+   (centrado en cx, cy y con el ancho indicado) */
+function iconoNacional(doc, cx, cy, ancho) {
+  const FX = Math.cos(14.5 * Math.PI / 180);                       // corrige la proporción según la latitud
+  const lon0 = -89.35, lon1 = -83.14, lat0 = 12.99, lat1 = 16.01;
+  const s = ancho / ((lon1 - lon0) * FX), alto = (lat1 - lat0) * s;
+  const aXY = ([lon, lat]) => [cx - ancho / 2 + (lon - lon0) * FX * s, cy - alto / 2 + (lat1 - lat) * s];
+  const forma = (pts, estilo) => {
+    const lados = pts.slice(1).map((p, i) => [p[0] - pts[i][0], p[1] - pts[i][1]]);
+    doc.lines(lados, pts[0][0], pts[0][1], [1, 1], estilo, true);
+  };
+  doc.setLineJoin('round');
+  doc.setFillColor(88, 122, 178); doc.setDrawColor(...BLANCO); doc.setLineWidth(ancho * 0.022);
+  forma(HONDURAS.map(aXY), 'FD');
+  // Marcador (gota con la punta hacia abajo) clavado en la zona central del país
+  const [px, py] = aXY([-86.75, 14.15]);
+  const r = ancho * 0.12, d = r * 1.8, cyM = py - d;               // d: distancia del centro a la punta
+  const a = Math.acos(r / d);                                      // ángulo donde los lados tocan el círculo
+  const desde = Math.PI / 2 + a, giro = 2 * Math.PI - 2 * a;
+  const gota = [[px, py], ...Array.from({ length: 41 }, (_, i) => {
+    const t = desde + giro * i / 40;
+    return [px + r * Math.cos(t), cyM + r * Math.sin(t)];
+  })];
+  doc.setDrawColor(...AZUL); doc.setLineWidth(ancho * 0.045);
+  forma(gota, 'S');                                                // borde azul que lo separa del mapa
+  doc.setFillColor(...BLANCO); forma(gota, 'F');
+  doc.setFillColor(...AZUL); doc.circle(px, cyM, r * 0.42, 'F');
+  doc.setLineJoin('miter');
+}
+
 /* ══════════════════════════════════════════════════════════
    Dibuja el recibo con la escala `k` (1 = tamaño normal).
    Todo lo vertical (alturas, espacios, letras) se multiplica por k.
@@ -114,9 +155,12 @@ function dibujar(doc, rec, logoDataUrl, k) {
   doc.text('PAGADURÍA ESPECIAL', mX, y + HH * 0.80, { align: 'center' });
   const tX = M + LW + MIDW;
   doc.setFillColor(...AZUL); doc.rect(tX, y, TW, HH, 'F');
-  doc.setTextColor(...BLANCO); doc.setFontSize(F(9));
-  doc.text('RECIBO DE', tX + TW / 2, y + HH * 0.36, { align: 'center' });
-  doc.setFontSize(F(15)); doc.text('VIÁTICOS', tX + TW / 2, y + HH * 0.80, { align: 'center' });
+  const anchoIcono = HH * 1.25, zonaIcono = anchoIcono + 8;
+  iconoNacional(doc, tX + 5 + anchoIcono / 2, y + HH * 0.55, anchoIcono);
+  const cT = tX + zonaIcono + (TW - zonaIcono) / 2;      // los textos se centran en el espacio junto al icono
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(...BLANCO); doc.setFontSize(F(9));
+  doc.text('RECIBO DE', cT, y + HH * 0.36, { align: 'center' });
+  doc.setFontSize(F(15)); doc.text('VIÁTICOS', cT, y + HH * 0.80, { align: 'center' });
   y += HH;
 
   /* ─ "RECIBI DE LA PAGADURIA…" ─ */
