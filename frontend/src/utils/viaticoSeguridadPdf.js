@@ -2,7 +2,6 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { numeroALetras } from './numeroLetras';
 import { resumenDeRegistro } from './viaticoSeguridadResumen';
-import { CONTORNOS } from './mapaHonduras';
 
 const AZUL = [39, 76, 141], AZUL_OSC = [24, 48, 92], NEGRO = [30, 30, 30], BLANCO = [255, 255, 255];
 const GRIS = [238, 242, 250], GRIS2 = [248, 250, 254], AZUL_L = [205, 218, 240], FINDE = [255, 243, 214];
@@ -79,34 +78,20 @@ export function limitesContenido(ctx, w, h, umbral = 245, margen = 1) {
   return { x: x0, y: y0, ancho: x1 - x0 + 1, alto: y1 - y0 + 1 };
 }
 
-/* Icono de viaje nacional: mapa de Honduras con las cinco estrellas de la bandera, dibujado en vector
-   (centrado en cx, cy y con el ancho indicado) */
-function iconoNacional(doc, cx, cy, ancho) {
-  const FX = Math.cos(14.75 * Math.PI / 180);                      // corrige la proporción según la latitud
-  const todos = CONTORNOS.flat();
-  const lons = todos.filter((_, i) => i % 2 === 0), lats = todos.filter((_, i) => i % 2 === 1);
-  const lon0 = Math.min(...lons), lon1 = Math.max(...lons), lat0 = Math.min(...lats), lat1 = Math.max(...lats);
-  const s = ancho / ((lon1 - lon0) * FX), alto = (lat1 - lat0) * s;
-  const aXY = (lon, lat) => [cx - ancho / 2 + (lon - lon0) * FX * s, cy - alto / 2 + (lat1 - lat) * s];
-  const forma = (pts, estilo) => {
-    const lados = pts.slice(1).map((p, i) => [p[0] - pts[i][0], p[1] - pts[i][1]]);
-    doc.lines(lados, pts[0][0], pts[0][1], [1, 1], estilo, true);
+/* Icono de viaje nacional: carretera entre montañas con el sol, dibujado en vector
+   (centro cx, cy; con s = 1 mide unos 26 × 18 mm) */
+function iconoNacional(doc, cx, cy, s) {
+  const forma = (pts, estilo, cerrar) => {
+    const lados = pts.slice(1).map((p, i) => [(p[0] - pts[i][0]) * s, (p[1] - pts[i][1]) * s]);
+    doc.lines(lados, cx + pts[0][0] * s, cy + pts[0][1] * s, [1, 1], estilo, cerrar);
   };
-  doc.setLineJoin('round');
-  doc.setFillColor(...BLANCO); doc.setDrawColor(...BLANCO); doc.setLineWidth(0.15);
-  CONTORNOS.forEach(c => {
-    const pts = [];
-    for (let i = 0; i < c.length; i += 2) pts.push(aXY(c[i], c[i + 1]));
-    forma(pts, 'FD');
-  });
-  // Cinco estrellas: una al centro y cuatro alrededor, sobre la zona central del país
-  const [mx, my] = aXY(-86750, 14800), r = ancho * 0.048, dx = ancho * 0.12, dy = ancho * 0.07;
-  doc.setFillColor(...AZUL);
-  [[0, 0], [-dx, -dy], [dx, -dy], [-dx, dy], [dx, dy]].forEach(([ox, oy]) => forma(
-    Array.from({ length: 10 }, (_, i) => {
-      const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.4 : r;
-      return [mx + ox + q * Math.cos(a), my + oy + q * Math.sin(a)];
-    }), 'F'));
+  doc.setDrawColor(...BLANCO); doc.setFillColor(...BLANCO);
+  doc.setLineWidth(0.7 * s); doc.setLineJoin('round');
+  forma([[-13, 0], [-7, -6], [-3.5, -2.3], [2.5, -8.5], [9, -1.8], [10.5, -3], [13, 0]], 'S', false);   // montañas
+  doc.circle(cx - 11 * s, cy - 6.5 * s, 1.7 * s, 'F');                                                  // sol
+  forma([[-1.4, 1], [1.4, 1], [9.5, 9.3], [-9.5, 9.3]], 'F', true);                                     // carretera
+  doc.setFillColor(...AZUL);                                       // línea central: [inicio, largo, ancho]
+  [[1.9, 1.1, 0.35], [4, 1.7, 0.6], [6.8, 2.2, 0.95]].forEach(([y, h, w]) => doc.rect(cx - w * s / 2, cy + y * s, w * s, h * s, 'F'));
   doc.setLineJoin('miter');
 }
 
@@ -146,8 +131,8 @@ function dibujar(doc, rec, logoDataUrl, k) {
   doc.text('PAGADURÍA ESPECIAL', mX, y + HH * 0.80, { align: 'center' });
   const tX = M + LW + MIDW;
   doc.setFillColor(...AZUL); doc.rect(tX, y, TW, HH, 'F');
-  const esc = HH / 23, zonaIcono = 38 * esc;
-  iconoNacional(doc, tX + 20.5 * esc, y + HH / 2, 33 * esc);
+  const esc = HH / 23, zonaIcono = 34 * esc;
+  iconoNacional(doc, tX + 19 * esc, y + HH / 2, esc);
   const cT = tX + zonaIcono + (TW - zonaIcono) / 2;      // los textos se centran en el espacio junto al icono
   doc.setFont('helvetica', 'bold'); doc.setTextColor(...BLANCO);
   doc.setFontSize(F(9));  doc.text('RECIBO DE', cT, y + HH * 0.28, { align: 'center' });
