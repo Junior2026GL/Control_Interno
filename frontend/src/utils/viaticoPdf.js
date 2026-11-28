@@ -81,8 +81,8 @@ function iconoExterior(doc, cx, cy, r) {
 function dibujar(doc, v, nombreUsuario, logoData, k) {
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
-  const M = 10, CW = W - M * 2;
-  const FH = 8, FY = H - 5 - FH;            // franja del pie de página
+  const M = 5, CW = W - M * 2;              // M: margen igual en los cuatro bordes (como el recibo nacional)
+  const FH = 8, FY = H - M - FH;            // franja del pie de página
   const MB = H - FY + 2;                    // margen inferior para las tablas
   const V = x => x * k;                     // longitudes verticales
   const F = x => Math.max(5, x * k);        // tamaños de letra (mínimo legible)
@@ -394,13 +394,11 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
 export async function generarPdfViatico(v, nombreUsuario) {
   const logoData = await loadImg('/logo-congreso.png.png');
 
-  // Carta hasta 7 días; oficio (legal) si hay más
-  const diasViaje = v.dias_viaje || (v.dias || []).filter(d => d.tipo === 'viaje' || !d.tipo);
-  const formato = diasViaje.length > 7 ? 'legal' : 'letter';
-  const nuevo = () => new jsPDF({ orientation: 'landscape', unit: 'mm', format: formato });
+  // Siempre carta horizontal, igual que el recibo de Viáticos Nacionales
+  const nuevo = () => new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
 
   // Prueba escalas de mayor a menor hasta que todo quepa en una hoja
-  const K_MIN = 0.7;
+  const K_MIN = 0.6;
   let k = 1;
   for (; k > K_MIN; k = Math.round((k - 0.04) * 100) / 100) {
     const prueba = nuevo();
