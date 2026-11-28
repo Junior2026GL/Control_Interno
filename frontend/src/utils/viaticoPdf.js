@@ -78,7 +78,7 @@ function iconoExterior(doc, cx, cy, r) {
 /* ══════════════════════════════════════════════════════════
    Dibuja el cuadro con la escala `k` (1 = tamaño normal).
 ══════════════════════════════════════════════════════════ */
-function dibujar(doc, v, nombreUsuario, logoData, k) {
+function dibujar(doc, v, logoData, k) {
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 5, CW = W - M * 2;              // M: margen igual en los cuatro bordes (como el recibo nacional)
@@ -343,9 +343,9 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   notas.forEach(lineas => { doc.text(lineas, nx + 3, yNota); yNota += (lineas.length + 0.6) * NOTE_LINE_H; });
   y += BLOQUE_H + V(2);
 
-  /* ─ FIRMA (izquierda) y ELABORADO POR (derecha) ─ */
+  /* ─ FIRMA ─ */
   const FR = V(6.8);                         // alto de cada renglón de firma
-  const ESPACIO_FIRMA = V(7);                // espacio extra para firmar a mano
+  const ESPACIO_FIRMA = V(14);               // espacio extra para firmar a mano
   const ALTO_FIRMA = FR * 5 + ESPACIO_FIRMA;
   if (y + ALTO_FIRMA > FY - 1) { doc.addPage(); y = M + 4; }
   const lblW = 24, lineW = 70;
@@ -369,16 +369,6 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   renglon(3, 'FECHA:', '');                  // se llena a mano
   renglon(4, 'FIRMA:', '', ESPACIO_FIRMA);
 
-  const cxR = M + CW * 0.75, mitad = 35;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(F(8)); doc.setTextColor(...NEGRO);
-  doc.text('Elaborado por:', cxR, y + V(9), { align: 'center' });
-  doc.setFont('helvetica', 'bold'); doc.setTextColor(...AZUL);
-  doc.text(mayus(nombreUsuario || v.elaborado_por_nombre), cxR, y + V(15), { align: 'center' });
-  doc.line(cxR - mitad, y + V(16.5), cxR + mitad, y + V(16.5));
-  doc.line(cxR - mitad, y + V(31), cxR + mitad, y + V(31));
-  doc.setFont('helvetica', 'normal'); doc.setTextColor(...NEGRO);
-  doc.text('Firma', cxR, y + V(35), { align: 'center' });
-
   /* ─ PIE DE PÁGINA (todas las hojas) ─ */
   const totalPaginas = doc.getNumberOfPages();
   for (let pg = 1; pg <= totalPaginas; pg++) {
@@ -391,7 +381,7 @@ function dibujar(doc, v, nombreUsuario, logoData, k) {
   }
 }
 
-export async function generarPdfViatico(v, nombreUsuario) {
+export async function generarPdfViatico(v) {
   const logoData = await loadImg('/logo-congreso.png.png');
 
   // Siempre carta horizontal, igual que el recibo de Viáticos Nacionales
@@ -402,17 +392,17 @@ export async function generarPdfViatico(v, nombreUsuario) {
   let k = 1;
   for (; k > K_MIN; k = Math.round((k - 0.04) * 100) / 100) {
     const prueba = nuevo();
-    dibujar(prueba, v, nombreUsuario, null, k);
+    dibujar(prueba, v, null, k);
     if (prueba.getNumberOfPages() === 1) break;
   }
   // Si ni con la escala mínima cabe, se usa tamaño normal en varias hojas
   if (k <= K_MIN) {
     const prueba = nuevo();
-    dibujar(prueba, v, nombreUsuario, null, K_MIN);
+    dibujar(prueba, v, null, K_MIN);
     k = prueba.getNumberOfPages() === 1 ? K_MIN : 1;
   }
 
   const doc = nuevo();
-  dibujar(doc, v, nombreUsuario, logoData, k);
+  dibujar(doc, v, logoData, k);
   doc.save('viatico_' + (v.diputado_nombre || 'doc').replace(/\s+/g, '_') + '_' + fmtFecha(v.fecha_inicio) + '.pdf');
 }

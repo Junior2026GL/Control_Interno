@@ -309,7 +309,7 @@ export default function Viaticos() {
   const handlePrint = async (id) => {
     try {
       const res = await api.get(`/viaticos/${id}`, { headers: authHeaders() });
-      await generarPdfViatico(res.data, me?.nombre);
+      await generarPdfViatico(res.data);
       showToast('PDF generado correctamente.');
     } catch {
       showToast('Error al cargar el viático.', 'error');
