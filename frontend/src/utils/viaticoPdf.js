@@ -127,8 +127,8 @@ function dibujar(doc, v, logoData, k) {
   titulo('DETALLE DE CÁLCULO DE VIÁTICOS AL EXTERIOR', 'normal', 7.5, 0.88);
   const tX = M + LW + MIDW;
   doc.setFillColor(...AZUL); doc.rect(tX, y, TW, HH, 'F');
-  const radio = HH * 0.30, zonaIcono = radio * 2 + 9;
-  iconoExterior(doc, tX + 5 + radio, y + HH * 0.53, radio);
+  const radio = HH * 0.355, zonaIcono = radio * 2 + 9;
+  iconoExterior(doc, tX + 5 + radio, y + HH * 0.54, radio);
   const cT = tX + zonaIcono + (TW - zonaIcono) / 2;      // los textos se centran en el espacio junto al icono
   doc.setFont('helvetica', 'bold'); doc.setTextColor(...BLANCO);
   doc.setFontSize(F(9));  doc.text('CUADRO DE CÁLCULOS', cT, y + HH * 0.28, { align: 'center' });
